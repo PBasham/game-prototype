@@ -39,6 +39,10 @@ func watch(key: String, value: Variant) -> void:
 	_watches[key] = value
 
 
+func get_watch(key: String) -> Variant:
+	return _watches.get(key)
+
+
 func unwatch(key: String) -> void:
 	_watches.erase(key)
 

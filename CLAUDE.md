@@ -28,3 +28,13 @@ godot --headless --path . --import          # must print no SCRIPT ERROR
 godot --headless --path . -s addons/gut/gut_cmdln.gd   # must exit 0
 godot --headless --path . --quit-after 120  # main scene runs without errors
 ```
+
+## Screenshots for Patrick
+
+Render on a virtual display with DevCli (see README):
+
+```
+xvfb-run -a -s "-screen 0 1920x1080x24" godot --path . --rendering-driver opengl3 -- --shot=60:/tmp/a.png --quit=65
+```
+
+Software rendering is slow (single-digit FPS in the overlay); that's not real performance.

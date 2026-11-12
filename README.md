@@ -16,8 +16,25 @@ Architecture notes are in [docs/architecture.md](docs/architecture.md); decision
 ## Getting started
 
 1. Open Godot, choose **Import**, select this folder's `project.godot`.
-2. Press **F5** to run. Phase 0 shows a boot screen with the placeholder tile atlas.
-3. **F3** toggles the debug overlay (FPS, draw calls, game state, live watch values).
+2. Press **F5** to run. You spawn in the Phase 1 test world.
+3. **F3** toggles the debug overlay (FPS, position, speed, chunks, last fall).
+
+## Controls (current)
+
+| Key | Action |
+| --- | --- |
+| A / D | Move (jog) |
+| Shift (hold) | Run |
+| C | Toggle walk |
+| Space | Jump (hold for full height) |
+| W / S | Climb ropes |
+| S + Space | Drop through a platform |
+| Mouse wheel | Debug brush: pick block |
+| Left / right mouse | Debug brush: remove / place block (until mining in Phase 3) |
+| F3 | Debug overlay |
+
+Movement values are exported on the Player: run the game, open the **Remote** tree,
+select `Player`, and tweak them live in the Inspector.
 
 ## Tests
 
@@ -52,6 +69,17 @@ Regenerate placeholders with:
 ```
 godot --headless --path . --script res://tools/generate_placeholders.gd
 ```
+
+## Scripted runs and screenshots
+
+`DevCli` (autoload) drives the game from the command line, for screenshots and
+smoke tests. Example: spawn at column 6, walk left across the world seam, screenshot:
+
+```
+godot --path . -- --spawn=6 --hold=move_left:20:60 --shot=58:/tmp/seam.png --quit=62
+```
+
+See `src/core/dev_cli.gd` for all options.
 
 ## Workflow
 
