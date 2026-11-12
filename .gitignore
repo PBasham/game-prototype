@@ -1,0 +1,13 @@
+# Godot 4 editor cache (regenerated on import)
+.godot/
+
+# Exports
+/build/
+/export/
+*.pck
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.tmp
+.vscode/
