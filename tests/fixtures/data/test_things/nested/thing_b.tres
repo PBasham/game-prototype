@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="GameData" format=3]
+
+[ext_resource type="Script" path="res://src/core/data/game_data.gd" id="1_gd"]
+
+[resource]
+script = ExtResource("1_gd")
+id = &"thing_b"
+display_name = "Thing B"
+description = "Test fixture in a nested folder."

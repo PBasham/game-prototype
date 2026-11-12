@@ -1,0 +1,49 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  gut:
+    runs-on: ubuntu-latest
+    env:
+      GODOT_VERSION: "4.7.2"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          cd ~/godot
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+          rm ./*.zip
+
+      - name: Import project
+        run: |
+          ~/godot/godot --headless --path . --import 2>&1 | tee import.log
+          if grep -E "SCRIPT ERROR|Parse Error" import.log; then
+            echo "::error::Script errors during import"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: ~/godot/godot --headless --path . -s addons/gut/gut_cmdln.gd
+
+      - name: Smoke test main scene
+        run: |
+          ~/godot/godot --headless --path . --quit-after 120 2>&1 | tee run.log
+          if grep -E "SCRIPT ERROR|^ERROR" run.log; then
+            echo "::error::Errors while running the main scene"
+            exit 1
+          fi
