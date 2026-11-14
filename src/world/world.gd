@@ -9,7 +9,8 @@ extends Node2D
 ## A block changed (after it was applied). Tile coords are wrapped.
 signal block_changed(tile: Vector2i, old_id: int, new_id: int)
 
-const TILE := 16
+## Tile size in pixels. The Scholar is about 3 tiles wide and 8 tall.
+const TILE := 8
 const PLAYER_SCENE := preload("res://src/player/player.tscn")
 
 @export var size_preset: WorldData.Size = WorldData.Size.SMALL
@@ -24,6 +25,8 @@ var blocks: TileTypes
 var walls: TileTypes
 var generator: TestWorldGenerator
 var renderer: ChunkRenderer
+var lights: LightMap
+var backdrop: Backdrop
 var player: Player
 
 
@@ -36,7 +39,9 @@ func _ready() -> void:
 	generator = TestWorldGenerator.new(blocks, walls, size.x, size.y, world_seed)
 	data.generator = generator.generate_chunk
 
-	_add_sky()
+	backdrop = Backdrop.new()
+	backdrop.name = "Backdrop"
+	add_child(backdrop)
 	renderer = ChunkRenderer.new()
 	renderer.name = "Chunks"
 	renderer.load_radius = load_radius
@@ -52,6 +57,15 @@ func _ready() -> void:
 	player.position = tile_to_world(spawn) + Vector2(TILE * 0.5, 0)
 	renderer.load_all_now(player.position)
 	add_child(player)
+	backdrop.surface_y = tile_to_world(generator.spawn_tile()).y - 60.0
+
+	lights = LightMap.new()
+	lights.name = "Lights"
+	lights.world = self
+	add_child(lights)
+	renderer.chunks_changed.connect(lights.mark_dirty)
+	block_changed.connect(func(_t: Vector2i, _o: int, _n: int) -> void: lights.mark_dirty())
+	lights.rebuild()
 
 	if OS.is_debug_build():
 		var brush := DebugBrush.new()
@@ -121,22 +135,3 @@ func request_set_block(tile: Vector2i, id: int) -> bool:
 	renderer.refresh_tile(tile)
 	block_changed.emit(wrap_tile(tile), old, id)
 	return true
-
-
-func _add_sky() -> void:
-	var layer := CanvasLayer.new()
-	layer.name = "Sky"
-	layer.layer = -10
-	var gradient := Gradient.new()
-	gradient.set_color(0, Color("6fb3e8"))
-	gradient.set_color(1, Color("d6ecf7"))
-	var tex := GradientTexture2D.new()
-	tex.gradient = gradient
-	tex.fill_from = Vector2(0, 0)
-	tex.fill_to = Vector2(0, 1)
-	var rect := TextureRect.new()
-	rect.texture = tex
-	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(rect)
-	add_child(layer)

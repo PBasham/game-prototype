@@ -27,7 +27,7 @@ func _ready() -> void:
 	add_child(panel)
 
 	_label = Label.new()
-	_label.add_theme_font_size_override("font_size", 8)
+	_label.add_theme_font_size_override("font_size", 6)
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(_label)
 

@@ -1,53 +1,61 @@
 class_name Player
 extends CharacterBody2D
-## Player movement: Starbound-style feel on Terraria-size tiles.
+## Player movement: fluid, not floaty. Walk / jog (default) / run, a snappy jump with
+## variable height, and partial air control: mid-jump you can slow down and drift back
+## a little, but not turn around instantly.
 ##
-## Default pace is a jog. Hold Run (Shift) to run; Toggle Walk (C) switches the
-## default pace to a walk. Every number below is exported: select the Player in the
-## running game's Remote tree (or in player.tscn) and tune it live.
-## Distances are in tiles (16 px), speeds in tiles per second.
+## Hold Run (Shift) to run; Toggle Walk (C) switches the default pace to a walk.
+## Every number is exported: select the Player in the running game's Remote tree and
+## tune it live. Distances are in tiles (8 px), speeds in tiles per second.
 
 ## Landed after being airborne. `fall_tiles` = distance from the highest point.
 signal landed(fall_tiles: float)
 ## Fall damage to apply. Health arrives in Phase 6; for now it's shown in the overlay.
 signal fall_damage_taken(amount: int)
 
-const TILE := 16.0
+const TILE := float(World.TILE)
+const SHEET := "res://assets/sprites/scholar"
 
 @export_group("Speed (tiles/s)")
-@export var walk_speed := 5.0
-@export var jog_speed := 9.0
-@export var run_speed := 14.0
-@export var climb_speed := 6.0
+@export var walk_speed := 10.0
+@export var jog_speed := 18.0
+@export var run_speed := 28.0
+@export var climb_speed := 12.0
 
-@export_group("Acceleration (seconds to full speed / to stop)")
-@export var ground_accel_time := 0.10
-@export var ground_decel_time := 0.14
-## Higher = less steering in the air.
-@export var air_accel_time := 0.35
-@export var air_decel_time := 0.8
+@export_group("Ground (seconds to full speed / to stop)")
+@export var ground_accel_time := 0.1
+@export var ground_decel_time := 0.12
+
+@export_group("Air control (seconds)")
+## Time to reach full speed in the air from standing still.
+@export var air_accel_time := 0.55
+## Time to cancel full speed when holding the opposite direction mid-air.
+## Lower = more control. Around half a second lets you slow down and drift back a bit.
+@export var air_turn_time := 0.4
+## Time to lose full speed in the air with no input (momentum carries).
+@export var air_drag_time := 1.6
 
 @export_group("Jump")
-@export var jump_height := 5.5
-@export var time_to_apex := 0.42
-## Falling is faster than rising: less floaty landings.
-@export var fall_gravity_multiplier := 1.35
+@export var jump_height := 11.0
+@export var time_to_apex := 0.36
+## Falling is faster than rising, so landings feel grounded, not floaty.
+@export var fall_gravity_multiplier := 1.5
 ## Velocity kept when Jump is released early (short hop).
 @export var jump_cut := 0.45
-@export var max_fall_speed := 45.0
+@export var max_fall_speed := 90.0
 ## Can still jump this long after running off a ledge.
 @export var coyote_time := 0.1
 ## A jump pressed this long before landing still counts.
 @export var jump_buffer_time := 0.12
 
 @export_group("Terrain")
-## Walk up 1-tile steps without jumping.
-@export var auto_step := true
+## Walk up ledges this many tiles high without jumping.
+@export var max_step_tiles := 2
 @export var platform_drop_time := 0.25
 
 @export_group("Fall damage")
-@export var fall_damage_start := 25.0
-@export var fall_damage_per_tile := 10.0
+@export var fall_damage_start := 50.0
+@export var fall_damage_per_tile := 5.0
 
 ## Set by the World before the player enters the tree.
 var world: World
@@ -62,13 +70,21 @@ var _drop_timer := 0.0
 var _airborne := false
 var _peak_y := 0.0
 
-@onready var _sprite: Sprite2D = $Sprite
+@onready var _sprite: AnimatedSprite2D = $Sprite
 
 
 ## Gravity (px/s^2) and launch speed (px/s) that reach `height_tiles` in `apex_time`.
 static func jump_values(height_tiles: float, apex_time: float) -> Vector2:
 	var h := height_tiles * TILE
 	return Vector2(2.0 * h / (apex_time * apex_time), 2.0 * h / apex_time)
+
+
+func _ready() -> void:
+	var sheet := SpriteSheet.load_from(SHEET)
+	_sprite.sprite_frames = sheet.frames
+	_sprite.centered = false
+	_sprite.offset = -sheet.anchor
+	_sprite.play(&"Breath")
 
 
 func _physics_process(delta: float) -> void:
@@ -86,16 +102,15 @@ func _physics_process(delta: float) -> void:
 
 	if _climbing:
 		_climb(input_x, input_y)
+	elif input_y != 0.0 and world and world.is_climbable_at(_body_center()):
+		_start_climb()
+		_climb(input_x, input_y)
 	else:
-		if input_y != 0.0 and world and world.is_climbable_at(_body_center()):
-			_start_climb()
-			_climb(input_x, input_y)
-		else:
-			_move(input_x, input_y, delta)
+		_move(input_x, input_y, delta)
 
 	if input_x != 0.0:
 		facing = 1 if input_x > 0.0 else -1
-		_sprite.flip_h = facing < 0
+	_animate()
 	_track_fall()
 	_debug_watch()
 
@@ -123,14 +138,23 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 	var top := _current_speed() * TILE
 	var target := input_x * top
 	var grounded := is_on_floor()
-	var accel_time := ground_accel_time if grounded else air_accel_time
-	var decel_time := ground_decel_time if grounded else air_decel_time
-	var speeding_up := target != 0.0 and (signf(target) == signf(velocity.x) or velocity.x == 0.0) and absf(target) >= absf(velocity.x)
-	var turning := target != 0.0 and velocity.x != 0.0 and signf(target) != signf(velocity.x)
-	var rate := top / (accel_time if speeding_up or (turning and grounded) else decel_time)
+	var rate: float
+	if grounded:
+		var speeding_up := target != 0.0 and (velocity.x == 0.0 or signf(target) == signf(velocity.x)) and absf(target) >= absf(velocity.x)
+		var turning := target != 0.0 and velocity.x != 0.0 and signf(target) != signf(velocity.x)
+		rate = top / (ground_accel_time if speeding_up or turning else ground_decel_time)
+	elif input_x == 0.0:
+		rate = top / air_drag_time
+	elif velocity.x != 0.0 and signf(target) != signf(velocity.x):
+		rate = top / air_turn_time
+	elif absf(velocity.x) > absf(target):
+		# Holding the same way but slower than your momentum: keep the momentum.
+		rate = top / air_drag_time
+	else:
+		rate = top / air_accel_time
 	velocity.x = move_toward(velocity.x, target, rate * delta)
 
-	if auto_step and grounded and input_x != 0.0:
+	if grounded and input_x != 0.0 and max_step_tiles > 0:
 		_try_step_up(signf(input_x), delta)
 	move_and_slide()
 
@@ -141,18 +165,19 @@ func _current_speed() -> float:
 	return walk_speed if walk_toggled else jog_speed
 
 
-## If a 1-tile ledge blocks us and there's room above it, hop the body up onto it.
+## If a low ledge blocks us and there's room above it, lift the body onto it.
 func _try_step_up(dir: float, delta: float) -> void:
 	var motion := Vector2(dir * maxf(absf(velocity.x) * delta, 2.0), 0.0)
 	if not test_move(global_transform, motion):
 		return
-	var up := Vector2(0.0, -TILE - 1.0)
-	if test_move(global_transform, up):
-		return
-	if test_move(global_transform.translated(up), motion):
-		return
-	global_position += up
-	velocity.y = maxf(velocity.y, 0.0)
+	for step in range(1, max_step_tiles + 1):
+		var up := Vector2(0.0, -TILE * step - 1.0)
+		if test_move(global_transform, up):
+			return
+		if not test_move(global_transform.translated(up), motion):
+			global_position += up
+			velocity.y = maxf(velocity.y, 0.0)
+			return
 
 
 func _start_climb() -> void:
@@ -172,8 +197,23 @@ func _climb(input_x: float, input_y: float) -> void:
 	move_and_slide()
 
 
+func _animate() -> void:
+	_sprite.flip_h = facing < 0
+	if _climbing:
+		_sprite.play(&"Idle Pose")
+	elif not is_on_floor():
+		_sprite.play(&"Jump")
+	elif absf(velocity.x) > 4.0:
+		_sprite.play(&"Jog")
+		_sprite.speed_scale = clampf(absf(velocity.x) / (jog_speed * TILE), 0.5, 1.8)
+		return
+	else:
+		_sprite.play(&"Breath")
+	_sprite.speed_scale = 1.0
+
+
 func _standing_on_platform() -> bool:
-	for dx in [-10.0, 0.0, 10.0]:
+	for dx in [-6.0, 0.0, 6.0]:
 		if world.collision_at(global_position + Vector2(dx, 2.0)) == TileDef.Collision.PLATFORM:
 			return true
 	return false

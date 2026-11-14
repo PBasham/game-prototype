@@ -1,7 +1,7 @@
 extends GutTest
 
-const W := 4224
-const H := 1216
+const W := 6400
+const H := 2048
 
 var blocks: TileTypes
 var walls: TileTypes
@@ -37,11 +37,32 @@ func test_spawn_is_standable() -> void:
 	var s := g.spawn_tile()
 	assert_eq(g.block_at(s.x, s.y - 1), WorldData.AIR, "air above spawn")
 	assert_ne(blocks.collision(g.block_at(s.x, s.y)), TileDef.Collision.NONE, "solid at spawn")
-	for dy in range(1, 5):
-		assert_eq(g.block_at(s.x, s.y - dy), WorldData.AIR, "room for a 4-tile player")
+	for dy in range(1, 9):
+		assert_eq(g.block_at(s.x, s.y - dy), WorldData.AIR, "room for an 8-tile player")
 
 
 func test_jump_values_reach_the_height() -> void:
 	var jv := Player.jump_values(5.5, 0.42)
-	var apex := jv.y * jv.y / (2.0 * jv.x) / 16.0
+	var apex := jv.y * jv.y / (2.0 * jv.x) / Player.TILE
 	assert_almost_eq(apex, 5.5, 0.01)
+
+
+func test_forest_only_uses_known_blocks() -> void:
+	var g := _gen(3)
+	var allowed := [WorldData.AIR]
+	for id in [&"dirt", &"grass", &"stone", &"copper_ore", &"wood_planks", &"wood_platform", &"rope"]:
+		allowed.append(blocks.index_of(id))
+	for x in range(0, W, 97):
+		for y in range(g.surface_at(x) - 2, g.surface_at(x) + 120, 7):
+			assert_has(allowed, g.block_at(x, y))
+
+
+func test_decorations_are_deterministic_and_off_the_course() -> void:
+	var a := _gen(5)
+	var b := _gen(5)
+	for x in range(0, W, 13):
+		assert_eq(a.tree_at(x), b.tree_at(x))
+	for rx in range(-TestWorldGenerator.COURSE, TestWorldGenerator.COURSE + 1):
+		if rx == -110 or rx == 132:
+			continue
+		assert_eq(a.tree_at(TestWorldGenerator.SPAWN_X + rx), -1)

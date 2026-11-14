@@ -39,7 +39,7 @@ func test_solids_connect_to_any_solid_others_only_to_themselves() -> void:
 
 func test_atlas_rows_are_unique_and_fit_the_texture() -> void:
 	var tex := load("res://assets/tiles/blocks.png") as Texture2D
-	var rows := tex.get_height() / 16
+	var rows := tex.get_height() / World.TILE
 	var seen := {}
 	for i in range(1, blocks.size()):
 		var row := blocks.atlas_row(i)

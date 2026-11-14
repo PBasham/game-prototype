@@ -11,12 +11,13 @@ const OUT_OF_BOUNDS := -1
 
 enum Size { TINY, SMALL, MEDIUM, LARGE }
 
-## Width x height in tiles. Multiples of the chunk size; roughly Terraria's presets.
+## Width x height in tiles (8 px). Multiples of the chunk size. Scaled from Terraria's
+## presets so a world feels as big relative to the player (the Scholar is ~8 tiles tall).
 const SIZES := {
 	Size.TINY: Vector2i(1024, 512),
-	Size.SMALL: Vector2i(4224, 1216),
-	Size.MEDIUM: Vector2i(6400, 1792),
-	Size.LARGE: Vector2i(8448, 2400),
+	Size.SMALL: Vector2i(6400, 2048),
+	Size.MEDIUM: Vector2i(9600, 2816),
+	Size.LARGE: Vector2i(12800, 3584),
 }
 
 var width: int

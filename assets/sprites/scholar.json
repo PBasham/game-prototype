@@ -1,0 +1,119 @@
+{
+  "anchor": [
+    20,
+    64
+  ],
+  "frame_size": [
+    44,
+    64
+  ],
+  "frames": [
+    {
+      "duration_ms": 100,
+      "x": 0
+    },
+    {
+      "duration_ms": 100,
+      "x": 44
+    },
+    {
+      "duration_ms": 100,
+      "x": 88
+    },
+    {
+      "duration_ms": 100,
+      "x": 132
+    },
+    {
+      "duration_ms": 100,
+      "x": 176
+    },
+    {
+      "duration_ms": 100,
+      "x": 220
+    },
+    {
+      "duration_ms": 100,
+      "x": 264
+    },
+    {
+      "duration_ms": 100,
+      "x": 308
+    },
+    {
+      "duration_ms": 100,
+      "x": 352
+    },
+    {
+      "duration_ms": 100,
+      "x": 396
+    },
+    {
+      "duration_ms": 100,
+      "x": 440
+    },
+    {
+      "duration_ms": 100,
+      "x": 484
+    },
+    {
+      "duration_ms": 100,
+      "x": 528
+    },
+    {
+      "duration_ms": 100,
+      "x": 572
+    },
+    {
+      "duration_ms": 100,
+      "x": 616
+    },
+    {
+      "duration_ms": 100,
+      "x": 660
+    },
+    {
+      "duration_ms": 100,
+      "x": 704
+    },
+    {
+      "duration_ms": 100,
+      "x": 748
+    },
+    {
+      "duration_ms": 100,
+      "x": 792
+    },
+    {
+      "duration_ms": 100,
+      "x": 836
+    },
+    {
+      "duration_ms": 100,
+      "x": 880
+    },
+    {
+      "duration_ms": 100,
+      "x": 924
+    }
+  ],
+  "source": "Scholar-casual.aseprite",
+  "tags": {
+    "Breath": [
+      2,
+      13
+    ],
+    "Idle Pose": [
+      0,
+      0
+    ],
+    "Jog": [
+      14,
+      21
+    ],
+    "Jump": [
+      1,
+      1
+    ]
+  }
+}

@@ -4,9 +4,10 @@
 
 [resource]
 script = ExtResource("1_tiledef")
-atlas_row = 8
+atlas_row = 4
 collision = 1
 climbable = false
 hardness = 1
+terrain = "planks"
 id = &"wood_planks"
 display_name = "Wood Planks"

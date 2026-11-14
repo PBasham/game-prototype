@@ -8,5 +8,6 @@ atlas_row = 0
 collision = 1
 climbable = false
 hardness = 1
+terrain = "dirt"
 id = &"dirt"
 display_name = "Dirt"

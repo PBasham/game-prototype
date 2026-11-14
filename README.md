@@ -16,7 +16,7 @@ Architecture notes are in [docs/architecture.md](docs/architecture.md); decision
 ## Getting started
 
 1. Open Godot, choose **Import**, select this folder's `project.godot`.
-2. Press **F5** to run. You spawn in the Phase 1 test world.
+2. Press **F5** to run. You spawn in the Phase 1 test world (forest), as the Scholar.
 3. **F3** toggles the debug overlay (FPS, position, speed, chunks, last fall).
 
 ## Controls (current)
@@ -26,7 +26,7 @@ Architecture notes are in [docs/architecture.md](docs/architecture.md); decision
 | A / D | Move (jog) |
 | Shift (hold) | Run |
 | C | Toggle walk |
-| Space | Jump (hold for full height) |
+| Space | Jump (hold for full height; steer a little in the air) |
 | W / S | Climb ropes |
 | S + Space | Drop through a platform |
 | Mouse wheel | Debug brush: pick block |
@@ -60,15 +60,18 @@ tests/     GUT tests, mirroring src/
 tools/     editor-time scripts (placeholder generation, etc.)
 ```
 
-## Placeholder assets
+## Art
 
-`assets/ASSETS.md` lists every placeholder, its size and layout. Replacing a
-placeholder with real art is a file swap with the same name and layout.
-Regenerate placeholders with:
+`assets/ASSETS.md` lists every asset, its size and layout.
 
-```
-godot --headless --path . --script res://tools/generate_placeholders.gd
-```
+- **Scholar:** edit `art/Scholar-casual.aseprite`, then re-import:
+  ```
+  godot --headless --path . --script res://tools/import_aseprite.gd -- --in=res://art/Scholar-casual.aseprite --out=res://assets/sprites/scholar
+  ```
+- **Terrain, trees, backdrop** are generated:
+  ```
+  godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game
+  ```
 
 ## Scripted runs and screenshots
 

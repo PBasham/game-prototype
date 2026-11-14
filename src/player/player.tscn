@@ -1,10 +1,9 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://src/player/player.gd" id="1_player"]
-[ext_resource type="Texture2D" path="res://assets/sprites/player_placeholder.png" id="2_sprite"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(24, 60)
+size = Vector2(16, 60)
 
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 4
@@ -17,9 +16,7 @@ script = ExtResource("1_player")
 position = Vector2(0, -30)
 shape = SubResource("RectangleShape2D_body")
 
-[node name="Sprite" type="Sprite2D" parent="."]
-position = Vector2(0, -32)
-texture = ExtResource("2_sprite")
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
 
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(0, -40)

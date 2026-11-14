@@ -6,5 +6,6 @@
 script = ExtResource("1_tiledef")
 atlas_row = 0
 collision = 0
+terrain = "dirt_wall"
 id = &"dirt_wall"
 display_name = "Dirt Wall"

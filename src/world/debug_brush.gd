@@ -4,7 +4,7 @@ extends Node2D
 ##   Left mouse: remove block. Right mouse: place block. Mouse wheel: change block.
 ## Goes through World.request_set_block like real gameplay will.
 
-const PLACEABLE := [&"dirt", &"stone", &"wood_planks", &"wood_platform", &"rope", &"sand", &"snow", &"copper_ore"]
+const PLACEABLE := [&"dirt", &"stone", &"copper_ore", &"wood_planks", &"wood_platform", &"rope"]
 
 var world: World
 var _selected := 0
@@ -35,7 +35,7 @@ func _process(_delta: float) -> void:
 
 func _draw() -> void:
 	var tile := world.world_to_tile(get_global_mouse_position())
-	draw_rect(Rect2(world.tile_to_world(tile), Vector2(16, 16)), Color(1, 1, 1, 0.6), false, 1.0)
+	draw_rect(Rect2(world.tile_to_world(tile), Vector2(World.TILE, World.TILE)), Color(1, 1, 1, 0.6), false, 1.0)
 
 
 func _show() -> void:

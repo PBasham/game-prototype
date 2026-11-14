@@ -22,6 +22,15 @@ enum Collision {
 ## How hard it is to mine. Used from Phase 3.
 @export var hardness: int = 1
 
+@export_group("Terrain look")
+## Texture key for the terrain shader: assets/terrain/<terrain>.png. Empty = drawn as a
+## regular tile from the atlas instead (platforms, ropes).
+@export var terrain: String = ""
+## Grass grows on its exposed surfaces (top and upper sides).
+@export var grass_cover: bool = false
+## Overlay drawn on top of the base texture: assets/terrain/ore_<ore_overlay>.png.
+@export var ore_overlay: String = ""
+
 
 func validate() -> PackedStringArray:
 	var problems := super.validate()

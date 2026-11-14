@@ -8,5 +8,6 @@ atlas_row = 2
 collision = 1
 climbable = false
 hardness = 2
+terrain = "stone"
 id = &"stone"
 display_name = "Stone"

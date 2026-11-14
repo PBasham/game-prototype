@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_tiledef")
-atlas_row = 14
+atlas_row = 5
 collision = 2
 climbable = false
 hardness = 1

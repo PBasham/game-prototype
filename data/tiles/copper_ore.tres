@@ -4,9 +4,11 @@
 
 [resource]
 script = ExtResource("1_tiledef")
-atlas_row = 9
+atlas_row = 3
 collision = 1
 climbable = false
 hardness = 3
+terrain = "stone"
+ore_overlay = "copper"
 id = &"copper_ore"
 display_name = "Copper Ore"
