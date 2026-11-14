@@ -25,6 +25,14 @@ these tags: `Breath` (standing), `Jog` (moving, speed scales with velocity),
 `Jump` (in the air), `Idle Pose` (climbing for now). Layers named `backdrop` and `Ref`
 are skipped. Edit the .aseprite file and re-run the importer; nothing else changes.
 
+### Placeholder: `sprites/scholar_jump.png` + `.json`
+
+Cut from the Jog frames by `tools/placeholders/make_scholar_jump.py` (Python + Pillow).
+Tags: `Jump Takeoff`, `Jump Rise`, `Jump Apex`, `Jump Fall`, `Land`, one frame each.
+To replace: add tags with those exact names to `art/Scholar-casual.aseprite` (any number
+of frames) and re-run the importer. Tags in the main sheet always win over this
+placeholder, so no code changes are needed. Missing beats fall back to `Jump`.
+
 ## Terrain: `terrain/*.png` (64x64, seamless)
 
 Drawn by `src/world/terrain.gdshader`, which blends them per pixel across tiles.

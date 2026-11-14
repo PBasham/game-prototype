@@ -15,6 +15,16 @@ signal fall_damage_taken(amount: int)
 
 const TILE := float(World.TILE)
 const SHEET := "res://assets/sprites/scholar"
+## Placeholder frames for tags the main sheet doesn't have yet (jump beats, landing).
+const PLACEHOLDER_SHEET := "res://assets/sprites/scholar_jump"
+
+@export_group("Animation")
+## Seconds the takeoff pose shows after a jump starts.
+@export var takeoff_time := 0.07
+## Vertical speed (tiles/s) around the top of a jump that counts as the apex.
+@export var apex_band := 6.0
+## Seconds the landing pose shows when landing without moving.
+@export var land_time := 0.08
 
 @export_group("Speed (tiles/s)")
 @export var walk_speed := 10.0
@@ -69,6 +79,8 @@ var _climbing := false
 var _drop_timer := 0.0
 var _airborne := false
 var _peak_y := 0.0
+var _takeoff_timer := 0.0
+var _land_timer := 0.0
 
 @onready var _sprite: AnimatedSprite2D = $Sprite
 
@@ -81,6 +93,7 @@ static func jump_values(height_tiles: float, apex_time: float) -> Vector2:
 
 func _ready() -> void:
 	var sheet := SpriteSheet.load_from(SHEET)
+	sheet.add_tags_from(PLACEHOLDER_SHEET)
 	_sprite.sprite_frames = sheet.frames
 	_sprite.centered = false
 	_sprite.offset = -sheet.anchor
@@ -110,8 +123,8 @@ func _physics_process(delta: float) -> void:
 
 	if input_x != 0.0:
 		facing = 1 if input_x > 0.0 else -1
-	_animate()
 	_track_fall()
+	_animate(delta)
 	_debug_watch()
 
 
@@ -129,6 +142,7 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 		else:
 			velocity.y = -jv.y
 			_rising_jump = true
+			_takeoff_timer = takeoff_time
 			_coyote = 0.0
 	if _rising_jump and (velocity.y >= 0.0 or not Input.is_action_pressed("jump")):
 		if velocity.y < 0.0:
@@ -197,19 +211,42 @@ func _climb(input_x: float, input_y: float) -> void:
 	move_and_slide()
 
 
-func _animate() -> void:
+func _animate(delta: float) -> void:
+	_takeoff_timer = maxf(_takeoff_timer - delta, 0.0)
+	_land_timer = maxf(_land_timer - delta, 0.0)
 	_sprite.flip_h = facing < 0
+	_sprite.speed_scale = 1.0
 	if _climbing:
 		_sprite.play(&"Idle Pose")
 	elif not is_on_floor():
-		_sprite.play(&"Jump")
+		_sprite.play(_air_animation())
 	elif absf(velocity.x) > 4.0:
 		_sprite.play(&"Jog")
 		_sprite.speed_scale = clampf(absf(velocity.x) / (jog_speed * TILE), 0.5, 1.8)
-		return
+	elif _land_timer > 0.0:
+		_sprite.play(_first_of([&"Land"], &"Breath"))
 	else:
 		_sprite.play(&"Breath")
-	_sprite.speed_scale = 1.0
+
+
+## Takeoff, rise, apex or fall, from the time since the jump and the vertical speed.
+## Falls back to the single "Jump" pose when a beat has no frames.
+func _air_animation() -> StringName:
+	var vy := velocity.y / TILE
+	if _takeoff_timer > 0.0:
+		return _first_of([&"Jump Takeoff", &"Jump Rise"], &"Jump")
+	if absf(vy) < apex_band:
+		return _first_of([&"Jump Apex"], &"Jump")
+	if vy < 0.0:
+		return _first_of([&"Jump Rise"], &"Jump")
+	return _first_of([&"Jump Fall"], &"Jump")
+
+
+func _first_of(names: Array[StringName], fallback: StringName) -> StringName:
+	for anim_name in names:
+		if _sprite.sprite_frames.has_animation(anim_name):
+			return anim_name
+	return fallback
 
 
 func _standing_on_platform() -> bool:
@@ -228,6 +265,8 @@ func _track_fall() -> void:
 		if _airborne and not _climbing:
 			var fall := (global_position.y - _peak_y) / TILE
 			landed.emit(fall)
+			if fall >= 2.0:
+				_land_timer = land_time
 			if fall > fall_damage_start:
 				var amount := roundi((fall - fall_damage_start) * fall_damage_per_tile)
 				fall_damage_taken.emit(amount)
