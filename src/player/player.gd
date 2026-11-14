@@ -21,9 +21,12 @@ const PLACEHOLDER_SHEET := "res://assets/sprites/scholar_placeholder"
 @export_group("Animation")
 ## Seconds the first Jump frame (takeoff) shows after a jump starts.
 @export var takeoff_time := 0.07
-## The rest of the Jump frames are spread over this vertical speed range (tiles/s):
-## rising this fast or faster shows the second frame, falling this fast or faster shows
-## the last, and the apex lands in the middle.
+## Which Jump frame is the apex (knees tucked), numbered like Aseprite (1 = first).
+@export var jump_apex_frame := 4
+## The apex frame shows while vertical speed is within this many tiles/s of zero.
+@export var apex_band := 12.0
+## Frames after the apex are spread from apex_band up to this falling speed (tiles/s);
+## falling faster holds the last frame.
 @export var jump_frame_speed := 50.0
 ## Seconds the landing pose shows when landing without moving.
 @export var land_time := 0.08
@@ -231,18 +234,37 @@ func _animate(delta: float) -> void:
 		_sprite.play(&"Breath")
 
 
-## Picks the Jump frame from the arc instead of a timer: frame 0 is the takeoff, the rest
-## follow vertical speed, so the tuck always lines up with the top of the jump.
+## Picks the Jump frame from the arc instead of a timer. Frame 1 is the takeoff. Frames
+## between it and the apex follow rising speed, the apex frame holds around the top, and
+## the frames after it follow falling speed.
 func _show_jump_frame() -> void:
 	if _sprite.animation != &"Jump":
 		_sprite.play(&"Jump")
 	_sprite.pause()
-	var count := _sprite.sprite_frames.get_frame_count(&"Jump")
+	_sprite.frame = jump_frame_for(_sprite.sprite_frames.get_frame_count(&"Jump"))
+
+
+func jump_frame_for(count: int) -> int:
 	if count <= 1 or _takeoff_timer > 0.0:
-		_sprite.frame = 0
-		return
-	var t := clampf((velocity.y / TILE + jump_frame_speed) / (2.0 * jump_frame_speed), 0.0, 1.0)
-	_sprite.frame = 1 + mini(int(t * (count - 1)), count - 2)
+		return 0
+	var apex := clampi(jump_apex_frame - 1, 1, count - 1)
+	var vy := velocity.y / TILE
+	if absf(vy) <= apex_band:
+		return apex
+	if vy < 0.0:
+		# Rising: frames 1 .. apex-1, fastest first.
+		var rising := apex - 1
+		if rising <= 0:
+			return apex
+		var launch := jump_values(jump_height, time_to_apex).y / TILE
+		var t := clampf((-vy - apex_band) / maxf(launch - apex_band, 0.001), 0.0, 1.0)
+		return apex - 1 - mini(int(t * rising), rising - 1)
+	# Falling: frames apex+1 .. last, slowest first.
+	var falling := count - 1 - apex
+	if falling <= 0:
+		return apex
+	var f := clampf((vy - apex_band) / maxf(jump_frame_speed - apex_band, 0.001), 0.0, 1.0)
+	return apex + 1 + mini(int(f * falling), falling - 1)
 
 
 func _first_of(names: Array[StringName], fallback: StringName) -> StringName:
@@ -293,3 +315,5 @@ func _debug_watch() -> void:
 	DebugOverlay.watch("tile", "%d, %d" % [t.x, t.y])
 	DebugOverlay.watch("move", "%s %.1f t/s%s%s" % [pace, absf(velocity.x) / TILE,
 		"  climbing" if _climbing else "", "  floor" if is_on_floor() else ""])
+	DebugOverlay.watch("anim", "%s %d  vy %.0f" % [_sprite.animation, _sprite.frame + 1,
+		velocity.y / TILE])

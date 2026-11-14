@@ -25,10 +25,11 @@ these tags: `Breath` (standing), `Jog` (moving, speed scales with velocity),
 `Jump` (in the air), `Idle Pose` (climbing for now). Layers named `backdrop` and `Ref`
 are skipped. Edit the .aseprite file and re-run the importer; nothing else changes.
 
-The `Jump` tag can have any number of frames. Frame 1 is the takeoff (shown for
-`takeoff_time`); the rest are picked from vertical speed, not played on a timer: fast
-rising shows frame 2, the apex lands in the middle, fast falling shows the last frame.
-Range is `jump_frame_speed` on the Player.
+The `Jump` tag can have any number of frames, picked from the arc rather than a timer:
+frame 1 is the takeoff (`takeoff_time`), frames before the apex follow rising speed, the
+apex frame (`jump_apex_frame`, currently 4) holds while vertical speed is within
+`apex_band`, and the frames after it follow falling speed up to `jump_frame_speed`.
+All are exported on the Player under Animation.
 
 ### Placeholder: `sprites/scholar_placeholder.png` + `.json`
 
