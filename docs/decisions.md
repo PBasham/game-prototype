@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-13: Smooth motion and no streaming hitches
+
+- **Physics interpolation on** (60 Hz physics). Playtest on a high refresh monitor
+  showed constant stutter without it. Teleports must use `World.teleport_player()`.
+- **World streaming and lighting on worker threads.** Measured on Patrick's PC: the
+  light rebuild took about 106 ms on the main thread each time chunks loaded (84 frames
+  over 50 ms in a 2.5 minute run); chunk generate about 7 ms and render about 6 ms each.
+  Now generation, chunk builds and lighting run on `WorkerThreadPool`; the main thread
+  applies results (under 1 ms per chunk). Chose threads over relighting only new
+  chunks (still a main-thread spike) and over GPU light spread (more work; revisit if
+  torches make lighting heavier).
+
 ## 2026-11-13: Look, scale and forest focus
 
 - **Tile size: 8 px.** Patrick's Scholar is 24x63 px, so he's about 3 tiles wide and

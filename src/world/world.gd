@@ -17,8 +17,9 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 @export var world_seed: int = 1337
 ## Chunks kept loaded around the camera, each direction.
 @export var load_radius := Vector2i(2, 2)
-## Max chunks built per frame while moving.
-@export var chunks_per_frame: int = 2
+## Max finished chunks turned into nodes per frame while moving (building happens on
+## worker threads; this caps the main-thread part).
+@export var chunks_per_frame: int = 1
 
 var data: WorldData
 var blocks: TileTypes
@@ -57,6 +58,7 @@ func _ready() -> void:
 	player.position = tile_to_world(spawn) + Vector2(TILE * 0.5, 0)
 	renderer.load_all_now(player.position)
 	add_child(player)
+	teleport_player(player.position)
 	backdrop.surface_y = tile_to_world(generator.spawn_tile()).y - 60.0
 
 	lights = LightMap.new()
@@ -65,7 +67,7 @@ func _ready() -> void:
 	add_child(lights)
 	renderer.chunks_changed.connect(lights.mark_dirty)
 	block_changed.connect(func(_t: Vector2i, _o: int, _n: int) -> void: lights.mark_dirty())
-	lights.rebuild()
+	lights.rebuild_now()
 
 	if OS.is_debug_build():
 		var brush := DebugBrush.new()
@@ -82,11 +84,31 @@ func _process(_delta: float) -> void:
 	var cam := get_viewport().get_camera_2d()
 	var center := cam.get_screen_center_position() if cam else player.position
 	renderer.update(center)
-	DebugOverlay.watch("chunks", "%d loaded, %d generated" % [renderer.loaded_count(), data.generated_chunk_count()])
+	DebugOverlay.watch("chunks", "%d loaded, %d generated, %d queued" % [renderer.loaded_count(),
+		data.generated_chunk_count(), renderer.pending_count() + data.pending_generation_count()])
 
 
 func _exit_tree() -> void:
+	# Background jobs hold their own data, but finish them before the world goes away.
+	if lights:
+		lights.wait()
+	if renderer:
+		renderer.wait_all()
+	if data:
+		data.wait_all()
 	EventBus.world_unloaded.emit()
+
+
+## Moves the player instantly (spawn, respawn, rewrapping x later). Use this, not
+## `player.position =`: with physics interpolation on, a raw jump would be drawn as a
+## one-tick slide across the screen, and the smoothed camera would pan the whole way.
+func teleport_player(pos: Vector2) -> void:
+	player.global_position = pos
+	player.velocity = Vector2.ZERO
+	player.reset_physics_interpolation()  # Propagates to the sprite and camera.
+	var cam := player.get_node_or_null(^"Camera") as Camera2D
+	if cam:
+		cam.reset_smoothing()
 
 
 # --- coordinates -------------------------------------------------------------

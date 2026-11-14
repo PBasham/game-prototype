@@ -56,6 +56,16 @@ func climbable(index: int) -> bool:
 	return index > 0 and index < _climbable.size() and _climbable[index] == 1
 
 
+## TileDef.Collision by index, for background jobs (a copy; safe to read from any thread).
+func collision_table() -> PackedInt32Array:
+	return _collision.duplicate()
+
+
+## Atlas row by index, for background jobs.
+func atlas_row_table() -> PackedInt32Array:
+	return _row.duplicate()
+
+
 ## Collision of whatever block uses an atlas row (for building the TileSet).
 func collision_for_row(row: int) -> int:
 	for i in range(1, _row.size()):

@@ -11,6 +11,7 @@ const REFRESH_SECONDS := 0.2
 var _label: Label
 var _watches: Dictionary[String, Variant] = {}
 var _since_refresh := 0.0
+var _playing_time := 0.0
 
 
 func _ready() -> void:
@@ -56,6 +57,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	# Frame times while playing, skipping the first two seconds (initial world load).
+	if Game.state == Game.State.PLAYING:
+		_playing_time += delta
+		if _playing_time > 2.0:
+			PerfStats.add("frame", int(delta * 1000000.0))
 	if not visible:
 		return
 	_since_refresh += delta
@@ -76,4 +82,9 @@ func _build_text() -> String:
 	lines.append("state %s%s" % [Game.state_name(), "  (net)" if Game.is_networked() else ""])
 	for key in _watches:
 		lines.append("%s: %s" % [key, str(_watches[key])])
+	lines.append("frame: %s  >25ms %d  >50ms %d" % [PerfStats.brief("frame"),
+		PerfStats.count_over("frame", 25000), PerfStats.count_over("frame", 50000)])
+	for key: String in ["light rebuild (worker)", "light apply (main)", "chunk generate (worker)",
+			"chunk build (worker)", "chunk apply (main)", "chunk build (main)", "chunk generate (main)"]:
+		lines.append("%s: %s" % [key, PerfStats.brief(key)])
 	return "\n".join(lines)

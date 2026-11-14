@@ -11,6 +11,7 @@ extends Node
 ##   --watch=KEY             print a DebugOverlay value at every screenshot / log line
 ##   --log=EVERY             print watched values every EVERY frames
 ##   --spawn=X               spawn the player at tile column X (on the surface)
+##   --perf                  print PerfStats (frames, chunks, lighting) on quit
 
 var _frame := 0
 var _shots: Array[Array] = []
@@ -20,12 +21,16 @@ var _watch: PackedStringArray = []
 var _log_every := 0
 ## Tile column to spawn at, or -1. Read by World.
 var spawn_x := -1
+var _perf := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	for arg in OS.get_cmdline_user_args():
 		var parts := arg.trim_prefix("--").split("=", true, 1)
+		if parts[0] == "perf":
+			_perf = true
+			continue
 		if parts.size() < 2:
 			continue
 		var v := parts[1].split(":")
@@ -60,6 +65,9 @@ func _physics_process(_delta: float) -> void:
 	if _log_every > 0 and _frame % _log_every == 0:
 		print("frame %d %s" % [_frame, _watched()])
 	if _frame == _quit_at:
+		if _perf:
+			print("PerfStats after %d physics frames:" % _frame)
+			print(PerfStats.summary())
 		get_tree().quit()
 
 

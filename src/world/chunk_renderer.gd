@@ -37,14 +37,19 @@ class ChunkView:
 
 ## Chunks loaded around the camera, in each direction.
 var load_radius := Vector2i(2, 2)
-## Max chunks built per frame (spreads the cost when moving fast).
-var chunks_per_frame := 2
+## Max finished chunks turned into nodes per frame (spreads the main-thread cost).
+var chunks_per_frame := 1
 
 var _world: World
 var _data: WorldData
 var _views: Dictionary[Vector2i, ChunkView] = {}
-var _pending: Array[Vector2i] = []
+## Chunks being built on worker threads, and built ones waiting to be applied.
+var _building: Dictionary[Vector2i, ChunkBuildJob] = {}
+var _built: Dictionary[Vector2i, ChunkBuildJob] = {}
 var _chunk_px := float(ChunkData.SIZE * TILE)
+var _collision_table := PackedInt32Array()
+var _atlas_rows := PackedInt32Array()
+var _grass_id := -1
 var _block_slot := PackedInt32Array()
 var _wall_slot := PackedInt32Array()
 var _stone_slot := 0
@@ -58,6 +63,11 @@ var _flowers: Array[Texture2D] = []
 func setup(world: World) -> void:
 	_world = world
 	_data = world.data
+	# Chunks are placed, never moved: no physics interpolation for them.
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	_collision_table = world.blocks.collision_table()
+	_atlas_rows = world.blocks.atlas_row_table()
+	_grass_id = world.blocks.index_of(&"grass")
 	_build_terrain_material()
 	_collision_set = _build_tileset(true)
 	_props_set = _build_tileset(false)
@@ -84,27 +94,45 @@ func loaded_tile_rect() -> Rect2i:
 	return Rect2i(lo * ChunkData.SIZE, (hi - lo + Vector2i.ONE) * ChunkData.SIZE)
 
 
-## Loads/unloads chunks around `center` (world pixels), within the per-frame budget.
+## Streams chunks around `center` (world pixels). Each frame: pick up generated data and
+## finished builds, start builds for chunks whose 3x3 data is ready (on worker threads),
+## and turn at most `chunks_per_frame` finished builds into nodes. The chunk under the
+## camera and its direct neighbors are built immediately if missing (after a teleport),
+## so the player never stands on missing collision.
 func update(center: Vector2) -> void:
+	_data.collect_generated()
 	var cc := _chunk_at(center)
+	var changed := false
+	for c: Vector2i in _views.keys():
+		if not _in_range(c, cc, 1):
+			_unload(c)
+			changed = true
+	_collect_builds(cc)
+
+	var wanted: Array[Vector2i] = []
 	for dy in range(-load_radius.y, load_radius.y + 1):
 		for dx in range(-load_radius.x, load_radius.x + 1):
 			var c := cc + Vector2i(dx, dy)
-			if c.y < 0 or c.y >= _data.chunks_y or _views.has(c) or _pending.has(c):
-				continue
-			_pending.append(c)
-	var changed := false
-	for c: Vector2i in _views.keys():
-		if absi(c.x - cc.x) > load_radius.x + 1 or absi(c.y - cc.y) > load_radius.y + 1:
-			_unload(c)
-			changed = true
-	_pending = _pending.filter(func(c: Vector2i) -> bool:
-		return absi(c.x - cc.x) <= load_radius.x + 1 and absi(c.y - cc.y) <= load_radius.y + 1)
-	_pending.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			if c.y >= 0 and c.y < _data.chunks_y and not _views.has(c):
+				wanted.append(c)
+	wanted.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return (a - cc).length_squared() < (b - cc).length_squared())
-	for i in mini(chunks_per_frame, _pending.size()):
-		_load(_pending.pop_front())
-		changed = true
+	for c in wanted:
+		if absi(c.x - cc.x) <= 1 and absi(c.y - cc.y) <= 1 and not _built.has(c):
+			_build_now(c)
+			changed = true
+		elif not _building.has(c) and not _built.has(c) and _neighborhood_ready(c):
+			_start_build(c)
+
+	var applied := 0
+	for c in wanted:
+		if applied >= chunks_per_frame:
+			break
+		if _built.has(c):
+			_apply(_built[c])
+			_built.erase(c)
+			applied += 1
+			changed = true
 	for view: ChunkView in _views.values():
 		if view.dirty:
 			view.tile_texture.update(view.tile_image)
@@ -113,18 +141,33 @@ func update(center: Vector2) -> void:
 		chunks_changed.emit()
 
 
-## Loads everything around `center` right now (used at spawn).
+## Loads everything around `center` right now, on this thread (used at spawn).
 func load_all_now(center: Vector2) -> void:
-	var budget := chunks_per_frame
-	chunks_per_frame = 1000
-	update(center)
-	chunks_per_frame = budget
+	var cc := _chunk_at(center)
+	for dy in range(-load_radius.y, load_radius.y + 1):
+		for dx in range(-load_radius.x, load_radius.x + 1):
+			var c := cc + Vector2i(dx, dy)
+			if c.y >= 0 and c.y < _data.chunks_y and not _views.has(c):
+				_build_now(c)
+	chunks_changed.emit()
 
 
 func clear() -> void:
 	for c: Vector2i in _views.keys():
 		_unload(c)
-	_pending.clear()
+	wait_all()
+	_built.clear()
+
+
+## Blocks until no build is running (on world unload).
+func wait_all() -> void:
+	for job: ChunkBuildJob in _building.values():
+		WorkerThreadPool.wait_for_task_completion(job.task)
+	_building.clear()
+
+
+func pending_count() -> int:
+	return _building.size() + _built.size()
 
 
 ## Redraws a tile everywhere it appears (including neighbors' borders).
@@ -153,17 +196,98 @@ func _chunk_at(p: Vector2) -> Vector2i:
 	return Vector2i(floori(p.x / _chunk_px), floori(p.y / _chunk_px))
 
 
-func _load(c: Vector2i) -> void:
+func _in_range(c: Vector2i, cc: Vector2i, slack: int) -> bool:
+	return absi(c.x - cc.x) <= load_radius.x + slack and absi(c.y - cc.y) <= load_radius.y + slack
+
+
+## Moves finished worker builds to `_built` (or drops them if no longer wanted or stale).
+func _collect_builds(cc: Vector2i) -> void:
+	var done: Array[Vector2i] = []
+	for c: Vector2i in _building:
+		if WorkerThreadPool.is_task_completed(_building[c].task):
+			done.append(c)
+	for c in done:
+		var job: ChunkBuildJob = _building[c]
+		_building.erase(c)
+		WorkerThreadPool.wait_for_task_completion(job.task)
+		PerfStats.add("chunk build (worker)", job.usec)
+		if _in_range(c, cc, 0) and not _views.has(c) and not job.is_stale():
+			_built[c] = job
+	for c: Vector2i in _built.keys():
+		if not _in_range(c, cc, 1) or _built[c].is_stale():
+			_built.erase(c)
+
+
+## True when the chunk and its 8 neighbors have data; requests any that don't.
+func _neighborhood_ready(c: Vector2i) -> bool:
+	var ready := true
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var n := c + Vector2i(dx, dy)
+			if n.y >= 0 and n.y < _data.chunks_y and not _data.request_chunk(n):
+				ready = false
+	return ready
+
+
+## Captures the 3x3 neighborhood's tile arrays. With `generate`, missing chunks are
+## generated now (main thread); otherwise they must already exist.
+func _make_job(c: Vector2i, generate: bool) -> ChunkBuildJob:
+	var job := ChunkBuildJob.new()
+	job.coord = c
+	job.world_width = _data.width
+	job.world_height = _data.height
+	job.block_slot = _block_slot
+	job.wall_slot = _wall_slot
+	job.stone_slot = _stone_slot
+	job.collision = _collision_table
+	job.atlas_row = _atlas_rows
+	job.grass_id = _grass_id
+	job.generator = _world.generator
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var n := c + Vector2i(dx, dy)
+			var chunk: ChunkData = null
+			if n.y >= 0 and n.y < _data.chunks_y:
+				chunk = _data.get_chunk(n) if generate else _data.peek_chunk(n)
+			job.chunks.append(chunk)
+			job.revisions.append(chunk.revision if chunk else 0)
+			job.blocks.append(chunk.blocks if chunk else PackedInt32Array())
+			job.walls.append(chunk.walls if chunk else PackedInt32Array())
+	return job
+
+
+func _start_build(c: Vector2i) -> void:
+	var job := _make_job(c, false)
+	job.task = WorkerThreadPool.add_task(job.run, false, "build chunk")
+	_building[c] = job
+
+
+## Builds and applies a chunk right now on this thread (spawn, or after a teleport).
+func _build_now(c: Vector2i) -> void:
+	var job: ChunkBuildJob = _built.get(c)
+	_built.erase(c)
+	if job == null and _building.has(c):
+		job = _building[c]
+		_building.erase(c)
+		WorkerThreadPool.wait_for_task_completion(job.task)
+	if job == null or job.is_stale():
+		job = _make_job(c, true)
+		job.run()
+		PerfStats.add("chunk build (main)", job.usec)
+	_apply(job)
+
+
+## Main thread: turns a finished build into the chunk's nodes.
+func _apply(job: ChunkBuildJob) -> void:
+	var t := Time.get_ticks_usec()
+	var c := job.coord
 	var view := ChunkView.new()
 	view.node = Node2D.new()
 	view.node.name = "Chunk_%d_%d" % [c.x, c.y]
 	view.node.position = Vector2(c) * _chunk_px
 
-	view.tile_image = Image.create_empty(TEX_SIZE, TEX_SIZE, false, Image.FORMAT_RGBA8)
+	view.tile_image = Image.create_from_data(TEX_SIZE, TEX_SIZE, false, Image.FORMAT_RGBA8, job.tile_bytes)
 	var origin := c * ChunkData.SIZE
-	for ty in TEX_SIZE:
-		for tx in TEX_SIZE:
-			view.tile_image.set_pixel(tx, ty, _tile_color(origin + Vector2i(tx - BORDER, ty - BORDER)))
 	view.tile_texture = ImageTexture.create_from_image(view.tile_image)
 
 	view.terrain = Sprite2D.new()
@@ -190,12 +314,16 @@ func _load(c: Vector2i) -> void:
 	view.node.add_child(view.terrain)
 	view.node.add_child(view.props)
 	view.node.add_child(view.collision)
-	for ly in ChunkData.SIZE:
-		for lx in ChunkData.SIZE:
-			_paint_cells(view, Vector2i(lx, ly), origin + Vector2i(lx, ly))
-	_add_decor(view, c)
+	var cells := job.collision_cells
+	for i in range(0, cells.size(), 3):
+		view.collision.set_cell(Vector2i(cells[i], cells[i + 1]), 0, Vector2i(0, cells[i + 2]))
+	var props := job.prop_cells
+	for i in range(0, props.size(), 4):
+		view.props.set_cell(Vector2i(props[i], props[i + 1]), 0, Vector2i(props[i + 2], props[i + 3]))
+	_add_decor(view, job.decor)
 	add_child(view.node)
 	_views[c] = view
+	PerfStats.add("chunk apply (main)", Time.get_ticks_usec() - t)
 
 
 func _unload(c: Vector2i) -> void:
@@ -233,30 +361,20 @@ func _paint_cells(view: ChunkView, local: Vector2i, tile: Vector2i) -> void:
 	view.props.set_cell(local, 0, Vector2i(mask * PIECES + piece, _world.blocks.atlas_row(id)))
 
 
-## Trees and flowers on grassy surfaces, from the world generator's decoration rules.
-func _add_decor(view: ChunkView, c: Vector2i) -> void:
-	var gen := _world.generator
-	if gen == null:
-		return
-	var grass := _world.blocks.index_of(&"grass")
-	for lx in ChunkData.SIZE:
-		var x := c.x * ChunkData.SIZE + lx
-		var wx := _data.wrap_x(x)
-		var tree := gen.tree_at(wx)
-		var flower := gen.flower_at(wx)
-		if tree < 0 and flower < 0:
-			continue
-		for ly in ChunkData.SIZE:
-			var y := c.y * ChunkData.SIZE + ly
-			if _data.get_block(x, y) != grass or _data.get_block(x, y - 1) != WorldData.AIR:
-				continue
-			var tex: Texture2D = _trees[tree % _trees.size()] if tree >= 0 else _flowers[flower % _flowers.size()]
-			var s := Sprite2D.new()
-			s.texture = tex
-			s.centered = false
-			s.position = Vector2(lx * TILE + TILE / 2 - tex.get_width() / 2, ly * TILE + (3 if tree >= 0 else 1) - tex.get_height())
-			view.decor.add_child(s)
-			break
+## Trees and flowers on grassy surfaces, at the spots ChunkBuildJob found from the
+## world generator's decoration rules. `spots` is flat quads: x, y, tree, flower.
+func _add_decor(view: ChunkView, spots: PackedInt32Array) -> void:
+	for i in range(0, spots.size(), 4):
+		var lx := spots[i]
+		var ly := spots[i + 1]
+		var tree := spots[i + 2]
+		var flower := spots[i + 3]
+		var tex: Texture2D = _trees[tree % _trees.size()] if tree >= 0 else _flowers[flower % _flowers.size()]
+		var s := Sprite2D.new()
+		s.texture = tex
+		s.centered = false
+		s.position = Vector2(lx * TILE + TILE / 2 - tex.get_width() / 2, ly * TILE + (3 if tree >= 0 else 1) - tex.get_height())
+		view.decor.add_child(s)
 
 
 func _build_terrain_material() -> void:

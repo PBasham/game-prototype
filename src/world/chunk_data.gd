@@ -12,6 +12,8 @@ var blocks := PackedInt32Array()
 var walls := PackedInt32Array()
 ## Set when anything changes after generation (for saving in Phase 5).
 var modified := false
+## Bumped by every edit, so background work can tell its copy of the tiles is stale.
+var revision := 0
 
 
 func _init(chunk_coord: Vector2i) -> void:
