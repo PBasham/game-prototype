@@ -25,13 +25,17 @@ these tags: `Breath` (standing), `Jog` (moving, speed scales with velocity),
 `Jump` (in the air), `Idle Pose` (climbing for now). Layers named `backdrop` and `Ref`
 are skipped. Edit the .aseprite file and re-run the importer; nothing else changes.
 
-### Placeholder: `sprites/scholar_jump.png` + `.json`
+The `Jump` tag can have any number of frames. Frame 1 is the takeoff (shown for
+`takeoff_time`); the rest are picked from vertical speed, not played on a timer: fast
+rising shows frame 2, the apex lands in the middle, fast falling shows the last frame.
+Range is `jump_frame_speed` on the Player.
 
-Cut from the Jog frames by `tools/placeholders/make_scholar_jump.py` (Python + Pillow).
-Tags: `Jump Takeoff`, `Jump Rise`, `Jump Apex`, `Jump Fall`, `Land`, one frame each.
-To replace: add tags with those exact names to `art/Scholar-casual.aseprite` (any number
-of frames) and re-run the importer. Tags in the main sheet always win over this
-placeholder, so no code changes are needed. Missing beats fall back to `Jump`.
+### Placeholder: `sprites/scholar_placeholder.png` + `.json`
+
+`Land` (one frame, the idle pose crouched), from
+`tools/placeholders/make_scholar_placeholder.py` (Python + Pillow). Shown briefly when
+landing still after a fall of 2+ tiles. Add a `Land` tag to the .aseprite and re-run the
+importer to replace it: tags in the main sheet always win over the placeholder.
 
 ## Terrain: `terrain/*.png` (64x64, seamless)
 

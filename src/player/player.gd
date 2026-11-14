@@ -15,14 +15,16 @@ signal fall_damage_taken(amount: int)
 
 const TILE := float(World.TILE)
 const SHEET := "res://assets/sprites/scholar"
-## Placeholder frames for tags the main sheet doesn't have yet (jump beats, landing).
-const PLACEHOLDER_SHEET := "res://assets/sprites/scholar_jump"
+## Placeholder frames for tags the main sheet doesn't have yet (landing).
+const PLACEHOLDER_SHEET := "res://assets/sprites/scholar_placeholder"
 
 @export_group("Animation")
-## Seconds the takeoff pose shows after a jump starts.
+## Seconds the first Jump frame (takeoff) shows after a jump starts.
 @export var takeoff_time := 0.07
-## Vertical speed (tiles/s) around the top of a jump that counts as the apex.
-@export var apex_band := 6.0
+## The rest of the Jump frames are spread over this vertical speed range (tiles/s):
+## rising this fast or faster shows the second frame, falling this fast or faster shows
+## the last, and the apex lands in the middle.
+@export var jump_frame_speed := 50.0
 ## Seconds the landing pose shows when landing without moving.
 @export var land_time := 0.08
 
@@ -219,7 +221,7 @@ func _animate(delta: float) -> void:
 	if _climbing:
 		_sprite.play(&"Idle Pose")
 	elif not is_on_floor():
-		_sprite.play(_air_animation())
+		_show_jump_frame()
 	elif absf(velocity.x) > 4.0:
 		_sprite.play(&"Jog")
 		_sprite.speed_scale = clampf(absf(velocity.x) / (jog_speed * TILE), 0.5, 1.8)
@@ -229,17 +231,18 @@ func _animate(delta: float) -> void:
 		_sprite.play(&"Breath")
 
 
-## Takeoff, rise, apex or fall, from the time since the jump and the vertical speed.
-## Falls back to the single "Jump" pose when a beat has no frames.
-func _air_animation() -> StringName:
-	var vy := velocity.y / TILE
-	if _takeoff_timer > 0.0:
-		return _first_of([&"Jump Takeoff", &"Jump Rise"], &"Jump")
-	if absf(vy) < apex_band:
-		return _first_of([&"Jump Apex"], &"Jump")
-	if vy < 0.0:
-		return _first_of([&"Jump Rise"], &"Jump")
-	return _first_of([&"Jump Fall"], &"Jump")
+## Picks the Jump frame from the arc instead of a timer: frame 0 is the takeoff, the rest
+## follow vertical speed, so the tuck always lines up with the top of the jump.
+func _show_jump_frame() -> void:
+	if _sprite.animation != &"Jump":
+		_sprite.play(&"Jump")
+	_sprite.pause()
+	var count := _sprite.sprite_frames.get_frame_count(&"Jump")
+	if count <= 1 or _takeoff_timer > 0.0:
+		_sprite.frame = 0
+		return
+	var t := clampf((velocity.y / TILE + jump_frame_speed) / (2.0 * jump_frame_speed), 0.0, 1.0)
+	_sprite.frame = 1 + mini(int(t * (count - 1)), count - 2)
 
 
 func _first_of(names: Array[StringName], fallback: StringName) -> StringName:
