@@ -38,6 +38,12 @@ Drawn by `src/world/terrain.gdshader`, which blends them per pixel across tiles.
 | dirt_wall.png, stone_wall.png, planks_wall.png | background walls |
 | noise.png | edge and blend noise (RGBA channels), not art |
 
+Wood comes in three generated sets (`--wood=A|B|C` on the tile generator). B is the
+default (thin long warm boards, no nails). The other two are kept in `terrain/alternates/`
+as `planks_A.png` / `planks_wall_A.png` (olive, medium boards, nails) and `planks_C.png` /
+`planks_wall_C.png` (light olive, tall short boards, nails). Copy one over `planks.png`
+and `planks_wall.png`, or re-run the generator with `--wood=A`, to swap.
+
 Grass colors live in `src/world/chunk_renderer.gd` (`GRASS_COLORS`).
 Which texture a block uses is set on its TileDef (`terrain`, `grass_cover`, `ore_overlay`).
 

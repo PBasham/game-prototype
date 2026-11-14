@@ -83,6 +83,7 @@ const STYLES := {
 
 var style: Dictionary
 var style_name := "earthy"
+var wood_variant := "B"
 
 
 func _init() -> void:
@@ -95,6 +96,8 @@ func _init() -> void:
 			out = arg.trim_prefix("--out=")
 		elif arg == "--preview":
 			preview = true
+		elif arg.begins_with("--wood="):
+			wood_variant = arg.trim_prefix("--wood=")
 		elif arg == "--export=game":
 			_export_game()
 			quit()
@@ -1805,21 +1808,15 @@ func _export_game() -> void:
 	_variant_texture("stone", 202).save_png(root + "/terrain/stone.png")
 	_variant_texture("dirt_wall", 404).save_png(root + "/terrain/dirt_wall.png")
 	_variant_texture("stone_wall", 505).save_png(root + "/terrain/stone_wall.png")
-	# Wood: warmer and more saturated, to sit with the dirt and grass.
-	var keep := style
-	style = style.duplicate()
-	style.sat = 1.15
-	style.shift = 1.3
-	var wood_ramp := ramp(Color("a2643a"))
-	style = keep
+	# Wood boards in the colors of Patrick's reference (variant via --wood=A|B|C).
 	var planks := Image.create_empty(TEX, TEX, false, Image.FORMAT_RGBA8)
-	_tex_planks(planks, wood_ramp, 7)
+	_tex_boards(planks, wood_variant, 7)
 	planks.save_png(root + "/terrain/planks.png")
 	var planks_wall := planks.duplicate() as Image
 	for y in TEX:
 		for x in TEX:
 			var c := planks_wall.get_pixel(x, y)
-			planks_wall.set_pixel(x, y, Color.from_hsv(c.h, c.s * 0.85, c.v).darkened(0.5))
+			planks_wall.set_pixel(x, y, Color.from_hsv(c.h, c.s * 0.9, c.v).darkened(0.45))
 	planks_wall.save_png(root + "/terrain/planks_wall.png")
 	var ore := Image.create_empty(TEX, TEX, false, Image.FORMAT_RGBA8)
 	ore.fill(Color.TRANSPARENT)
@@ -1924,3 +1921,58 @@ func _export_backdrop(dir: String) -> void:
 					c = base.lightened(0.12)
 				img.set_pixel(x, y, c)
 		img.save_png(dir + "/hills_%d.png" % layer)
+
+
+# --- wood boards (Patrick's reference: muted olive-brown, long boards, nails) --
+
+## [palette dark..light (7), board band heights summing to 64, min length, max length, nails]
+const WOOD_VARIANTS := {
+	"A": [["1e160a", "2c210e", "3c2d11", "4b4022", "574c2c", "5d4f2c", "6e5f38"], [5, 6, 5, 5, 6, 5, 5, 6, 5, 5, 6, 5], 14, 22, true],
+	"B": [["221509", "33230f", "46301a", "57402a", "654c33", "6f5638", "80683f"], [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], 20, 30, false],
+	"C": [["2a2210", "3b3014", "50431f", "62552c", "6f6235", "7a6c3b", "8c7d48"], [8, 8, 8, 8, 8, 8, 8, 8], 10, 16, true],
+}
+
+
+## Horizontal boards: lit top row, grain, shaded bottom row, a dark seam under each
+## board and at each joint, and optional nails near the joints. Tiles seamlessly.
+func _tex_boards(img: Image, variant: String, seed: int) -> void:
+	var spec: Array = WOOD_VARIANTS[variant]
+	var r := _hexes(spec[0])
+	var bands: Array = spec[1]
+	var min_len: int = spec[2]
+	var max_len: int = spec[3]
+	var nails: bool = spec[4]
+	var y0 := 0
+	for b in bands.size():
+		var bh: int = bands[b]
+		var x := int(h(b, 0, seed) * TEX)
+		var used := 0
+		var k := 0
+		while used < TEX:
+			var len := min_len + int(h(b, k, seed + 1) * (max_len - min_len + 1))
+			len = mini(len, TEX - used)
+			var tone := 4 if h(b, k, seed + 2) > 0.35 else 3
+			for i in len:
+				var px := posmod(x + i, TEX)
+				for j in bh:
+					var c := r[tone]
+					if j == bh - 1 or i == 0:
+						c = r[1]  # seam under the board / joint at its start
+					elif j == 0:
+						c = r[tone + 2] if i > 1 else r[tone + 1]
+					elif j == bh - 2:
+						c = r[tone - 1]
+					elif i == 1:
+						c = r[tone + 1]
+					elif pnoise(px, y0 + j, 8, seed + b) > 0.62:
+						c = r[tone - 1]
+					img.set_pixel(px, y0 + j, c)
+			if nails and bh >= 5 and len > 6:
+				var ny := y0 + (bh - 1) / 2
+				for nx in [x + 2, x + len - 3]:
+					img.set_pixel(posmod(nx, TEX), ny, r[0])
+					img.set_pixel(posmod(nx - 1, TEX), ny - 1, r[6])
+			x += len
+			used += len
+			k += 1
+		y0 += bh
