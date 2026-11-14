@@ -7,5 +7,6 @@ script = ExtResource("1_tiledef")
 atlas_row = 2
 collision = 0
 terrain = "planks_wall"
+built = true
 id = &"wood_wall"
 display_name = "Wood Wall"

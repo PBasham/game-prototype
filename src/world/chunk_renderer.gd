@@ -266,6 +266,10 @@ func _build_terrain_material() -> void:
 	var overlays: Array[String] = []
 	var grass := PackedFloat32Array()
 	grass.resize(16)
+	var built := PackedFloat32Array()
+	built.resize(16)
+	var built_walls := PackedFloat32Array()
+	built_walls.resize(16)
 	_block_slot.resize(blocks.size())
 	for i in range(1, blocks.size()):
 		var def := blocks.def(i)
@@ -275,6 +279,7 @@ func _build_terrain_material() -> void:
 		overlays.append(def.ore_overlay)
 		_block_slot[i] = keys.size()
 		grass[keys.size()] = 1.0 if def.grass_cover else 0.0
+		built[keys.size()] = 1.0 if def.built else 0.0
 		if def.id == &"stone":
 			_stone_slot = keys.size()
 	var wall_keys: Array[String] = []
@@ -285,6 +290,7 @@ func _build_terrain_material() -> void:
 			continue
 		wall_keys.append(def.terrain)
 		_wall_slot[i] = wall_keys.size()
+		built_walls[wall_keys.size()] = 1.0 if def.built else 0.0
 	_material = ShaderMaterial.new()
 	_material.shader = SHADER
 	_material.set_shader_parameter("materials", _strip(keys, ""))
@@ -292,6 +298,8 @@ func _build_terrain_material() -> void:
 	_material.set_shader_parameter("wall_tex", _strip(wall_keys, ""))
 	_material.set_shader_parameter("noise_tex", load(TERRAIN_DIR + "/noise.png"))
 	_material.set_shader_parameter("grass_slots", grass)
+	_material.set_shader_parameter("built_slots", built)
+	_material.set_shader_parameter("built_walls", built_walls)
 	for i in GRASS_COLORS.size():
 		_material.set_shader_parameter("grass_%d" % i, Color(GRASS_COLORS[i]))
 

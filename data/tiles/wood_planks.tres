@@ -9,5 +9,6 @@ collision = 1
 climbable = false
 hardness = 1
 terrain = "planks"
+built = true
 id = &"wood_planks"
 display_name = "Wood Planks"

@@ -55,7 +55,9 @@ Each loaded chunk has four parts (`src/world/chunk_renderer.gd`):
    chunk plus a 2-tile border; R = block terrain slot, G = wall slot) and draws per
    pixel: a smoothed outline of the solid tiles plus noise (slopes and corners come out
    diagonal and rounded), material boundaries shifted by noise, lit rims, soft
-   undersides, grass, and walls. Textures come from `assets/terrain`.
+   undersides, grass, and walls. Textures come from `assets/terrain`. Blocks and walls
+   marked `built` on their TileDef (planks) skip the smoothing: crisp square edges with
+   a dark edge line and a lit top row.
 2. **Collision layer:** a hidden TileMapLayer with full-tile and platform shapes.
    Collision stays exactly on the tile grid even though the art is smoothed.
 3. **Props layer:** a visible TileMapLayer for thin tiles (platforms, ropes).

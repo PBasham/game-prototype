@@ -30,6 +30,9 @@ enum Collision {
 @export var grass_cover: bool = false
 ## Overlay drawn on top of the base texture: assets/terrain/ore_<ore_overlay>.png.
 @export var ore_overlay: String = ""
+## Built block (planks, bricks): crisp square edges with a dark edge line instead of the
+## smooth, blended edges natural ground gets.
+@export var built: bool = false
 
 
 func validate() -> PackedStringArray:
