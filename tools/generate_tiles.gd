@@ -1805,14 +1805,21 @@ func _export_game() -> void:
 	_variant_texture("stone", 202).save_png(root + "/terrain/stone.png")
 	_variant_texture("dirt_wall", 404).save_png(root + "/terrain/dirt_wall.png")
 	_variant_texture("stone_wall", 505).save_png(root + "/terrain/stone_wall.png")
+	# Wood: warmer and more saturated, to sit with the dirt and grass.
+	var keep := style
+	style = style.duplicate()
+	style.sat = 1.15
+	style.shift = 1.3
+	var wood_ramp := ramp(Color("a2643a"))
+	style = keep
 	var planks := Image.create_empty(TEX, TEX, false, Image.FORMAT_RGBA8)
-	_tex_planks(planks, ramp(Color("9a6a3a")), 7)
+	_tex_planks(planks, wood_ramp, 7)
 	planks.save_png(root + "/terrain/planks.png")
 	var planks_wall := planks.duplicate() as Image
 	for y in TEX:
 		for x in TEX:
 			var c := planks_wall.get_pixel(x, y)
-			planks_wall.set_pixel(x, y, Color.from_hsv(c.h, c.s * 0.7, c.v).darkened(0.55))
+			planks_wall.set_pixel(x, y, Color.from_hsv(c.h, c.s * 0.85, c.v).darkened(0.5))
 	planks_wall.save_png(root + "/terrain/planks_wall.png")
 	var ore := Image.create_empty(TEX, TEX, false, Image.FORMAT_RGBA8)
 	ore.fill(Color.TRANSPARENT)

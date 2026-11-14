@@ -126,11 +126,12 @@ vec4 strip(sampler2D s, int slot, vec2 p) {
 	return texelFetch(s, ivec2((slot - 1) * 64 + q.x, q.y), 0);
 }
 
-// Crisp square tile with a dark edge line where it meets open space.
-vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bool right, float edge_dark) {
+// Crisp square tile with a dark edge line where it meets open space. `cut` rounds an
+// outer corner by one pixel, only where the diagonal neighbor is open too.
+vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bool right, float edge_dark, bool cut, bvec4 diag) {
 	vec2 lp = p - floor(p / T) * T;
-	if ((up && left && lp.x < 0.5 && lp.y < 0.5) || (up && right && lp.x > 6.5 && lp.y < 0.5)
-			|| (down && left && lp.x < 0.5 && lp.y > 6.5) || (down && right && lp.x > 6.5 && lp.y > 6.5)) {
+	if (cut && ((up && left && diag.x && lp.x < 0.5 && lp.y < 0.5) || (up && right && diag.y && lp.x > 6.5 && lp.y < 0.5)
+			|| (down && left && diag.z && lp.x < 0.5 && lp.y > 6.5) || (down && right && diag.w && lp.x > 6.5 && lp.y > 6.5))) {
 		return vec4(0.0);
 	}
 	vec3 c = strip(tex, slot, p).rgb;
@@ -146,6 +147,9 @@ vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bo
 	return vec4(c, 1.0);
 }
 
+// A wall edge only counts as open where there is neither a wall nor a block.
+bool wall_open(ivec2 t) { return wal(t) == 0 && blk(t) == 0; }
+
 float hash(float x) { return fract(sin(x * 12.9898 + 78.233) * 43758.5453); }
 
 void fragment() {
@@ -158,10 +162,15 @@ void fragment() {
 	if (!is_built(here) && solid(p)) {
 		m = mat_at(p);
 	}
+	bool drew = false;
 	if (is_built(here)) {
+		bvec4 diag = bvec4(blk(here_t + ivec2(-1, -1)) == 0, blk(here_t + ivec2(1, -1)) == 0,
+			blk(here_t + ivec2(-1, 1)) == 0, blk(here_t + ivec2(1, 1)) == 0);
 		col = built_px(materials, here, p, blk(here_t + ivec2(0, -1)) == 0, blk(here_t + ivec2(0, 1)) == 0,
-			blk(here_t + ivec2(-1, 0)) == 0, blk(here_t + ivec2(1, 0)) == 0, 0.38);
+			blk(here_t + ivec2(-1, 0)) == 0, blk(here_t + ivec2(1, 0)) == 0, 0.38, true, diag);
+		drew = col.a > 0.5;
 	} else if (m > 0) {
+		drew = true;
 		vec3 c = strip(materials, m, p).rgb;
 		vec4 ov = strip(overlays, m, p);
 		c = mix(c, ov.rgb, ov.a);
@@ -202,7 +211,8 @@ void fragment() {
 			c = mix(c, c * 0.8, 0.2);
 		}
 		col = vec4(c, 1.0);
-	} else {
+	}
+	if (!drew) {
 		bool done = false;
 		for (int k = 1; k <= 5; k++) {
 			vec2 q = p + vec2(0.0, float(k));
@@ -219,8 +229,8 @@ void fragment() {
 		}
 		int wh = wal(here_t);
 		if (!done && wh > 0 && built_walls[wh] > 0.5) {
-			col = built_px(wall_tex, wh, p, wal(here_t + ivec2(0, -1)) == 0, wal(here_t + ivec2(0, 1)) == 0,
-				wal(here_t + ivec2(-1, 0)) == 0, wal(here_t + ivec2(1, 0)) == 0, 0.6);
+			col = built_px(wall_tex, wh, p, wall_open(here_t + ivec2(0, -1)), wall_open(here_t + ivec2(0, 1)),
+				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false));
 		} else if (!done && field_w(p) + nz(p) * 0.6 > 0.5) {
 			int w = wall_at(p);
 			if (w > 0 && built_walls[w] < 0.5) {

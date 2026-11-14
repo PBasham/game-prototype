@@ -118,7 +118,7 @@ func block_at(x: int, y: int) -> int:
 
 func wall_at(x: int, y: int) -> int:
 	var rx := rel_x(x)
-	if rx >= 101 and rx <= 121 and y >= ground - 13 and y < ground:
+	if rx >= 100 and rx <= 122 and y >= ground - 15 and y <= ground:
 		return _w.wood_wall
 	var depth := y - surface_at(x)
 	if depth < 4:
@@ -166,7 +166,9 @@ func _course_block(x: int, y: int) -> int:
 		return _b.rope if rx == -66 and y < g + 88 else WorldData.AIR
 	if rx >= -84 and rx <= -64 and y >= g + 78 and y < g + 90:
 		return WorldData.AIR
-	# House: plank frame, a doorway on the left, a platform shelf inside.
+	# House: plank frame and floor, a doorway on the left, a platform shelf inside.
+	if rx >= 100 and rx <= 122 and y == g:
+		return _b.wood_planks
 	if rx >= 100 and rx <= 122 and y >= g - 15 and y < g:
 		if y <= g - 14:
 			return _b.wood_planks
