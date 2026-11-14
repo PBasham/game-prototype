@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bsk1m8tk686k1"
-path="res://.godot/imported/placeholder_tiles.png-5dae0d9c0d368e7e5abd61088400999c.ctex"
+uid="uid://dehvcocqiqlob"
+path="res://.godot/imported/planks_A.png-8edb9dc3aee6e63d2f22552bffe31bdf.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tiles/placeholder_tiles.png"
-dest_files=["res://.godot/imported/placeholder_tiles.png-5dae0d9c0d368e7e5abd61088400999c.ctex"]
+source_file="res://assets/terrain/alternates/planks_A.png"
+dest_files=["res://.godot/imported/planks_A.png-8edb9dc3aee6e63d2f22552bffe31bdf.ctex"]
 
 [params]
 

@@ -39,16 +39,74 @@ Multiplayer is planned for later, so the game is built as if it were already net
 - Shared state: tiles, walls, liquids, dropped items, chests, entities, bosses,
   time of day. Per-player state: inventory, equipment, buffs, hunger, mana.
 
-## World (from Phase 1)
+## World
 
-- **Tiles:** 16 px. World measured in tiles; presets roughly Terraria-sized.
-- **Chunks:** 32x32 tiles. Only chunks near the camera are loaded, drawn and collidable.
-- **Horizontal wrap:** the world wraps left to right like Starbound. Chunk x coordinates
-  wrap modulo the world width; the camera draws chunks across the seam; positions
-  are normalized when an entity crosses it.
-- **Seamless generation:** noise for terrain and caves is sampled on a cylinder so the
-  seam where x wraps has no visible cut.
+- **Tiles:** 8 px. The Scholar is about 3 tiles wide and 8 tall.
+- **Chunks:** 32x32 tiles, generated on demand. Only chunks near the camera are loaded.
+- **Horizontal wrap:** chunk x coordinates wrap modulo the world width; the renderer
+  uses unwrapped coordinates near the camera, so the seam is invisible.
 - **Seeded:** the same seed always generates the same world (tested).
+
+## Rendering a chunk
+
+Each loaded chunk has four parts (`src/world/chunk_renderer.gd`):
+
+1. **Terrain sprite** drawn by `terrain.gdshader`. It gets a 36x36 tile texture (the
+   chunk plus a 2-tile border; R = block terrain slot, G = wall slot) and draws per
+   pixel: a smoothed outline of the solid tiles plus noise (slopes and corners come out
+   diagonal and rounded), material boundaries shifted by noise, lit rims, soft
+   undersides, grass, and walls. Textures come from `assets/terrain`. Blocks and walls
+   marked `built` on their TileDef (planks) skip the smoothing: crisp square edges with
+   a dark edge line and a lit top row.
+2. **Collision layer:** a hidden TileMapLayer with full-tile and platform shapes.
+   Collision stays exactly on the tile grid even though the art is smoothed.
+3. **Props layer:** a visible TileMapLayer for thin tiles (platforms, ropes).
+4. **Decorations:** trees and flowers on grassy surfaces (from the generator's rules).
+
+**Lighting** (`light_map.gd`): a tile-level light map over the loaded area. Open sky
+(no block, no wall) is lit; light fades per tile through air and more through blocks.
+Drawn as a smoothed multiply overlay with an ambient floor. Recomputed when chunks load
+or a block changes.
+
+## Background work (threads)
+
+Nothing heavy runs per tile on the main thread while playing. Three jobs run on
+`WorkerThreadPool`, and the main thread only applies their results:
+
+| Job | Worker does | Main thread does |
+| --- | --- | --- |
+| Generate (`WorldData.request_chunk`) | fills a new `ChunkData` | inserts it (`collect_generated`) |
+| Build (`ChunkBuildJob`) | terrain texture bytes, collision/prop cells, decor spots | creates nodes, `set_cell`s (max `chunks_per_frame`) |
+| Light (`LightJob`) | the whole light spread | uploads one texture |
+
+Rules that keep this safe and host-authoritative:
+
+- **Jobs own their inputs.** The main thread captures references to chunk tile arrays
+  before starting a job. Packed arrays are copy-on-write, so an edit made meanwhile
+  copies the chunk's array and never touches the job's copy.
+- **Jobs never write shared state.** Results land in the job object; the main thread
+  stores them. Generators must be pure functions of the chunk coordinate.
+- **Stale results are dropped.** `ChunkData.revision` bumps on every edit; a build
+  whose 3x3 neighborhood changed is redone.
+- At spawn (and if the camera's own chunk is ever missing, e.g. after a teleport) the
+  same jobs run inline so the player never stands on missing collision.
+
+`PerfStats` records timings (`(main)` / `(worker)` keys); F3 shows them and DevCli
+`--perf` prints them on quit.
+
+## Physics interpolation
+
+On (`physics/common/physics_interpolation`). Physics runs at 60 Hz and the renderer
+draws moving bodies between ticks, so motion is smooth at any refresh rate. Rules:
+
+- Move bodies in `_physics_process` only. The Camera2D runs in physics mode.
+- **Teleports go through `World.teleport_player()`**, which resets interpolation and
+  camera smoothing. Setting `position` directly would draw a one-tick smear.
+- Nodes that are placed rather than moved (chunks, the light overlay) have
+  interpolation off, so they snap to new positions.
+
+**Backdrop** (`backdrop.gd`): screen-space parallax layers that repeat horizontally and
+darken underground.
 
 ## Physics layers
 
@@ -66,5 +124,5 @@ Multiplayer is planned for later, so the game is built as if it were already net
 
 ## Rendering
 
-Base resolution 960x540, window 1920x1080, `canvas_items` stretch with integer
+Base resolution 640x360, window 1920x1080 (3x), `canvas_items` stretch with integer
 scaling, nearest filtering, 2D transforms snapped to pixels. Pixel art stays crisp.

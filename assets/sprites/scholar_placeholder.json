@@ -1,0 +1,22 @@
+{
+  "anchor": [
+    20,
+    64
+  ],
+  "frame_size": [
+    44,
+    64
+  ],
+  "frames": [
+    {
+      "x": 0,
+      "duration_ms": 80
+    }
+  ],
+  "tags": {
+    "Land": [
+      0,
+      0
+    ]
+  }
+}
