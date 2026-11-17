@@ -16,9 +16,12 @@ extends RefCounted
 
 const META_BLOCKS := "blocks"
 const META_WALLS := "walls"
+## Extra world state saved in meta (plants).
+const META_PLANTS := "plants"
 
 
-static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes) -> Error:
+static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,
+		extra: Dictionary = {}) -> Error:
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var tmp := path + ".tmp"
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
@@ -28,6 +31,7 @@ static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks
 	var meta := info.to_dict()
 	meta[META_BLOCKS] = _palette(blocks)
 	meta[META_WALLS] = _palette(walls)
+	meta.merge(extra)
 	f.store_var(meta)
 	f.store_32(chunks.size())
 	for c in chunks:
@@ -80,6 +84,21 @@ static func load_chunks(path: String, blocks: TileTypes, walls: TileTypes) -> Di
 		c.modified = true
 		out[c.coord] = c
 	return out
+
+
+## One extra entry from a world file's meta (plants...); empty if missing.
+static func read_extra(path: String, key: String) -> Dictionary:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return {}
+	var header := SaveHeader.read(f)
+	if not header.ok or header.kind != SaveHeader.KIND_WORLD:
+		return {}
+	var meta: Variant = f.get_var()
+	if not meta is Dictionary:
+		return {}
+	var v: Variant = (meta as Dictionary).get(key, {})
+	return v if v is Dictionary else {}
 
 
 static func delete(path: String) -> void:

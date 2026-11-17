@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_a4csb"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_cjw8u"]
+[ext_resource type="Texture2D" path="res://assets/items/held/wood.png" id="3_0r2ht"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/wood.png" id="4_p75ji"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_4ttww"]
+
+[sub_resource type="Resource" id="Resource_a213e"]
+script = ExtResource("2_cjw8u")
+id = &"wood"
+texture = ExtResource("3_0r2ht")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_4ttww")
+icon = ExtResource("4_p75ji")
+held = SubResource("Resource_a213e")
+id = &"wood"
+display_name = "Wood"
+description = "From trees. Crafted into planks (crafting comes later)."

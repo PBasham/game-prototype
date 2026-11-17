@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_m1mi0"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_lop6s"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_iheg7"]
+
+[sub_resource type="Resource" id="Resource_6eieh"]
+script = ExtResource("2_lop6s")
+
+[sub_resource type="Curve" id="Curve_ba2uh"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_hu8tm"]
+_data = [Vector2(0, 1), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_vtxd7"]
+script = ExtResource("2_lop6s")
+mode = 1
+angle = SubResource("Curve_ba2uh")
+reach = SubResource("Curve_hu8tm")
+
+[sub_resource type="Curve" id="Curve_1qhgb"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_avvsx"]
+script = ExtResource("1_m1mi0")
+name = "Channel"
+duration = 0.3
+aims = true
+front = SubResource("Resource_vtxd7")
+back = SubResource("Resource_6eieh")
+item_angle_mode = 2
+item_angle = SubResource("Curve_1qhgb")
+
+[sub_resource type="Resource" id="Resource_vs4lk"]
+script = ExtResource("2_lop6s")
+
+[sub_resource type="Curve" id="Curve_od87e"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 10), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_151i4"]
+_data = [Vector2(0, 0.8), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_vawut"]
+script = ExtResource("2_lop6s")
+mode = 1
+angle = SubResource("Curve_od87e")
+reach = SubResource("Curve_151i4")
+
+[sub_resource type="Curve" id="Curve_sdt1o"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_wdfbs"]
+script = ExtResource("1_m1mi0")
+name = "Hold"
+duration = 1.0
+aims = true
+front = SubResource("Resource_vawut")
+back = SubResource("Resource_vs4lk")
+item_angle_mode = 2
+item_angle = SubResource("Curve_sdt1o")
+
+[resource]
+script = ExtResource("3_iheg7")
+hold = SubResource("Resource_wdfbs")
+attacks = Array[ExtResource("1_m1mi0")]([SubResource("Resource_avvsx")])
+combo_window = 0.2
+stow_style = 2
+id = &"spell"
+display_name = "Channeled spell (mining beam): the hand aims, held to channel"

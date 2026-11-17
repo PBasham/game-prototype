@@ -16,11 +16,17 @@ const WORLD_SCENE := "res://scenes/world/world.tscn"
 var state: State = State.BOOT
 ## The world to load or being played. Set by start_world(); read by World._ready().
 var world_info: WorldInfo
+## The character playing. Set by start_world() (the saved default character until
+## character select exists, Phase 7).
+var character: CharacterData
 
 
 ## Loads a world (new or saved) and switches to the world scene.
-func start_world(info: WorldInfo) -> void:
+## `character` null = the saved default character (made with the starting kit the first
+## time).
+func start_world(info: WorldInfo, playing: CharacterData = null) -> void:
 	world_info = info
+	character = playing if playing else CharacterData.load_or_create(CharacterData.DEFAULT_NAME)
 	get_tree().paused = false
 	get_tree().change_scene_to_file(WORLD_SCENE)
 

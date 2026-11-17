@@ -19,7 +19,12 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 	var panel := PanelContainer.new()
-	panel.position = Vector2(4, 4)
+	# Top right: the hotbar is top left.
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.offset_right = -4.0
+	panel.offset_top = 4.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 0.55)

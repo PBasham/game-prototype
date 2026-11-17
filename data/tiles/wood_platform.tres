@@ -7,6 +7,6 @@ script = ExtResource("1_tiledef")
 atlas_row = 5
 collision = 2
 climbable = false
-hardness = 1
+health = 20.0
 id = &"wood_platform"
 display_name = "Wood Platform"

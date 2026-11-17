@@ -230,6 +230,8 @@ and drag points. The x axis is time through the motion (0 = start, 1 = end).
 | crossbow | aims, one arm | Fire (recoil) | hip |
 | bow | aims, back hand on the string | Draw (pull back, release) | back |
 | unarmed | (empty hands) | Jab, Cross, Uppercut | |
+| block | held small in your drawn arm (blocks, seeds, materials) | Place (a quick reach toward the cursor) | hidden |
+| spell | the hand points at the cursor | Channel (arm straight at the cursor; loops while held) | hidden |
 
 Empty hands use the **unarmed** type: clicking punches (jab, cross, uppercut combo).
 `unarmed_attacks` on the Player turns it off; the debug brush (B) also takes over

@@ -19,7 +19,7 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred(DOLL_VIEWER)
 		return
 	if DevCli.wants_world():
-		Game.start_world.call_deferred(DevCli.world_info())
+		Game.start_world.call_deferred(DevCli.world_info(), DevCli.character())
 		return
 	var backdrop := Backdrop.new()
 	add_child(backdrop)

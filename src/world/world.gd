@@ -8,6 +8,8 @@ extends Node2D
 
 ## A block changed (after it was applied). Tile coords are wrapped.
 signal block_changed(tile: Vector2i, old_id: int, new_id: int)
+## A background wall changed. Tile coords are wrapped.
+signal wall_changed(tile: Vector2i, old_id: int, new_id: int)
 
 ## Tile size in pixels. The Scholar is about 3 tiles wide and 8 tall.
 const TILE := 8
@@ -27,6 +29,8 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 ## Max finished chunks turned into nodes per frame while moving (building happens on
 ## worker threads; this caps the main-thread part).
 @export var chunks_per_frame: int = 1
+## Seconds after the last hit before a damaged block heals back to full.
+@export var block_heal_seconds := 5.0
 
 var info: WorldInfo
 var data: WorldData
@@ -37,6 +41,15 @@ var renderer: ChunkRenderer
 var lights: LightMap
 var backdrop: Backdrop
 var player: Player
+var plants: PlantLayer
+## The character playing (inventory). From Game.character, or a throwaway one.
+var character: CharacterData
+var item_user: ItemUser
+var hud: Hud
+var _drops: Node2D
+var _cracks: CrackOverlay
+## Damaged blocks (wrapped tile) -> [damage taken, seconds until healed].
+var _damage: Dictionary[Vector2i, Array] = {}
 ## Debug builds only (B toggles it); null otherwise.
 var brush: DebugBrush
 var _pause_menu: PauseMenu
@@ -68,9 +81,23 @@ func _ready() -> void:
 	renderer.chunks_per_frame = chunks_per_frame
 	add_child(renderer)
 	renderer.setup(self)
+	plants = PlantLayer.new()
+	plants.name = "Plants"
+	add_child(plants)
+	move_child(plants, renderer.get_index())  # behind the terrain
+	plants.setup(self)
+	if not info.temporary and not info.path.is_empty():
+		plants.from_dict(WorldSave.read_extra(info.path, WorldSave.META_PLANTS))
 
+	character = Game.character
+	if character == null:
+		character = CharacterData.create(CharacterData.DEFAULT_NAME)
+		character.temporary = true
+	if OS.is_debug_build():
+		DevHeldItems.add_to(character.inventory)
 	player = PLAYER_SCENE.instantiate() as Player
 	player.world = self
+	player.character = character
 	var spawn := generator.spawn_tile()
 	if DevCli.spawn_x >= 0:
 		spawn = Vector2i(DevCli.spawn_x, generator.surface_at(DevCli.spawn_x))
@@ -78,6 +105,19 @@ func _ready() -> void:
 	renderer.load_all_now(player.position)
 	add_child(player)
 	teleport_player(player.position)
+	character.inventory.changed.connect(player.refresh_held)
+	player.select_slot(0)
+	_drops = Node2D.new()
+	_drops.name = "Drops"
+	add_child(_drops)
+	_cracks = CrackOverlay.new()
+	_cracks.name = "Cracks"
+	_cracks.world = self
+	add_child(_cracks)
+	item_user = ItemUser.new()
+	item_user.name = "ItemUser"
+	item_user.world = self
+	add_child(item_user)
 	backdrop.surface_y = tile_to_world(generator.spawn_tile()).y - 60.0
 
 	lights = LightMap.new()
@@ -93,10 +133,16 @@ func _ready() -> void:
 		brush.name = "DebugBrush"
 		brush.world = self
 		add_child(brush)
-		var dev_items := DevHeldItems.new()
-		dev_items.name = "DevHeldItems"
-		dev_items.player = player
-		add_child(dev_items)
+
+	_apply_zoom()
+	Settings.changed.connect(func(section: String, key: String, _v: Variant) -> void:
+		if section == "display" and key == "zoom":
+			_apply_zoom())
+
+	hud = Hud.new()
+	hud.name = "Hud"
+	hud.world = self
+	add_child(hud)
 
 	_pause_menu = PauseMenu.new()
 	_pause_menu.name = "PauseMenu"
@@ -118,6 +164,7 @@ func _process(delta: float) -> void:
 	var cam := get_viewport().get_camera_2d()
 	var center := cam.get_screen_center_position() if cam else player.position
 	renderer.update(center)
+	_heal_blocks(delta)
 	DebugOverlay.watch("chunks", "%d loaded, %d generated, %d queued" % [renderer.loaded_count(),
 		data.generated_chunk_count(), renderer.pending_count() + data.pending_generation_count()])
 
@@ -146,7 +193,17 @@ func _exit_tree() -> void:
 	if data:
 		data.wait_all()
 		save()
+	elif character:
+		character.save()
 	EventBus.world_unloaded.emit()
+
+
+## Camera zoom from Settings (display/zoom, slider in the pause menu).
+func _apply_zoom() -> void:
+	var cam := player.get_node_or_null(^"Camera") as Camera2D
+	if cam:
+		var z := Settings.camera_zoom()
+		cam.zoom = Vector2(z, z)
 
 
 ## True for worlds that have a save file (not the test course or scripted runs).
@@ -157,11 +214,20 @@ func is_saved() -> bool:
 ## Writes the world file: its info and every chunk the player changed. Returns OK for
 ## temporary worlds without writing anything.
 func save() -> Error:
+	if character:
+		var cerr := character.save()
+		if cerr != OK:
+			push_error("World: saving the character failed: %s" % error_string(cerr))
 	if not is_saved():
 		return OK
 	info.last_played_unix = int(Time.get_unix_time_from_system())
 	var t := Time.get_ticks_usec()
-	var err := WorldSave.save(info.path, info, data.modified_chunks(), blocks, walls)
+	var modified := data.modified_chunks()
+	var coords: Array[Vector2i] = []
+	for c in modified:
+		coords.append(c.coord)
+	var err := WorldSave.save(info.path, info, modified, blocks, walls,
+		{WorldSave.META_PLANTS: plants.to_dict(coords)})
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
@@ -178,6 +244,7 @@ func regenerate() -> void:
 	lights.wait()
 	renderer.clear()
 	data.discard_unmodified()
+	plants.reset_unchanged()
 	if info.kind == &"forest":
 		generator = ForestGenerator.new(blocks, walls, size.x, size.y, info.seed, ForestGenerator.default_settings(true))
 	else:
@@ -254,3 +321,87 @@ func request_set_block(tile: Vector2i, id: int) -> bool:
 	renderer.refresh_tile(tile)
 	block_changed.emit(wrap_tile(tile), old, id)
 	return true
+
+
+## Damages a block (mining). Breaks it at its health: it drops its item and the tile
+## becomes air. Damage heals after block_heal_seconds without hits. Returns true if the
+## block broke.
+func request_damage_block(tile: Vector2i, amount: float) -> bool:
+	if not Game.is_authority():
+		return false
+	tile = wrap_tile(tile)
+	var id := data.get_block(tile.x, tile.y)
+	if id <= 0 or tile.y >= data.height - 1:
+		return false
+	var def := blocks.def(id)
+	if def == null or def.unbreakable or def.health <= 0.0:
+		return false
+	var entry: Array = _damage.get(tile, [0.0, 0.0])
+	entry[0] = float(entry[0]) + amount
+	entry[1] = block_heal_seconds
+	if entry[0] < def.health:
+		_damage[tile] = entry
+		return false
+	_damage.erase(tile)
+	if not request_set_block(tile, WorldData.AIR):
+		return false
+	var drop := def.drop_item if def.drop_item != &"" else def.id
+	if ItemData.find(drop) != null and def.drop_count > 0:
+		var pos := tile_to_world(tile) + Vector2(TILE * 0.5, TILE * 0.5)
+		pos.x += roundf((player.global_position.x - pos.x) / (data.width * TILE)) * data.width * TILE
+		request_spawn_drop(drop, def.drop_count, pos, Vector2(randf_range(-2.0, 2.0), -4.0) * TILE)
+	return true
+
+
+## 0..1: how damaged a block is (for the crack overlay).
+func block_damage(tile: Vector2i) -> float:
+	tile = wrap_tile(tile)
+	var entry: Array = _damage.get(tile, [])
+	if entry.is_empty():
+		return 0.0
+	var def := blocks.def(data.get_block(tile.x, tile.y))
+	return clampf(float(entry[0]) / def.health, 0.0, 1.0) if def and def.health > 0.0 else 0.0
+
+
+func damaged_tiles() -> Array[Vector2i]:
+	return _damage.keys()
+
+
+func _heal_blocks(delta: float) -> void:
+	for tile: Vector2i in _damage.keys():
+		var entry: Array = _damage[tile]
+		entry[1] = float(entry[1]) - delta
+		if entry[1] <= 0.0 or data.get_block(tile.x, tile.y) <= 0:
+			_damage.erase(tile)
+
+
+## Sets a background wall. Returns true if it changed.
+func request_set_wall(tile: Vector2i, id: int) -> bool:
+	if not Game.is_authority():
+		return false
+	if not data.in_bounds_y(tile.y) or id < 0 or id >= walls.size():
+		return false
+	var old := data.get_wall(tile.x, tile.y)
+	if old == id:
+		return false
+	data.set_wall(tile.x, tile.y, id)
+	renderer.refresh_tile(tile)
+	wall_changed.emit(wrap_tile(tile), old, id)
+	return true
+
+
+## Puts an item stack in the world at `pos` with velocity `vel` (px/s). `thrown` = the
+## player threw it (it can't be picked straight back up).
+func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vector2 = Vector2.ZERO,
+		thrown: bool = false) -> ItemDrop:
+	if not Game.is_authority() or count <= 0 or ItemData.find(item_id) == null:
+		return null
+	var drop := ItemDrop.new()
+	drop.setup(self, item_id, count, vel, thrown)
+	drop.position = pos
+	_drops.add_child(drop)
+	return drop
+
+
+func drop_count() -> int:
+	return _drops.get_child_count() if _drops else 0

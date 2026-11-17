@@ -11,6 +11,9 @@ const DEFAULTS := {
 	"display": {
 		"fullscreen": false,
 		"vsync": true,
+		## How big the world is drawn: screen pixels per world pixel at 1080p-ish window
+		## sizes. 3 = the original view; smaller shows more of the world.
+		"zoom": 3.0,
 	},
 	"audio": {
 		"master_volume": 1.0,
@@ -19,6 +22,13 @@ const DEFAULTS := {
 		"show_overlay": true,
 	},
 }
+
+## Zoom range for the settings slider.
+const ZOOM_MIN := 1.5
+const ZOOM_MAX := 4.0
+
+## Emitted after set_value (section, key, value).
+signal changed(section: String, key: String, value: Variant)
 
 var _cfg := ConfigFile.new()
 
@@ -52,6 +62,13 @@ func get_value(section: String, key: String) -> Variant:
 
 func set_value(section: String, key: String, value: Variant) -> void:
 	_cfg.set_value(section, key, value)
+	changed.emit(section, key, value)
+
+
+## Camera zoom for the current zoom setting (the game renders at 640x360 shown at 3x,
+## so zoom 3 = camera zoom 1).
+func camera_zoom() -> float:
+	return clampf(float(get_value("display", "zoom")), ZOOM_MIN, ZOOM_MAX) / 3.0
 
 
 ## Pushes current values to the engine (window mode, vsync, volume).

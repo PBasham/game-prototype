@@ -35,13 +35,14 @@ Docs:
 | Space | Jump (hold for full height; steer a little in the air) |
 | W / S | Climb ropes |
 | S + Space | Drop through a platform |
-| B | Debug brush on/off |
-| Mouse wheel | Debug brush: pick block |
-| Left / right mouse | Debug brush (when on, empty hands): remove / place block (until mining in Phase 4) |
-| Left click | Attack with the held item, or punch with empty hands (combos: click again right after) |
+| 1 to 0, mouse wheel | Pick a hotbar slot |
+| Left click | Use the held item: mine, chop, place, swing; punch with empty hands (combos: click again right after) |
+| Ctrl + mouse wheel | Mining / placing area (mining spell 1x1 to 3x3, blocks 1x1 to 2x2) |
+| E (or Tab) | Inventory |
+| Q | Throw the selected stack |
 | H | Put the held item away / take it out |
-| 1 to 0 | Debug: placeholder held items (empty, tools, wand, dagger, swords, spell book, crossbow, bow) |
-| Esc | Pause menu (resume, save, quit to menu) |
+| B | Debug brush on/off (wheel picks a block, left / right mouse remove / place) |
+| Esc | Pause menu (resume, save, settings with zoom, quit to menu) |
 | F3 | Debug overlay |
 | F6 | Regenerate the world from `data/worldgen/forest.tres` (debug builds) |
 | F7 | Reload item types after editing `data/item_types/*.tres` (debug builds) |
@@ -96,6 +97,12 @@ tools/     editor-time scripts (placeholder generation, etc.)
 - **Terrain, trees, backdrop** are generated:
   ```
   godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game
+  ```
+- **Item icons and held sprites** (placeholders) and the default items
+  ([docs/items-and-mining.md](docs/items-and-mining.md)):
+  ```
+  godot --headless --path . --script res://tools/make_item_art.gd
+  godot --headless --path . --script res://tools/make_items.gd
   ```
 
 ## Scripted runs and screenshots

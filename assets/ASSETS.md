@@ -80,6 +80,18 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | --- | --- |
 | trees/pine_{green,olive,teal,gold}_{0,1,2}.png | foreground pines, bottom-centered on a grass tile, no outline |
 | decor/flower_{0..4}.png | 5x10, stem at the bottom center |
+| decor/sapling.png | 9x14 placeholder (tools/make_item_art.gd), stem at the bottom center |
+
+## Items: `items/` (placeholders from tools/make_item_art.gd)
+
+| File | Notes |
+| --- | --- |
+| items/icons/<item id>.png | 16x16 inventory icon. Tools point up-right, handle bottom-left. Block icons are cut from the terrain textures. |
+| items/held/<item id>.png | Sprite drawn in hand. Tools: same as the icon (grip pixel in the item's `held.grip`). Blocks 7x7, small items 9x9. |
+| fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |
+
+Replace any of these with real art under the same name; if the size changes, check the
+item's `held.grip` (the pixel the hand holds).
 
 ## Backdrop: `backdrop/*.png`
 

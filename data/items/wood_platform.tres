@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_myhlp"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_6e6f1"]
+[ext_resource type="Texture2D" path="res://assets/items/held/wood_platform.png" id="3_r67vj"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/wood_platform.png" id="4_3b8hi"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_igc76"]
+
+[sub_resource type="Resource" id="Resource_wrmlj"]
+script = ExtResource("2_6e6f1")
+id = &"wood_platform"
+texture = ExtResource("3_r67vj")
+type = &"block"
+grip = Vector2(3, 5)
+
+[resource]
+script = ExtResource("5_igc76")
+kind = 1
+icon = ExtResource("4_3b8hi")
+held = SubResource("Resource_wrmlj")
+places_block = &"wood_platform"
+id = &"wood_platform"
+display_name = "Wood Platform"
+description = "Stand on it; jump up through it, Down + Jump drops through."

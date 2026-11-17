@@ -67,7 +67,7 @@ func _update_holds() -> void:
 
 func _types() -> Array[ItemTypeData]:
 	return [_tool(), _big_tool(), _dagger(), _sword(), _greatsword(), _wand(), _spell_book(),
-		_crossbow(), _bow(), _unarmed()]
+		_crossbow(), _bow(), _unarmed(), _block(), _spell()]
 
 
 # --- types --------------------------------------------------------------------------------
@@ -196,6 +196,30 @@ func _unarmed() -> ItemTypeData:
 		_attack("Uppercut", 0.3, _pose([[0, 60], [0.5, -60], [1, -40]], [[0, 0.5], [0.5, 0.9], [1, 0.6]]), null,
 			[[0, 0]], [[0, 0], [0.5, 2], [1, 0]]),
 	]
+	return t
+
+
+func _block() -> ItemTypeData:
+	var t := _type(&"block", "Block, material or seed (held small, placed with a quick reach)")
+	t.stow_style = ItemTypeData.StowStyle.HIDDEN
+	t.hold = _natural_hold(-30)
+	t.hold.drawn_tag = ""
+	# A short reach toward the cursor; the block is placed at the end of it.
+	var place := _attack("Place", 0.18, _pose([[0, -25], [0.5, 0], [1, 5]], [[0, 0.7], [0.5, 1.0], [1, 0.85]]), null,
+		[[0, -30]], null, "", true)
+	t.attacks = [place]
+	return t
+
+
+func _spell() -> ItemTypeData:
+	var t := _type(&"spell", "Channeled spell (mining beam): the hand aims, held to channel")
+	t.stow_style = ItemTypeData.StowStyle.HIDDEN
+	t.hold = _hold(_pose([[0, 10]], [[0, 0.8]]), null, ItemMotion.ItemAngle.FIXED, [[0, 0]], "", true)
+	# Arm straight at the cursor while the button is held; loops.
+	var channel := _attack("Channel", 0.3, _pose([[0, 0]], [[0, 1.0]]), null, [[0, 0]], null, "", true)
+	channel.item_angle_mode = ItemMotion.ItemAngle.FIXED
+	t.attacks = [channel]
+	t.combo_window = 0.2  # > 0 so holding the button chains straight into the next loop
 	return t
 
 

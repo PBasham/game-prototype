@@ -15,6 +15,8 @@ extends Node
 ##   --world=KIND            world generator: forest (default) or course (test course)
 ##   --seed=N                world seed (default 1337); any word works too
 ##   --size=NAME             tiny, small (default), medium, large
+##   --aim=DX:DY             aim at this offset (px) from the player's chest instead of
+##                           the mouse (mining, placing, facing)
 ##   --scene=doll            open a dev scene instead of a world (doll = Doll Viewer)
 ##   --menu                  stay on the main menu (otherwise any of these arguments
 ##                           skips the menu and starts a temporary, unsaved world)
@@ -27,6 +29,7 @@ var _watch: PackedStringArray = []
 var _log_every := 0
 ## Tile column to spawn at, or -1. Read by World.
 var spawn_x := -1
+var _aim := Vector2.INF
 var _perf := false
 var _world_kind := "forest"
 var _seed_text := "1337"
@@ -74,12 +77,22 @@ func _ready() -> void:
 				_size_name = parts[1]
 			"scene":
 				scene_override = parts[1]
-	set_physics_process(not (_shots.is_empty() and _holds.is_empty() and _quit_at < 0 and _log_every == 0))
+			"aim":
+				_aim = Vector2(float(v[0]), float(v[1]))
+	set_physics_process(not (_shots.is_empty() and _holds.is_empty() and _quit_at < 0 and _log_every == 0
+		and not _aim.is_finite()))
 
 
 ## True when the command line asks for a scripted run, so the menu should be skipped.
 func wants_world() -> bool:
 	return _any_args and not _menu and scene_override == ""
+
+
+## Scripted runs play a throwaway character with the starting kit (never saved).
+func character() -> CharacterData:
+	var c := CharacterData.create(CharacterData.DEFAULT_NAME)
+	c.temporary = true
+	return c
 
 
 ## The temporary world a scripted run plays in.
@@ -93,6 +106,10 @@ func world_info() -> WorldInfo:
 
 func _physics_process(_delta: float) -> void:
 	_frame += 1
+	if _aim.is_finite():
+		var w := get_tree().current_scene as World
+		if w and w.item_user:
+			w.item_user.cursor_override = w.player.chest() + _aim
 	for h in _holds:
 		if _frame == h[1]:
 			Input.action_press(h[0])

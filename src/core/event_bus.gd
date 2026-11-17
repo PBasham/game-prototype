@@ -21,3 +21,7 @@ signal world_unloaded
 ## Short text for on-screen debug toasts.
 @warning_ignore("unused_signal")
 signal debug_message(text: String)
+
+## The local player picked up items (for the pickup toast).
+@warning_ignore("unused_signal")
+signal item_picked_up(item_id: StringName, count: int)

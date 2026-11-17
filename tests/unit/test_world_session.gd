@@ -57,6 +57,7 @@ func test_attack_combo_and_bare_hands() -> void:
 	var w := _start(WorldInfo.test_course())
 	await wait_physics_frames(3)
 	var p := w.player
+	w.character.inventory.set_slot(0, &"", 0)  # empty hands (slot 0 is selected)
 	# Bare hands punch (jab first)...
 	Input.action_press("use_primary")
 	await wait_physics_frames(2)

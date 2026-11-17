@@ -2,6 +2,29 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Phase 4, items and mining
+
+- **Hotbar** top left (Terraria), 10 slots; **inventory** 40 slots (top row = hotbar),
+  opened with E. Stacks: 999 for blocks and materials, 1 for tools.
+- **Left click places** (Terraria-style); right click is kept for interacting.
+- **Mining:** blocks have health and a crack overlay, heal after 5 s. The copper
+  pickaxe mines 2x2 per hit at 10 tiles; any item can have mining damage.
+- **Mining spell:** a beam while held, stats as data, area toggle with Ctrl + wheel
+  (1x1 to 3x3), slightly weaker than the pickaxe, no mana yet. In the starting kit for
+  now; later it's the first crafted spell.
+- **Placing** needs something to touch (a block, or a wall behind) unless the item is
+  `free_place`. Walls are placed without a tool and removed with a hammer.
+- **Indicators** like Starbound: white/red target box, ghost blocks, the beam, a range
+  ring that fades in near the edge of reach.
+- **Trees** wiggle when hit, fall over and break into wood plus at least one seed;
+  seeds grow into trees on grass. Grass spreads to dirt; cutting flowers can drop grass
+  seeds; wood becomes planks when crafting exists.
+- **Character file** separate from worlds, one automatic default character until
+  character select (Phase 7).
+- Axe reach raised from 6 to 10 tiles after the first screenshot: 6 couldn't reach a
+  trunk next to you once measured from the chest.
+- Inventory key moved from I to E; E was "interact", which moved to right click.
+
 ## 2026-11-17: Spell book hold
 
 Patrick picked option C: the back hand holds the book still, forearm out, in front at

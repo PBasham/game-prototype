@@ -1,30 +1,55 @@
 class_name DevHeldItems
-extends Node
-## Debug builds only: placeholder items to test holding, using, aiming and putting away
-## until real items arrive in Phase 4. Number keys pick one; H puts it away; left click
-## uses it.
+extends RefCounted
+## Debug builds only: placeholder weapons to test holding, using, aiming and putting
+## away, until real weapons exist. They're runtime items (not content, never saved),
+## put in the second inventory row when a world starts. H puts the held item away.
 ##
-##   1  empty hands            6  sword (one-handed melee, 3-hit combo)
-##   2  tool (pickaxe-like)    7  two-handed sword (2-hit combo)
-##   3  two-handed tool        8  spell book (back hand; front hand casts)
-##   4  wand (aims)            9  hand crossbow (one-handed ranged, aims)
-##   5  dagger (stab combo)    0  bow (two-handed ranged, aims, draws)
+##   tool (pickaxe-like), two-handed tool, wand, dagger (stab combo), sword (3-hit
+##   combo), two-handed sword, spell book, hand crossbow, bow (draws)
 ##
-## Each item points at an item type (data/item_types) for how it's held and its
-## attacks. Textures are drawn in code as rough placeholders, not content.
+## Each points at an item type (data/item_types) for how it's held and its attacks.
+## Textures are drawn in code as rough placeholders.
+
+## Inventory slot of the first dev item (the second row).
+const FIRST_SLOT := 10
 
 ## [label, look] in key order (1..9, 0); index 0 is empty hands (null look).
 static var _catalog: Array[Array] = []
 
-var player: Player
+## Puts the dev items into the second inventory row (slots that are free).
+static func add_to(inv: Inventory) -> void:
+	var slot := FIRST_SLOT
+	for item in items():
+		if inv.count_of(item.id) > 0:
+			continue
+		while slot < Inventory.SIZE and not inv.is_empty(slot):
+			slot += 1
+		if slot >= Inventory.SIZE:
+			return
+		inv.set_slot(slot, item.id, 1)
 
 
-func _process(_delta: float) -> void:
-	# Polled (not _unhandled_input) so scripted runs (DevCli --tap) work too.
-	var list := catalog()
-	for i in list.size():
-		if Input.is_action_just_pressed("hotbar_%d" % (i + 1)):
-			player.hold(list[i][1])
+## The dev weapons as runtime ItemData ("dev_sword"...), registered with ItemData.find.
+static func items() -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	for e in catalog():
+		var look: HeldItemLook = e[1]
+		if look == null:
+			continue
+		var item_id := StringName("dev_" + String(look.id))
+		var item := ItemData.find(item_id)
+		if item == null:
+			item = ItemData.new()
+			item.id = item_id
+			item.display_name = "%s (dev)" % e[0]
+			item.description = "Debug builds only: a placeholder to test animations."
+			item.kind = ItemData.Kind.WEAPON
+			item.max_stack = 1
+			item.icon = look.texture
+			item.held = look
+			ItemData.register_runtime(item)
+		out.append(item)
+	return out
 
 
 ## All placeholder items: [short label, HeldItemLook or null].

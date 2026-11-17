@@ -1,6 +1,6 @@
 class_name DebugBrush
 extends Node2D
-## Debug builds only, until real mining arrives in Phase 4. B turns it on and off.
+## Debug builds only: instant digging and placing for building test setups. B toggles it.
 ## While on: left mouse removes a block, right mouse places one, mouse wheel picks the
 ## block. Goes through World.request_set_block like real gameplay will. While on, empty
 ## hands don't punch; while holding an item (not put away), clicks use the item instead.

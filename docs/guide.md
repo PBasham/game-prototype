@@ -3,7 +3,8 @@
 A tour of every feature in the game so far: what it does, where the code is, and what
 you can tweak. For the rules the code follows (data-driven content, host-authoritative,
 threading) see [architecture.md](architecture.md). World generation has its own deep
-dive: [world-generation.md](world-generation.md).
+dive: [world-generation.md](world-generation.md); items, mining, placing and plants are in
+[items-and-mining.md](items-and-mining.md).
 
 **Tweaking in general:** almost every number is an `@export` on a node or a setting in a
 `.tres` file. Two ways to change them:
@@ -19,7 +20,8 @@ dive: [world-generation.md](world-generation.md).
 
 1. [Starting the game: menu, worlds, saves](#starting-the-game-menu-worlds-saves)
 2. [Player movement](#player-movement)
-3. [Player animation](#player-animation) and [holding items](#holding-items)
+3. [Player animation](#player-animation), [holding items](#holding-items), and
+   [items, mining and placing](items-and-mining.md)
 4. [The world: tiles, chunks, wrap](#the-world-tiles-chunks-wrap)
 5. [Terrain look](#terrain-look)
 6. [Lighting](#lighting)
@@ -43,12 +45,15 @@ dive: [world-generation.md](world-generation.md).
 - **Quit.**
 
 **Esc** in game opens the pause menu (`src/ui/menu/pause_menu.gd`): Resume, Save,
-Save & Quit to Menu, Quit Game.
+Settings, Save & Quit to Menu, Quit Game. **Settings** has the camera zoom slider (1.5x
+to 4x, default 3x), saved in the settings file (`display/zoom`). Esc closes the
+inventory first if it's open.
 
 **How a world starts:** the menu builds a `WorldInfo` (name, kind, seed, size, save
 path) and calls `Game.start_world(info)`, which switches to `scenes/world/world.tscn`.
 `World._ready()` reads `Game.world_info`, creates the generator for that kind, loads
-any saved chunks, and spawns the player.
+any saved chunks, and spawns the player. The character comes from `Game.character`
+(the saved default character; see [items-and-mining.md](items-and-mining.md)).
 
 **Saves** (`src/world/world_save.gd`): one file per world in `user://worlds/`
 (on Windows: `%APPDATA%\Godot\app_userdata\game-prototype\worlds\`). A world file
@@ -117,30 +122,30 @@ F3 shows the current animation, frame, "rev" when reversed, and the arm mode.
 
 ## Holding items
 
-Real items arrive with mining (Phase 4). Debug builds have placeholder items to test
-the doll:
+The hotbar (top left, 1 to 0 or the mouse wheel) picks what's in your hands. Left click
+uses it, H puts it away, and an empty slot means bare hands (jab, cross, uppercut).
+Items, the inventory (E), mining, placing, trees and grass are all in
+[items-and-mining.md](items-and-mining.md).
 
-| Key | Item (type) | Hold | Attacks | Put away |
-| --- | --- | --- | --- | --- |
-| 1 | Empty hands (unarmed) | | jab, cross, uppercut | |
-| 2 | Tool (tool) | one hand | swing | back |
-| 3 | Two-handed tool (big_tool) | both hands | slam | back |
-| 4 | Wand (wand) | aims | flick | hidden |
-| 5 | Dagger (dagger) | one hand | stab, stab, slash | hip |
-| 6 | Sword (sword) | one hand | slash, backslash, thrust | hip |
-| 7 | Two-handed sword (greatsword) | both hands | overhead, rising | back |
-| 8 | Spell book (spell_book) | back hand | front palm casts at the cursor | hip |
-| 9 | Hand crossbow (crossbow) | aims, one arm | fire (recoil) | hip |
-| 0 | Bow (bow) | aims, back hand on string | draw and release | back |
-| H | Put away / take out | | | |
-| Left click | Attack. Click again right after one ends (or hold) to continue the combo. | | | |
+Debug builds put placeholder weapons in the second inventory row (open it with E and
+drag one to the hotbar, or shift + click it) to test the doll:
 
-How items are held and their attacks come from item types (`data/item_types/`), editable
-as curves in the Inspector; see [character-art.md](character-art.md). These are
-placeholders: nothing fires or hits yet. F3 shows the current motion and combo step.
+| Item (type) | Hold | Attacks | Put away |
+| --- | --- | --- | --- |
+| Tool (tool) | one hand | swing | back |
+| 2H tool (big_tool) | both hands | slam | back |
+| Wand (wand) | aims | flick | hidden |
+| Dagger (dagger) | one hand | stab, stab, slash | hip |
+| Sword (sword) | one hand | slash, backslash, thrust | hip |
+| 2H sword (greatsword) | both hands | overhead, rising | back |
+| Book (spell_book) | back hand | front palm casts at the cursor | hip |
+| Crossbow (crossbow) | aims, one arm | fire (recoil) | hip |
+| Bow (bow) | aims, back hand on string | draw and release | back |
 
-To dig with the debug brush, press **B** (and empty your hands with 1 or H): while the
-brush is on, clicks dig instead of punching.
+Click again right after an attack ends (or hold) to continue the combo. How items are
+held and their attacks come from item types (`data/item_types/`), editable as curves in
+the Inspector; see [character-art.md](character-art.md). Weapons don't hit anything yet.
+F3 shows the current motion and combo step.
 
 ## The world: tiles, chunks, wrap
 
@@ -209,10 +214,9 @@ Debug builds only (running from the editor counts).
 | Key / tool | What it does |
 | --- | --- |
 | **F3** | Debug overlay: FPS, position, speed, animation frame, chunk counts, timings (frames over 25 / 50 ms, chunk and light job times). |
-| **1 to 5, H** | Placeholder held items, put away (see Holding items). |
-| **B** | Debug brush on/off. While on, empty-hand clicks dig instead of punching. |
-| **Mouse wheel** | Debug brush: pick a block type. |
-| **Left / right mouse** | Debug brush (when on): remove / place a block (until real mining). |
+| **B** | Debug brush on/off. While on (and with an empty slot or the item put away), clicks dig and place instead of punching. |
+| **Mouse wheel** | Debug brush (when on): pick a block type instead of a hotbar slot. |
+| **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
 | **Esc** | Pause menu. |
@@ -236,6 +240,7 @@ godot --path . -- --seed=42 --spawn=1440 --hold=move_right:20:60 --shot=58:/tmp/
 | `--quit=FRAME` | Quit |
 | `--watch=KEY`, `--log=N` | Print overlay values |
 | `--perf` | Print timings on quit |
+| `--aim=DX:DY` | Aim at this offset (px) from the chest instead of the mouse |
 | `--scene=doll` | Open the Doll Viewer |
 | `--menu` | Stay on the main menu instead |
 
@@ -255,13 +260,15 @@ every asset, its size and layout.
   animations.
 - **Terrain, trees, backdrop:** generated by `tools/generate_tiles.gd`
   (`-- --export=game`; add `--wood=A|B|C` to pick the wood variant).
+- **Item icons and held sprites, sapling, crack overlay:** placeholders from
+  `tools/make_item_art.gd`. Replace the PNGs with yours (same names).
 
 ## Content as data
 
 Every piece of content is a `.tres` resource under `data/<category>/` extending
 `GameData` (id, display name, description), loaded by the `Registry` autoload. Tiles,
-walls and world generation settings work this way now; items, recipes, spells, enemies
-and bosses will too. To add a tile type: duplicate a `.tres` in `data/tiles/`, give it a
+walls, items, item types and world generation settings work this way now; recipes,
+spells, enemies and bosses will too. To add a tile type: duplicate a `.tres` in `data/tiles/`, give it a
 new `id`, set its fields. Ids must never be renamed once worlds are saved with them.
 
 ## Tests

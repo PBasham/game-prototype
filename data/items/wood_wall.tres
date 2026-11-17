@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_o72wj"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_1wqlb"]
+[ext_resource type="Texture2D" path="res://assets/items/held/wood_wall.png" id="3_ms1fj"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/wood_wall.png" id="4_s0tan"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_pn2mp"]
+
+[sub_resource type="Resource" id="Resource_vwvng"]
+script = ExtResource("2_1wqlb")
+id = &"wood_wall"
+texture = ExtResource("3_ms1fj")
+type = &"block"
+grip = Vector2(3, 5)
+
+[resource]
+script = ExtResource("5_pn2mp")
+kind = 2
+icon = ExtResource("4_s0tan")
+held = SubResource("Resource_vwvng")
+places_wall = &"wood_wall"
+id = &"wood_wall"
+display_name = "Wood Wall"
+description = "A background wall. Needs a hammer to remove."

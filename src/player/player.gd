@@ -16,6 +16,12 @@ extends CharacterBody2D
 signal landed(fall_tiles: float)
 ## Fall damage to apply. Health arrives in Phase 6; for now it's shown in the overlay.
 signal fall_damage_taken(amount: int)
+## The held item's use landed (its impact_at point in the swing): mine, chop, place.
+signal use_impact(item: ItemData)
+## Ctrl + mouse wheel: change the mining / placing area (+1 bigger, -1 smaller).
+signal area_scrolled(step: int)
+## The selected hotbar slot changed.
+signal selection_changed(slot: int)
 
 const TILE := float(World.TILE)
 const SHEET := "res://assets/sprites/scholar"
@@ -96,6 +102,19 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 
 ## Set by the World before the player enters the tree.
 var world: World
+## The character being played (inventory). Set by the World.
+var character: CharacterData
+## Selected hotbar slot (0..9).
+var selected := 0
+## The ItemData in hand (from the selected slot), null for empty hands.
+var held_item: ItemData
+## True while the mouse is over UI or a panel is open: clicks don't use items.
+var input_blocked := false
+## Optional: returns false when using the held item now would do nothing (a block with
+## nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
+var use_check: Callable
+## Tiles/s a dropped stack (Q) is thrown at.
+@export var throw_speed := 14.0
 var walk_toggled := false
 var facing := 1
 
@@ -138,14 +157,67 @@ func _ready() -> void:
 	_doll.look = look if look else load(DEFAULT_LOOK) as CharacterLook
 
 
-## Puts an item in the player's hands (null = empty hands). Inventory and hotbar call
-## this in Phase 4; debug builds use DevHeldItems (keys 1 to 4).
+## Puts an item look in the player's hands (null = empty hands). The hotbar calls this
+## through refresh_held(); tests call it directly.
 func hold(item: HeldItemLook) -> void:
+	if item == held and item != null:
+		return
 	held = item
 	stowed = false
 	_end_attack(false)
 	_doll.item = item
 	_doll.stowed = false
+
+
+## Selects a hotbar slot and holds what's in it.
+func select_slot(slot: int) -> void:
+	selected = posmod(slot, Inventory.HOTBAR)
+	refresh_held()
+	selection_changed.emit(selected)
+
+
+## Holds whatever is in the selected slot (after the inventory changed).
+func refresh_held() -> void:
+	var item := character.inventory.item(selected) if character else null
+	if item == held_item:
+		return
+	held_item = item
+	hold(item.held if item else null)
+
+
+## Throws the selected stack in front of the player (Q).
+func drop_selected() -> void:
+	if character == null or world == null or character.inventory.is_empty(selected):
+		return
+	var inv := character.inventory
+	var item_id := inv.ids[selected]
+	var n := inv.take(selected, inv.counts[selected])
+	world.request_spawn_drop(item_id, n, _body_center() + Vector2(facing * 10.0, 0.0),
+		Vector2(facing * throw_speed * TILE, -6.0 * TILE), true)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if character == null:
+		return
+	var wheel := 0
+	if event.is_action_pressed("hotbar_next"):
+		wheel = 1
+	elif event.is_action_pressed("hotbar_prev"):
+		wheel = -1
+	if wheel != 0:
+		if Input.is_key_pressed(KEY_CTRL):
+			area_scrolled.emit(-wheel)  # wheel up = bigger
+		elif not (world and world.brush and world.brush.active):
+			select_slot(selected + wheel)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("drop_item"):
+		drop_selected()
+		get_viewport().set_input_as_handled()
+
+
+## True while an attack or use is playing (the beam mines while this is true).
+func is_using() -> bool:
+	return _attack != null
 
 
 ## Puts the held item away or takes it back out (H).
@@ -217,7 +289,7 @@ func _physics_process(delta: float) -> void:
 
 	_update_use(delta)
 	if is_aiming():
-		var dx := get_global_mouse_position().x - global_position.x
+		var dx := aim_point().x - global_position.x
 		if absf(dx) > 2.0:
 			facing = 1 if dx > 0.0 else -1
 	elif input_x != 0.0:
@@ -318,18 +390,29 @@ func _climb(input_x: float, input_y: float) -> void:
 
 
 func _update_use(delta: float) -> void:
+	# Number keys pick a hotbar slot (polled, so scripted runs can tap them too).
+	if character:
+		for i in Inventory.HOTBAR:
+			if Input.is_action_just_pressed("hotbar_%d" % (i + 1)):
+				select_slot(i)
 	if Input.is_action_just_pressed("put_away"):
 		toggle_stowed()
 	_hold_time += delta
 	_combo_left = maxf(_combo_left - delta, 0.0)
 	if _attack != null:
 		_attack_time += delta
+		var t0 := (_attack_time - delta) / maxf(_attack.duration, 0.001)
+		var t1 := _attack_time / maxf(_attack.duration, 0.001)
+		if held_item and not stowed and t0 < held_item.impact_at and t1 >= held_item.impact_at:
+			use_impact.emit(held_item)
 		if _attack_time >= _attack.duration:
 			_end_attack(true)
-	if _attack == null:
+		elif held_item and held_item.beam and not Input.is_action_pressed("use_primary"):
+			_end_attack(true)  # a beam stops when the button is let go
+	if _attack == null and not input_blocked:
 		var clicked := Input.is_action_just_pressed("use_primary")
 		var held_down := Input.is_action_pressed("use_primary") and _repeats() and _combo_left > 0.0
-		if clicked or held_down:
+		if (clicked or held_down) and (not use_check.is_valid() or use_check.call()):
 			_start_attack()
 
 
@@ -397,7 +480,7 @@ func _show_stance() -> void:
 
 
 func _animate_arms() -> void:
-	_doll.aim_global = get_global_mouse_position()
+	_doll.aim_global = aim_point()
 	if _attack != null:
 		_doll.motion = _attack
 		_doll.motion_t = clampf(_attack_time / maxf(_attack.duration, 0.01), 0.0, 1.0)
@@ -444,6 +527,28 @@ func _standing_on_platform() -> bool:
 		if world.collision_at(global_position + Vector2(dx, 2.0)) == TileDef.Collision.PLATFORM:
 			return true
 	return false
+
+
+## The collision box in world space (blocks can't be placed into it).
+func body_rect() -> Rect2:
+	return Rect2(global_position + Vector2(-8.0, -60.0), Vector2(16.0, 60.0))
+
+
+## Where the held item is drawn (the beam starts here).
+func doll_item_position() -> Vector2:
+	return _doll.item_global_position()
+
+
+## Where the player aims: the mouse, or ItemUser.cursor_override (tests, scripted runs).
+func aim_point() -> Vector2:
+	if world and world.item_user and world.item_user.cursor_override.is_finite():
+		return world.item_user.cursor_override
+	return get_global_mouse_position()
+
+
+## Where reach is measured from (the chest).
+func chest() -> Vector2:
+	return global_position + Vector2(0.0, -36.0)
 
 
 func _body_center() -> Vector2:

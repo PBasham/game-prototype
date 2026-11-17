@@ -1,8 +1,8 @@
 class_name HeldItemLook
 extends Resource
 ## How one item looks in the character's hands: its sprite, where the hands grip it, and
-## its item type (which says how it's held and its attacks). Items (Phase 4) will each
-## point at one of these.
+## its item type (which says how it's held and its attacks). Each ItemData points at one
+## of these (`held`).
 ##
 ## Texture convention: draw the item pointing up and to the right (like an inventory
 ## icon), handle at the bottom left.

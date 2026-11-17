@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_orwi4"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_m6smr"]
+[ext_resource type="Texture2D" path="res://assets/items/held/tree_seed.png" id="3_0pq5q"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/tree_seed.png" id="4_18o8f"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_ik76e"]
+
+[sub_resource type="Resource" id="Resource_abx5x"]
+script = ExtResource("2_m6smr")
+id = &"tree_seed"
+texture = ExtResource("3_0pq5q")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_ik76e")
+kind = 5
+icon = ExtResource("4_18o8f")
+held = SubResource("Resource_abx5x")
+plants = &"tree"
+place_area_max = 1
+id = &"tree_seed"
+display_name = "Tree Seed"
+description = "Plant on grass to grow a tree."

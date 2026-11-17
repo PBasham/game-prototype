@@ -2,7 +2,8 @@
 
 Godot 4.7.2 (GDScript) 2D sandbox. Read docs/architecture.md before changing core systems.
 docs/guide.md explains every feature; docs/world-generation.md covers generation;
-docs/character-art.md covers the paper doll. Keep them up to date when behavior or
+docs/character-art.md covers the paper doll; docs/items-and-mining.md covers items,
+the inventory, mining, placing and plants. Keep them up to date when behavior or
 tunables change: Patrick tweaks things by hand from these docs.
 
 ## Collaboration rules
@@ -33,6 +34,9 @@ tunables change: Patrick tweaks things by hand from these docs.
   asking Patrick for frames; he draws real poses later.
 - Item types (hold + attack animations as curves): `data/item_types/`, defaults from
   `tools/make_item_types.gd` (never `--force` over Patrick's edits without asking).
+- Items: `data/items/`, defaults from `tools/make_items.gd` (same `--force` rule);
+  placeholder icons, held sprites, sapling and cracks from `tools/make_item_art.gd`.
+- Scripted runs can aim with `--aim=DX:DY` (offset from the chest) for mining shots.
 - Terrain, trees, backdrop: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game` (style V5 = "t5")
 - Tile size is 8 px (`World.TILE`). The Scholar is ~3 tiles wide, ~8 tall.
 

@@ -7,6 +7,6 @@ script = ExtResource("1_tiledef")
 atlas_row = 6
 collision = 0
 climbable = true
-hardness = 1
+health = 15.0
 id = &"rope"
 display_name = "Rope"

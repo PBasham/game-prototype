@@ -495,6 +495,11 @@ func _place_item(m: ItemMotion, side: StringName, shoulder: Vector2, aim_angle: 
 	_item_sprite.rotation = item_rotation + PI / 4.0
 
 
+## Where the held item is, in world space (the beam starts here).
+func item_global_position() -> Vector2:
+	return _item_sprite.global_position if _item_sprite else global_position
+
+
 ## A pixel of the item texture, in doll space, with the item where it is now.
 func _grip_point(texture_px: Vector2) -> Vector2:
 	return _item_sprite.position + (texture_px - item.grip).rotated(_item_sprite.rotation)

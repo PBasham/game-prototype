@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_r5nv2"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_mkxa8"]
+[ext_resource type="Texture2D" path="res://assets/items/held/grass_seeds.png" id="3_w3iai"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/grass_seeds.png" id="4_ijn1l"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_xykmw"]
+
+[sub_resource type="Resource" id="Resource_27kq0"]
+script = ExtResource("2_mkxa8")
+id = &"grass_seeds"
+texture = ExtResource("3_w3iai")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_xykmw")
+kind = 5
+icon = ExtResource("4_ijn1l")
+held = SubResource("Resource_27kq0")
+plants = &"grass"
+id = &"grass_seeds"
+display_name = "Grass Seeds"
+description = "Plant on dirt to grow grass. Cutting flowers and tall grass drops them."

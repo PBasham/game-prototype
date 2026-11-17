@@ -4,7 +4,7 @@ extends Node2D
 ## - a terrain sprite drawn by terrain.gdshader (smooth edges, blending, grass, walls),
 ## - a hidden TileMapLayer that only provides collision,
 ## - a visible TileMapLayer for thin tiles (platforms, ropes),
-## - decorations (trees, flowers) on grassy surfaces.
+## Trees and flowers are the PlantLayer's (fed by chunk_shown).
 ## Only chunks near the camera exist, so cost stays flat however big the world is.
 ##
 ## Chunk coordinates here are UNWRAPPED: they keep counting past the world's edges.
@@ -12,6 +12,11 @@ extends Node2D
 
 ## Emitted when the set of loaded chunks changes (lighting listens).
 signal chunks_changed
+## A chunk's nodes were created. `decor` = natural plant spots from the generator's
+## decoration rules (flat quads: x, y, tree, flower; chunk-local ground tiles). The
+## PlantLayer seeds plants from these the first time a chunk is shown.
+signal chunk_shown(coord: Vector2i, decor: PackedInt32Array)
+signal chunk_hidden(coord: Vector2i)
 
 const TILE := 8
 const BORDER := 2
@@ -32,7 +37,6 @@ class ChunkView:
 	var tile_texture: ImageTexture
 	var collision: TileMapLayer
 	var props: TileMapLayer
-	var decor: Node2D
 	var dirty := false
 
 ## Chunks loaded around the camera, in each direction.
@@ -56,8 +60,6 @@ var _stone_slot := 0
 var _material: ShaderMaterial
 var _collision_set: TileSet
 var _props_set: TileSet
-var _trees: Array[Texture2D] = []
-var _flowers: Array[Texture2D] = []
 
 
 func setup(world: World) -> void:
@@ -71,11 +73,6 @@ func setup(world: World) -> void:
 	_build_terrain_material()
 	_collision_set = _build_tileset(true)
 	_props_set = _build_tileset(false)
-	for kind in ["green", "olive", "teal", "gold"]:
-		for i in 3:
-			_trees.append(load("res://assets/trees/pine_%s_%d.png" % [kind, i]) as Texture2D)
-	for i in 5:
-		_flowers.append(load("res://assets/decor/flower_%d.png" % i) as Texture2D)
 
 
 func loaded_count() -> int:
@@ -307,10 +304,6 @@ func _apply(job: ChunkBuildJob) -> void:
 	view.props = TileMapLayer.new()
 	view.props.tile_set = _props_set
 	view.props.collision_enabled = false
-	view.decor = Node2D.new()
-	view.decor.z_index = -1
-
-	view.node.add_child(view.decor)
 	view.node.add_child(view.terrain)
 	view.node.add_child(view.props)
 	view.node.add_child(view.collision)
@@ -320,9 +313,9 @@ func _apply(job: ChunkBuildJob) -> void:
 	var props := job.prop_cells
 	for i in range(0, props.size(), 4):
 		view.props.set_cell(Vector2i(props[i], props[i + 1]), 0, Vector2i(props[i + 2], props[i + 3]))
-	_add_decor(view, job.decor)
 	add_child(view.node)
 	_views[c] = view
+	chunk_shown.emit(c, job.decor)
 	PerfStats.add("chunk apply (main)", Time.get_ticks_usec() - t)
 
 
@@ -330,6 +323,7 @@ func _unload(c: Vector2i) -> void:
 	var view: ChunkView = _views[c]
 	view.node.queue_free()
 	_views.erase(c)
+	chunk_hidden.emit(c)
 
 
 ## R = block terrain slot, G = wall slot. Below the world counts as stone.
@@ -359,22 +353,6 @@ func _paint_cells(view: ChunkView, local: Vector2i, tile: Vector2i) -> void:
 			mask |= 1 << i
 	var piece := posmod(_data.wrap_x(tile.x), 8) + posmod(tile.y, 8) * 8
 	view.props.set_cell(local, 0, Vector2i(mask * PIECES + piece, _world.blocks.atlas_row(id)))
-
-
-## Trees and flowers on grassy surfaces, at the spots ChunkBuildJob found from the
-## world generator's decoration rules. `spots` is flat quads: x, y, tree, flower.
-func _add_decor(view: ChunkView, spots: PackedInt32Array) -> void:
-	for i in range(0, spots.size(), 4):
-		var lx := spots[i]
-		var ly := spots[i + 1]
-		var tree := spots[i + 2]
-		var flower := spots[i + 3]
-		var tex: Texture2D = _trees[tree % _trees.size()] if tree >= 0 else _flowers[flower % _flowers.size()]
-		var s := Sprite2D.new()
-		s.texture = tex
-		s.centered = false
-		s.position = Vector2(lx * TILE + TILE / 2 - tex.get_width() / 2, ly * TILE + (3 if tree >= 0 else 1) - tex.get_height())
-		view.decor.add_child(s)
 
 
 func _build_terrain_material() -> void:

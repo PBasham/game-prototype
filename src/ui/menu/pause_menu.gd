@@ -20,14 +20,7 @@ func _ready() -> void:
 	dim.color = Color(0, 0, 0, 0.35)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(dim)
-	var box := UiKit.panel(_root, 150)
-	box.add_child(UiKit.label("Paused", 14))
-	box.add_child(UiKit.label(world.info.name, 8, UiKit.DIM))
-	box.add_child(UiKit.button("Resume", toggle))
-	if world.is_saved():
-		box.add_child(UiKit.button("Save", func() -> void: world.save()))
-	box.add_child(UiKit.button("Save & Quit to Menu" if world.is_saved() else "Quit to Menu", Game.quit_to_menu))
-	box.add_child(UiKit.button("Quit Game", func() -> void: get_tree().quit()))
+	_show_main()
 
 	_toast = UiKit.label("", 10)
 	_toast.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -35,6 +28,49 @@ func _ready() -> void:
 	_toast.visible = false
 	add_child(_toast)
 	EventBus.debug_message.connect(show_toast)
+
+
+func _page() -> VBoxContainer:
+	for c in _root.get_children():
+		if c is CenterContainer:
+			c.queue_free()
+	return UiKit.panel(_root, 170)
+
+
+func _show_main() -> VBoxContainer:
+	var box := _page()
+	box.add_child(UiKit.label("Paused", 14))
+	box.add_child(UiKit.label(world.info.name, 8, UiKit.DIM))
+	box.add_child(UiKit.button("Resume", toggle))
+	if world.is_saved():
+		box.add_child(UiKit.button("Save", func() -> void: world.save()))
+	box.add_child(UiKit.button("Settings", _show_settings))
+	box.add_child(UiKit.button("Save & Quit to Menu" if world.is_saved() else "Quit to Menu", Game.quit_to_menu))
+	box.add_child(UiKit.button("Quit Game", func() -> void: get_tree().quit()))
+	return box
+
+
+func _show_settings() -> void:
+	var box := _page()
+	box.add_child(UiKit.label("Settings", 14))
+	var value := UiKit.label("", 10)
+	var slider := HSlider.new()
+	slider.min_value = Settings.ZOOM_MIN
+	slider.max_value = Settings.ZOOM_MAX
+	slider.step = 0.25
+	slider.custom_minimum_size = Vector2(140, 16)
+	slider.value = float(Settings.get_value("display", "zoom"))
+	var show := func(v: float) -> void: value.text = "Zoom: %.2fx%s" % [v, "  (default)" if is_equal_approx(v, 3.0) else ""]
+	show.call(slider.value)
+	slider.value_changed.connect(func(v: float) -> void:
+		Settings.set_value("display", "zoom", v)
+		show.call(v))
+	box.add_child(value)
+	box.add_child(slider)
+	box.add_child(UiKit.label("Lower shows more of the world.", 8, UiKit.DIM))
+	box.add_child(UiKit.button("Back", func() -> void:
+		Settings.save_settings()
+		_show_main()))
 
 
 func _process(delta: float) -> void:
@@ -56,7 +92,8 @@ func toggle() -> void:
 	get_tree().paused = _root.visible
 	Game.set_state(Game.State.PAUSED if _root.visible else Game.State.PLAYING)
 	if _root.visible:
-		(_root.find_children("*", "Button", true, false)[0] as Button).grab_focus()
+		var box := _show_main()
+		(box.find_children("*", "Button", true, false)[0] as Button).grab_focus.call_deferred()
 
 
 func show_toast(text: String) -> void:

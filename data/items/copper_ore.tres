@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_2moyj"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_c7xor"]
+[ext_resource type="Texture2D" path="res://assets/items/held/copper_ore.png" id="3_j8el4"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/copper_ore.png" id="4_jh5m4"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_077cm"]
+
+[sub_resource type="Resource" id="Resource_6onem"]
+script = ExtResource("2_c7xor")
+id = &"copper_ore"
+texture = ExtResource("3_j8el4")
+type = &"block"
+grip = Vector2(3, 5)
+
+[resource]
+script = ExtResource("5_077cm")
+kind = 1
+icon = ExtResource("4_jh5m4")
+held = SubResource("Resource_6onem")
+places_block = &"copper_ore"
+id = &"copper_ore"
+display_name = "Copper Ore"
+description = "Smelts into copper (crafting comes later)."

@@ -19,8 +19,16 @@ enum Collision {
 ## Player can climb it with Up/Down (ropes, ladders).
 @export var climbable: bool = false
 
-## How hard it is to mine. Used from Phase 3.
-@export var hardness: int = 1
+@export_group("Mining")
+## Damage it takes to break. A copper pickaxe does 25 per hit, so 50 = two hits.
+## For walls: hammer damage (walls can only be removed with a hammer).
+@export var health: float = 50.0
+## Item dropped when broken (empty = the item with this tile's id, if one exists).
+@export var drop_item: StringName = &""
+@export var drop_count: int = 1
+## Can't be broken at all (0 health also means unbreakable).
+@export var unbreakable: bool = false
+@export_group("")
 
 @export_group("Terrain look")
 ## Texture key for the terrain shader: assets/terrain/<terrain>.png. Empty = drawn as a

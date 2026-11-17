@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/world/tile_def.gd" id="1_tiledef"]
 
 [resource]
+health = 30.0
 script = ExtResource("1_tiledef")
 atlas_row = 0
 collision = 0
