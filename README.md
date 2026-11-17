@@ -35,9 +35,10 @@ Docs:
 | Space | Jump (hold for full height; steer a little in the air) |
 | W / S | Climb ropes |
 | S + Space | Drop through a platform |
+| B | Debug brush on/off |
 | Mouse wheel | Debug brush: pick block |
-| Left / right mouse | Debug brush: remove / place block, empty hands only (until mining in Phase 4) |
-| Left click | Use the held item (debug builds: or dig with the brush when hands are empty) |
+| Left / right mouse | Debug brush (when on, empty hands): remove / place block (until mining in Phase 4) |
+| Left click | Attack with the held item, or punch with empty hands (combos: click again right after) |
 | H | Put the held item away / take it out |
 | 1 to 0 | Debug: placeholder held items (empty, tools, wand, dagger, swords, spell book, crossbow, bow) |
 | Esc | Pause menu (resume, save, quit to menu) |

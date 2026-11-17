@@ -118,7 +118,7 @@ the doll:
 
 | Key | Item (type) | Hold | Attacks | Put away |
 | --- | --- | --- | --- | --- |
-| 1 | Empty hands | | nothing (unarmed punches exist but are off) | |
+| 1 | Empty hands (unarmed) | | jab, cross, uppercut | |
 | 2 | Tool (tool) | one hand | swing | back |
 | 3 | Two-handed tool (big_tool) | both hands | slam | back |
 | 4 | Wand (wand) | aims | flick | hidden |
@@ -135,8 +135,8 @@ How items are held and their attacks come from item types (`data/item_types/`), 
 as curves in the Inspector; see [character-art.md](character-art.md). These are
 placeholders: nothing fires or hits yet. F3 shows the current motion and combo step.
 
-While holding an item, the debug brush is off (clicks use the item); press H or 1 to
-free your hands and dig again.
+To dig with the debug brush, press **B** (and empty your hands with 1 or H): while the
+brush is on, clicks dig instead of punching.
 
 ## The world: tiles, chunks, wrap
 
@@ -206,8 +206,9 @@ Debug builds only (running from the editor counts).
 | --- | --- |
 | **F3** | Debug overlay: FPS, position, speed, animation frame, chunk counts, timings (frames over 25 / 50 ms, chunk and light job times). |
 | **1 to 5, H** | Placeholder held items, put away (see Holding items). |
+| **B** | Debug brush on/off. While on, empty-hand clicks dig instead of punching. |
 | **Mouse wheel** | Debug brush: pick a block type. |
-| **Left / right mouse** | Debug brush: remove / place a block (until real mining). |
+| **Left / right mouse** | Debug brush (when on): remove / place a block (until real mining). |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |

@@ -5,8 +5,8 @@ extends Node2D
 ## or run scenes/dev/doll_viewer.tscn directly (F6 in the editor).
 ##
 ## Top row: holding each item. Bottom row: its attacks, played as the full combo on a
-## loop (aiming ones point at the mouse). The last column is unarmed punching (off in
-## game for now: Player.unarmed_attacks). Arms use hand-drawn frames where the art has
+## loop (aiming ones point at the mouse). The last column is unarmed punching (what
+## empty hands do in game). Arms use hand-drawn frames where the art has
 ## them and code posing otherwise; "Code posing: forced" shows code posing everywhere,
 ## to compare once drawn frames exist.
 

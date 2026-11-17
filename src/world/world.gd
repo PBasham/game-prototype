@@ -37,6 +37,8 @@ var renderer: ChunkRenderer
 var lights: LightMap
 var backdrop: Backdrop
 var player: Player
+## Debug builds only (B toggles it); null otherwise.
+var brush: DebugBrush
 var _pause_menu: PauseMenu
 var _autosave_left := 0.0
 
@@ -87,7 +89,7 @@ func _ready() -> void:
 	lights.rebuild_now()
 
 	if OS.is_debug_build():
-		var brush := DebugBrush.new()
+		brush = DebugBrush.new()
 		brush.name = "DebugBrush"
 		brush.world = self
 		add_child(brush)

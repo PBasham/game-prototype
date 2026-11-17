@@ -47,8 +47,8 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var climb_speed := 12.0
 ## Speed multiplier when moving away from where you're facing (aiming backwards).
 @export_range(0.1, 1.0) var backpedal_speed := 0.8
-## Empty hands punch (data/item_types/unarmed.tres combo) on click. Off for now.
-@export var unarmed_attacks := false
+## Empty hands punch (data/item_types/unarmed.tres: jab, cross, uppercut) on click.
+@export var unarmed_attacks := true
 
 @export_group("Ground (seconds to full speed / to stop)")
 @export var ground_accel_time := 0.1
@@ -155,7 +155,7 @@ func is_aiming() -> bool:
 func _attacks() -> Array[ItemMotion]:
 	if held != null and not stowed:
 		return held.attacks()
-	if held == null and unarmed_attacks:
+	if held == null and unarmed_attacks and not (world and world.brush and world.brush.active):
 		var unarmed := load("res://data/item_types/unarmed.tres") as ItemTypeData
 		if unarmed:
 			return unarmed.attacks
@@ -165,7 +165,8 @@ func _attacks() -> Array[ItemMotion]:
 func _combo_window() -> float:
 	if held != null and held.item_type():
 		return held.item_type().combo_window
-	return 0.35
+	var unarmed := load("res://data/item_types/unarmed.tres") as ItemTypeData
+	return unarmed.combo_window if unarmed else 0.35
 
 
 func _repeats() -> bool:

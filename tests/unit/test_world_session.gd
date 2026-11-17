@@ -57,11 +57,20 @@ func test_attack_combo_and_bare_hands() -> void:
 	var w := _start(WorldInfo.test_course())
 	await wait_physics_frames(3)
 	var p := w.player
-	# Bare hands: clicking does nothing.
+	# Bare hands punch (jab first)...
 	Input.action_press("use_primary")
 	await wait_physics_frames(2)
 	Input.action_release("use_primary")
-	assert_null(p._attack, "empty hands don't attack")
+	assert_not_null(p._attack, "empty hands punch")
+	assert_eq(p._attack.name, "Jab")
+	await wait_physics_frames(20)
+	# ...unless the debug brush is on (its clicks dig).
+	w.brush.active = true
+	Input.action_press("use_primary")
+	await wait_physics_frames(2)
+	Input.action_release("use_primary")
+	assert_null(p._attack, "no punching while the brush is on")
+	w.brush.active = false
 	# Sword: holding the button runs the combo Slash, Backslash, Thrust, Slash...
 	p.hold(DevHeldItems.by_name("Sword"))
 	var seen: Array[String] = []

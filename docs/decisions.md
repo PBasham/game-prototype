@@ -12,8 +12,8 @@ Newest first. Each entry: what was decided, why, and what it affects.
   slams, wand flick, crossbow recoil, bow draw, book cast.
 - **Combos:** clicking again within `combo_window` after an attack plays the next one in
   the chain; holding keeps going.
-- **Bare hands do nothing.** Unarmed punching (jab, cross, uppercut) exists behind
-  `Player.unarmed_attacks`, off until Patrick decides.
+- **Unarmed:** empty hands punch (jab, cross, uppercut combo), per Patrick. The debug
+  brush moved behind a toggle (B) so it doesn't fight with punching.
 - **Spell book** is held in the back hand; the front hand casts.
 - **One-handed aiming** moves only the front arm.
 

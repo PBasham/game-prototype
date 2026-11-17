@@ -180,8 +180,9 @@ and drag points. The x axis is time through the motion (0 = start, 1 = end).
 | bow | aims, back hand on the string | Draw (pull back, release) | back |
 | unarmed | (empty hands) | Jab, Cross, Uppercut | |
 
-Unarmed is **off** in game (`unarmed_attacks` on the Player); with it off, clicking with
-empty hands does nothing.
+Empty hands use the **unarmed** type: clicking punches (jab, cross, uppercut combo).
+`unarmed_attacks` on the Player turns it off; the debug brush (B) also takes over
+empty-hand clicks while it's on.
 
 To regenerate the defaults: `godot --headless --path . --script res://tools/make_item_types.gd -- --force`
 (this overwrites your edits; without `--force` existing files are kept).
