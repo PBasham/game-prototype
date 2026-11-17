@@ -1,0 +1,144 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_2f2gb"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_avtyu"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_q2ytj"]
+
+[sub_resource type="Resource" id="Resource_5esju"]
+script = ExtResource("2_avtyu")
+
+[sub_resource type="Curve" id="Curve_y5xj7"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 20), 0.0, -62.5, 1, 1, Vector2(0.4, -5), -62.5, 33.333332, 1, 1, Vector2(1, 15), 33.333332, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_y8tqv"]
+_data = [Vector2(0, 0.45), 0.0, 1.3750001, 1, 1, Vector2(0.4, 1), 1.3750001, -0.8333334, 1, 1, Vector2(1, 0.5), -0.8333334, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_uyp6u"]
+script = ExtResource("2_avtyu")
+mode = 1
+angle = SubResource("Curve_y5xj7")
+reach = SubResource("Curve_y8tqv")
+
+[sub_resource type="Curve" id="Curve_ymf2d"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_gmsdi"]
+_limits = [-8.0, 8.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 4.9999995, 1, 1, Vector2(0.4, 2), 4.9999995, -3.3333333, 1, 1, Vector2(1, 0), -3.3333333, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_tjhsp"]
+script = ExtResource("1_2f2gb")
+name = "Jab"
+duration = 0.18
+front = SubResource("Resource_uyp6u")
+back = SubResource("Resource_5esju")
+item_angle = SubResource("Curve_ymf2d")
+lunge = SubResource("Curve_gmsdi")
+
+[sub_resource type="Curve" id="Curve_fhcvn"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 25), 0.0, -66.666664, 1, 1, Vector2(0.45, -5), -66.666664, 45.454544, 1, 1, Vector2(1, 20), 45.454544, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_5cnk7"]
+_data = [Vector2(0, 0.45), 0.0, 1.2222222, 1, 1, Vector2(0.45, 1), 1.2222222, -0.9090909, 1, 1, Vector2(1, 0.5), -0.9090909, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_a2qgb"]
+script = ExtResource("2_avtyu")
+mode = 1
+angle = SubResource("Curve_fhcvn")
+reach = SubResource("Curve_5cnk7")
+
+[sub_resource type="Resource" id="Resource_ug0ld"]
+script = ExtResource("2_avtyu")
+
+[sub_resource type="Curve" id="Curve_a7a13"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_7bj11"]
+_limits = [-8.0, 8.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 6.666667, 1, 1, Vector2(0.45, 3), 6.666667, -5.4545455, 1, 1, Vector2(1, 0), -5.4545455, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_kycn4"]
+script = ExtResource("1_2f2gb")
+name = "Cross"
+duration = 0.22
+front = SubResource("Resource_ug0ld")
+back = SubResource("Resource_a2qgb")
+item_angle = SubResource("Curve_a7a13")
+lunge = SubResource("Curve_7bj11")
+
+[sub_resource type="Resource" id="Resource_ws0dk"]
+script = ExtResource("2_avtyu")
+
+[sub_resource type="Curve" id="Curve_fpum5"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 60), 0.0, -239.99998, 1, 1, Vector2(0.5, -60), -239.99998, 40.0, 1, 1, Vector2(1, -40), 40.0, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_gp0dp"]
+_data = [Vector2(0, 0.5), 0.0, 0.79999995, 1, 1, Vector2(0.5, 0.9), 0.79999995, -0.5999999, 1, 1, Vector2(1, 0.6), -0.5999999, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_5bxr4"]
+script = ExtResource("2_avtyu")
+mode = 1
+angle = SubResource("Curve_fpum5")
+reach = SubResource("Curve_gp0dp")
+
+[sub_resource type="Curve" id="Curve_d1su6"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_r5xl0"]
+_limits = [-8.0, 8.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 4.0, 1, 1, Vector2(0.5, 2), 4.0, -4.0, 1, 1, Vector2(1, 0), -4.0, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_fkyxm"]
+script = ExtResource("1_2f2gb")
+name = "Uppercut"
+duration = 0.3
+front = SubResource("Resource_5bxr4")
+back = SubResource("Resource_ws0dk")
+item_angle = SubResource("Curve_d1su6")
+lunge = SubResource("Curve_r5xl0")
+
+[sub_resource type="Resource" id="Resource_617x5"]
+script = ExtResource("2_avtyu")
+
+[sub_resource type="Resource" id="Resource_sbnpk"]
+script = ExtResource("2_avtyu")
+
+[sub_resource type="Curve" id="Curve_3nggj"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_vjmir"]
+script = ExtResource("1_2f2gb")
+name = "Hold"
+duration = 1.0
+front = SubResource("Resource_sbnpk")
+back = SubResource("Resource_617x5")
+item_angle_mode = 2
+item_angle = SubResource("Curve_3nggj")
+
+[resource]
+script = ExtResource("3_q2ytj")
+hold = SubResource("Resource_vjmir")
+attacks = Array[ExtResource("1_2f2gb")]([SubResource("Resource_tjhsp"), SubResource("Resource_kycn4"), SubResource("Resource_fkyxm")])
+stow_style = 2
+id = &"unarmed"
+display_name = "Unarmed (punches)"

@@ -6,8 +6,9 @@ extends CharacterBody2D
 ##
 ## Hold Run (Shift) to run; Toggle Walk (C) switches the default pace to a walk.
 ## Drawn as a PaperDoll (separate body parts): see src/player/doll/paper_doll.gd.
-## Holding an item: left click uses it, H puts it away / takes it out. Aiming items
-## face the cursor; moving away from it walks backwards at backpedal_speed.
+## Holding an item: left click attacks/uses it (clicking again soon after continues a
+## combo), H puts it away / takes it out. While aiming or attacking you face the cursor;
+## moving away from it walks backwards at backpedal_speed.
 ## Every number is exported: select the Player in the running game's Remote tree and
 ## tune it live. Distances are in tiles (8 px), speeds in tiles per second.
 
@@ -46,6 +47,8 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var climb_speed := 12.0
 ## Speed multiplier when moving away from where you're facing (aiming backwards).
 @export_range(0.1, 1.0) var backpedal_speed := 0.8
+## Empty hands punch (data/item_types/unarmed.tres combo) on click. Off for now.
+@export var unarmed_attacks := false
 
 @export_group("Ground (seconds to full speed / to stop)")
 @export var ground_accel_time := 0.1
@@ -99,8 +102,13 @@ var _land_timer := 0.0
 ## Held item (null = empty hands) and whether it's put away.
 var held: HeldItemLook
 var stowed := false
-## Seconds left in the current use (swing); 0 when not using.
-var _use_left := 0.0
+## The attack playing (null = none), seconds into it, and its place in the combo.
+var _attack: ItemMotion
+var _attack_time := 0.0
+var _combo_index := -1
+## Seconds left to continue the combo after an attack ends.
+var _combo_left := 0.0
+var _hold_time := 0.0
 
 @onready var _doll: PaperDoll = $Doll
 
@@ -121,7 +129,7 @@ func _ready() -> void:
 func hold(item: HeldItemLook) -> void:
 	held = item
 	stowed = false
-	_use_left = 0.0
+	_end_attack(false)
 	_doll.item = item
 	_doll.stowed = false
 
@@ -131,16 +139,43 @@ func toggle_stowed() -> void:
 	if held == null:
 		return
 	stowed = not stowed
-	_use_left = 0.0
+	_end_attack(false)
 	_doll.stowed = stowed
 
 
-## True while the arms point at the cursor (so the body faces it).
+## True while facing the cursor: attacking, or holding something that aims.
 func is_aiming() -> bool:
+	if _attack != null:
+		return true
+	var m := _hold_motion()
+	return m != null and m.aims
+
+
+## The item type whose attacks a click plays: the held item's, or unarmed (if enabled).
+func _attacks() -> Array[ItemMotion]:
+	if held != null and not stowed:
+		return held.attacks()
+	if held == null and unarmed_attacks:
+		var unarmed := load("res://data/item_types/unarmed.tres") as ItemTypeData
+		if unarmed:
+			return unarmed.attacks
+	return []
+
+
+func _combo_window() -> float:
+	if held != null and held.item_type():
+		return held.item_type().combo_window
+	return 0.35
+
+
+func _repeats() -> bool:
+	return held == null or held.item_type() == null or held.item_type().repeat_while_held
+
+
+func _hold_motion() -> ItemMotion:
 	if held == null or stowed:
-		return false
-	return held.aim_when_held or held.face_cursor or _use_left > 0.0 \
-		or (held.use_style == HeldItemLook.UseStyle.AIM and Input.is_action_pressed("use_primary"))
+		return null
+	return held.hold_motion()
 
 
 func _physics_process(delta: float) -> void:
@@ -264,13 +299,35 @@ func _climb(input_x: float, input_y: float) -> void:
 func _update_use(delta: float) -> void:
 	if Input.is_action_just_pressed("put_away"):
 		toggle_stowed()
-	if held == null or stowed:
-		_use_left = 0.0
+	_hold_time += delta
+	_combo_left = maxf(_combo_left - delta, 0.0)
+	if _attack != null:
+		_attack_time += delta
+		if _attack_time >= _attack.duration:
+			_end_attack(true)
+	if _attack == null:
+		var clicked := Input.is_action_just_pressed("use_primary")
+		var held_down := Input.is_action_pressed("use_primary") and _repeats() and _combo_left > 0.0
+		if clicked or held_down:
+			_start_attack()
+
+
+func _start_attack() -> void:
+	var chain := _attacks()
+	if chain.is_empty():
 		return
-	if _use_left > 0.0:
-		_use_left = maxf(_use_left - delta, 0.0)
-	elif held.use_style == HeldItemLook.UseStyle.SWING and Input.is_action_pressed("use_primary"):
-		_use_left = held.use_time  # holding the button keeps swinging
+	_combo_index = (_combo_index + 1) % chain.size() if _combo_left > 0.0 else 0
+	_attack = chain[_combo_index]
+	_attack_time = 0.0
+
+
+## `finished`: ran to the end (opens the combo window); false: interrupted.
+func _end_attack(finished: bool) -> void:
+	_attack = null
+	_attack_time = 0.0
+	_combo_left = _combo_window() if finished else 0.0
+	if not finished:
+		_combo_index = -1
 
 
 func _animate(delta: float) -> void:
@@ -300,16 +357,13 @@ func _animate(delta: float) -> void:
 
 func _animate_arms() -> void:
 	_doll.aim_global = get_global_mouse_position()
-	if held == null or stowed:
-		_doll.arm_mode = PaperDoll.ArmMode.SWING
-	elif _use_left > 0.0:
-		_doll.arm_mode = PaperDoll.ArmMode.USE
-		_doll.use_progress = 1.0 - _use_left / maxf(held.use_time, 0.01)
-	elif held.aim_when_held \
-			or (held.use_style == HeldItemLook.UseStyle.AIM and Input.is_action_pressed("use_primary")):
-		_doll.arm_mode = PaperDoll.ArmMode.AIM
+	if _attack != null:
+		_doll.motion = _attack
+		_doll.motion_t = clampf(_attack_time / maxf(_attack.duration, 0.01), 0.0, 1.0)
 	else:
-		_doll.arm_mode = PaperDoll.ArmMode.HOLD
+		var m := _hold_motion()
+		_doll.motion = m
+		_doll.motion_t = fposmod(_hold_time, m.duration) / m.duration if m else 0.0
 
 
 ## Picks the Jump frame from the arc instead of a timer. Frame 1 is the takeoff. Frames
@@ -385,5 +439,6 @@ func _debug_watch() -> void:
 	DebugOverlay.watch("tile", "%d, %d" % [t.x, t.y])
 	DebugOverlay.watch("move", "%s %.1f t/s%s%s" % [pace, absf(velocity.x) / TILE,
 		"  climbing" if _climbing else "", "  floor" if is_on_floor() else ""])
-	DebugOverlay.watch("anim", "%s %d%s  vy %.0f  arms %s" % [_doll.animation, _doll.frame + 1,
-		" rev" if _doll.reverse else "", velocity.y / TILE, PaperDoll.ArmMode.keys()[_doll.arm_mode]])
+	DebugOverlay.watch("anim", "%s %d%s  vy %.0f  arms %s%s" % [_doll.animation, _doll.frame + 1,
+		" rev" if _doll.reverse else "", velocity.y / TILE, (_doll.motion.name if _doll.motion else "-"),
+		" #%d" % (_combo_index + 1) if _attack else ""])

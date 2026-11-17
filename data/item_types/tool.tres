@@ -1,0 +1,82 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_o1wj5"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_07sag"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_0eiup"]
+
+[sub_resource type="Resource" id="Resource_req3m"]
+script = ExtResource("2_07sag")
+
+[sub_resource type="Curve" id="Curve_nysne"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -140), 0.0, 177.77777, 1, 1, Vector2(0.45, -60), 177.77777, 319.99997, 1, 1, Vector2(0.7, 20), 319.99997, 50.0, 1, 1, Vector2(1, 35), 50.0, 0.0, 1, 1]
+point_count = 4
+
+[sub_resource type="Curve" id="Curve_c587t"]
+_data = [Vector2(0, 0.9), 0.0, 0.1666667, 1, 1, Vector2(0.6, 1), 0.1666667, -0.2500001, 1, 1, Vector2(1, 0.9), -0.2500001, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_x0bwm"]
+script = ExtResource("2_07sag")
+mode = 1
+angle = SubResource("Curve_nysne")
+reach = SubResource("Curve_c587t")
+
+[sub_resource type="Curve" id="Curve_6cafn"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_04i7q"]
+_limits = [-8.0, 8.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 3.3333333, 1, 1, Vector2(0.6, 2), 3.3333333, -5.0, 1, 1, Vector2(1, 0), -5.0, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_nsdg1"]
+script = ExtResource("1_o1wj5")
+name = "Swing"
+front = SubResource("Resource_x0bwm")
+back = SubResource("Resource_req3m")
+item_angle = SubResource("Curve_6cafn")
+lunge = SubResource("Curve_04i7q")
+drawn_tag = "Use"
+
+[sub_resource type="Resource" id="Resource_247ak"]
+script = ExtResource("2_07sag")
+
+[sub_resource type="Curve" id="Curve_dcrmm"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 55), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_e36vm"]
+_data = [Vector2(0, 0.75), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_rjsko"]
+script = ExtResource("2_07sag")
+mode = 1
+angle = SubResource("Curve_dcrmm")
+reach = SubResource("Curve_e36vm")
+
+[sub_resource type="Curve" id="Curve_pv4m4"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -65), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_l6pki"]
+script = ExtResource("1_o1wj5")
+name = "Hold"
+duration = 1.0
+front = SubResource("Resource_rjsko")
+back = SubResource("Resource_247ak")
+item_angle_mode = 2
+item_angle = SubResource("Curve_pv4m4")
+drawn_tag = "Hold1H"
+
+[resource]
+script = ExtResource("3_0eiup")
+hold = SubResource("Resource_l6pki")
+attacks = Array[ExtResource("1_o1wj5")]([SubResource("Resource_nsdg1")])
+id = &"tool"
+display_name = "Tool (pickaxe, axe, hammer)"

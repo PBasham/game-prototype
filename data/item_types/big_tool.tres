@@ -1,0 +1,86 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_fhdi2"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_1r24q"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_xj0fs"]
+
+[sub_resource type="Resource" id="Resource_ayxh2"]
+script = ExtResource("2_1r24q")
+mode = 2
+
+[sub_resource type="Curve" id="Curve_fdcin"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -160), 0.0, 33.333332, 1, 1, Vector2(0.3, -150), 33.333332, 457.14288, 1, 1, Vector2(0.65, 10), 457.14288, 199.99995, 1, 1, Vector2(0.8, 40), 199.99995, -25.000002, 1, 1, Vector2(1, 35), -25.000002, 0.0, 1, 1]
+point_count = 5
+
+[sub_resource type="Curve" id="Curve_wjp07"]
+_data = [Vector2(0, 0.9), 0.0, 0.15384619, 1, 1, Vector2(0.65, 1), 0.15384619, -0.14285716, 1, 1, Vector2(1, 0.95), -0.14285716, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_ijnwc"]
+script = ExtResource("2_1r24q")
+mode = 1
+angle = SubResource("Curve_fdcin")
+reach = SubResource("Curve_wjp07")
+
+[sub_resource type="Curve" id="Curve_yq15u"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_8m2xg"]
+_limits = [-8.0, 8.0, 0.0, 1.0]
+_data = [Vector2(0, -1), 0.0, 6.1538463, 1, 1, Vector2(0.65, 3), 6.1538463, -8.571428, 1, 1, Vector2(1, 0), -8.571428, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_pygsp"]
+script = ExtResource("1_fhdi2")
+name = "Slam"
+duration = 0.5
+front = SubResource("Resource_ijnwc")
+back = SubResource("Resource_ayxh2")
+item_angle = SubResource("Curve_yq15u")
+lunge = SubResource("Curve_8m2xg")
+drawn_tag = "Use"
+
+[sub_resource type="Resource" id="Resource_p7aos"]
+script = ExtResource("2_1r24q")
+mode = 2
+
+[sub_resource type="Curve" id="Curve_7qqvq"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 50), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_c4fr5"]
+_data = [Vector2(0, 0.8), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_3245d"]
+script = ExtResource("2_1r24q")
+mode = 1
+angle = SubResource("Curve_7qqvq")
+reach = SubResource("Curve_c4fr5")
+
+[sub_resource type="Curve" id="Curve_ku73y"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -55), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_67e4n"]
+script = ExtResource("1_fhdi2")
+name = "Hold"
+duration = 1.0
+front = SubResource("Resource_3245d")
+back = SubResource("Resource_p7aos")
+item_angle_mode = 2
+item_angle = SubResource("Curve_ku73y")
+drawn_tag = "Hold2H"
+
+[resource]
+script = ExtResource("3_xj0fs")
+hold = SubResource("Resource_67e4n")
+attacks = Array[ExtResource("1_fhdi2")]([SubResource("Resource_pygsp")])
+two_handed = true
+id = &"big_tool"
+display_name = "Two-handed tool (sledgehammer, big pick)"

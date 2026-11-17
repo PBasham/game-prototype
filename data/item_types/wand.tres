@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_xiov0"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_i5bc7"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_617se"]
+
+[sub_resource type="Resource" id="Resource_s6rtd"]
+script = ExtResource("2_i5bc7")
+
+[sub_resource type="Curve" id="Curve_cu5a4"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, -46.666664, 1, 1, Vector2(0.3, -14), -46.666664, 20.0, 1, 1, Vector2(1, 0), 20.0, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_7jlbv"]
+_data = [Vector2(0, 0.95), 0.0, 0.1666667, 1, 1, Vector2(0.3, 1), 0.1666667, -0.07142859, 1, 1, Vector2(1, 0.95), -0.07142859, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_tv58u"]
+script = ExtResource("2_i5bc7")
+mode = 1
+angle = SubResource("Curve_cu5a4")
+reach = SubResource("Curve_7jlbv")
+
+[sub_resource type="Curve" id="Curve_v4mmo"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_1ljlg"]
+script = ExtResource("1_xiov0")
+name = "Flick"
+duration = 0.25
+aims = true
+front = SubResource("Resource_tv58u")
+back = SubResource("Resource_s6rtd")
+item_angle = SubResource("Curve_v4mmo")
+
+[sub_resource type="Resource" id="Resource_ncrii"]
+script = ExtResource("2_i5bc7")
+
+[sub_resource type="Curve" id="Curve_y4usu"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_ss55p"]
+_data = [Vector2(0, 0.95), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_5rql0"]
+script = ExtResource("2_i5bc7")
+mode = 1
+angle = SubResource("Curve_y4usu")
+reach = SubResource("Curve_ss55p")
+
+[sub_resource type="Curve" id="Curve_gqck8"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_16wj5"]
+script = ExtResource("1_xiov0")
+name = "Hold"
+duration = 1.0
+aims = true
+front = SubResource("Resource_5rql0")
+back = SubResource("Resource_ncrii")
+item_angle_mode = 1
+item_angle = SubResource("Curve_gqck8")
+
+[resource]
+script = ExtResource("3_617se")
+hold = SubResource("Resource_16wj5")
+attacks = Array[ExtResource("1_xiov0")]([SubResource("Resource_1ljlg")])
+stow_style = 2
+id = &"wand"
+display_name = "Wand"

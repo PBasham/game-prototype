@@ -4,8 +4,10 @@ How the character is drawn in game and how to make art for it. The Scholar is dr
 a **paper doll**: each body layer of `art/Scholar-casual.aseprite` is its own sprite,
 and code decides which frame each part shows.
 
-- **Code:** `src/player/doll/` (`paper_doll.gd`, `doll_rig.gd`, `character_look.gd`,
-  `held_item_look.gd`, `palette_swap.gdshader`)
+- **Code:** `src/player/doll/` (`paper_doll.gd`, `doll_rig.gd`, `item_motion.gd`,
+  `arm_track.gd`, `item_type_data.gd`, `held_item_look.gd`, `character_look.gd`,
+  `palette_swap.gdshader`)
+- **Item types (hold and attack animations):** `data/item_types/*.tres`
 - **Try it:** main menu, **Doll Viewer** (debug builds), or `-- --scene=doll`
 - **Tests:** `tests/unit/test_paper_doll.gd`
 
@@ -61,9 +63,9 @@ applies to one channel and wins over the plain one for that channel.
 | --- | --- | --- |
 | `arms/Rest` | Reference pose for code posing | One frame, arms hanging straight down. Defaults to the first `Idle Pose` frame. |
 | `arms/Jog`, `arms/Breath`, ... | Empty hands | Override the arms of that movement animation only. |
-| `arms/Hold1H` | Holding a one-handed item | One frame (or a short loop). Front hand where the item's grip goes. |
-| `arms/Hold2H` | Holding a two-handed item | Both hands on the item. |
-| `arms/Use` | Swinging a tool or weapon | Frames are spread across the swing (`use_time` on the item): first frame = wind-up, last = follow-through. |
+| `arms/<type>/<motion>` | That motion for a whole item type | e.g. `arms/sword/Slash`, `arms/crossbow/Hold`, `arms/bow/Draw`. Frames spread across the motion's duration. |
+| `arms/<item id>/<motion>` | One specific item | Beats the type's frames. |
+| `arms/Hold1H`, `arms/Hold2H`, `arms/Use` | Generic fallbacks | Used by types whose motions name them (tools, swords). |
 
 Similarly `body/<anim>` overrides the torso and head, and `legs/<anim>` the legs.
 
@@ -71,20 +73,31 @@ Similarly `body/<anim>` overrides the torso and head, and `legs/<anim>` the legs
 layers can be anything; they're ignored for arm tags). Keep the shoulder where it is in
 the rest frame.
 
-## Arm modes
+## Arms: natural, holding, attacking
 
-| Mode | When | Drawn tag | Without the tag |
-| --- | --- | --- | --- |
-| Swing | Empty hands, or item put away | (the movement animation) | |
-| Hold | Item held, not in use | `arms/Hold1H` / `arms/Hold2H` | Code bends the arm so the hand sits at `one_hand_reach` / `two_hand_reach` from the shoulder |
-| Use | Clicking a SWING item | `arms/Use` | Code swings the straight arm from `swing_from` to `swing_to` (item settings) |
-| Aim | Items with `aim_when_held`, or holding click with an AIM-use item | (always code) | The front arm rotates around the shoulder to point at the cursor. Back arm: on the second grip for a two-handed item (bow), also aiming with empty hands (casting), and swinging normally with a one-handed item (wand, crossbow, book) |
+The arms follow the movement animation unless a **motion** is playing:
 
-The **Doll Viewer** shows the character holding (top row) and using (bottom row) every
-placeholder item. Arms use your drawn frames where they exist and code posing
-otherwise; the **Code posing: forced** button switches everything to code posing so you
-can compare once you've drawn some poses. The line under the buttons lists which arm
-tags the art has.
+- **Holding** an item plays its type's `hold` motion (looped).
+- **Attacking/using** plays one of its type's `attacks` (see Item types below).
+
+A motion plays **hand-drawn frames** if the art has them, else **code poses** the arms
+from the motion's curves. The doll looks for drawn frames in this order, and uses the
+first tag that exists (frames are spread across the motion):
+
+1. `arms/<item id>/<motion name>`, for one specific item, e.g. `arms/frostbrand/Slash`
+2. `arms/<item type>/<motion name>`, for every item of a type, e.g. `arms/crossbow/Hold`,
+   `arms/sword/Slash`, `arms/dagger/Stab`
+3. `arms/<drawn_tag>`, a generic fallback set on the motion (`Hold1H`, `Hold2H`, `Use`)
+
+So you can draw one generic one-handed hold, then a special crossbow hold, then a unique
+pose for one legendary sword, and each overrides the one before only where it applies.
+Draw only the arm layers on those frames and keep the shoulder where it is in the rest
+frame.
+
+The **Doll Viewer** shows every placeholder item held (top row) and its whole attack
+combo on a loop (bottom row), plus unarmed punches. **Code posing: forced** switches to
+code posing everywhere, to compare once you've drawn some poses. The line under the
+buttons lists the arm tags your art has.
 
 ## Joints (pivots)
 
@@ -104,30 +117,81 @@ frame:
 
 The Pivots layer is never drawn.
 
-## Items
+## Items and item types
 
-Each item has a `HeldItemLook` (`held_item_look.gd`):
+An item's look (`HeldItemLook`, `held_item_look.gd`):
 
 | Setting | What |
 | --- | --- |
+| `id` | For item-specific drawn frames (`arms/<id>/...`) |
 | `texture` | Drawn pointing **up and to the right**, handle at the bottom left (like an inventory icon) |
-| `grip` | Pixel the front hand holds |
-| `grip2` | Pixel the back hand holds (two-handed) |
-| `hold_style` | `ONE_HAND` or `TWO_HAND` |
-| `aim_when_held` | Arms follow the cursor the whole time it's held (wands, crossbows, bows) |
-| `use_style` | `SWING` (click swings), `AIM` (click aims), `NONE` |
+| `type` | Item type id: how it's held and its attacks (below) |
+| `grip` | Pixel the holding hand holds |
+| `grip2` | Pixel the other hand holds (two-handed items, or a bow's string) |
+| `hold_override`, `attacks_override` | This item only: replace the type's hold or attacks |
+
+**Item types** live in `data/item_types/<id>.tres` (`ItemTypeData`). Open one in the
+Inspector to edit it:
+
+| Setting | What |
+| --- | --- |
+| `held_in` | `FRONT` or `BACK` hand (a spell book sits in the back hand so the front hand can cast) |
+| `hold` | The holding motion |
+| `attacks` | The attack chain. Clicking again within `combo_window` seconds after one ends plays the next; holding the button keeps going (`repeat_while_held`). One attack = no combo. |
 | `stow_style` | Where it goes when put away (H): `BACK`, `HIP`, `HIDDEN` |
-| `hold_angle` | Angle while just held (0 = forward, -90 = straight up) |
-| `use_time`, `swing_from`, `swing_to` | Swing length and arc |
-| `face_cursor` | Face the cursor while held (`aim_when_held` items always do; using always does) |
-| `aim_rotates` | While aiming, the item points at the cursor. Off for things held upright while the arm aims (spell book) |
+| `two_handed` | The other hand holds `grip2` |
+
+Each **motion** (`ItemMotion`) has:
+
+| Setting | What |
+| --- | --- |
+| `name` | Used for drawn tags (`Slash`, `Fire`, `Hold`) |
+| `duration` | Seconds (hold motions loop over it) |
+| `aims` | Angles are relative to the direction of the cursor, and the body faces it |
+| `front`, `back` | One `ArmTrack` per arm (below) |
+| `item_angle_mode`, `item_angle` | The item points along the holding arm (`ARM`), at the cursor (`AIM`), or at a fixed angle (`FIXED`), plus the `item_angle` curve in degrees |
+| `lunge` | Pixels the upper body leans forward over the motion (into a stab) |
+| `drawn_tag` | Generic drawn fallback (`Hold1H`, `Hold2H`, `Use`) |
+
+Each **arm track** (`ArmTrack`) is one of:
+
+- `NATURAL`: the arm follows the movement animation.
+- `POSE`: `angle` (degrees: 0 = forward, -90 = up, 90 = down, 180 = behind) and `reach`
+  (hand distance from the shoulder: 1 = straight arm, 0.5 = elbow well bent) over the
+  motion.
+- `GRIP`: the hand holds the item's `grip2`, pulled back along the item by `pull`
+  pixels (that's the bow draw).
+
+All of these are **curves**: in the Inspector, click a curve to open the curve editor
+and drag points. The x axis is time through the motion (0 = start, 1 = end).
+
+**Placeholder types** (from `tools/make_item_types.gd`):
+
+| Type | Hold | Attacks (combo) | Put away |
+| --- | --- | --- | --- |
+| tool | one hand | Swing (overhead to forward) | back |
+| big_tool | both hands | Slam | back |
+| dagger | one hand, low | Stab, Stab2, Slash | hip |
+| sword | one hand | Slash, Backslash, Thrust | hip |
+| greatsword | both hands | Overhead, Rising | back |
+| wand | aims | Flick | hidden |
+| spell_book | back hand, upright | Cast (front palm pushes at the cursor) | hip |
+| crossbow | aims, one arm | Fire (recoil) | hip |
+| bow | aims, back hand on the string | Draw (pull back, release) | back |
+| unarmed | (empty hands) | Jab, Cross, Uppercut | |
+
+Unarmed is **off** in game (`unarmed_attacks` on the Player); with it off, clicking with
+empty hands does nothing.
+
+To regenerate the defaults: `godot --headless --path . --script res://tools/make_item_types.gd -- --force`
+(this overwrites your edits; without `--force` existing files are kept).
 
 Where stowed items sit is on the PaperDoll: `stow_back_offset/angle`,
 `stow_hip_offset/angle`.
 
-**Facing and walking backwards:** while aiming or using, the character faces the
-cursor. Moving the other way plays the legs in reverse at `backpedal_speed` (0.8) of
-normal speed. Both are on the Player.
+**Facing and walking backwards:** while attacking, or holding something that aims, the
+character faces the cursor. Moving the other way plays the legs in reverse at
+`backpedal_speed` (0.8) of normal speed. Both are on the Player.
 
 ## Colors
 

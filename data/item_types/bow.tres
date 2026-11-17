@@ -1,0 +1,87 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_yhrow"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_s3qsp"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_kgmil"]
+
+[sub_resource type="Curve" id="Curve_8ohsn"]
+_limits = [-4.0, 12.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 10.0, 1, 1, Vector2(0.7, 7), 10.0, -139.99997, 1, 1, Vector2(0.75, 0), -139.99997, 0.0, 1, 1, Vector2(1, 0), 0.0, 0.0, 1, 1]
+point_count = 4
+
+[sub_resource type="Resource" id="Resource_ipi56"]
+script = ExtResource("2_s3qsp")
+mode = 2
+pull = SubResource("Curve_8ohsn")
+
+[sub_resource type="Curve" id="Curve_hfx60"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_a3xsa"]
+_data = [Vector2(0, 1), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_70bcc"]
+script = ExtResource("2_s3qsp")
+mode = 1
+angle = SubResource("Curve_hfx60")
+reach = SubResource("Curve_a3xsa")
+
+[sub_resource type="Curve" id="Curve_e5csf"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_w3d2t"]
+script = ExtResource("1_yhrow")
+name = "Draw"
+duration = 0.6
+aims = true
+front = SubResource("Resource_70bcc")
+back = SubResource("Resource_ipi56")
+item_angle_mode = 1
+item_angle = SubResource("Curve_e5csf")
+
+[sub_resource type="Resource" id="Resource_yg8dn"]
+script = ExtResource("2_s3qsp")
+mode = 2
+
+[sub_resource type="Curve" id="Curve_kvgwt"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_rmi43"]
+_data = [Vector2(0, 1), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_nr151"]
+script = ExtResource("2_s3qsp")
+mode = 1
+angle = SubResource("Curve_kvgwt")
+reach = SubResource("Curve_rmi43")
+
+[sub_resource type="Curve" id="Curve_txr8a"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_qwp60"]
+script = ExtResource("1_yhrow")
+name = "Hold"
+duration = 1.0
+aims = true
+front = SubResource("Resource_nr151")
+back = SubResource("Resource_yg8dn")
+item_angle_mode = 1
+item_angle = SubResource("Curve_txr8a")
+
+[resource]
+script = ExtResource("3_kgmil")
+hold = SubResource("Resource_qwp60")
+attacks = Array[ExtResource("1_yhrow")]([SubResource("Resource_w3d2t")])
+two_handed = true
+id = &"bow"
+display_name = "Bow"

@@ -2,6 +2,21 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Item types and attack animations
+
+- **Item types** (`data/item_types/`) define how items are held and their attacks;
+  items point at a type and can override. Drawn frames are looked up per item, then
+  per type, then generic, then code posing.
+- **Attacks are motions** (arm angle/reach curves per arm, item angle, lunge), edited as
+  curves in the Inspector. Placeholder attacks per type: stab combos, slash combos,
+  slams, wand flick, crossbow recoil, bow draw, book cast.
+- **Combos:** clicking again within `combo_window` after an attack plays the next one in
+  the chain; holding keeps going.
+- **Bare hands do nothing.** Unarmed punching (jab, cross, uppercut) exists behind
+  `Player.unarmed_attacks`, off until Patrick decides.
+- **Spell book** is held in the back hand; the front hand casts.
+- **One-handed aiming** moves only the front arm.
+
 ## 2026-11-17: Phase 3, character rig (paper doll)
 
 Inserted before mining, because mining is where arm poses matter. Mining and items

@@ -116,23 +116,26 @@ F3 shows the current animation, frame, "rev" when reversed, and the arm mode.
 Real items arrive with mining (Phase 4). Debug builds have placeholder items to test
 the doll:
 
-| Key | Item | Hold | Use | Put away |
+| Key | Item (type) | Hold | Attacks | Put away |
 | --- | --- | --- | --- | --- |
-| 1 | Empty hands | | click: both arms aim (casting) | |
-| 2 | Tool (pickaxe-like) | one hand | swing | back |
-| 3 | Two-handed tool | both hands | swing | back |
-| 4 | Wand | aims (front arm) | aim | hidden |
-| 5 | Dagger | one hand | quick swing | hip |
-| 6 | Sword | one hand | swing | hip |
-| 7 | Two-handed sword | both hands | wide, slow swing | back |
-| 8 | Spell book | one hand, upright | front arm aims, book stays upright | hip |
-| 9 | Hand crossbow | aims (front arm) | aim | hip |
-| 0 | Bow | aims, back hand on the string | aim | back |
+| 1 | Empty hands | | nothing (unarmed punches exist but are off) | |
+| 2 | Tool (tool) | one hand | swing | back |
+| 3 | Two-handed tool (big_tool) | both hands | slam | back |
+| 4 | Wand (wand) | aims | flick | hidden |
+| 5 | Dagger (dagger) | one hand | stab, stab, slash | hip |
+| 6 | Sword (sword) | one hand | slash, backslash, thrust | hip |
+| 7 | Two-handed sword (greatsword) | both hands | overhead, rising | back |
+| 8 | Spell book (spell_book) | back hand | front palm casts at the cursor | hip |
+| 9 | Hand crossbow (crossbow) | aims, one arm | fire (recoil) | hip |
+| 0 | Bow (bow) | aims, back hand on string | draw and release | back |
 | H | Put away / take out | | | |
-| Left click | Use (hold to keep swinging or aiming) | | | |
+| Left click | Attack. Click again right after one ends (or hold) to continue the combo. | | | |
 
-These are placeholders drawn in code (`src/player/doll/dev_held_items.gd`); nothing
-fires or hits yet. While holding an item, the debug brush is off (clicks use the item); press H or 1 to
+How items are held and their attacks come from item types (`data/item_types/`), editable
+as curves in the Inspector; see [character-art.md](character-art.md). These are
+placeholders: nothing fires or hits yet. F3 shows the current motion and combo step.
+
+While holding an item, the debug brush is off (clicks use the item); press H or 1 to
 free your hands and dig again.
 
 ## The world: tiles, chunks, wrap

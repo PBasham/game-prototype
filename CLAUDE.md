@@ -31,6 +31,8 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Character colors: `godot --headless --path . --script res://tools/make_character_palette.gd` (after color changes)
 - The player is a paper doll (docs/character-art.md). Prefer code-posed fallbacks over
   asking Patrick for frames; he draws real poses later.
+- Item types (hold + attack animations as curves): `data/item_types/`, defaults from
+  `tools/make_item_types.gd` (never `--force` over Patrick's edits without asking).
 - Terrain, trees, backdrop: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game` (style V5 = "t5")
 - Tile size is 8 px (`World.TILE`). The Scholar is ~3 tiles wide, ~8 tall.
 

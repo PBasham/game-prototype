@@ -51,3 +51,30 @@ func test_temporary_worlds_are_not_saved() -> void:
 	assert_eq(w.save(), OK)
 	w.queue_free()
 	await wait_physics_frames(2)
+
+
+func test_attack_combo_and_bare_hands() -> void:
+	var w := _start(WorldInfo.test_course())
+	await wait_physics_frames(3)
+	var p := w.player
+	# Bare hands: clicking does nothing.
+	Input.action_press("use_primary")
+	await wait_physics_frames(2)
+	Input.action_release("use_primary")
+	assert_null(p._attack, "empty hands don't attack")
+	# Sword: holding the button runs the combo Slash, Backslash, Thrust, Slash...
+	p.hold(DevHeldItems.by_name("Sword"))
+	var seen: Array[String] = []
+	Input.action_press("use_primary")
+	for i in 90:
+		await wait_physics_frames(1)
+		if p._attack and (seen.is_empty() or seen.back() != p._attack.name):
+			seen.append(p._attack.name)
+	Input.action_release("use_primary")
+	assert_gte(seen.size(), 4, "combo kept going: %s" % [seen])
+	assert_eq(seen.slice(0, 4), ["Slash", "Backslash", "Thrust", "Slash"] as Array[String])
+	# Putting it away stops the attack.
+	p.toggle_stowed()
+	assert_null(p._attack)
+	w.queue_free()
+	await wait_physics_frames(2)

@@ -4,8 +4,9 @@ extends Node2D
 ## poses. Open from the main menu (Doll Viewer, debug builds), with `-- --scene=doll`,
 ## or run scenes/dev/doll_viewer.tscn directly (F6 in the editor).
 ##
-## Top row: holding each item. Bottom row: using it (swinging, or aiming at the mouse).
-## Arms use hand-drawn frames (arms/Hold1H, arms/Hold2H, arms/Use) where the art has
+## Top row: holding each item. Bottom row: its attacks, played as the full combo on a
+## loop (aiming ones point at the mouse). The last column is unarmed punching (off in
+## game for now: Player.unarmed_attacks). Arms use hand-drawn frames where the art has
 ## them and code posing otherwise; "Code posing: forced" shows code posing everywhere,
 ## to compare once drawn frames exist.
 
@@ -16,9 +17,10 @@ const ANIMS: Array[StringName] = [&"Breath", &"Jog", &"Jump", &"Idle Pose"]
 const SKINS := ["eec39a", "c98e62", "8d5a3b", "f5d7c0", "5c3a28"]
 const CLOTHES := ["2f68d9", "3c8a3c", "a83232", "6a4aa8", "c8a040", "444a52"]
 const HAIRS := ["5c3a22", "1c1814", "c89a48", "a04020", "d8d0c0"]
-const SPACING := 58.0
+const SPACING := 53.0
 
 var _rig: DollRig
+var _unarmed: ItemTypeData
 var _palette: CharacterPalette
 var _look: CharacterLook
 var _held: Array[PaperDoll] = []
@@ -47,13 +49,15 @@ func _ready() -> void:
 	add_child(cam)
 
 	var catalog := DevHeldItems.catalog()
-	for i in catalog.size():
-		var x := 36.0 + i * SPACING
-		_held.append(_make_doll(Vector2(x, 168), catalog[i][1]))
-		_using.append(_make_doll(Vector2(x, 300), catalog[i][1]))
-		_label(String(catalog[i][0]), Vector2(x, 306))
-	_label("holding", Vector2(18, 92), true)
-	_label("using (click / aim at mouse)", Vector2(18, 226), true)
+	_unarmed = load("res://data/item_types/unarmed.tres") as ItemTypeData
+	for i in catalog.size() + 1:
+		var x := 30.0 + i * SPACING
+		var it: HeldItemLook = catalog[i][1] if i < catalog.size() else null
+		_held.append(_make_doll(Vector2(x, 168), it))
+		_using.append(_make_doll(Vector2(x, 300), it))
+		_label(String(catalog[i][0]) if i < catalog.size() else "Unarmed", Vector2(x, 306))
+	_label("holding", Vector2(6, 46), true)
+	_label("attacking (whole combo, looped; aimed ones follow the mouse)", Vector2(6, 186), true)
 
 	var ui := CanvasLayer.new()
 	add_child(ui)
@@ -109,26 +113,47 @@ func _process(delta: float) -> void:
 
 
 ## Sets one doll's state the way Player._animate_arms() would.
-func _drive(d: PaperDoll, using: bool, mouse: Vector2) -> void:
+func _drive(d: PaperDoll, attacking: bool, mouse: Vector2) -> void:
 	d.play(ANIMS[_anim])
 	d.force_posed = _forced
 	d.stowed = _stowed
 	d.aim_global = mouse
 	var item := d.item
+	d.motion = null
+	if attacking and not _stowed:
+		if item:
+			_play_chain(d, item.attacks())
+		elif d == _using[_using.size() - 1]:
+			_play_chain(d, _unarmed.attacks)  # empty hands do nothing; this column previews punches
+	elif item != null and not _stowed:
+		d.motion = item.hold_motion()
+		d.motion_t = fposmod(_time, d.motion.duration) / d.motion.duration
 	var facing := _facing
-	if item == null or _stowed:
-		d.arm_mode = PaperDoll.ArmMode.AIM if using and item == null else PaperDoll.ArmMode.SWING
-	elif using and item.use_style == HeldItemLook.UseStyle.SWING:
-		d.arm_mode = PaperDoll.ArmMode.USE
-		var cycle := item.use_time + 0.35
-		d.use_progress = minf(fposmod(_time, cycle) / item.use_time, 1.0)
-	elif item.aim_when_held or (using and item.use_style == HeldItemLook.UseStyle.AIM):
-		d.arm_mode = PaperDoll.ArmMode.AIM
-	else:
-		d.arm_mode = PaperDoll.ArmMode.HOLD
-	if d.arm_mode == PaperDoll.ArmMode.AIM:
+	if d.motion and (d.motion.aims or attacking):
 		facing = 1.0 if mouse.x >= d.global_position.x else -1.0  # face the cursor
 	d.scale.x = facing
+
+
+## Plays a combo chain on a loop: each attack, a short pause, the next.
+func _play_chain(d: PaperDoll, chain: Array[ItemMotion]) -> void:
+	const GAP := 0.12
+	var total := 0.4
+	for m in chain:
+		total += m.duration + GAP
+	var t := fposmod(_time, total)
+	for m in chain:
+		if t < m.duration:
+			d.motion = m
+			d.motion_t = t / m.duration
+			return
+		t -= m.duration
+		if t < GAP:
+			d.motion = m
+			d.motion_t = 1.0
+			return
+		t -= GAP
+	d.motion = chain[chain.size() - 1] if not chain.is_empty() else null
+	d.motion_t = 1.0
 
 
 func _toggle_forced() -> void:
@@ -173,8 +198,8 @@ func _refresh() -> void:
 	_force_button.text = "Code posing: %s" % ("forced" if _forced else "auto")
 	_stow_button.text = "Put away" if not _stowed else "Take out"
 	var drawn := PackedStringArray()
-	for tag: String in ["Hold1H", "Hold2H", "Use"]:
-		if _rig.tags.has("arms/" + tag):
-			drawn.append(tag)
+	for tag: String in _rig.tags:
+		if tag.begins_with("arms/"):
+			drawn.append(tag.trim_prefix("arms/"))
 	_info.text = "Legs: %s.  Hand-drawn arm frames: %s." % [ANIMS[_anim],
 		", ".join(drawn) if drawn.size() > 0 else "none yet, so every arm pose here is code-posed"]

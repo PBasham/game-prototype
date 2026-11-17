@@ -2,38 +2,24 @@ class_name PaperDoll
 extends Node2D
 ## The character drawn as separate body parts (a paper doll), each picking its own frame:
 ##
-##   legs       play the movement animation (Breath, Jog, Jump...)
-##   body       torso and head follow the legs' frame (or their own "body/" tags)
-##   arms       depend on the arm mode:
-##                SWING  follow the legs (or "arms/<anim>" tags)
-##                HOLD   "arms/Hold1H" / "arms/Hold2H" if drawn, else code-posed
-##                USE    "arms/Use" if drawn, else the arm swings in an arc (code)
-##                AIM    arms rotate around the shoulder toward aim_point (code)
+##   legs   play the movement animation (Breath, Jog, Jump...)
+##   body   torso and head follow the legs' frame (or their own "body/" tags)
+##   arms   follow the legs, unless a `motion` is playing: holding an item, or an
+##          attack. A motion plays hand-drawn arm frames when the art has them, else
+##          poses the arms in code from its curves (see ItemMotion, ArmTrack).
 ##
-## "Code-posed" arms use the upper and lower arm layers as two bones (shoulder and
-## elbow joints measured from the art) and bend them to reach a point. force_posed
+## "Code-posed" arms use the upper and lower arm layers as two bones (shoulder and elbow
+## joints measured from the art) and bend them so the hand reaches a point. force_posed
 ## shows code posing even where drawn frames exist, to compare.
 ##
-## The held item is drawn in the front hand; stowed (put away) it sits on the back,
-## at the hip, or is hidden, per its HeldItemLook. Colors come from CharacterLook via a
-## palette-swap shader. Facing: set `scale.x` to 1 (right) or -1 (left); the art faces
-## right. Origin = feet.
+## The held item is drawn in the holding hand; stowed (put away) it sits on the back, at
+## the hip, or is hidden. Colors come from CharacterLook via a palette-swap shader.
+## Facing: set `scale.x` to 1 (right) or -1 (left); the art faces right. Origin = feet.
 ##
-## Everything is driven by setting properties each frame; see Player._animate().
-
-enum ArmMode { SWING, HOLD, USE, AIM }
+## Driven by setting properties each frame; see Player._animate().
 
 const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 
-@export_group("Code-posed arms")
-## Show code-posed arms even when drawn hold/use frames exist (to compare).
-@export var force_posed := false
-## Where the front hand goes when holding one-handed, from the shoulder (pixels).
-@export var one_hand_reach := Vector2(6, 13)
-## Where the front hand goes when holding two-handed, from the shoulder.
-@export var two_hand_reach := Vector2(8, 11)
-## Elbows bend downward (true) or upward.
-@export var elbow_down := true
 @export_group("Stowed item")
 ## Item on the back: position from the front shoulder (pixels) and angle (degrees).
 @export var stow_back_offset := Vector2(-6, 9)
@@ -42,6 +28,8 @@ const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 @export var stow_hip_offset := Vector2(3, 20)
 @export var stow_hip_angle := 105.0
 @export_group("")
+## Show code-posed arms even when drawn frames exist (to compare).
+@export var force_posed := false
 
 var rig: DollRig
 var palette: CharacterPalette
@@ -60,11 +48,12 @@ var stowed := false:
 	set(v):
 		stowed = v
 		_apply_item()
-var arm_mode := ArmMode.SWING
-## Point the arms aim at (AIM mode), in global coordinates.
+## The arm motion playing (the item's hold, or an attack), or null for natural arms.
+var motion: ItemMotion
+## 0..1 through the motion.
+var motion_t := 0.0
+## Point the arms aim at when the motion aims, in global coordinates.
 var aim_global := Vector2.ZERO
-## 0..1 through a use (swing) in USE mode.
-var use_progress := 0.0
 ## Pixels the upper body drops (procedural landing squash).
 var dip := 0.0
 
@@ -80,15 +69,17 @@ var _time := 0.0
 # Nodes.
 var _slots: Array[Node2D] = []  ## per part
 var _sprites: Array[Sprite2D] = []  ## per part (base layer)
-var _overlays: Array[Array] = []  ## per part: [Sprite2D, follow_frames: bool]
+var _overlays: Array[Array] = []  ## per part: overlay Sprite2Ds
 var _hair: Sprite2D
 var _item_sprite: Sprite2D
 var _stow_back: Sprite2D
 var _stow_hip: Sprite2D
 var _material: ShaderMaterial
 var _head_part := -1
-## Last computed hand positions (local), for debugging and tests.
+## Hand positions (local) from the last update, for items, tests and debugging.
 var hands: Dictionary[StringName, Vector2] = {}
+## Item angle (radians) from the last update.
+var item_rotation := 0.0
 
 
 func setup(doll_rig: DollRig, doll_palette: CharacterPalette = null) -> void:
@@ -186,6 +177,22 @@ func clear_overlays() -> void:
 		list.clear()
 
 
+## The drawn arm tag this motion would play, or "" if the art has none (or force_posed).
+func drawn_tag_for(m: ItemMotion) -> String:
+	if m == null or force_posed:
+		return ""
+	var names := PackedStringArray()
+	if item and m.name != "":
+		names.append("arms/%s/%s" % [item.id, m.name])
+		names.append("arms/%s/%s" % [item.type, m.name])
+	if m.drawn_tag != "":
+		names.append("arms/%s" % m.drawn_tag)
+	for n in names:
+		if rig.tags.has(n):
+			return n
+	return ""
+
+
 func _item_node(node_name: String) -> Sprite2D:
 	var s := Sprite2D.new()
 	s.name = node_name
@@ -215,7 +222,7 @@ func _advance(delta: float) -> void:
 		guard += 1
 
 
-# --- per frame ------------------------------------------------------------------
+# --- per frame ------------------------------------------------------------------------
 
 func _update() -> void:
 	var legs_r := rig.tag_range(&"legs", animation)
@@ -225,7 +232,7 @@ func _update() -> void:
 	frame = clampi(frame, 0, count - 1)
 	var legs_abs := legs_r.x + frame
 	var body_abs := _follow(&"body", legs_abs)
-	var up := Vector2(0, dip)
+	var shift := Vector2(motion.lunge_at(motion_t) if motion else 0.0, dip)
 	hands.clear()
 
 	for pi in rig.part_names.size():
@@ -233,14 +240,12 @@ func _update() -> void:
 		if ch == &"legs":
 			_show_frame(pi, legs_abs, Vector2.ZERO)
 		elif ch == &"body":
-			_show_frame(pi, body_abs, up)
-	# Front first: a two-handed item's second grip depends on where the front hand is.
-	for side: StringName in [&"front", &"back"]:
-		_pose_arm(side, legs_abs, body_abs)
+			_show_frame(pi, body_abs, shift)
+	_pose_arms(legs_abs, body_abs, shift)
 
 	if _hair and _hair.texture and _head_part >= 0:
-		_hair.position = rig.head_pos[body_abs] + look.hair_offset - rig.anchor + up
-	_place_item(body_abs)
+		_hair.position = rig.head_pos[body_abs] + look.hair_offset - rig.anchor + shift
+	_place_stowed(body_abs, shift)
 
 
 ## The frame a channel shows: its own tag's frame at the same index if it has one,
@@ -267,87 +272,80 @@ func _set_region(pi: int, region: Rect2, offset: Vector2) -> void:
 		s.offset = offset
 
 
-## Draws one arm for the current mode.
-func _pose_arm(side: StringName, legs_abs: int, body_abs: int) -> void:
-	var channel := &"front_arm" if side == &"front" else &"back_arm"
-	var parts := _parts_of(channel)
-	var up := Vector2(0, dip)
+func _shoulder(side: StringName, body_abs: int, shift: Vector2) -> Vector2:
 	var arm: Dictionary = rig.arms.get(side, {})
-	var shoulder := Vector2.ZERO
-	if not arm.is_empty():
-		shoulder = (arm.shoulder as Vector2) + rig.body_offset[body_abs] - rig.anchor + up
+	if arm.is_empty():
+		return Vector2.ZERO
+	return (arm.shoulder as Vector2) + rig.body_offset[body_abs] - rig.anchor + shift
 
-	var mode := arm_mode
-	if item == null or stowed:
-		if mode != ArmMode.AIM and mode != ArmMode.USE:
-			mode = ArmMode.SWING
-	var two_hand := item != null and not stowed and item.hold_style == HeldItemLook.HoldStyle.TWO_HAND
 
-	# Drawn frames win unless force_posed.
-	var drawn_tag := &""
-	match mode:
-		ArmMode.HOLD:
-			drawn_tag = &"Hold2H" if two_hand else &"Hold1H"
-		ArmMode.USE:
-			drawn_tag = &"Use"
-	if mode == ArmMode.SWING or arm.is_empty() or (drawn_tag != &"" and not force_posed and _has_arm_tag(drawn_tag)):
-		var abs_frame := _follow(channel, legs_abs)
-		if drawn_tag != &"" and mode != ArmMode.SWING and _has_arm_tag(drawn_tag):
-			var r := rig.tag_range(channel, drawn_tag)
-			var n := r.y - r.x + 1
-			var t := use_progress if mode == ArmMode.USE else 0.0
-			abs_frame = r.x + mini(int(t * n), n - 1)
-		for pi in parts:
-			_show_frame(pi, abs_frame, up)
-		if not arm.is_empty():
-			hands[side] = _drawn_hand(arm, abs_frame, shoulder)
+## Natural arms, drawn motion frames, or code-posed motion.
+func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
+	var m := motion
+	var in_hand := item != null and not stowed
+	_item_sprite.visible = in_hand and m != null
+	if m == null:
+		for side: StringName in [&"front", &"back"]:
+			_natural(side, legs_abs, body_abs, shift)
 		return
 
-	# Code-posed.
-	var front_shoulder := shoulder
-	if side == &"back" and rig.arms.has(&"front"):
-		front_shoulder = (rig.arms[&"front"].shoulder as Vector2) + rig.body_offset[body_abs] - rig.anchor + up
-	match mode:
-		ArmMode.AIM:
-			# Front arm aims. Back arm: on the second grip of a two-handed item, aims too
-			# when the hands are empty (casting), and just swings with a one-handed item.
-			var target := to_local(aim_global)
-			var empty := item == null or stowed
-			if side == &"front" or empty:
-				_rigid(arm, parts, shoulder, (target - shoulder).angle())
-			elif two_hand:
-				_reach(arm, parts, shoulder, _second_grip())
-			else:
-				var abs_frame := _follow(channel, legs_abs)
-				for pi in parts:
-					_show_frame(pi, abs_frame, up)
-				hands[side] = _drawn_hand(arm, abs_frame, shoulder)
-		ArmMode.USE:
-			var a := deg_to_rad(lerpf(item.swing_from if item else -140.0, item.swing_to if item else 30.0, _ease(use_progress)))
-			if side == &"front" or not two_hand:
-				if side == &"front":
-					_rigid(arm, parts, shoulder, a)
-				else:
-					var abs_frame := _follow(channel, legs_abs)
-					for pi in parts:
-						_show_frame(pi, abs_frame, up)
-					hands[side] = _drawn_hand(arm, abs_frame, shoulder)
-			else:
-				_reach(arm, parts, shoulder, _second_grip_for(front_shoulder, a))
-		ArmMode.HOLD:
-			if side == &"front":
-				_reach(arm, parts, shoulder, shoulder + (two_hand_reach if two_hand else one_hand_reach))
-			elif two_hand:
-				_reach(arm, parts, shoulder, _second_grip_for_hold(front_shoulder))
-			else:
-				var abs_frame := _follow(channel, legs_abs)
-				for pi in parts:
-					_show_frame(pi, abs_frame, up)
-				hands[side] = _drawn_hand(arm, abs_frame, shoulder)
+	var tag := drawn_tag_for(m)
+	if tag != "":
+		var r: Vector2i = rig.tags[tag]
+		var n := r.y - r.x + 1
+		var f := r.x + mini(int(motion_t * n), n - 1)
+		for side: StringName in [&"front", &"back"]:
+			for pi in _parts_of(_channel(side)):
+				_show_frame(pi, f, shift)
+			if rig.arms.has(side):
+				hands[side] = _drawn_hand(rig.arms[side], f, _shoulder(side, body_abs, shift))
+		if in_hand:
+			_place_item(m, _holding_side(), _shoulder(_holding_side(), body_abs, shift))
+		return
+
+	# Code-posed: the holding arm first, then the item, then the other arm (which may
+	# grip the item).
+	var holding := _holding_side()
+	var other := &"back" if holding == &"front" else &"front"
+	var aim_angle := 0.0
+	if m.aims:
+		aim_angle = (to_local(aim_global) - _shoulder(&"front", body_abs, shift)).angle()
+	for side: StringName in [holding, other]:
+		var track: ArmTrack = m.front if side == &"front" else m.back
+		var shoulder := _shoulder(side, body_abs, shift)
+		var arm: Dictionary = rig.arms.get(side, {})
+		var mode := track.mode if track else ArmTrack.Mode.NATURAL
+		if arm.is_empty() or mode == ArmTrack.Mode.NATURAL or (mode == ArmTrack.Mode.GRIP and not in_hand):
+			_natural(side, legs_abs, body_abs, shift)
+		elif mode == ArmTrack.Mode.POSE:
+			var length := ((arm.hand as Vector2) - (arm.shoulder as Vector2)).length()
+			var dir := Vector2.from_angle(aim_angle + deg_to_rad(track.angle_at(motion_t)))
+			_reach(arm, _parts_of(_channel(side)), shoulder, shoulder + dir * length * track.reach_at(motion_t))
+		else:  # GRIP: the item's other grip, pulled back along the item
+			var axis := Vector2.from_angle(item_rotation)
+			var target := _grip_point(item.grip2) - axis * track.pull_at(motion_t)
+			_reach(arm, _parts_of(_channel(side)), shoulder, target)
+		if side == holding and in_hand:
+			_place_item(m, holding, shoulder, aim_angle)
 
 
-func _has_arm_tag(tag: StringName) -> bool:
-	return rig.tags.has("arms/%s" % tag)
+func _holding_side() -> StringName:
+	if item and item.item_type() and item.item_type().held_in == ItemTypeData.Hand.BACK:
+		return &"back"
+	return &"front"
+
+
+func _channel(side: StringName) -> StringName:
+	return &"front_arm" if side == &"front" else &"back_arm"
+
+
+func _natural(side: StringName, legs_abs: int, body_abs: int, shift: Vector2) -> void:
+	var channel := _channel(side)
+	var f := _follow(channel, legs_abs)
+	for pi in _parts_of(channel):
+		_show_frame(pi, f, shift)
+	if rig.arms.has(side):
+		hands[side] = _drawn_hand(rig.arms[side], f, _shoulder(side, body_abs, shift))
 
 
 func _parts_of(channel: StringName) -> PackedInt32Array:
@@ -358,20 +356,6 @@ func _parts_of(channel: StringName) -> PackedInt32Array:
 	return out
 
 
-## Whole arm rotated stiffly around the shoulder so it points along `angle` (radians,
-## 0 = forward, positive = downward).
-func _rigid(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, angle: float) -> void:
-	var s0: Vector2 = arm.shoulder
-	var e0: Vector2 = arm.elbow
-	var h0: Vector2 = arm.hand
-	var rot := angle - (h0 - s0).angle()
-	_bone(arm.upper, s0, shoulder, rot)
-	var elbow := shoulder + (e0 - s0).rotated(rot)
-	_bone(arm.lower, e0, elbow, rot)
-	_hide_other(parts, arm)
-	hands[_side_of(arm)] = elbow + (h0 - e0).rotated(rot)
-
-
 ## Two-bone arm bent so the hand reaches `target` (clamped to the arm's length).
 func _reach(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, target: Vector2) -> void:
 	var s0: Vector2 = arm.shoulder
@@ -380,18 +364,23 @@ func _reach(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, target:
 	var l1 := (e0 - s0).length()
 	var l2 := (h0 - e0).length()
 	var to := target - shoulder
+	if to.length_squared() < 0.01:
+		to = Vector2(0, 0.1)
 	var d := clampf(to.length(), absf(l1 - l2) + 0.01, l1 + l2 - 0.01)
 	var base := to.angle()
 	var bend := acos(clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0))
-	# Elbow below the shoulder-hand line: bend toward +y.
-	var a1 := base + (bend if elbow_down == (cos(base) >= 0.0) else -bend)
+	# Elbow below the shoulder-hand line (bend toward +y), like a relaxed arm.
+	var a1 := base + (bend if cos(base) >= 0.0 else -bend)
 	var elbow := shoulder + Vector2.from_angle(a1) * l1
 	var hand := shoulder + to.normalized() * d
 	var a2 := (hand - elbow).angle()
 	_bone(arm.upper, s0, shoulder, a1 - (e0 - s0).angle())
 	_bone(arm.lower, e0, elbow, a2 - (h0 - e0).angle())
-	_hide_other(parts, arm)
-	hands[_side_of(arm)] = hand
+	for pi in parts:
+		# Any extra layers in the arm channel follow the lower arm.
+		if pi != arm.upper and pi != arm.lower:
+			_bone(pi, e0, elbow, a2 - (h0 - e0).angle())
+	hands[&"front" if rig.arms.get(&"front") == arm else &"back"] = hand
 
 
 ## Draws a part from the rest frame, rotated by `rot` around `joint_rest` placed at `at`.
@@ -400,19 +389,6 @@ func _bone(pi: int, joint_rest: Vector2, at: Vector2, rot: float) -> void:
 	slot.position = at
 	slot.rotation = rot
 	_set_region(pi, rig.region(pi, rig.rest_frame), -joint_rest)
-
-
-func _hide_other(parts: PackedInt32Array, arm: Dictionary) -> void:
-	# Any extra layers in the arm channel (not upper/lower) follow the lower arm.
-	for pi in parts:
-		if pi != arm.upper and pi != arm.lower:
-			_slots[pi].position = _slots[arm.lower].position
-			_slots[pi].rotation = _slots[arm.lower].rotation
-			_set_region(pi, rig.region(pi, rig.rest_frame), _sprites[arm.lower].offset)
-
-
-func _side_of(arm: Dictionary) -> StringName:
-	return &"front" if rig.arms.get(&"front") == arm else &"back"
 
 
 ## Hand position in a drawn frame: the end of the lower arm farthest from the shoulder.
@@ -430,77 +406,53 @@ func _drawn_hand(arm: Dictionary, abs_frame: int, shoulder: Vector2) -> Vector2:
 	return best
 
 
-# --- item ---------------------------------------------------------------------------
+# --- item -------------------------------------------------------------------------------
 
 func _apply_item() -> void:
 	if _item_sprite == null:
 		return
 	var tex := item.texture if item else null
+	var stow := item.item_type().stow_style if item and item.item_type() else ItemTypeData.StowStyle.BACK
 	for s: Sprite2D in [_item_sprite, _stow_back, _stow_hip]:
 		s.texture = tex
 		s.offset = -item.grip if item else Vector2.ZERO
 	_item_sprite.visible = item != null and not stowed
-	_stow_back.visible = item != null and stowed and item.stow_style == HeldItemLook.StowStyle.BACK
-	_stow_hip.visible = item != null and stowed and item.stow_style == HeldItemLook.StowStyle.HIP
+	_stow_back.visible = item != null and stowed and stow == ItemTypeData.StowStyle.BACK
+	_stow_hip.visible = item != null and stowed and stow == ItemTypeData.StowStyle.HIP
 
 
-## Item axis angle (radians): which way the item points right now.
-func item_angle() -> float:
-	if item == null:
-		return 0.0
-	match arm_mode:
-		ArmMode.USE:
-			return deg_to_rad(lerpf(item.swing_from, item.swing_to, _ease(use_progress)))
-		ArmMode.AIM:
-			if item.aim_rotates and hands.has(&"front") and rig.arms.has(&"front"):
-				return (to_local(aim_global) - hands[&"front"]).angle()
-	return deg_to_rad(item.hold_angle)
+## Puts the item in the holding hand at the motion's angle.
+func _place_item(m: ItemMotion, side: StringName, shoulder: Vector2, aim_angle: float = 0.0) -> void:
+	var hand: Vector2 = hands.get(side, shoulder)
+	var offset := deg_to_rad(m.item_angle_at(motion_t))
+	match m.item_angle_mode:
+		ItemMotion.ItemAngle.ARM:
+			item_rotation = (hand - shoulder).angle() + offset
+		ItemMotion.ItemAngle.AIM:
+			item_rotation = ((to_local(aim_global) - hand).angle() if m.aims else aim_angle) + offset
+		_:
+			item_rotation = offset
+	_item_sprite.position = hand
+	# The texture points up-right (-45 degrees); turn that onto the item angle.
+	_item_sprite.rotation = item_rotation + PI / 4.0
 
 
-func _place_item(body_abs: int) -> void:
+## A pixel of the item texture, in doll space, with the item where it is now.
+func _grip_point(texture_px: Vector2) -> Vector2:
+	return _item_sprite.position + (texture_px - item.grip).rotated(_item_sprite.rotation)
+
+
+func _place_stowed(body_abs: int, shift: Vector2) -> void:
 	if item == null:
 		return
-	# Texture points up-right (-45 degrees); rotate that onto the item angle.
-	var rot := item_angle() + PI / 4.0
-	if _item_sprite.visible:
-		_item_sprite.position = hands.get(&"front", Vector2.ZERO)
-		_item_sprite.rotation = rot
-	var shoulder := Vector2.ZERO
-	if rig.arms.has(&"front"):
-		shoulder = (rig.arms[&"front"].shoulder as Vector2) + rig.body_offset[body_abs] - rig.anchor + Vector2(0, dip)
+	var shoulder := _shoulder(&"front", body_abs, shift)
 	_stow_back.position = shoulder + stow_back_offset
 	_stow_back.rotation = deg_to_rad(stow_back_angle) + PI / 4.0
 	_stow_hip.position = shoulder + stow_hip_offset
 	_stow_hip.rotation = deg_to_rad(stow_hip_angle) + PI / 4.0
 
 
-## Where the back hand goes on a two-handed item held by a front hand at `hand`,
-## pointing along `angle`.
-func _grip2_at(hand: Vector2, angle: float) -> Vector2:
-	return hand + (item.grip2 - item.grip).rotated(angle + PI / 4.0)
-
-
-func _second_grip() -> Vector2:
-	return _grip2_at(hands.get(&"front", Vector2.ZERO), item_angle())
-
-
-func _second_grip_for(front_shoulder: Vector2, arm_angle: float) -> Vector2:
-	var arm: Dictionary = rig.arms[&"front"]
-	var reach := ((arm.hand as Vector2) - (arm.shoulder as Vector2)).length()
-	var hand := front_shoulder + Vector2.from_angle(arm_angle) * reach
-	return _grip2_at(hand, arm_angle)
-
-
-func _second_grip_for_hold(front_shoulder: Vector2) -> Vector2:
-	return _grip2_at(front_shoulder + two_hand_reach, deg_to_rad(item.hold_angle))
-
-
-static func _ease(t: float) -> float:
-	# Fast through the middle of the swing, like a real swing.
-	return 0.5 - 0.5 * cos(PI * clampf(t, 0.0, 1.0))
-
-
-# --- look -----------------------------------------------------------------------------
+# --- look -------------------------------------------------------------------------------
 
 func _apply_look() -> void:
 	if _material == null:
