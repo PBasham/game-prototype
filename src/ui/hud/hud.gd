@@ -1,7 +1,8 @@
 class_name Hud
 extends CanvasLayer
 ## The in-world HUD: the hotbar (top left), the inventory panel (I or Tab) with the
-## equipment and spell sections, the spell wheel (hold R), the stack held on the mouse,
+## equipment and spell sections, the spellbook key (tap R: book out or away, hold R:
+## spell wheel), the stack held on the mouse,
 ## tooltips, and pickup notes. Placeholder look until real UI art exists.
 ##
 ## Inventory panel: 4 rows of 10, the top row is the hotbar.
@@ -33,6 +34,9 @@ const EQUIP_SLOTS: Array[StringName] = [CharacterData.SLOT_BOOK, CharacterData.S
 
 ## Radius (UI px) of the spell wheel.
 @export var wheel_radius := 44.0
+## Holding R this long (seconds) opens the spell wheel; a shorter tap takes the
+## spellbook out or puts it back.
+@export var wheel_hold_seconds := 0.2
 
 var world: World
 var open := false
@@ -43,6 +47,8 @@ var cursor_count := 0
 var wheel_open := false
 var wheel_center := Vector2.ZERO
 var wheel_choice: StringName = &""
+var _r_down := false
+var _r_held := 0.0
 
 var _grid: Grid
 var _wheel: Wheel
@@ -496,10 +502,20 @@ func _clear_cursor() -> void:
 # --- spell wheel -------------------------------------------------------------------------
 
 func _update_wheel(paused: bool) -> void:
-	if Input.is_action_just_pressed("spell_wheel") and not paused and not open:
-		wheel_open = true
-		wheel_center = _wheel.get_local_mouse_position()
-		wheel_choice = &""
+	# R: tap = take the spellbook out (or put it back), hold = spell wheel.
+	if Input.is_action_just_pressed("spellbook") and not paused and not open:
+		_r_held = 0.0
+		_r_down = true
+	if _r_down:
+		_r_held += get_process_delta_time()
+		if not wheel_open and _r_held >= wheel_hold_seconds:
+			wheel_open = true
+			wheel_center = _wheel.get_local_mouse_position()
+			wheel_choice = &""
+		if not Input.is_action_pressed("spellbook"):
+			_r_down = false
+			if not wheel_open:
+				world.player.toggle_spellbook()
 	if not wheel_open:
 		_wheel.visible = false
 		return
@@ -510,7 +526,7 @@ func _update_wheel(paused: bool) -> void:
 	if d.length() > 8.0 and not spells.is_empty():
 		wheel_choice = spells[wheel_index(d.angle(), spells.size())]
 	_wheel.queue_redraw()
-	if not Input.is_action_pressed("spell_wheel"):
+	if not _r_down:
 		wheel_open = false
 		_wheel.visible = false
 		if wheel_choice != &"":

@@ -265,3 +265,48 @@ func test_tome_and_wheel_spells_cast_with_book_and_conduit() -> void:
 	assert_almost_eq(u.damage(), 55.0 * 1.5 * 1.25, 0.01, "book power x conduit power")
 	w.player.select_slot(0)
 	assert_eq(w.player.held_item.id, &"copper_pickaxe")
+
+
+func test_drops_at_your_feet_are_picked_up() -> void:
+	var inv := w.character.inventory
+	var before := inv.count_of(&"dirt")
+	# On the ground two tiles to the side: level with the feet, far below the chest.
+	w.request_spawn_drop(&"dirt", 2, w.player.global_position + Vector2(2 * World.TILE, -1))
+	await wait_seconds(1.0)
+	assert_eq(inv.count_of(&"dirt"), before + 2)
+
+
+func test_drops_dont_fly_off_when_the_player_leaves() -> void:
+	var drop := w.request_spawn_drop(&"stone", 1, w.player.global_position + Vector2(40 * World.TILE, -8))
+	await wait_physics_frames(2)
+	drop._magnetized = true
+	drop.velocity = Vector2(-300.0 * World.TILE, 0)  # absurdly fast, then out of range
+	await wait_seconds(1.0)
+	assert_lt(absf(drop.velocity.x), drop.max_loose_speed * World.TILE + 1.0)
+	var moved := absf(drop.global_position.x - (w.player.global_position.x + 40 * World.TILE))
+	assert_lt(moved, 6.0 * World.TILE, "slid at most a few tiles")
+
+
+func test_r_takes_the_spellbook_out_and_back() -> void:
+	var p := w.player
+	p.select_slot(1)
+	p.toggle_spellbook()
+	assert_eq(p.selected, -1)
+	assert_eq(p.held_item.id, &"mining_spell", "the book's first spell")
+	p.toggle_spellbook()
+	assert_eq(p.selected, 1, "back to the slot you had")
+
+
+func test_building_uses_the_spellbook_reach_and_shared_area() -> void:
+	var u := w.item_user
+	w.player.select_slot(3)  # planks
+	u.update_target(w.player.chest())
+	assert_almost_eq(u.reach(), 12.0 * World.TILE, 0.01, "the book's build reach")
+	var planks := w.player.held_item
+	w.player.area_scrolled.emit(1)
+	w.player.area_scrolled.emit(1)
+	assert_eq(u.area_size(planks), 3, "up to the book's build_area_max")
+	w.player.select_slot(2)  # mining spell shortcut
+	assert_eq(u.area_size(w.player.use_item()), 3, "the spell shares the area")
+	w.player.select_slot(0)
+	assert_eq(u.area_size(w.player.held_item), 2, "the pickaxe keeps its own")

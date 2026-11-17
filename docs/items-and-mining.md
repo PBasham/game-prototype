@@ -14,8 +14,9 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **Right click** | On something you can interact with (doors, chests later): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
 | **E** | Interact with the nearest thing in reach (nothing interactable exists yet) |
 | **I** or **Tab** | Open / close the inventory (with equipment and spells) |
-| **R** (hold) | Spell wheel: move the mouse toward a spell, let go to ready it |
-| **Ctrl + mouse wheel** | Change the area (mining spell 1x1 to 3x3; blocks and grass seeds 1x1 to 2x2). Wheel up = bigger. |
+| **R** (tap) | Take the spellbook out (like Starbound's matter manipulator), with the last spell you used; tap again to go back to your hotbar slot |
+| **R** (hold) | Spell wheel: move the mouse toward a spell, let go to cast with it |
+| **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
 | **Q** | Throw the selected stack |
 | **H** | Put the held item away / take it out |
 
@@ -69,9 +70,12 @@ Each item is an `ItemData` (`src/items/item_data.gd`). Open one in the Inspector
 | `places_wall` | Wall placed with right click (the back layer) |
 | `plants` | `tree` (a sapling on grass) or `grass` (turns dirt into grass) |
 | `free_place` | Can go anywhere in reach; otherwise it must touch a block or wall |
-| `place_area_max` | Biggest square the area toggle places at once |
+| `place_area_max` | 0 = up to the spellbook's `build_area_max`; 1 = always one at a time (tree seeds); other = a cap |
+| `place_reach_tiles` | 0 = the spellbook's `build_reach_tiles`; set it to give an item its own placing reach |
 | **Magic** | |
 | `spell_slots` | Books: how many spells the book holds |
+| `build_reach_tiles` | Books: how far you place blocks, walls and seeds (12) |
+| `build_area_max` | Books: biggest building area (3) |
 | `spell_power` | Books, conduits, tomes: multiplies spell strength |
 | `spell_reach_bonus` | Conduits: extra spell reach in tiles |
 | `conduit_type` | Conduits: what kind (spells can require one) |
@@ -121,8 +125,10 @@ spell has the same mining fields as an item (beam, damage, area, reach) plus
   know", then click a Spellbook slot. Right click a Spellbook slot to empty it. Only
   spells in the book can be cast (from the wheel or a shortcut).
 - **Casting:**
-  - **Spell wheel:** hold R, move toward a spell, let go. The spell is ready in your
-    hands (the hotbar shows no selection) until you pick a hotbar slot.
+  - **R, the spellbook key:** tap R to take the book out with the last spell you used
+    (or the book's first), tap again to put it away and go back to your hotbar slot.
+    Hold R for the **spell wheel**: move toward a spell, let go. While the book is
+    out the hotbar shows no selection; picking a slot also puts it away.
   - **Hotbar shortcuts:** click a known spell, then a hotbar slot. Number keys and the
     wheel then pick it like an item. A small blue mark shows it's a shortcut; it turns
     red when the spell can't be cast (not in the book, missing conduit). Shortcuts
@@ -135,6 +141,9 @@ spell has the same mining fields as an item (beam, damage, area, reach) plus
 - **Tomes:** a hotbar item that casts one spell (`tome_spell`) without needing it in
   the book (a conduit requirement still applies). Strength uses the tome's
   `spell_power` instead of the book's.
+- **The book is your building tool too:** placing blocks, walls and seeds uses the
+  book's `build_reach_tiles` (12, plus the conduit's reach bonus) and the shared area
+  setting, so building feels the same as the mining spell.
 - **Strength:** damage = spell's `mining_damage` x book (or tome) `spell_power` x
   conduit `spell_power`. Reach = spell's `reach_tiles` + conduit `spell_reach_bonus`.
 - No mana yet.
@@ -200,9 +209,13 @@ where the ring appears), `ring_alpha`, `swing_cut_tiles`.
 
 ## Drops (`src/items/item_drop.gd`)
 
-Items pop out, fall, land on blocks and platforms, and fly to you inside 3 tiles.
-Tunables per drop: `magnet_tiles` (3), `magnet_accel`, `gravity`, `thrown_pickup_delay`
-(1 s, so a thrown stack doesn't come straight back), `despawn_minutes` (10). Drops aren't
+Items pop out, fall, land on blocks and platforms, and fly to you inside 3 tiles of
+your body (measured to the nearest point of the body, so drops at your feet count).
+Tunables per drop: `magnet_tiles` (3), `pickup_tiles` (0.6), `magnet_speed`,
+`magnet_accel`, `gravity`, `ground_friction`, `air_friction`, `max_loose_speed` (6: if
+you walk away from a drop flying toward you, it slows to this instead of shooting
+off), `thrown_pickup_delay` (1 s, so a thrown stack doesn't come straight back),
+`despawn_minutes` (10). Drops aren't
 saved with the world yet.
 
 ## Trees, saplings, flowers, grass (`Plants` node, `src/world/plant_layer.gd`)

@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Spellbook as the matter manipulator
+
+- Tap R takes the spellbook out (last spell used), tap again goes back to the hotbar;
+  hold R for the spell wheel.
+- Building uses the book's stats: placing reach `build_reach_tiles` (12) and one area
+  setting shared with spells, up to `build_area_max` (3). Pickaxes keep their own.
+- Drops: magnet measured from the player's body (drops at the feet were never picked
+  up), and a drop that loses the player slows down instead of sliding off at flying
+  speed (ore was ending up 20+ tiles away).
+
 ## 2026-11-17: Front/back layers and magic (Phase 4, second pass)
 
 - **Starbound-style layers:** one item per material; left click = front layer, right

@@ -6,11 +6,22 @@ extends Node2D
 
 const TILE := float(World.TILE)
 
-## Tiles: the drop flies to the player inside this distance.
+## Tiles: the drop flies to the player inside this distance (from the player's body,
+## not a single point, so drops at your feet count).
 @export var magnet_tiles := 3.0
+## Tiles: picked up when this close to the body.
+@export var pickup_tiles := 0.6
+## Tiles/s: fastest it flies toward the player.
+@export var magnet_speed := 30.0
 ## Tiles/s^2 it accelerates toward the player while magnetized.
 @export var magnet_accel := 260.0
 @export var gravity := 160.0
+## Tiles/s^2 it slows down sliding on the ground / flying through the air.
+@export var ground_friction := 80.0
+@export var air_friction := 4.0
+## Tiles/s: fastest it can still be moving sideways after the player walks out of the
+## magnet range (so it doesn't fly off).
+@export var max_loose_speed := 6.0
 ## Tiles/s.
 @export var max_fall := 60.0
 ## Seconds before a stack the player threw can be picked up again.
@@ -25,6 +36,7 @@ var velocity := Vector2.ZERO
 var _pickup_delay := 0.0
 var _age := 0.0
 var _bob := 0.0
+var _magnetized := false
 var _sprite: Sprite2D
 
 
@@ -54,17 +66,30 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 	var player := world.player if world else null
-	var to_player := (player.chest() + Vector2(0, 12)) - global_position if player else Vector2.INF
-	var magnet := player != null and _pickup_delay <= 0.0 and to_player.length() < magnet_tiles * TILE \
+	var center := global_position + Vector2(0, -4)
+	var gap := INF
+	var to_player := Vector2.ZERO
+	if player:
+		# Distance to the nearest point of the player's body.
+		var body := player.body_rect()
+		var nearest := center.clamp(body.position, body.end)
+		gap = center.distance_to(nearest)
+		to_player = body.get_center() - center
+	var magnet := player != null and _pickup_delay <= 0.0 and gap < magnet_tiles * TILE \
 		and player.character and player.character.inventory.room_for(item_id) > 0
 	if magnet:
-		velocity = velocity.move_toward(to_player.normalized() * 40.0 * TILE, magnet_accel * TILE * delta)
+		_magnetized = true
+		velocity = velocity.move_toward(to_player.normalized() * magnet_speed * TILE, magnet_accel * TILE * delta)
 		global_position += velocity * delta
-		if to_player.length() < TILE * 1.5:
+		if gap < pickup_tiles * TILE:
 			_pick_up(player)
 		return
+	if _magnetized:
+		# Lost the player (walked away, inventory full): don't keep the flying speed.
+		_magnetized = false
+		velocity = velocity.limit_length(max_loose_speed * TILE)
 	velocity.y = minf(velocity.y + gravity * TILE * delta, max_fall * TILE)
-	velocity.x = move_toward(velocity.x, 0.0, (6.0 if _on_ground() else 1.5) * TILE * delta)
+	velocity.x = move_toward(velocity.x, 0.0, (ground_friction if _on_ground() else air_friction) * TILE * delta)
 	var next := global_position + velocity * delta
 	# Sideways: stop at solid blocks.
 	if world.collision_at(Vector2(next.x, global_position.y - 2.0)) == TileDef.Collision.SOLID:

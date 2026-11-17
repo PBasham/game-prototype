@@ -90,8 +90,20 @@ func damage() -> float:
 func reach() -> float:
 	if _item == null:
 		return 0.0
-	var bonus := world.player.character.spell_reach_bonus() if _item.is_spell() and world.player.character else 0.0
+	var c := world.player.character
+	if _places(_item):
+		# Building reach comes from the spellbook (the book is the building tool).
+		if _item.place_reach_tiles > 0.0 or c == null:
+			return maxf(_item.place_reach_tiles, 1.0) * TILE
+		return (c.book().build_reach_tiles + c.spell_reach_bonus()) * TILE
+	var bonus := c.spell_reach_bonus() if _item.is_spell() and c else 0.0
 	return (_item.reach_tiles + bonus) * TILE
+
+
+## Blocks, walls and seeds (not tools or spells).
+static func _places(item: ItemData) -> bool:
+	return item.mining_damage <= 0.0 and item.axe_damage <= 0.0 \
+		and (item.places_block != &"" or item.places_wall != &"" or item.plants != &"")
 
 
 func _spell_power() -> float:
@@ -191,17 +203,29 @@ func area_size(item: ItemData) -> int:
 		hi = maxi(item.mining_area_max, item.mining_area)
 		lo = 1 if hi > item.mining_area else item.mining_area
 		start = item.mining_area
-	elif item.places_block != &"" or item.places_wall != &"" or item.plants == &"grass":
-		hi = maxi(item.place_area_max, 1)
-	return clampi(_area.get(item.id, start), lo, hi)
+		start = item.mining_area
+	elif _places(item):
+		var c := world.player.character
+		hi = c.book().build_area_max if c and c.book() else 2
+		if item.place_area_max > 0:
+			hi = mini(hi, item.place_area_max)
+		start = 1
+	return clampi(_area.get(_area_key(item), start), lo, maxi(hi, lo))
+
+
+## Spells and building share one area setting (like Starbound's matter manipulator);
+## other tools keep their own.
+func _area_key(item: ItemData) -> StringName:
+	return &"book" if item.is_spell() or _places(item) else item.id
 
 
 func _on_area_scrolled(step: int) -> void:
 	var item := world.player.use_item()
 	if item == null:
 		return
-	_area[item.id] = area_size(item) + step
-	_area[item.id] = area_size(item)  # clamped
+	var key := _area_key(item)
+	_area[key] = area_size(item) + step
+	_area[key] = area_size(item)  # clamped
 	_area_shown = 1.0
 
 

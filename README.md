@@ -40,7 +40,7 @@ Docs:
 | Right click | Interact with what's under the cursor; otherwise the back layer (place background walls, mine them) |
 | E | Interact with the nearest thing |
 | I or Tab | Inventory, equipment (book, conduit) and spells |
-| R (hold) | Spell wheel |
+| R | Tap: spellbook out / away. Hold: spell wheel |
 | Ctrl + mouse wheel | Mining / placing area |
 | Q | Throw the selected stack |
 | H | Put the held item away / take it out |

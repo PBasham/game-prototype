@@ -144,8 +144,11 @@ var _combo_index := -1
 ## Seconds left to continue the combo after an attack ends.
 var _combo_left := 0.0
 var _hold_time := 0.0
-## Spell readied from the wheel (selected == -1).
+## Spell readied with R (selected == -1), and the hotbar slot to go back to.
 var _readied: ItemData
+var _slot_before_book := 0
+## The spell R takes out (the last one readied).
+var last_spell: StringName = &""
 ## Book looks for casting, per book id.
 var _book_looks: Dictionary[StringName, HeldItemLook] = {}
 
@@ -184,16 +187,38 @@ func select_slot(slot: int) -> void:
 	selection_changed.emit(selected)
 
 
-## Readies a spell from the spell wheel (not on the hotbar): it's cast with the clicks
-## until a hotbar slot is picked again.
+## Readies a spell (the spellbook out, like Starbound's matter manipulator): it's cast
+## with the clicks until a hotbar slot is picked again.
 func ready_spell(spell_id: StringName) -> void:
 	var spell := ItemData.find(ItemData.spell_key(spell_id))
 	if spell == null:
 		return
+	if selected >= 0:
+		_slot_before_book = selected
 	selected = -1
 	_readied = spell
+	last_spell = spell_id
 	refresh_held()
 	selection_changed.emit(selected)
+
+
+## R tapped: take the spellbook out (with the last spell used, or the book's first) or
+## put it back and return to the hotbar slot you had.
+func toggle_spellbook() -> void:
+	if selected < 0:
+		select_slot(_slot_before_book)
+		return
+	var spell := last_spell
+	if character and not character.in_book(spell):
+		spell = &""
+		for s in character.book_loadout():
+			if s != &"":
+				spell = s
+				break
+	if spell == &"":
+		EventBus.debug_message.emit("No spells in your spellbook")
+		return
+	ready_spell(spell)
 
 
 ## Holds whatever is in the selected slot (after the inventory or equipment changed).
