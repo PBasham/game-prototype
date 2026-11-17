@@ -123,6 +123,13 @@ Code needs the shoulder, elbow and hand of each arm.
   attach where the body actually is in each pose.
 - **Elbow and hand** come from the rest frame: elbow = bottom of the upper arm,
   hand = bottom of the lower arm. They define the arm's bone lengths.
+- **The pixels of a code-posed arm** also come from the rest frame. The rest frame is
+  the 3/4 idle, where the back arm is drawn thin at the top for perspective; rotated
+  into a side pose that reads as a swapped bicep and forearm. So until an `arms/Rest`
+  tag exists, the back arm borrows the **front** arm's pieces, darkened
+  (`back_arm_from_front`, `back_arm_shade` on the PaperDoll). Best fix: draw a
+  one-frame `arms/Rest` tag, side view, both arms hanging straight down; then both arms
+  use their own pieces.
 - **The elbow always bends the same way** (clockwise of the shoulder-to-hand line on a
   right-facing character): below the arm for a forward reach, behind it for a downward
   one, in front when raised.
@@ -140,6 +147,21 @@ they're wrong, hands on the rest frame):
 | `#00ff00` | neck (reserved) |
 
 The Pivots layer is never drawn.
+
+## Tweaking animations yourself
+
+Everything about holding and attacks is data you can edit:
+
+1. Run the game (F5) and open the **Doll Viewer** from the menu (or play with an item).
+2. In the editor, open `data/item_types/<type>.tres` (e.g. `sword.tres`). Expand
+   `attacks`, pick a motion, expand `front` or `back`, click the `angle` or `reach`
+   curve and drag its points; change `duration`, `lunge`, `item_angle`.
+3. Save (Ctrl+S), then press **Reload** in the Doll Viewer, or **F7** in game. The new
+   values apply immediately, no restart.
+
+Tips: angle 0 = forward, -90 = up, 90 = down. Reach 1 = straight arm. Each curve's x
+axis is time through the motion (0 to 1). To start over on one type, `git checkout`
+that file.
 
 ## Items and item types
 

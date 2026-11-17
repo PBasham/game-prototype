@@ -130,6 +130,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			and (event as InputEventKey).physical_keycode == KEY_F6:
 		regenerate()
 		get_viewport().set_input_as_handled()
+	elif OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo \
+			and (event as InputEventKey).physical_keycode == KEY_F7:
+		HeldItemLook.reload_types()  # after editing data/item_types/*.tres
+		EventBus.debug_message.emit("Item types reloaded")
+		get_viewport().set_input_as_handled()
 
 
 func _exit_tree() -> void:

@@ -223,3 +223,28 @@ func test_drawn_tag_lookup_prefers_item_then_type_then_generic() -> void:
 	d.force_posed = true
 	assert_eq(d.drawn_tag_for(slash), "")
 	rig.tags = saved
+
+
+func test_reload_types_updates_items_in_place() -> void:
+	var sword := DevHeldItems.by_name("Sword")
+	var t := sword.item_type()
+	var original := t.attacks[0].duration
+	t.attacks[0].duration = 9.0  # pretend: a stale value in memory
+	HeldItemLook.reload_types()
+	assert_eq(sword.item_type(), t, "same object")
+	assert_almost_eq(sword.item_type().attacks[0].duration, original, 0.0001, "re-read from disk")
+
+
+func test_back_arm_borrows_front_arm_pieces_until_arms_rest_exists() -> void:
+	var d := _doll()
+	d.item = DevHeldItems.by_name("2H sword")
+	d.motion = d.item.attacks()[0]
+	d.motion_t = 0.5
+	d._update()
+	var back_upper: int = rig.arms[&"back"].upper
+	var front_upper: int = rig.arms[&"front"].upper
+	assert_eq(d._sprites[back_upper].region_rect, rig.region(front_upper, rig.rest_frame))
+	assert_lt(d._slots[back_upper].modulate.r, 1.0, "darkened")
+	d.back_arm_from_front = false
+	d._update()
+	assert_eq(d._sprites[back_upper].region_rect, rig.region(back_upper, rig.rest_frame))

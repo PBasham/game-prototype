@@ -30,6 +30,13 @@ const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 @export_group("")
 ## Show code-posed arms even when drawn frames exist (to compare).
 @export var force_posed := false
+## Code-posed back arm uses the front arm's pieces (darkened by back_arm_shade). The
+## rest pose is the 3/4 idle, where the back arm is drawn thin at the top for
+## perspective; rotated into a side pose that reads as a swapped bicep and forearm. An
+## "arms/Rest" tag drawn in side view fixes the source instead; then turn this off.
+@export var back_arm_from_front := true
+## Brightness of the back arm when it borrows the front arm's pieces (1 = same).
+@export_range(0.3, 1.0) var back_arm_shade := 0.82
 ## Seconds the hands take to slide to a new pose when the motion changes (picking up,
 ## attacking, aiming, between combo hits), instead of jumping there.
 @export var blend_time := 0.07
@@ -281,6 +288,7 @@ func _show_frame(pi: int, abs_frame: int, shift: Vector2) -> void:
 	var slot := _slots[pi]
 	slot.position = shift
 	slot.rotation = 0.0
+	slot.modulate = Color.WHITE
 	_set_region(pi, rig.region(pi, abs_frame), -rig.anchor)
 
 
@@ -394,9 +402,10 @@ func _reach(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, target:
 	if _blending(side):
 		var k := 1.0 - _blend_left / blend_time
 		target = _from_hands[side].lerp(target, k * k * (3.0 - 2.0 * k))
-	var s0: Vector2 = arm.shoulder
-	var e0: Vector2 = arm.elbow
-	var h0: Vector2 = arm.hand
+	var src := _bone_source(side)
+	var s0: Vector2 = src.shoulder
+	var e0: Vector2 = src.elbow
+	var h0: Vector2 = src.hand
 	var l1 := (e0 - s0).length()
 	var l2 := (h0 - e0).length()
 	var to := target - shoulder
@@ -412,8 +421,9 @@ func _reach(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, target:
 	var elbow := shoulder + Vector2.from_angle(a1) * l1
 	var hand := shoulder + to.normalized() * d
 	var a2 := (hand - elbow).angle()
-	_bone(arm.upper, s0, shoulder, a1 - (e0 - s0).angle())
-	_bone(arm.lower, e0, elbow, a2 - (h0 - e0).angle())
+	var tint := Color(back_arm_shade, back_arm_shade, back_arm_shade) if src != arm else Color.WHITE
+	_bone(arm.upper, s0, shoulder, a1 - (e0 - s0).angle(), src.upper, tint)
+	_bone(arm.lower, e0, elbow, a2 - (h0 - e0).angle(), src.lower, tint)
 	for pi in parts:
 		# Any extra layers in the arm channel follow the lower arm.
 		if pi != arm.upper and pi != arm.lower:
@@ -422,11 +432,20 @@ func _reach(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, target:
 
 
 ## Draws a part from the rest frame, rotated by `rot` around `joint_rest` placed at `at`.
-func _bone(pi: int, joint_rest: Vector2, at: Vector2, rot: float) -> void:
+## `source` is the part whose pixels to draw (default: the part itself).
+func _bone(pi: int, joint_rest: Vector2, at: Vector2, rot: float, source: int = -1, tint: Color = Color.WHITE) -> void:
 	var slot := _slots[pi]
 	slot.position = at
 	slot.rotation = rot
-	_set_region(pi, rig.region(pi, rig.rest_frame), -joint_rest)
+	slot.modulate = tint
+	_set_region(pi, rig.region(source if source >= 0 else pi, rig.rest_frame), -joint_rest)
+
+
+## Which arm's pieces and joints a posed arm is drawn with.
+func _bone_source(side: StringName) -> Dictionary:
+	if side == &"back" and back_arm_from_front and rig.arms.has(&"front") and not rig.tags.has("arms/Rest"):
+		return rig.arms[&"front"]
+	return rig.arms[side]
 
 
 ## Hand position in a drawn frame: the end of the lower arm farthest from the shoulder.

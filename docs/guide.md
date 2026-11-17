@@ -214,6 +214,7 @@ Debug builds only (running from the editor counts).
 | **Mouse wheel** | Debug brush: pick a block type. |
 | **Left / right mouse** | Debug brush (when on): remove / place a block (until real mining). |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
+| **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |
 

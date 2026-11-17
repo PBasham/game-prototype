@@ -44,6 +44,7 @@ Docs:
 | Esc | Pause menu (resume, save, quit to menu) |
 | F3 | Debug overlay |
 | F6 | Regenerate the world from `data/worldgen/forest.tres` (debug builds) |
+| F7 | Reload item types after editing `data/item_types/*.tres` (debug builds) |
 
 Movement values are exported on the Player: run the game, open the **Remote** tree,
 select `Player`, and tweak them live in the Inspector.

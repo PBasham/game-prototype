@@ -74,6 +74,7 @@ func _ready() -> void:
 	bar.add_child(UiKit.button("Colors", _random_colors, 44))
 	bar.add_child(UiKit.button("Reset", _reset_colors, 40))
 	bar.add_child(UiKit.button("Hair", _toggle_hair, 34))
+	bar.add_child(UiKit.button("Reload", _reload, 40))
 	bar.add_child(UiKit.button("Back", func() -> void: Game.quit_to_menu(), 36))
 	_info = UiKit.label("", 8, UiKit.TEXT)
 	_info.position = Vector2(6, 30)
@@ -156,6 +157,12 @@ func _play_chain(d: PaperDoll, chain: Array[ItemMotion]) -> void:
 		t -= GAP
 	d.motion = chain[chain.size() - 1] if not chain.is_empty() else null
 	d.motion_t = 1.0
+
+
+## Re-reads data/item_types after you edit and save one in the editor.
+func _reload() -> void:
+	HeldItemLook.reload_types()
+	_unarmed = load("res://data/item_types/unarmed.tres") as ItemTypeData
 
 
 func _toggle_forced() -> void:

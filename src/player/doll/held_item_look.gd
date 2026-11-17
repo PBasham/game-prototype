@@ -23,6 +23,15 @@ extends Resource
 var _type_cache: ItemTypeData
 
 
+## Re-reads every item type from disk (after editing a .tres while the game runs).
+## Items already holding a type see the new values: the cached resource is updated in
+## place.
+static func reload_types() -> void:
+	for f in DirAccess.get_files_at("res://data/item_types"):
+		if f.ends_with(".tres"):
+			ResourceLoader.load("res://data/item_types/" + f, "", ResourceLoader.CACHE_MODE_REPLACE_DEEP)
+
+
 func item_type() -> ItemTypeData:
 	if _type_cache == null or _type_cache.id != type:
 		_type_cache = load("res://data/item_types/%s.tres" % type) as ItemTypeData
