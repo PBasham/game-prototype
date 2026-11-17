@@ -28,7 +28,7 @@ static func count(key: String) -> int:
 static func max_ms(key: String) -> float:
 	if not _samples.has(key) or _samples[key].is_empty():
 		return 0.0
-	var s := _samples[key].duplicate()
+	var s := PackedInt64Array(_samples[key])
 	s.sort()
 	return s[s.size() - 1] / 1000.0
 
@@ -47,7 +47,7 @@ static func count_over(key: String, usec: int) -> int:
 static func brief(key: String) -> String:
 	if not _samples.has(key) or _samples[key].is_empty():
 		return "-"
-	var s := _samples[key].duplicate()
+	var s := PackedInt64Array(_samples[key])
 	s.sort()
 	return "n %d  med %.1f  max %.1f ms" % [s.size(), s[s.size() / 2] / 1000.0, s[s.size() - 1] / 1000.0]
 
@@ -57,7 +57,7 @@ static func summary() -> String:
 	var lines := PackedStringArray()
 	lines.append("%-22s %6s %8s %8s %8s %9s" % ["key", "n", "median", "p95", "max", "total"])
 	for key: String in _samples:
-		var s := _samples[key].duplicate()
+		var s := PackedInt64Array(_samples[key])
 		if s.is_empty():
 			continue
 		s.sort()

@@ -60,11 +60,11 @@ func _show_settings() -> void:
 	slider.step = 0.25
 	slider.custom_minimum_size = Vector2(140, 16)
 	slider.value = float(Settings.get_value("display", "zoom"))
-	var show := func(v: float) -> void: value.text = "Zoom: %.2fx%s" % [v, "  (default)" if is_equal_approx(v, 3.0) else ""]
-	show.call(slider.value)
+	var show_value := func(v: float) -> void: value.text = "Zoom: %.2fx%s" % [v, "  (default)" if is_equal_approx(v, 3.0) else ""]
+	show_value.call(slider.value)
 	slider.value_changed.connect(func(v: float) -> void:
 		Settings.set_value("display", "zoom", v)
-		show.call(v))
+		show_value.call(v))
 	box.add_child(value)
 	box.add_child(slider)
 	box.add_child(UiKit.label("Lower shows more of the world.", 8, UiKit.DIM))

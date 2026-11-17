@@ -51,9 +51,9 @@ func _show_main() -> void:
 	box.add_child(UiKit.label("game-prototype", 18))
 	box.add_child(UiKit.label("placeholder title", 8, UiKit.DIM))
 	box.add_child(UiKit.button("New World", _show_new_world))
-	var load := UiKit.button("Load World", _show_load_world)
-	load.disabled = SaveManager.list_worlds().is_empty()
-	box.add_child(load)
+	var load_button := UiKit.button("Load World", _show_load_world)
+	load_button.disabled = SaveManager.list_worlds().is_empty()
+	box.add_child(load_button)
 	if OS.is_debug_build():
 		box.add_child(UiKit.label("dev", 8, UiKit.DIM))
 		box.add_child(UiKit.button("Test Course", func() -> void: Game.start_world(WorldInfo.test_course())))

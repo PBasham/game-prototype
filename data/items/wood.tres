@@ -16,6 +16,7 @@ grip = Vector2(4, 6)
 [resource]
 script = ExtResource("5_4ttww")
 icon = ExtResource("4_p75ji")
+impact_at = 0.2
 held = SubResource("Resource_a213e")
 id = &"wood"
 display_name = "Wood"

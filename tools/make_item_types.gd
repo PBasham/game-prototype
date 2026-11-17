@@ -204,8 +204,8 @@ func _block() -> ItemTypeData:
 	t.stow_style = ItemTypeData.StowStyle.HIDDEN
 	t.hold = _natural_hold(-30)
 	t.hold.drawn_tag = ""
-	# A short reach toward the cursor; the block is placed at the end of it.
-	var place := _attack("Place", 0.18, _pose([[0, -25], [0.5, 0], [1, 5]], [[0, 0.7], [0.5, 1.0], [1, 0.85]]), null,
+	# A quick reach toward the cursor (holding the button places about 12 a second).
+	var place := _attack("Place", 0.08, _pose([[0, -25], [0.5, 0], [1, 5]], [[0, 0.7], [0.5, 1.0], [1, 0.85]]), null,
 		[[0, -30]], null, "", true)
 	t.attacks = [place]
 	return t

@@ -94,6 +94,8 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var step_smooth_time := 0.06
 ## Walk up ledges this many tiles high without jumping.
 @export var max_step_tiles := 2
+## Longest that platforms are ignored after Down + Jump. They catch you again as soon
+## as you're through the one you dropped from.
 @export var platform_drop_time := 0.25
 
 @export_group("Fall damage")
@@ -113,6 +115,8 @@ var held_item: ItemData
 var use_back := false
 ## True while the mouse is over UI or a panel is open: clicks don't use items.
 var input_blocked := false
+## True while typing in the dev console: no movement or item input.
+var typing := false
 ## Optional: (back: bool) -> bool. False when using the held item now would do nothing
 ## (a block with nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
 var use_check: Callable
@@ -126,6 +130,7 @@ var _buffer := 0.0
 var _rising_jump := false
 var _climbing := false
 var _drop_timer := 0.0
+var _drop_from_y := 0.0
 var _airborne := false
 var _peak_y := 0.0
 var _takeoff_timer := 0.0
@@ -211,9 +216,9 @@ func toggle_spellbook() -> void:
 	var spell := last_spell
 	if character and not character.in_book(spell):
 		spell = &""
-		for s in character.book_loadout():
-			if s != &"":
-				spell = s
+		for book_spell in character.book_loadout():
+			if book_spell != &"":
+				spell = book_spell
 				break
 	if spell == &"":
 		EventBus.debug_message.emit("No spells in your spellbook")
@@ -224,11 +229,11 @@ func toggle_spellbook() -> void:
 ## Holds whatever is in the selected slot (after the inventory or equipment changed).
 func refresh_held() -> void:
 	var item: ItemData = _readied if selected < 0 else (character.inventory.item(selected) if character else null)
-	var look := _look_for(item)
-	if item == held_item and look == held:
+	var new_look := _look_for(item)
+	if item == held_item and new_look == held:
 		return
 	held_item = item
-	hold(look)
+	hold(new_look)
 
 
 ## The item that's actually used: the held item, or the spell a held tome casts.
@@ -247,12 +252,12 @@ func _look_for(item: ItemData) -> HeldItemLook:
 		if book == null or book.held == null:
 			return null
 		if not _book_looks.has(book.id):
-			var look := HeldItemLook.new()
-			look.id = book.id
-			look.type = &"spell"
-			look.texture = book.held.texture
-			look.grip = book.held.grip
-			_book_looks[book.id] = look
+			var book_look := HeldItemLook.new()
+			book_look.id = book.id
+			book_look.type = &"spell"
+			book_look.texture = book.held.texture
+			book_look.grip = book.held.grip
+			_book_looks[book.id] = book_look
 		return _book_looks[book.id]
 	return item.held
 
@@ -338,16 +343,20 @@ func _hold_motion() -> ItemMotion:
 
 
 func _physics_process(delta: float) -> void:
-	var input_x := Input.get_axis("move_left", "move_right")
-	var input_y := Input.get_axis("move_up", "move_down")
+	var input_x := _axis("move_left", "move_right")
+	var input_y := _axis("move_up", "move_down")
 	_input_x = input_x
-	if Input.is_action_just_pressed("toggle_walk"):
+	if _just("toggle_walk"):
 		walk_toggled = not walk_toggled
 
 	_coyote = coyote_time if is_on_floor() else maxf(_coyote - delta, 0.0)
-	_buffer = jump_buffer_time if Input.is_action_just_pressed("jump") else maxf(_buffer - delta, 0.0)
+	_buffer = jump_buffer_time if _just("jump") else maxf(_buffer - delta, 0.0)
 	if _drop_timer > 0.0:
 		_drop_timer -= delta
+		# Platforms collide again as soon as the feet are through the one we dropped
+		# from, so a platform one tile lower catches us (Down + Jump again to keep going).
+		if global_position.y > _drop_from_y + 4.0:
+			_drop_timer = 0.0
 		if _drop_timer <= 0.0:
 			set_collision_mask_value(2, true)
 
@@ -382,12 +391,13 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 		if input_y > 0.0 and _standing_on_platform():
 			set_collision_mask_value(2, false)
 			_drop_timer = platform_drop_time
+			_drop_from_y = global_position.y
 		else:
 			velocity.y = -jv.y
 			_rising_jump = true
 			_takeoff_timer = takeoff_time
 			_coyote = 0.0
-	if _rising_jump and (velocity.y >= 0.0 or not Input.is_action_pressed("jump")):
+	if _rising_jump and (velocity.y >= 0.0 or not _held("jump")):
 		if velocity.y < 0.0:
 			velocity.y *= jump_cut
 		_rising_jump = false
@@ -421,10 +431,15 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 	var dy := global_position.y - y_before
 	if grounded and is_on_floor() and absf(dy) > 2.0:
 		_step_offset = clampf(_step_offset - dy, -TILE * 3.0, TILE * 3.0)
+		# With physics interpolation the body would be drawn sliding to the new height
+		# over the next tick while the sprite offset already holds it in place: the
+		# sprite dipped a tile and came back (the jitter on stairs). Snap the body's
+		# drawn position instead; the offset does the smoothing.
+		reset_physics_interpolation()
 
 
 func _current_speed() -> float:
-	if Input.is_action_pressed("run"):
+	if _held("run"):
 		return run_speed
 	return walk_speed if walk_toggled else jog_speed
 
@@ -451,9 +466,9 @@ func _start_climb() -> void:
 
 
 func _climb(input_x: float, input_y: float) -> void:
-	if not world.is_climbable_at(_body_center()) or Input.is_action_just_pressed("jump"):
+	if not world.is_climbable_at(_body_center()) or _just("jump"):
 		_climbing = false
-		if Input.is_action_just_pressed("jump"):
+		if _just("jump"):
 			velocity.y = -jump_values(jump_height, time_to_apex).y * 0.7
 		return
 	velocity = Vector2(input_x * walk_speed * 0.5, input_y * climb_speed) * TILE
@@ -465,9 +480,9 @@ func _update_use(delta: float) -> void:
 	# Number keys pick a hotbar slot (polled, so scripted runs can tap them too).
 	if character:
 		for i in Inventory.HOTBAR:
-			if Input.is_action_just_pressed("hotbar_%d" % (i + 1)):
+			if _just("hotbar_%d" % (i + 1)):
 				select_slot(i)
-	if Input.is_action_just_pressed("put_away"):
+	if _just("put_away"):
 		toggle_stowed()
 	_hold_time += delta
 	_combo_left = maxf(_combo_left - delta, 0.0)
@@ -478,18 +493,22 @@ func _update_use(delta: float) -> void:
 		var used := use_item()
 		if used and not stowed and t0 < used.impact_at and t1 >= used.impact_at:
 			use_impact.emit(used)
-		if _attack_time >= _attack.duration:
+		# The impact can end the attack (placing the last block of a stack changes what's
+		# held, which cancels the attack), so check again.
+		if _attack == null:
+			pass
+		elif _attack_time >= _attack.duration:
 			_end_attack(true)
-		elif used and used.beam and not Input.is_action_pressed(_button()):
+		elif used and used.beam and not _held(_button()):
 			_end_attack(true)  # a beam stops when the button is let go
-	if Input.is_action_just_pressed("interact") and world:
+	if _just("interact") and world:
 		world.try_interact_near(self)
 	if _attack == null and not input_blocked:
 		# Left click: front layer (or punch). Right click: interact with what's under the
 		# cursor, otherwise the back layer.
 		var back := false
-		var clicked := Input.is_action_just_pressed("use_primary")
-		if not clicked and Input.is_action_just_pressed("use_secondary"):
+		var clicked := _just("use_primary")
+		if not clicked and _just("use_secondary"):
 			if world and world.try_interact_at(aim_point(), self):
 				return
 			back = held_item != null and not stowed
@@ -497,7 +516,7 @@ func _update_use(delta: float) -> void:
 		var held_down := false
 		if not clicked and _repeats() and _combo_left > 0.0:
 			back = use_back
-			held_down = Input.is_action_pressed(_button(back))
+			held_down = _held(_button(back))
 		if (clicked or held_down) and (not use_check.is_valid() or use_check.call(back)):
 			use_back = back
 			_start_attack()
@@ -614,7 +633,7 @@ func jump_frame_for(count: int) -> int:
 
 
 func _standing_on_platform() -> bool:
-	for dx in [-6.0, 0.0, 6.0]:
+	for dx: float in [-6.0, 0.0, 6.0]:
 		if world.collision_at(global_position + Vector2(dx, 2.0)) == TileDef.Collision.PLATFORM:
 			return true
 	return false
@@ -633,6 +652,19 @@ func doll_item_position() -> Vector2:
 ## The front (casting) hand, in world space: spell beams start here.
 func casting_hand_position() -> Vector2:
 	return _doll.to_global(_doll.hands[&"front"]) if _doll.hands.has(&"front") else chest()
+
+
+## Input, ignored while typing (the dev console).
+func _just(action: StringName) -> bool:
+	return not typing and Input.is_action_just_pressed(action)
+
+
+func _held(action: StringName) -> bool:
+	return not typing and Input.is_action_pressed(action)
+
+
+func _axis(negative: StringName, positive: StringName) -> float:
+	return 0.0 if typing else Input.get_axis(negative, positive)
 
 
 ## Where the player aims: the mouse, or ItemUser.cursor_override (tests, scripted runs).
@@ -677,7 +709,7 @@ func _debug_watch() -> void:
 	if not DebugOverlay.visible:
 		return
 	var t := world.wrap_tile(world.world_to_tile(global_position)) if world else Vector2i.ZERO
-	var pace := "run" if Input.is_action_pressed("run") else ("walk" if walk_toggled else "jog")
+	var pace := "run" if _held("run") else ("walk" if walk_toggled else "jog")
 	DebugOverlay.watch("tile", "%d, %d" % [t.x, t.y])
 	DebugOverlay.watch("move", "%s %.1f t/s%s%s" % [pace, absf(velocity.x) / TILE,
 		"  climbing" if _climbing else "", "  floor" if is_on_floor() else ""])

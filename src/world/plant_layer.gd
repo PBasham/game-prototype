@@ -77,7 +77,7 @@ func setup(w: World) -> void:
 	z_index = -1
 	_grass_id = world.blocks.index_of(&"grass")
 	_dirt_id = world.blocks.index_of(&"dirt")
-	for kind in ["green", "olive", "teal", "gold"]:
+	for kind: String in ["green", "olive", "teal", "gold"]:
 		for i in 3:
 			_trees.append(load("res://assets/trees/pine_%s_%d.png" % [kind, i]) as Texture2D)
 	for i in 5:
@@ -118,6 +118,12 @@ func ground_position(ground: Vector2i, near: Vector2) -> Vector2:
 	var w := world.data.width * TILE
 	base.x += roundf((near.x - base.x) / w) * w
 	return base
+
+
+## True when a tree stands on this block: it can't be mined (chop the tree first).
+func supports(tile: Vector2i) -> bool:
+	var plant: Plant = _plants.get(world.wrap_tile(tile))
+	return plant != null and plant.kind == Kind.TREE
 
 
 ## True when a block placed on `tile` would go through a tree trunk.
@@ -225,7 +231,7 @@ func reset_unchanged() -> void:
 	for wc: Vector2i in _seeded.keys():
 		if not _dirty.has(wc):
 			_seeded.erase(wc)
-			for g: Vector2i in _by_chunk.get(wc, []).duplicate():
+			for g: Vector2i in (_by_chunk.get(wc, []) as Array).duplicate():
 				_remove(g)
 
 
@@ -252,6 +258,13 @@ func _grow(delta: float) -> void:
 		_remove(g)
 		var tree := _add(g, Kind.TREE, randi() % _trees.size())
 		tree.health = tree_health
+
+
+## Dev console: every sapling grows on the next frame (if there's room). Returns how many.
+func grow_all() -> int:
+	for g in _saplings:
+		_plants[g].grow_left = 0.0
+	return _saplings.size()
 
 
 func _clear_above(g: Vector2i) -> bool:
@@ -372,7 +385,7 @@ func _drop_tree(base: Vector2, dir: float) -> void:
 	var length := 10.0 * TILE
 	for i in wood:
 		var along := (i + 0.5) / wood * length * (dir if dir != 0.0 else 0.0)
-		var pos := base + Vector2(along, 0.0 if dir != 0.0 else -i * TILE)
+		var pos := base + Vector2(along, 0.0 if dir != 0.0 else float(-i * TILE))
 		world.request_spawn_drop(&"wood", 1, pos, _pop())
 	var seeds := 1 + (1 if randf() < extra_seed_chance else 0)
 	world.request_spawn_drop(&"tree_seed", seeds, base + Vector2(dir * length * 0.6, 0), _pop())

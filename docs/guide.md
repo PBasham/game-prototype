@@ -86,7 +86,7 @@ grouped in the Inspector. Distances in tiles, speeds in tiles per second.
 | Ground | `ground_accel_time` 0.1, `ground_decel_time` 0.12 | Seconds to reach full speed / to stop. Lower = snappier. |
 | Air control | `air_accel_time` 0.55, `air_turn_time` 0.4, `air_drag_time` 1.6 | How much you can steer mid-jump. `air_turn_time` is how long holding the other way takes to cancel your speed, which is what lets you slow down and drift back a bit. |
 | Jump | `jump_height` 11, `time_to_apex` 0.36, `fall_gravity_multiplier` 1.5, `jump_cut` 0.45, `max_fall_speed` 90, `coyote_time` 0.1, `jump_buffer_time` 0.12 | Gravity and launch speed are worked out from height and time, so you tune the feel directly. Releasing jump early keeps `jump_cut` of the upward speed (short hops). Coyote time lets you jump just after leaving a ledge; the buffer remembers a jump pressed just before landing. |
-| Terrain | `max_step_tiles` 2, `max_step_down_tiles` 1, `step_smooth_time` 0.06, `platform_drop_time` 0.25 | Walks up ledges this high without jumping, and stays on the ground walking down drops this high (no tiny falls). The body moves a whole tile per step; the sprite eases into place over `step_smooth_time` so stairs look smooth. Down + Jump drops through platforms. |
+| Terrain | `max_step_tiles` 2, `max_step_down_tiles` 1, `step_smooth_time` 0.06, `platform_drop_time` 0.25 | Walks up ledges this high without jumping, and stays on the ground walking down drops this high (no tiny falls). The body moves a whole tile per step; the sprite eases into place over `step_smooth_time` so stairs look smooth. Down + Jump drops through platforms. Down + Jump drops through a platform; platforms catch you again as soon as you are through it, so a platform one tile lower stops you (press again to keep dropping). `platform_drop_time` is the longest they are ignored. |
 | Fall damage | `fall_damage_start` 50, `fall_damage_per_tile` 5 | Tiles fallen before damage, and damage per tile beyond. Health arrives later; the overlay shows the last fall. |
 
 Collision is 16x60 px (2 x 7.5 tiles). The camera follows in physics mode with
@@ -219,6 +219,7 @@ Debug builds only (running from the editor counts).
 | **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
+| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `clear`, `kit`, `tp <x> <y>` / `tp spawn`, `pos`, `grow`, `regen`, `cls`. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |
 
@@ -241,6 +242,7 @@ godot --path . -- --seed=42 --spawn=1440 --hold=move_right:20:60 --shot=58:/tmp/
 | `--watch=KEY`, `--log=N` | Print overlay values |
 | `--perf` | Print timings on quit |
 | `--aim=DX:DY` | Aim at this offset (px) from the chest instead of the mouse |
+| `--console=FRAME:CMD` | Run a dev console command at a frame (quote the whole argument if it has spaces) |
 | `--scene=doll` | Open the Doll Viewer |
 | `--menu` | Stay on the main menu instead |
 

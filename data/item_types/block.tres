@@ -30,7 +30,7 @@ point_count = 1
 [sub_resource type="Resource" id="Resource_k2qqm"]
 script = ExtResource("1_4ny77")
 name = "Place"
-duration = 0.18
+duration = 0.08
 aims = true
 front = SubResource("Resource_k51af")
 back = SubResource("Resource_ucr0t")

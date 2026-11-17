@@ -46,6 +46,7 @@ Docs:
 | H | Put the held item away / take it out |
 | B | Debug brush on/off (wheel picks a block, left / right mouse remove / place) |
 | Esc | Pause menu (resume, save, settings with zoom, quit to menu) |
+| ` (~) | Dev console (debug builds): `help` for commands |
 | F3 | Debug overlay |
 | F6 | Regenerate the world from `data/worldgen/forest.tres` (debug builds) |
 | F7 | Reload item types after editing `data/item_types/*.tres` (debug builds) |

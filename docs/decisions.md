@@ -2,6 +2,19 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Playtest round (Phase 4)
+
+- Placing is near instant (12 a second held), like Starbound.
+- Platforms and rope place one at a time; a square / horizontal / vertical placing
+  shape toggle is planned for later.
+- Blocks a tree stands on can't be mined (no more popping trees by digging under).
+- Ctrl + right click equips books and conduits, swapping with the equipped one.
+- Down + Jump drops through one platform at a time.
+- Dev console on ` for debug builds.
+- The integer-division GDScript warning is turned off project-wide (tile math divides
+  ints on purpose); other editor warnings were fixed.
+- Ropes on their own layer and torches: brief sent, waiting on Patrick.
+
 ## 2026-11-17: Spellbook as the matter manipulator
 
 - Tap R takes the spellbook out (last spell used), tap again goes back to the hotbar;

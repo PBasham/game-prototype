@@ -59,7 +59,7 @@ func _ready() -> void:
 		_root.add_child(rect)
 		_rects.append(rect)
 	# Solid ground below the nearest hills, so holes never show sky underneath.
-	var front := _rects.back().texture.get_image() as Image
+	var front := (_rects.back().texture as Texture2D).get_image()
 	_ground = ColorRect.new()
 	_ground.color = front.get_pixel(0, front.get_height() - 1)
 	_ground.size = Vector2(LAYER_WIDTH * 2, 2000)

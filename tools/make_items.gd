@@ -51,8 +51,13 @@ func _items() -> Array[ItemData]:
 	out.append(_block(&"stone", "Stone", "Hard rock.", &"stone_wall"))
 	out.append(_block(&"copper_ore", "Copper Ore", "Smelts into copper (crafting comes later)."))
 	out.append(_block(&"wood_planks", "Wood Planks", "A building block. Right click places it as a back wall.", &"wood_wall"))
-	out.append(_block(&"wood_platform", "Wood Platform", "Stand on it; jump up through it, Down + Jump drops through."))
-	out.append(_block(&"rope", "Rope", "Climb with Up and Down."))
+	# Platforms and rope go one at a time (line placing may come later).
+	var platform := _block(&"wood_platform", "Wood Platform", "Stand on it; jump up through it, Down + Jump drops through.")
+	platform.place_area_max = 1
+	out.append(platform)
+	var rope := _block(&"rope", "Rope", "Climb with Up and Down.")
+	rope.place_area_max = 1
+	out.append(rope)
 	# Materials and seeds.
 	var wood := _small(&"wood", "Wood", "From trees. Crafted into planks (crafting comes later).")
 	out.append(wood)
@@ -125,12 +130,14 @@ func _block(item_id: StringName, label: String, text: String, wall: StringName =
 	item.kind = ItemData.Kind.BLOCK
 	item.places_block = item_id
 	item.places_wall = wall
+	item.impact_at = 0.2  # placed early in the quick Place reach
 	item.held = _look(item_id, &"block", Vector2(3, 5))
 	return item
 
 
 func _small(item_id: StringName, label: String, text: String) -> ItemData:
 	var item := _base(item_id, label, text)
+	item.impact_at = 0.2
 	item.held = _look(item_id, &"block", Vector2(4, 6))
 	return item
 

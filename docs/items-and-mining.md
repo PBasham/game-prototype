@@ -25,6 +25,8 @@ Inventory panel (I): 4 rows of 10, the top row is the hotbar.
 - Left click: pick up a stack, put it down, merge or swap.
 - Right click: take half, or put one down from the stack on the mouse.
 - Shift + left click: move a stack between the hotbar and the rest.
+- Ctrl + right click: equip a book or conduit (swaps with the equipped one). On an
+  equipment slot (or shift + click it): back into the inventory.
 - Click the world with a stack on the mouse: throw it. Closing the panel puts it back.
 - Hover a slot for its tooltip.
 - To the right: the **Book** and **Conduit** equipment slots. Below: the **Spellbook**
@@ -70,7 +72,7 @@ Each item is an `ItemData` (`src/items/item_data.gd`). Open one in the Inspector
 | `places_wall` | Wall placed with right click (the back layer) |
 | `plants` | `tree` (a sapling on grass) or `grass` (turns dirt into grass) |
 | `free_place` | Can go anywhere in reach; otherwise it must touch a block or wall |
-| `place_area_max` | 0 = up to the spellbook's `build_area_max`; 1 = always one at a time (tree seeds); other = a cap |
+| `place_area_max` | 0 = up to the spellbook's `build_area_max`; 1 = always one at a time (tree seeds, platforms, rope); other = a cap |
 | `place_reach_tiles` | 0 = the spellbook's `build_reach_tiles`; set it to give an item its own placing reach |
 | **Magic** | |
 | `spell_slots` | Books: how many spells the book holds |
@@ -179,6 +181,9 @@ inventory row. They're for testing animations, not content, and are never saved.
 - Broken blocks drop their item (`drop_item`, empty = the item with the tile's id;
   grass drops dirt). `unbreakable` blocks can't be mined. The world's bottom row never
   breaks.
+- A block a tree stands on can't be mined (the box goes red): chop the tree first.
+  Later, chests and other objects will protect their blocks the same way
+  (`World.is_protected`).
 - The area is centered on the cursor: a 2x2 picks the four tiles nearest the cursor.
   Each tile must be within reach, measured from the chest to the tile's center.
 
@@ -198,8 +203,15 @@ where the ring appears), `ring_alpha`, `swing_cut_tiles`.
 
 ## Placing
 
-- Left click places a block, right click a background wall, at the swing's impact;
-  hold to keep placing.
+- Left click places a block, right click a background wall, almost instantly (the
+  block type's Place motion is 0.08 s and blocks land at `impact_at` 0.2); hold and drag
+  to keep placing, about 12 a second.
+- Hovering: when the front layer has nothing to do under the cursor but the back layer
+  does (a wall could go there, or there's a wall to mine), the box shows the back
+  target in blue, so you can see a right click will work.
+- Platforms and rope place one at a time. **Planned:** a placing-shape toggle (square,
+  horizontal line, vertical line) so platforms and rope can be laid in lines; until
+  then they're single tiles.
 - A block must touch a block or have a wall behind it (or connect to one through other
   tiles placed in the same click), can't go inside the player or a tree trunk, and
   only replaces air. A wall must touch a wall or a block (or have a block in front of

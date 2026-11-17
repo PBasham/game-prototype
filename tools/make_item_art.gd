@@ -125,7 +125,7 @@ func _platform() -> Image:
 	for x in range(1, 15):
 		for y in range(6, 9):
 			img.set_pixel(x, y, Color("8a6a3a") if y < 8 else Color("5e4626"))
-	for x in [3, 12]:
+	for x: int in [3, 12]:
 		for y in range(9, 12):
 			img.set_pixel(x, y, Color("5e4626"))
 	return img

@@ -310,3 +310,86 @@ func test_building_uses_the_spellbook_reach_and_shared_area() -> void:
 	assert_eq(u.area_size(w.player.use_item()), 3, "the spell shares the area")
 	w.player.select_slot(0)
 	assert_eq(u.area_size(w.player.held_item), 2, "the pickaxe keeps its own")
+
+
+func test_placing_the_last_block_of_a_stack_doesnt_crash() -> void:
+	var inv := w.character.inventory
+	inv.set_slot(3, &"wood_planks", 1)
+	w.player.select_slot(3)
+	var feet := w.world_to_tile(w.player.global_position)
+	var t := Vector2i(feet.x + 4, feet.y - 1)
+	w.item_user.cursor_override = Vector2(t * World.TILE) + Vector2(4, 4)
+	Input.action_press("use_primary")
+	await wait_seconds(0.4)
+	Input.action_release("use_primary")
+	assert_true(inv.is_empty(3), "used up")
+	assert_eq(w.data.get_block(t.x, t.y), w.blocks.index_of(&"wood_planks"))
+	assert_null(w.player.held_item, "empty hands now")
+
+
+func test_blocks_under_trees_cant_be_mined() -> void:
+	var plants := w.plants
+	var feet := w.world_to_tile(w.player.global_position)
+	var g := PlantLayer.NONE
+	for dx in range(6, 30):
+		g = plants.sapling_spot(Vector2i(feet.x + dx, feet.y - 1))
+		if g != PlantLayer.NONE:
+			break
+	plants.request_plant_tree(g)
+	plants.grow_all()
+	await wait_seconds(0.2)
+	assert_eq(plants.plant_at(g).kind, PlantLayer.Kind.TREE)
+	assert_false(w.request_damage_block(g, 10000.0), "the tree holds it")
+	assert_gt(w.data.get_block(g.x, g.y), 0)
+	assert_true(w.is_protected(g))
+
+
+func test_quick_equip_swaps() -> void:
+	var c := w.character
+	var slot := c.inventory.ids.find(&"dev_grimoire")
+	assert_gt(slot, -1)
+	w.hud.quick_equip(slot)
+	assert_eq(c.equipment[CharacterData.SLOT_BOOK], &"dev_grimoire")
+	assert_true(c.inventory.is_empty(slot))
+	c.inventory.set_slot(slot, &"basic_spellbook", 1)
+	w.hud.quick_equip(slot)
+	assert_eq(c.equipment[CharacterData.SLOT_BOOK], &"basic_spellbook")
+	assert_eq(c.inventory.ids[slot], &"dev_grimoire", "swapped back into the slot")
+	w.hud.quick_unequip(CharacterData.SLOT_BOOK)
+	assert_eq(c.equipment[CharacterData.SLOT_BOOK], &"")
+
+
+func test_dev_console() -> void:
+	var con := w.console
+	var inv := w.character.inventory
+	var before := inv.count_of(&"stone")
+	assert_true(con.run("give stone 25"))
+	assert_eq(inv.count_of(&"stone"), before + 25)
+	con.run("give Copper Ore 3")
+	assert_gte(inv.count_of(&"copper_ore"), 3, "by display name")
+	assert_eq(con.find_item("copper_p").id, &"copper_pickaxe", "unique prefix")
+	assert_null(con.find_item("copper"), "ambiguous")
+	con.run("forget mining spell")
+	assert_false(w.character.knows(&"mining_spell"))
+	con.run("learn mining_spell")
+	assert_true(w.character.in_book(&"mining_spell"))
+	assert_false(con.run("nonsense"))
+
+
+func test_down_jump_drops_one_platform_at_a_time() -> void:
+	var feet := w.world_to_tile(w.player.global_position)
+	var plat := w.blocks.index_of(&"wood_platform")
+	# Two platform floors 8 and 9 tiles up, 5 wide, under the player.
+	for x in range(feet.x - 2, feet.x + 3):
+		w.request_set_block(Vector2i(x, feet.y - 9), plat)
+		w.request_set_block(Vector2i(x, feet.y - 8), plat)
+	w.teleport_player(w.tile_to_world(Vector2i(feet.x, feet.y - 9)) + Vector2(4, -1))
+	await wait_seconds(0.3)
+	assert_almost_eq(w.player.global_position.y, float((feet.y - 9) * World.TILE), 1.0, "standing on the top one")
+	Input.action_press("move_down")
+	Input.action_press("jump")
+	await wait_physics_frames(2)
+	Input.action_release("jump")
+	Input.action_release("move_down")
+	await wait_seconds(0.5)
+	assert_almost_eq(w.player.global_position.y, float((feet.y - 8) * World.TILE), 1.0, "caught by the one below")

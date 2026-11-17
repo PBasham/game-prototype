@@ -12,7 +12,7 @@ const WORLD_EXT := ".gpworld"
 
 
 func _ready() -> void:
-	for dir in [CHARACTER_DIR, WORLD_DIR]:
+	for dir: String in [CHARACTER_DIR, WORLD_DIR]:
 		DirAccess.make_dir_recursive_absolute(dir)
 
 

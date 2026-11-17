@@ -54,6 +54,8 @@ var _cracks: CrackOverlay
 var _damage: Dictionary[Vector3i, Array] = {}
 ## Debug builds only (B toggles it); null otherwise.
 var brush: DebugBrush
+## Debug builds only (` toggles it); null otherwise.
+var console: DevConsole
 var _pause_menu: PauseMenu
 var _autosave_left := 0.0
 
@@ -148,6 +150,12 @@ func _ready() -> void:
 	hud.world = self
 	add_child(hud)
 
+	if OS.is_debug_build():
+		console = DevConsole.new()
+		console.name = "DevConsole"
+		console.world = self
+		add_child(console)
+
 	_pause_menu = PauseMenu.new()
 	_pause_menu.name = "PauseMenu"
 	_pause_menu.world = self
@@ -177,15 +185,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		_pause_menu.toggle()
 		get_viewport().set_input_as_handled()
-	elif OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo \
-			and (event as InputEventKey).physical_keycode == KEY_F6:
+	elif OS.is_debug_build() and _key_pressed(event, KEY_F6):
 		regenerate()
 		get_viewport().set_input_as_handled()
-	elif OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo \
-			and (event as InputEventKey).physical_keycode == KEY_F7:
+	elif OS.is_debug_build() and _key_pressed(event, KEY_F7):
 		HeldItemLook.reload_types()  # after editing data/item_types/*.tres
 		EventBus.debug_message.emit("Item types reloaded")
 		get_viewport().set_input_as_handled()
+
+
+func _key_pressed(event: InputEvent, key: Key) -> bool:
+	var k := event as InputEventKey
+	return k != null and k.pressed and not k.echo and k.physical_keycode == key
 
 
 func _exit_tree() -> void:
@@ -349,6 +360,8 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	var def := (walls if wall else blocks).def(id)
 	if def == null or def.unbreakable or def.health <= 0.0:
 		return false
+	if not wall and is_protected(tile):
+		return false
 	var key := Vector3i(tile.x, tile.y, 1 if wall else 0)
 	var entry: Array = _damage.get(key, [0.0, 0.0])
 	entry[0] = float(entry[0]) + amount
@@ -366,6 +379,12 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 		pos.x += roundf((player.global_position.x - pos.x) / (data.width * TILE)) * data.width * TILE
 		request_spawn_drop(drop, def.drop_count, pos, Vector2(randf_range(-2.0, 2.0), -4.0) * TILE)
 	return true
+
+
+## True when something depends on this block (a tree stands on it; chests later), so
+## it can't be mined.
+func is_protected(tile: Vector2i) -> bool:
+	return plants != null and plants.supports(tile)
 
 
 ## 0..1: how damaged a block (or with `wall`, a background wall) is, for the cracks.

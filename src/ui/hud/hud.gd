@@ -9,6 +9,8 @@ extends CanvasLayer
 ##   Left click: pick up a stack / put it down / swap / merge.
 ##   Right click: pick up half, or put one down from the stack on the mouse.
 ##   Shift + left click: move a stack between the hotbar and the rest.
+##   Ctrl + right click: equip a book or conduit (swapping with the equipped one); on an
+##   equipment slot, put it back in the inventory.
 ##   Click outside the panel with a stack on the mouse: throw it.
 ## Equipment (right of the grid): Book and Conduit slots. An empty book slot means the
 ## Basic Spellbook.
@@ -133,7 +135,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
-	var paused := world.get_tree().paused
+	var paused := world.get_tree().paused or (world.console != null and world.console.open)
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
 		set_open(not open)
@@ -341,6 +343,8 @@ func grid_input(event: InputEvent) -> void:
 			if not open:
 				if left:
 					world.player.select_slot(slot)  # hotbar click selects
+			elif right and mb.ctrl_pressed:
+				quick_equip(slot)
 			elif left and mb.shift_pressed:
 				_quick_move(slot)
 			elif left:
@@ -348,7 +352,9 @@ func grid_input(event: InputEvent) -> void:
 			elif right:
 				right_click_slot(slot)
 		Area.EQUIPMENT:
-			if left:
+			if (right and mb.ctrl_pressed) or (left and mb.shift_pressed):
+				quick_unequip(EQUIP_SLOTS[h[1]])
+			elif left:
 				click_equipment(EQUIP_SLOTS[h[1]])
 		Area.BOOK:
 			if left:
@@ -412,9 +418,9 @@ func right_click_slot(slot: int) -> void:
 func click_equipment(slot: StringName) -> void:
 	var c := world.character
 	if cursor_count == 0:
-		var old := c.equip(slot, &"")
-		if old != &"":
-			cursor_id = old
+		var taken := c.equip(slot, &"")
+		if taken != &"":
+			cursor_id = taken
 			cursor_count = 1
 		return
 	var item := ItemData.find(cursor_id)
@@ -427,6 +433,30 @@ func click_equipment(slot: StringName) -> void:
 		cursor_count = 1
 	else:
 		_clear_cursor()
+
+
+## Ctrl + right click on an inventory slot: equip it (book or conduit), swapping with
+## what was equipped.
+func quick_equip(slot: int) -> void:
+	var c := world.character
+	var item := c.inventory.item(slot)
+	if item == null:
+		return
+	for eq in EQUIP_SLOTS:
+		if CharacterData.fits(eq, item):
+			var old := c.equip(eq, item.id)
+			c.inventory.set_slot(slot, old, 1 if old != &"" else 0)
+			return
+
+
+## Ctrl + right click (or shift + click) on an equipment slot: back into the inventory.
+func quick_unequip(eq: StringName) -> void:
+	var c := world.character
+	var item_id: StringName = c.equipment[eq]
+	if item_id == &"" or c.inventory.room_for(item_id) <= 0:
+		return
+	c.equip(eq, &"")
+	c.inventory.add(item_id, 1)
 
 
 func click_book_slot(i: int) -> void:

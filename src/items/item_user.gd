@@ -69,6 +69,13 @@ func _process(delta: float) -> void:
 	# While using, the layer of that use; otherwise preview the back layer while right
 	# click is held.
 	update_target(cursor(), p.use_back if p.is_using() else Input.is_action_pressed("use_secondary"))
+	# Hovering: when the front layer has nothing to do here but the back layer does
+	# (a wall can go here, or there's a wall to mine), show the back target (blue).
+	if not p.is_using() and not back and valid.is_empty() and problem == "" \
+			and mode in [Mode.MINE, Mode.PLACE_BLOCK]:
+		update_target(cursor(), true)
+		if valid.is_empty():
+			update_target(cursor(), false)
 	if _item and _item.beam and mode == Mode.MINE and p.is_using() and not p.input_blocked:
 		for t in valid:
 			if back:
@@ -145,7 +152,8 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 			for t in _tiles():
 				var id := world.data.get_wall(t.x, t.y) if back else world.data.get_block(t.x, t.y)
 				var def := types.def(id) if id > 0 else null
-				if def and not def.unbreakable and def.health > 0.0 and t.y < world.data.height - 1 and _in_reach(t):
+				if def and not def.unbreakable and def.health > 0.0 and t.y < world.data.height - 1 and _in_reach(t) \
+						and (back or not world.is_protected(t)):
 					valid.append(t)
 		Mode.CHOP:
 			var g := world.plants.tree_at_point(at)
@@ -377,16 +385,16 @@ func _draw() -> void:
 		return
 	var p := world.player
 	var aim := cursor()
-	var reach := reach()
+	var reach_px := reach()
 	var ok := not valid.is_empty() or (mode == Mode.CHOP and tree != PlantLayer.NONE)
 	var color := (back_color if back else valid_color) if ok else invalid_color
 	# Range ring: fades in near the edge of reach (and stays when past it).
 	var d := aim.distance_to(p.chest())
-	var k := clampf((d - ring_fade_start * reach) / maxf((1.0 - ring_fade_start) * reach, 1.0), 0.0, 1.0)
+	var k := clampf((d - ring_fade_start * reach_px) / maxf((1.0 - ring_fade_start) * reach_px, 1.0), 0.0, 1.0)
 	if k > 0.0:
-		var ring := valid_color if d <= reach else invalid_color
+		var ring := valid_color if d <= reach_px else invalid_color
 		ring.a = ring_alpha * k
-		draw_arc(p.chest(), reach, 0.0, TAU, 128, ring, 1.0)
+		draw_arc(p.chest(), reach_px, 0.0, TAU, 128, ring, 1.0)
 	# Ghost blocks where blocks or walls will go.
 	if mode in [Mode.PLACE_BLOCK, Mode.PLACE_WALL, Mode.PLANT_GRASS] and _item.icon:
 		var ghost_tex := _item.icon

@@ -17,6 +17,7 @@ grip = Vector2(3, 5)
 script = ExtResource("5_077cm")
 kind = 1
 icon = ExtResource("4_jh5m4")
+impact_at = 0.2
 held = SubResource("Resource_6onem")
 places_block = &"copper_ore"
 id = &"copper_ore"

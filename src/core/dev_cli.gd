@@ -15,6 +15,7 @@ extends Node
 ##   --world=KIND            world generator: forest (default) or course (test course)
 ##   --seed=N                world seed (default 1337); any word works too
 ##   --size=NAME             tiny, small (default), medium, large
+##   --console=FRAME:CMD     run a dev console command at a frame (open, shown)
 ##   --aim=DX:DY             aim at this offset (px) from the player's chest instead of
 ##                           the mouse (mining, placing, facing)
 ##   --scene=doll            open a dev scene instead of a world (doll = Doll Viewer)
@@ -30,6 +31,7 @@ var _log_every := 0
 ## Tile column to spawn at, or -1. Read by World.
 var spawn_x := -1
 var _aim := Vector2.INF
+var _console: Array[Array] = []
 var _perf := false
 var _world_kind := "forest"
 var _seed_text := "1337"
@@ -77,10 +79,12 @@ func _ready() -> void:
 				_size_name = parts[1]
 			"scene":
 				scene_override = parts[1]
+			"console":
+				_console.append([int(v[0]), ":".join(v.slice(1))])
 			"aim":
 				_aim = Vector2(float(v[0]), float(v[1]))
 	set_physics_process(not (_shots.is_empty() and _holds.is_empty() and _quit_at < 0 and _log_every == 0
-		and not _aim.is_finite()))
+		and not _aim.is_finite() and _console.is_empty()))
 
 
 ## True when the command line asks for a scripted run, so the menu should be skipped.
@@ -115,6 +119,11 @@ func _physics_process(_delta: float) -> void:
 			Input.action_press(h[0])
 		elif _frame == h[2]:
 			Input.action_release(h[0])
+	for c in _console:
+		var cw := get_tree().current_scene as World
+		if _frame == c[0] and cw and cw.console:
+			cw.console.set_open(true)
+			cw.console.run(c[1])
 	for s in _shots:
 		if _frame == s[0]:
 			_take(s[1])

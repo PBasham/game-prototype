@@ -17,6 +17,7 @@ grip = Vector2(4, 6)
 script = ExtResource("5_xykmw")
 kind = 5
 icon = ExtResource("4_ijn1l")
+impact_at = 0.2
 held = SubResource("Resource_27kq0")
 plants = &"grass"
 id = &"grass_seeds"
