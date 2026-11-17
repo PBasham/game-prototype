@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/mining_spell.png" id="1_h8opb"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_3hpad"]
+
+[resource]
+script = ExtResource("2_3hpad")
+kind = 4
+icon = ExtResource("1_h8opb")
+max_stack = 1
+mining_damage = 55.0
+beam = true
+mining_area = 2
+mining_area_max = 3
+reach_tiles = 12.0
+id = &"mining_spell"
+display_name = "Mining Spell"
+description = "Hold to mine with a beam (right click: the back layer). Ctrl + mouse wheel changes the area."

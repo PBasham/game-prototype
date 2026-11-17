@@ -3,8 +3,8 @@
 A tour of every feature in the game so far: what it does, where the code is, and what
 you can tweak. For the rules the code follows (data-driven content, host-authoritative,
 threading) see [architecture.md](architecture.md). World generation has its own deep
-dive: [world-generation.md](world-generation.md); items, mining, placing and plants are in
-[items-and-mining.md](items-and-mining.md).
+dive: [world-generation.md](world-generation.md); items, mining, placing, magic and plants are
+in [items-and-mining.md](items-and-mining.md).
 
 **Tweaking in general:** almost every number is an `@export` on a node or a setting in a
 `.tres` file. Two ways to change them:
@@ -124,10 +124,10 @@ F3 shows the current animation, frame, "rev" when reversed, and the arm mode.
 
 The hotbar (top left, 1 to 0 or the mouse wheel) picks what's in your hands. Left click
 uses it, H puts it away, and an empty slot means bare hands (jab, cross, uppercut).
-Items, the inventory (E), mining, placing, trees and grass are all in
-[items-and-mining.md](items-and-mining.md).
+Items, the inventory (I or Tab), front and back layers, mining, placing, magic, trees
+and grass are all in [items-and-mining.md](items-and-mining.md).
 
-Debug builds put placeholder weapons in the second inventory row (open it with E and
+Debug builds put placeholder weapons in the second inventory row (open it with I and
 drag one to the hotbar, or shift + click it) to test the doll:
 
 | Item (type) | Hold | Attacks | Put away |

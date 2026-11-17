@@ -88,6 +88,8 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | --- | --- |
 | items/icons/<item id>.png | 16x16 inventory icon. Tools point up-right, handle bottom-left. Block icons are cut from the terrain textures. |
 | items/held/<item id>.png | Sprite drawn in hand. Tools: same as the icon (grip pixel in the item's `held.grip`). Blocks 7x7, small items 9x9. |
+| items/icons/mining_spell.png | 16x16 spell icon (spells have icons only; the hand shows the equipped book) |
+| items/icons/basic_spellbook.png, items/held/basic_spellbook.png | 11x11 book, upright, spine left; grip pixel (5, 9) |
 | fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |
 
 Replace any of these with real art under the same name; if the size changes, check the

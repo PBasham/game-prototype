@@ -1,5 +1,6 @@
 extends SceneTree
-## Writes the default items (data/items/*.tres) from the table below.
+## Writes the default items (data/items/*.tres) and spells (data/spells/*.tres) from the
+## tables below.
 ##
 ##   godot --headless --path . --script res://tools/make_items.gd
 ##   godot --headless --path . --script res://tools/make_items.gd -- --force
@@ -9,6 +10,7 @@ extends SceneTree
 ## from tools/make_item_art.gd (assets/items/icons and assets/items/held).
 
 const DIR := "res://data/items"
+const SPELL_DIR := "res://data/spells"
 
 var _force := false
 
@@ -16,11 +18,14 @@ var _force := false
 func _init() -> void:
 	_force = OS.get_cmdline_user_args().has("--force")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SPELL_DIR))
 	var written := 0
-	for item: ItemData in _items():
+	var all: Array[ItemData] = _items()
+	all.append_array(_spells())
+	for item: ItemData in all:
 		if not _selected(item):
 			continue
-		var path := "%s/%s.tres" % [DIR, item.id]
+		var path := "%s/%s.tres" % [SPELL_DIR if item.is_spell() else DIR, item.id]
 		if FileAccess.file_exists(path) and not _force:
 			print("make_items: %s exists, kept (use --force to overwrite)" % path)
 			continue
@@ -41,17 +46,13 @@ func _selected(item: ItemData) -> bool:
 func _items() -> Array[ItemData]:
 	var out: Array[ItemData] = []
 	# Blocks.
-	out.append(_block(&"dirt", "Dirt", "Soft ground. Grass spreads onto it."))
-	out.append(_block(&"stone", "Stone", "Hard rock."))
+	# Right click places a block as the back layer (places_wall), when it has one.
+	out.append(_block(&"dirt", "Dirt", "Soft ground. Grass spreads onto it.", &"dirt_wall"))
+	out.append(_block(&"stone", "Stone", "Hard rock.", &"stone_wall"))
 	out.append(_block(&"copper_ore", "Copper Ore", "Smelts into copper (crafting comes later)."))
-	out.append(_block(&"wood_planks", "Wood Planks", "A building block."))
+	out.append(_block(&"wood_planks", "Wood Planks", "A building block. Right click places it as a back wall.", &"wood_wall"))
 	out.append(_block(&"wood_platform", "Wood Platform", "Stand on it; jump up through it, Down + Jump drops through."))
 	out.append(_block(&"rope", "Rope", "Climb with Up and Down."))
-	var wall := _block(&"wood_wall", "Wood Wall", "A background wall. Needs a hammer to remove.")
-	wall.kind = ItemData.Kind.WALL
-	wall.places_block = &""
-	wall.places_wall = &"wood_wall"
-	out.append(wall)
 	# Materials and seeds.
 	var wood := _small(&"wood", "Wood", "From trees. Crafted into planks (crafting comes later).")
 	out.append(wood)
@@ -73,15 +74,31 @@ func _items() -> Array[ItemData]:
 	var axe := _tool(&"copper_axe", "Copper Axe", "Chops trees.", &"tool")
 	axe.axe_damage = 25.0
 	out.append(axe)
-	var spell := _tool(&"mining_spell", "Mining Spell", "Hold to mine with a beam. Ctrl + mouse wheel changes the area.", &"spell")
-	spell.kind = ItemData.Kind.SPELL
-	spell.beam = true
-	spell.mining_damage = 55.0  # per second, on every tile in the area
-	spell.mining_area = 2
-	spell.mining_area_max = 3
-	spell.reach_tiles = 12.0
-	spell.held.grip = Vector2(8, 10)
-	out.append(spell)
+	# The spellbook used when the book slot is empty. Not found in the world.
+	var book := _base(&"basic_spellbook", "Basic Spellbook", "Holds 4 spells. Used when no other book is equipped.")
+	book.kind = ItemData.Kind.BOOK
+	book.max_stack = 1
+	book.spell_slots = 4
+	book.held = _look(&"basic_spellbook", &"spell_book", Vector2(5, 9))
+	out.append(book)
+	return out
+
+
+func _spells() -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	var mining := SpellData.new()
+	mining.id = &"mining_spell"
+	mining.display_name = "Mining Spell"
+	mining.description = "Hold to mine with a beam (right click: the back layer). Ctrl + mouse wheel changes the area."
+	mining.icon = load("res://assets/items/icons/mining_spell.png") as Texture2D
+	mining.kind = ItemData.Kind.SPELL
+	mining.max_stack = 1
+	mining.beam = true
+	mining.mining_damage = 55.0  # per second, on every tile in the area
+	mining.mining_area = 2
+	mining.mining_area_max = 3
+	mining.reach_tiles = 12.0
+	out.append(mining)
 	return out
 
 
@@ -103,10 +120,11 @@ func _look(item_id: StringName, type_id: StringName, grip: Vector2) -> HeldItemL
 	return look
 
 
-func _block(item_id: StringName, label: String, text: String) -> ItemData:
+func _block(item_id: StringName, label: String, text: String, wall: StringName = &"") -> ItemData:
 	var item := _base(item_id, label, text)
 	item.kind = ItemData.Kind.BLOCK
 	item.places_block = item_id
+	item.places_wall = wall
 	item.held = _look(item_id, &"block", Vector2(3, 5))
 	return item
 

@@ -3,8 +3,9 @@
 [ext_resource type="Script" path="res://src/world/tile_def.gd" id="1_tiledef"]
 
 [resource]
-health = 30.0
 script = ExtResource("1_tiledef")
+health = 30.0
+drop_item = &"stone"
 atlas_row = 1
 collision = 0
 terrain = "stone_wall"

@@ -20,10 +20,11 @@ enum Collision {
 @export var climbable: bool = false
 
 @export_group("Mining")
-## Damage it takes to break. A copper pickaxe does 25 per hit, so 50 = two hits.
-## For walls: hammer damage (walls can only be removed with a hammer).
+## Damage it takes to break. A copper pickaxe does 25 per hit, so 50 = two hits. Walls
+## (the back layer) are mined with right click, by the same tools.
 @export var health: float = 50.0
 ## Item dropped when broken (empty = the item with this tile's id, if one exists).
+## Walls drop the block they're the back layer of (dirt_wall drops dirt).
 @export var drop_item: StringName = &""
 @export var drop_count: int = 1
 ## Can't be broken at all (0 health also means unbreakable).

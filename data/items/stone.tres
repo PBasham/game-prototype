@@ -19,6 +19,7 @@ kind = 1
 icon = ExtResource("4_d77jk")
 held = SubResource("Resource_k0r80")
 places_block = &"stone"
+places_wall = &"stone_wall"
 id = &"stone"
 display_name = "Stone"
 description = "Hard rock."

@@ -104,14 +104,17 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 var world: World
 ## The character being played (inventory). Set by the World.
 var character: CharacterData
-## Selected hotbar slot (0..9).
+## Selected hotbar slot (0..9), or -1 while a spell picked on the spell wheel is ready.
 var selected := 0
-## The ItemData in hand (from the selected slot), null for empty hands.
+## The ItemData in hand (from the selected slot, or the readied spell), null for empty
+## hands. A tome is held as itself; use_item() is the spell it casts.
 var held_item: ItemData
+## The current (or last) use is on the back layer (right click).
+var use_back := false
 ## True while the mouse is over UI or a panel is open: clicks don't use items.
 var input_blocked := false
-## Optional: returns false when using the held item now would do nothing (a block with
-## nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
+## Optional: (back: bool) -> bool. False when using the held item now would do nothing
+## (a block with nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
 var use_check: Callable
 ## Tiles/s a dropped stack (Q) is thrown at.
 @export var throw_speed := 14.0
@@ -141,6 +144,10 @@ var _combo_index := -1
 ## Seconds left to continue the combo after an attack ends.
 var _combo_left := 0.0
 var _hold_time := 0.0
+## Spell readied from the wheel (selected == -1).
+var _readied: ItemData
+## Book looks for casting, per book id.
+var _book_looks: Dictionary[StringName, HeldItemLook] = {}
 
 @onready var _doll: PaperDoll = $Doll
 
@@ -172,22 +179,62 @@ func hold(item: HeldItemLook) -> void:
 ## Selects a hotbar slot and holds what's in it.
 func select_slot(slot: int) -> void:
 	selected = posmod(slot, Inventory.HOTBAR)
+	_readied = null
 	refresh_held()
 	selection_changed.emit(selected)
 
 
-## Holds whatever is in the selected slot (after the inventory changed).
+## Readies a spell from the spell wheel (not on the hotbar): it's cast with the clicks
+## until a hotbar slot is picked again.
+func ready_spell(spell_id: StringName) -> void:
+	var spell := ItemData.find(ItemData.spell_key(spell_id))
+	if spell == null:
+		return
+	selected = -1
+	_readied = spell
+	refresh_held()
+	selection_changed.emit(selected)
+
+
+## Holds whatever is in the selected slot (after the inventory or equipment changed).
 func refresh_held() -> void:
-	var item := character.inventory.item(selected) if character else null
-	if item == held_item:
+	var item: ItemData = _readied if selected < 0 else (character.inventory.item(selected) if character else null)
+	var look := _look_for(item)
+	if item == held_item and look == held:
 		return
 	held_item = item
-	hold(item.held if item else null)
+	hold(look)
+
+
+## The item that's actually used: the held item, or the spell a held tome casts.
+func use_item() -> ItemData:
+	if held_item and held_item.tome_spell != &"":
+		return ItemData.find(ItemData.spell_key(held_item.tome_spell))
+	return held_item
+
+
+## How an item looks in hand. Spells show the equipped spellbook in the back hand.
+func _look_for(item: ItemData) -> HeldItemLook:
+	if item == null:
+		return null
+	if item.is_spell() and character:
+		var book := character.book()
+		if book == null or book.held == null:
+			return null
+		if not _book_looks.has(book.id):
+			var look := HeldItemLook.new()
+			look.id = book.id
+			look.type = &"spell"
+			look.texture = book.held.texture
+			look.grip = book.held.grip
+			_book_looks[book.id] = look
+		return _book_looks[book.id]
+	return item.held
 
 
 ## Throws the selected stack in front of the player (Q).
 func drop_selected() -> void:
-	if character == null or world == null or character.inventory.is_empty(selected):
+	if character == null or world == null or selected < 0 or character.inventory.is_empty(selected):
 		return
 	var inv := character.inventory
 	var item_id := inv.ids[selected]
@@ -403,17 +450,36 @@ func _update_use(delta: float) -> void:
 		_attack_time += delta
 		var t0 := (_attack_time - delta) / maxf(_attack.duration, 0.001)
 		var t1 := _attack_time / maxf(_attack.duration, 0.001)
-		if held_item and not stowed and t0 < held_item.impact_at and t1 >= held_item.impact_at:
-			use_impact.emit(held_item)
+		var used := use_item()
+		if used and not stowed and t0 < used.impact_at and t1 >= used.impact_at:
+			use_impact.emit(used)
 		if _attack_time >= _attack.duration:
 			_end_attack(true)
-		elif held_item and held_item.beam and not Input.is_action_pressed("use_primary"):
+		elif used and used.beam and not Input.is_action_pressed(_button()):
 			_end_attack(true)  # a beam stops when the button is let go
+	if Input.is_action_just_pressed("interact") and world:
+		world.try_interact_near(self)
 	if _attack == null and not input_blocked:
+		# Left click: front layer (or punch). Right click: interact with what's under the
+		# cursor, otherwise the back layer.
+		var back := false
 		var clicked := Input.is_action_just_pressed("use_primary")
-		var held_down := Input.is_action_pressed("use_primary") and _repeats() and _combo_left > 0.0
-		if (clicked or held_down) and (not use_check.is_valid() or use_check.call()):
+		if not clicked and Input.is_action_just_pressed("use_secondary"):
+			if world and world.try_interact_at(aim_point(), self):
+				return
+			back = held_item != null and not stowed
+			clicked = back
+		var held_down := false
+		if not clicked and _repeats() and _combo_left > 0.0:
+			back = use_back
+			held_down = Input.is_action_pressed(_button(back))
+		if (clicked or held_down) and (not use_check.is_valid() or use_check.call(back)):
+			use_back = back
 			_start_attack()
+
+
+func _button(back: bool = use_back) -> StringName:
+	return &"use_secondary" if back else &"use_primary"
 
 
 func _start_attack() -> void:
@@ -537,6 +603,11 @@ func body_rect() -> Rect2:
 ## Where the held item is drawn (the beam starts here).
 func doll_item_position() -> Vector2:
 	return _doll.item_global_position()
+
+
+## The front (casting) hand, in world space: spell beams start here.
+func casting_hand_position() -> Vector2:
+	return _doll.to_global(_doll.hands[&"front"]) if _doll.hands.has(&"front") else chest()
 
 
 ## Where the player aims: the mouse, or ItemUser.cursor_override (tests, scripted runs).

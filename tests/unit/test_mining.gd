@@ -185,3 +185,83 @@ func test_plants_save_with_the_world() -> void:
 	fresh.from_dict(d)
 	assert_eq(fresh._plants.get(g).kind, PlantLayer.Kind.SAPLING)
 	fresh.free()
+
+
+func test_right_click_places_blocks_as_back_walls() -> void:
+	w.player.select_slot(3)
+	var u := w.item_user
+	var inv := w.character.inventory
+	var before := inv.counts[3]
+	var feet := w.world_to_tile(w.player.global_position)
+	var t := Vector2i(feet.x + 4, feet.y - 1)
+	var at := Vector2(t * World.TILE) + Vector2(4, 4)
+	u.cursor_override = at
+	u.update_target(at, true)
+	assert_eq(u.mode, ItemUser.Mode.PLACE_WALL)
+	assert_eq(u.valid.size(), 1, "touches the ground")
+	w.player.use_back = true
+	w.player.use_impact.emit(w.player.held_item)
+	assert_eq(w.data.get_wall(t.x, t.y), w.walls.index_of(&"wood_wall"))
+	assert_eq(w.data.get_block(t.x, t.y), WorldData.AIR, "front layer untouched")
+	assert_eq(inv.counts[3], before - 1)
+
+
+func test_back_walls_mine_behind_blocks_and_drop_their_block() -> void:
+	var t := _ground_tile()
+	w.request_set_wall(t, w.walls.index_of(&"stone_wall"))
+	assert_gt(w.data.get_block(t.x, t.y), 0, "a block in front")
+	var drops := w.drop_count()
+	assert_true(w.request_damage_wall(t, 1000.0))
+	assert_eq(w.data.get_wall(t.x, t.y), WorldData.AIR)
+	assert_gt(w.data.get_block(t.x, t.y), 0, "the block in front stays")
+	assert_eq(w.drop_count(), drops + 1)
+	var drop := w._drops.get_child(w._drops.get_child_count() - 1) as ItemDrop
+	assert_eq(drop.item_id, &"stone", "stone walls drop stone")
+
+
+func test_pickaxe_right_click_targets_walls() -> void:
+	w.player.select_slot(0)
+	var u := w.item_user
+	var t := _ground_tile()
+	w.request_set_wall(t, w.walls.index_of(&"dirt_wall"))
+	var at := Vector2(t * World.TILE) + Vector2(4, 4)
+	u.update_target(at, true)
+	assert_eq(u.mode, ItemUser.Mode.MINE)
+	assert_true(t in u.valid, "the wall is a target")
+
+
+func test_spell_shortcuts_are_never_thrown_into_the_world() -> void:
+	assert_null(w.request_spawn_drop(&"spell:mining_spell", 1, w.player.chest()))
+
+
+func test_tome_and_wheel_spells_cast_with_book_and_conduit() -> void:
+	var c := w.character
+	var u := w.item_user
+	# Dev tome in row 3 (debug builds): casts the wide beam without a book slot, but
+	# still needs the focus conduit.
+	var tome_slot := c.inventory.ids.find(&"dev_tome")
+	assert_gt(tome_slot, -1)
+	c.inventory.set_slot(4, &"dev_tome", 1)
+	w.player.select_slot(4)
+	assert_eq(w.player.use_item().id, &"dev_wide_beam")
+	var t := Vector2i(w.world_to_tile(w.player.global_position).x + 3, w.world_to_tile(w.player.global_position).y + 1)
+	var at := Vector2(t * World.TILE) + Vector2(4, 4)
+	u.update_target(at)
+	assert_string_contains(u.problem, "focus")
+	c.equip(CharacterData.SLOT_CONDUIT, &"dev_focus")
+	u.update_target(at)
+	assert_eq(u.problem, "")
+	assert_eq(u.rect.size, Vector2i(3, 3))
+	assert_almost_eq(u.damage(), 30.0 * 1.25, 0.01, "tome power x conduit power")
+	# The wheel readies a book spell; the book's look goes in the hand.
+	w.player.ready_spell(&"mining_spell")
+	assert_eq(w.player.selected, -1)
+	assert_eq(w.player.held_item.id, &"mining_spell")
+	assert_eq(w.player.held.type, &"spell")
+	assert_eq(w.player.held.id, CharacterData.DEFAULT_BOOK)
+	c.equip(CharacterData.SLOT_BOOK, &"dev_grimoire")
+	assert_eq(w.player.held.id, &"dev_grimoire", "the hand shows the new book")
+	u.update_target(at)
+	assert_almost_eq(u.damage(), 55.0 * 1.5 * 1.25, 0.01, "book power x conduit power")
+	w.player.select_slot(0)
+	assert_eq(w.player.held_item.id, &"copper_pickaxe")

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_py3tw"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_1xdua"]
+[ext_resource type="Texture2D" path="res://assets/items/held/basic_spellbook.png" id="3_c7bhc"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/basic_spellbook.png" id="4_qhkwb"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_oxoe5"]
+
+[sub_resource type="Resource" id="Resource_v33b5"]
+script = ExtResource("2_1xdua")
+id = &"basic_spellbook"
+texture = ExtResource("3_c7bhc")
+type = &"spell_book"
+grip = Vector2(5, 9)
+
+[resource]
+script = ExtResource("5_oxoe5")
+kind = 7
+icon = ExtResource("4_qhkwb")
+max_stack = 1
+held = SubResource("Resource_v33b5")
+spell_slots = 4
+id = &"basic_spellbook"
+display_name = "Basic Spellbook"
+description = "Holds 4 spells. Used when no other book is equipped."

@@ -31,6 +31,8 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 @export var chunks_per_frame: int = 1
 ## Seconds after the last hit before a damaged block heals back to full.
 @export var block_heal_seconds := 5.0
+## E interacts with things this close (tiles).
+@export var interact_tiles := 4.0
 
 var info: WorldInfo
 var data: WorldData
@@ -48,8 +50,8 @@ var item_user: ItemUser
 var hud: Hud
 var _drops: Node2D
 var _cracks: CrackOverlay
-## Damaged blocks (wrapped tile) -> [damage taken, seconds until healed].
-var _damage: Dictionary[Vector2i, Array] = {}
+## Damaged tiles: (x, y, layer 0 = block / 1 = wall) -> [damage, seconds until healed].
+var _damage: Dictionary[Vector3i, Array] = {}
 ## Debug builds only (B toggles it); null otherwise.
 var brush: DebugBrush
 var _pause_menu: PauseMenu
@@ -95,6 +97,7 @@ func _ready() -> void:
 		character.temporary = true
 	if OS.is_debug_build():
 		DevHeldItems.add_to(character.inventory)
+		DevMagic.add_to(character)
 	player = PLAYER_SCENE.instantiate() as Player
 	player.world = self
 	player.character = character
@@ -106,6 +109,7 @@ func _ready() -> void:
 	add_child(player)
 	teleport_player(player.position)
 	character.inventory.changed.connect(player.refresh_held)
+	character.magic_changed.connect(player.refresh_held)
 	player.select_slot(0)
 	_drops = Node2D.new()
 	_drops.name = "Drops"
@@ -323,27 +327,38 @@ func request_set_block(tile: Vector2i, id: int) -> bool:
 	return true
 
 
-## Damages a block (mining). Breaks it at its health: it drops its item and the tile
-## becomes air. Damage heals after block_heal_seconds without hits. Returns true if the
-## block broke.
+## Damages a block (mining, left click). Breaks it at its health: it drops its item and
+## the tile becomes air. Damage heals after block_heal_seconds without hits. Returns
+## true if the block broke.
 func request_damage_block(tile: Vector2i, amount: float) -> bool:
+	return _damage_tile(tile, amount, false)
+
+
+## Damages a background wall (mining, right click). Works behind blocks too.
+func request_damage_wall(tile: Vector2i, amount: float) -> bool:
+	return _damage_tile(tile, amount, true)
+
+
+func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	if not Game.is_authority():
 		return false
 	tile = wrap_tile(tile)
-	var id := data.get_block(tile.x, tile.y)
+	var id := data.get_wall(tile.x, tile.y) if wall else data.get_block(tile.x, tile.y)
 	if id <= 0 or tile.y >= data.height - 1:
 		return false
-	var def := blocks.def(id)
+	var def := (walls if wall else blocks).def(id)
 	if def == null or def.unbreakable or def.health <= 0.0:
 		return false
-	var entry: Array = _damage.get(tile, [0.0, 0.0])
+	var key := Vector3i(tile.x, tile.y, 1 if wall else 0)
+	var entry: Array = _damage.get(key, [0.0, 0.0])
 	entry[0] = float(entry[0]) + amount
 	entry[1] = block_heal_seconds
 	if entry[0] < def.health:
-		_damage[tile] = entry
+		_damage[key] = entry
 		return false
-	_damage.erase(tile)
-	if not request_set_block(tile, WorldData.AIR):
+	_damage.erase(key)
+	var removed := request_set_wall(tile, WorldData.AIR) if wall else request_set_block(tile, WorldData.AIR)
+	if not removed:
 		return false
 	var drop := def.drop_item if def.drop_item != &"" else def.id
 	if ItemData.find(drop) != null and def.drop_count > 0:
@@ -353,26 +368,57 @@ func request_damage_block(tile: Vector2i, amount: float) -> bool:
 	return true
 
 
-## 0..1: how damaged a block is (for the crack overlay).
-func block_damage(tile: Vector2i) -> float:
+## 0..1: how damaged a block (or with `wall`, a background wall) is, for the cracks.
+func block_damage(tile: Vector2i, wall: bool = false) -> float:
 	tile = wrap_tile(tile)
-	var entry: Array = _damage.get(tile, [])
+	var entry: Array = _damage.get(Vector3i(tile.x, tile.y, 1 if wall else 0), [])
 	if entry.is_empty():
 		return 0.0
-	var def := blocks.def(data.get_block(tile.x, tile.y))
+	var id := data.get_wall(tile.x, tile.y) if wall else data.get_block(tile.x, tile.y)
+	var def := (walls if wall else blocks).def(id)
 	return clampf(float(entry[0]) / def.health, 0.0, 1.0) if def and def.health > 0.0 else 0.0
 
 
-func damaged_tiles() -> Array[Vector2i]:
+## (x, y, layer) of every damaged tile; layer 1 = background wall.
+func damaged_tiles() -> Array[Vector3i]:
 	return _damage.keys()
 
 
 func _heal_blocks(delta: float) -> void:
-	for tile: Vector2i in _damage.keys():
-		var entry: Array = _damage[tile]
+	for key: Vector3i in _damage.keys():
+		var entry: Array = _damage[key]
 		entry[1] = float(entry[1]) - delta
-		if entry[1] <= 0.0 or data.get_block(tile.x, tile.y) <= 0:
-			_damage.erase(tile)
+		var id := data.get_wall(key.x, key.y) if key.z == 1 else data.get_block(key.x, key.y)
+		if entry[1] <= 0.0 or id <= 0:
+			_damage.erase(key)
+
+
+## Right click: interacts with whatever interactable is under `point` (doors, chests,
+## later). Interactables are nodes in the "interactable" group with
+## `interact_rect() -> Rect2` (world space) and `interact(player)`. Returns true if one
+## was used.
+func try_interact_at(point: Vector2, who: Player) -> bool:
+	for node in get_tree().get_nodes_in_group(&"interactable"):
+		if node.has_method(&"interact_rect") and (node.call(&"interact_rect") as Rect2).has_point(point):
+			node.call(&"interact", who)
+			return true
+	return false
+
+
+## E: interacts with the nearest interactable within interact_tiles of the player.
+func try_interact_near(who: Player) -> bool:
+	var best: Node = null
+	var best_d := interact_tiles * TILE
+	for node in get_tree().get_nodes_in_group(&"interactable"):
+		if not node.has_method(&"interact_rect"):
+			continue
+		var d := (node.call(&"interact_rect") as Rect2).get_center().distance_to(who.chest())
+		if d < best_d:
+			best = node
+			best_d = d
+	if best:
+		best.call(&"interact", who)
+	return best != null
 
 
 ## Sets a background wall. Returns true if it changed.
@@ -396,6 +442,8 @@ func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vect
 		thrown: bool = false) -> ItemDrop:
 	if not Game.is_authority() or count <= 0 or ItemData.find(item_id) == null:
 		return null
+	if String(item_id).begins_with(ItemData.SPELL_PREFIX):
+		return null  # spell shortcuts aren't things; throwing one just removes it
 	var drop := ItemDrop.new()
 	drop.setup(self, item_id, count, vel, thrown)
 	drop.position = pos

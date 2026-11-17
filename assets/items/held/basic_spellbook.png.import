@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dxgrfq6gtpedu"
-path="res://.godot/imported/wood_wall.png-3c6e9084ecc6f9f2352b537a934f37db.ctex"
+uid="uid://c0sy3qcuxmv4h"
+path="res://.godot/imported/basic_spellbook.png-e23293f2e11adaba0a5ac28c4ad7ac76.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/icons/wood_wall.png"
-dest_files=["res://.godot/imported/wood_wall.png-3c6e9084ecc6f9f2352b537a934f37db.ctex"]
+source_file="res://assets/items/held/basic_spellbook.png"
+dest_files=["res://.godot/imported/basic_spellbook.png-e23293f2e11adaba0a5ac28c4ad7ac76.ctex"]
 
 [params]
 

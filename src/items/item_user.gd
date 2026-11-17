@@ -1,17 +1,22 @@
 class_name ItemUser
 extends Node2D
 ## Uses the item in the player's hand on the world, and draws the targeting indicators.
+## Left click works on the front layer, right click on the back layer (Starbound-like).
 ##
-## - Mining (pickaxes: one hit per swing; the mining spell: a beam while held): damages
-##   every block in the area around the cursor that's within reach.
-## - Chopping (axes): hits the tree under the cursor.
-## - Placing (blocks, walls, seeds): left click, at the swing's impact.
+## - Mining (pickaxes: one hit per swing; spells: a beam while held): damages every
+##   block (left) or background wall (right, also behind blocks) in the area around the
+##   cursor that's within reach.
+## - Chopping (axes, left click): hits the tree under the cursor.
+## - Placing: left click places a block, right click places it as a background wall.
+##   Seeds plant with left click.
 ## - Any swing cuts flowers in front of the player (grass seed chance).
+## - Spells (from the wheel, a hotbar shortcut or a tome) are stronger with a better
+##   book or conduit, and can need a conduit (CharacterData.cast_problem).
 ##
-## Indicators (Starbound-like): a box around the target area (white = will work, red =
-## out of reach or nothing to do), ghost blocks where blocks will go, the beam from the
-## hand, and a range ring that fades in as the cursor nears the edge of reach.
-## Ctrl + mouse wheel changes the area (mining spell, blocks, walls, grass seeds).
+## Indicators (Starbound-like): a box around the target area (white = will work, blue =
+## back layer, red = out of reach or nothing to do), ghost blocks where blocks will go,
+## the beam from the casting hand, and a range ring that fades in as the cursor nears
+## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLANT_TREE, PLANT_GRASS }
 
@@ -19,6 +24,8 @@ const TILE := World.TILE
 
 @export_group("Indicators")
 @export var valid_color := Color(1, 1, 1, 0.85)
+## Target box for the back layer (right click held).
+@export var back_color := Color(0.6, 0.82, 1.0, 0.85)
 @export var invalid_color := Color(1.0, 0.28, 0.22, 0.9)
 @export var ghost_alpha := 0.5
 @export var beam_color := Color(0.55, 0.9, 1.0, 0.9)
@@ -42,6 +49,10 @@ var mode := Mode.NONE
 var rect := Rect2i()
 var valid: Array[Vector2i] = []
 var tree := PlantLayer.NONE
+## Targeting the back layer (right click).
+var back := false
+## Why the held spell can't be cast ("" = it can).
+var problem := ""
 var _item: ItemData
 
 
@@ -54,13 +65,41 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_area_shown = maxf(_area_shown - delta, 0.0)
-	update_target(cursor())
 	var p := world.player
+	# While using, the layer of that use; otherwise preview the back layer while right
+	# click is held.
+	update_target(cursor(), p.use_back if p.is_using() else Input.is_action_pressed("use_secondary"))
 	if _item and _item.beam and mode == Mode.MINE and p.is_using() and not p.input_blocked:
 		for t in valid:
-			world.request_damage_block(t, _item.mining_damage * delta)
-		world.plants.request_cut_flowers(rect)
+			if back:
+				world.request_damage_wall(t, damage() * delta)
+			else:
+				world.request_damage_block(t, damage() * delta)
+		if not back:
+			world.plants.request_cut_flowers(rect)
 	queue_redraw()
+
+
+## Mining damage of the item in use, with spell strength from the book and conduit.
+func damage() -> float:
+	if _item == null:
+		return 0.0
+	return _item.mining_damage * (_spell_power() if _item.is_spell() else 1.0)
+
+
+func reach() -> float:
+	if _item == null:
+		return 0.0
+	var bonus := world.player.character.spell_reach_bonus() if _item.is_spell() and world.player.character else 0.0
+	return (_item.reach_tiles + bonus) * TILE
+
+
+func _spell_power() -> float:
+	var p := world.player
+	if p.character == null:
+		return 1.0
+	var tome := p.held_item if p.held_item and p.held_item.tome_spell != &"" else null
+	return p.character.spell_power(tome)
 
 
 ## Where the player is aiming (world px).
@@ -68,24 +107,32 @@ func cursor() -> Vector2:
 	return cursor_override if cursor_override.is_finite() else get_global_mouse_position()
 
 
-## Works out what the held item would do at `at` (world px): fills mode, rect,
-## valid (tiles it would affect) and tree.
-func update_target(at: Vector2) -> void:
+## Works out what the held item would do at `at` (world px), on the back layer with
+## `on_back`: fills mode, rect, valid (tiles it would affect), tree and problem.
+func update_target(at: Vector2, on_back: bool = false) -> void:
 	var p := world.player
-	_item = p.held_item if not p.stowed else null
-	mode = _mode_for(_item)
+	_item = p.use_item() if not p.stowed else null
+	back = on_back
+	mode = _mode_for(_item, back)
 	valid.clear()
 	tree = PlantLayer.NONE
+	problem = ""
 	if mode == Mode.NONE:
 		return
+	if _item.is_spell() and p.character:
+		var from_tome := p.held_item != null and p.held_item.tome_spell != &""
+		problem = p.character.cast_problem(_item as SpellData, from_tome)
 	var size := area_size(_item)
 	var c := at / TILE
 	rect = Rect2i(Vector2i(floori(c.x - size / 2.0 + 0.5), floori(c.y - size / 2.0 + 0.5)), Vector2i(size, size))
 	match mode:
 		Mode.MINE:
+			if problem != "":
+				return
+			var types := world.walls if back else world.blocks
 			for t in _tiles():
-				var id := world.data.get_block(t.x, t.y)
-				var def := world.blocks.def(id) if id > 0 else null
+				var id := world.data.get_wall(t.x, t.y) if back else world.data.get_block(t.x, t.y)
+				var def := types.def(id) if id > 0 else null
 				if def and not def.unbreakable and def.health > 0.0 and t.y < world.data.height - 1 and _in_reach(t):
 					valid.append(t)
 		Mode.CHOP:
@@ -118,12 +165,18 @@ func update_target(at: Vector2) -> void:
 
 
 ## False when using the held item would do nothing (no swing for a block with nowhere
-## to go). Tools and weapons always swing.
-func can_use() -> bool:
-	update_target(cursor())
+## to go, a spell that can't be cast, a right click the item has no use for). Tools and
+## weapons always swing with left click.
+func can_use(on_back: bool = false) -> bool:
+	update_target(cursor(), on_back)
+	if problem != "":
+		EventBus.debug_message.emit(problem)
+		return false
 	match mode:
 		Mode.PLACE_BLOCK, Mode.PLACE_WALL, Mode.PLANT_TREE, Mode.PLANT_GRASS:
 			return not valid.is_empty()
+		Mode.NONE:
+			return not on_back
 	return true
 
 
@@ -144,7 +197,7 @@ func area_size(item: ItemData) -> int:
 
 
 func _on_area_scrolled(step: int) -> void:
-	var item := world.player.held_item
+	var item := world.player.use_item()
 	if item == null:
 		return
 	_area[item.id] = area_size(item) + step
@@ -152,17 +205,17 @@ func _on_area_scrolled(step: int) -> void:
 	_area_shown = 1.0
 
 
-func _mode_for(item: ItemData) -> Mode:
+func _mode_for(item: ItemData, on_back: bool) -> Mode:
 	if item == null:
 		return Mode.NONE
 	if item.mining_damage > 0.0:
 		return Mode.MINE
+	if on_back:
+		return Mode.PLACE_WALL if item.places_wall != &"" else Mode.NONE
 	if item.axe_damage > 0.0:
 		return Mode.CHOP
 	if item.places_block != &"":
 		return Mode.PLACE_BLOCK
-	if item.places_wall != &"":
-		return Mode.PLACE_WALL
 	if item.plants == &"tree":
 		return Mode.PLANT_TREE
 	if item.plants == &"grass":
@@ -180,7 +233,7 @@ func _tiles() -> Array[Vector2i]:
 
 func _in_reach(t: Vector2i) -> bool:
 	var center := Vector2(t * TILE) + Vector2(TILE, TILE) * 0.5
-	return center.distance_to(world.player.chest()) <= _item.reach_tiles * TILE
+	return center.distance_to(world.player.chest()) <= reach()
 
 
 func _exposed(t: Vector2i) -> bool:
@@ -242,20 +295,23 @@ func _anchored(t: Vector2i, walls: bool) -> bool:
 ## Can't place more than the selected stack holds.
 func _limit_to_stack() -> void:
 	var p := world.player
-	var have := p.character.inventory.counts[p.selected] if p.character else 0
+	var have := p.character.inventory.counts[p.selected] if p.character and p.selected >= 0 else 0
 	if valid.size() > have:
 		valid.resize(have)
 
 
 func _on_impact(item: ItemData) -> void:
 	var p := world.player
-	update_target(cursor())
+	update_target(cursor(), p.use_back)
 	var inv := p.character.inventory
 	match mode:
 		Mode.MINE:
 			if not item.beam:
 				for t in valid:
-					world.request_damage_block(t, item.mining_damage)
+					if back:
+						world.request_damage_wall(t, damage())
+					else:
+						world.request_damage_block(t, damage())
 		Mode.CHOP:
 			if tree != PlantLayer.NONE:
 				world.plants.request_hit_tree(tree, item.axe_damage, p.global_position.x)
@@ -278,7 +334,7 @@ func _on_impact(item: ItemData) -> void:
 			for t in valid:
 				if inv.counts[p.selected] > 0 and world.request_set_block(t, grass):
 					inv.take(p.selected, 1)
-	if item.kind == ItemData.Kind.TOOL or item.kind == ItemData.Kind.WEAPON:
+	if not back and (item.kind == ItemData.Kind.TOOL or item.kind == ItemData.Kind.WEAPON):
 		_cut_flowers_in_swing()
 
 
@@ -297,9 +353,9 @@ func _draw() -> void:
 		return
 	var p := world.player
 	var aim := cursor()
-	var reach := _item.reach_tiles * TILE
+	var reach := reach()
 	var ok := not valid.is_empty() or (mode == Mode.CHOP and tree != PlantLayer.NONE)
-	var color := valid_color if ok else invalid_color
+	var color := (back_color if back else valid_color) if ok else invalid_color
 	# Range ring: fades in near the edge of reach (and stays when past it).
 	var d := aim.distance_to(p.chest())
 	var k := clampf((d - ring_fade_start * reach) / maxf((1.0 - ring_fade_start) * reach, 1.0), 0.0, 1.0)
@@ -317,10 +373,11 @@ func _draw() -> void:
 			if mode == Mode.PLANT_GRASS:
 				draw_rect(r, Color(0.35, 0.75, 0.25, ghost_alpha))
 			elif ghost_tex:
-				draw_texture_rect_region(ghost_tex, r, Rect2(2, 2, 12, 12), Color(1, 1, 1, ghost_alpha))
+				var tint := Color(0.6, 0.6, 0.65, ghost_alpha) if back else Color(1, 1, 1, ghost_alpha)
+				draw_texture_rect_region(ghost_tex, r, Rect2(2, 2, 12, 12), tint)
 	# Beam from the hand to the target.
 	if _item.beam and p.is_using():
-		var from := p.doll_item_position()
+		var from := p.casting_hand_position() if _item.is_spell() else p.doll_item_position()
 		var to := Vector2(rect.position * TILE) + Vector2(rect.size * TILE) * 0.5
 		var glow := beam_color if ok else invalid_color
 		glow.a *= 0.3
@@ -330,6 +387,9 @@ func _draw() -> void:
 		draw_line(from, to, core, 1.0)
 	# Target box.
 	draw_rect(Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE)).grow(0.5), color, false, 1.0)
+	if problem != "":
+		var font := ThemeDB.fallback_font
+		draw_string(font, aim + Vector2(6, -4), problem, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, invalid_color)
 	if _area_shown > 0.0:
 		var font := ThemeDB.fallback_font
 		var label := "%dx%d" % [rect.size.x, rect.size.y]

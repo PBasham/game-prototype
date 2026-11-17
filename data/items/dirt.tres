@@ -19,6 +19,7 @@ kind = 1
 icon = ExtResource("4_ywxyt")
 held = SubResource("Resource_mfy60")
 places_block = &"dirt"
+places_wall = &"dirt_wall"
 id = &"dirt"
 display_name = "Dirt"
 description = "Soft ground. Grass spreads onto it."

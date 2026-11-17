@@ -212,11 +212,15 @@ func _block() -> ItemTypeData:
 
 
 func _spell() -> ItemTypeData:
-	var t := _type(&"spell", "Channeled spell (mining beam): the hand aims, held to channel")
+	var t := _type(&"spell", "Spell (the equipped book in the back hand, the front hand channels at the cursor)")
+	t.held_in = ItemTypeData.Hand.BACK
 	t.stow_style = ItemTypeData.StowStyle.HIDDEN
-	t.hold = _hold(_pose([[0, 10]], [[0, 0.8]]), null, ItemMotion.ItemAngle.FIXED, [[0, 0]], "", true)
-	# Arm straight at the cursor while the button is held; loops.
-	var channel := _attack("Channel", 0.3, _pose([[0, 0]], [[0, 1.0]]), null, [[0, 0]], null, "", true)
+	# Same book hold as spell_book: held still in front at waist height.
+	var book_arm := _pose([[0, 35]], [[0, 0.6]])
+	book_arm.follows_aim = false
+	t.hold = _hold(null, book_arm, ItemMotion.ItemAngle.FIXED, [[0, -45]], "")
+	# Front arm straight at the cursor while the button is held; loops.
+	var channel := _attack("Channel", 0.3, _pose([[0, 0]], [[0, 1.0]]), book_arm.duplicate(true), [[0, -45]], null, "", true)
 	channel.item_angle_mode = ItemMotion.ItemAngle.FIXED
 	t.attacks = [channel]
 	t.combo_window = 0.2  # > 0 so holding the button chains straight into the next loop

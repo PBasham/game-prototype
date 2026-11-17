@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dj0y7te4kyl2c"
-path="res://.godot/imported/mining_spell.png-0939fef2e8ddd7c93cab639f19e568bc.ctex"
+uid="uid://65mc5kmgrvkg"
+path="res://.godot/imported/basic_spellbook.png-07f2a82a9e36acbe0ce1f3e6030ac744.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/held/mining_spell.png"
-dest_files=["res://.godot/imported/mining_spell.png-0939fef2e8ddd7c93cab639f19e568bc.ctex"]
+source_file="res://assets/items/icons/basic_spellbook.png"
+dest_files=["res://.godot/imported/basic_spellbook.png-07f2a82a9e36acbe0ce1f3e6030ac744.ctex"]
 
 [params]
 

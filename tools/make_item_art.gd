@@ -21,7 +21,6 @@ func _init() -> void:
 	ore.blend_rect(_terrain("ore_copper"), Rect2i(0, 0, 64, 64), Vector2i.ZERO)
 	_block("copper_ore", ore)
 	_block("wood_planks", _terrain("planks"))
-	_block("wood_wall", _terrain("planks_wall"))
 	_save(_platform(), "wood_platform", true)
 	_save(_rope(), "rope", true)
 	_save(_log(), "wood", true)
@@ -30,7 +29,8 @@ func _init() -> void:
 	# Tools: the icon is also the held sprite (pointing up-right, handle bottom-left).
 	_save(_pickaxe(), "copper_pickaxe", false)
 	_save(_axe(), "copper_axe", false)
-	_save(_orb(), "mining_spell", false)
+	_orb().save_png(ProjectSettings.globalize_path("%s/mining_spell.png" % ICONS))  # spell icon
+	_save(_spellbook(), "basic_spellbook", false)
 	_sapling().save_png(ProjectSettings.globalize_path("res://assets/decor/sapling.png"))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/fx"))
 	_cracks().save_png(ProjectSettings.globalize_path("res://assets/fx/cracks.png"))
@@ -210,4 +210,17 @@ func _cracks() -> Image:
 				var hx := stage * 8 + int(p[0]) + 1
 				if int(p[0]) + 1 < 8 and img.get_pixel(hx, int(p[1])).a == 0.0:
 					img.set_pixel(hx, int(p[1]), hi)
+	return img
+
+
+## The basic spellbook: 11x11, upright, spine on the left, grip at the bottom middle.
+func _spellbook() -> Image:
+	var img := Image.create_empty(11, 11, false, Image.FORMAT_RGBA8)
+	for y in range(1, 10):
+		for x in range(1, 10):
+			img.set_pixel(x, y, Color("6a3e2a"))
+		img.set_pixel(1, y, Color("4a2818"))
+		img.set_pixel(9, y, Color("e8e0c8"))  # page edges
+	for p: Vector2i in [Vector2i(5, 3), Vector2i(4, 4), Vector2i(6, 4), Vector2i(5, 5), Vector2i(5, 4)]:
+		img.set_pixelv(p, Color("7fd4ff"))  # emblem
 	return img

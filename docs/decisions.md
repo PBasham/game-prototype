@@ -2,6 +2,26 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Front/back layers and magic (Phase 4, second pass)
+
+- **Starbound-style layers:** one item per material; left click = front layer, right
+  click = back layer, for placing and mining. Back walls can be mined behind blocks.
+  Mined walls drop their block. No hammer; the Wood Wall item is gone. Walls keep their
+  own textures so front and back can look different later.
+- **Keys:** inventory I / Tab, interact E. Right click interacts when there's
+  something interactable under the cursor, otherwise it's the back layer.
+- **Spellbook is part of the character:** an equipment slot; empty = Basic Spellbook
+  (4 slots). Books can add slots and spell power. One loadout per character, kept
+  across book swaps.
+- **Conduit:** an equipment slot. Boosts spells (power, reach); some spells require a
+  conduit type. Swapping is done in the inventory for now (a quicker swap can come
+  later if it's a hassle).
+- **Casting:** spell wheel (hold R) and hotbar shortcuts, both. Only spells in the book
+  can be cast; tomes cast their own spell without a book slot.
+- **Mining Spell** is now a spell (data/spells), not an item. No mana yet.
+- No real books, conduits or tomes yet (content needs a brief); debug builds have
+  dev-only ones to test with.
+
 ## 2026-11-17: Phase 4, items and mining
 
 - **Hotbar** top left (Terraria), 10 slots; **inventory** 40 slots (top row = hotbar),
@@ -23,7 +43,6 @@ Newest first. Each entry: what was decided, why, and what it affects.
   character select (Phase 7).
 - Axe reach raised from 6 to 10 tiles after the first screenshot: 6 couldn't reach a
   trunk next to you once measured from the chest.
-- Inventory key moved from I to E; E was "interact", which moved to right click.
 
 ## 2026-11-17: Spell book hold
 

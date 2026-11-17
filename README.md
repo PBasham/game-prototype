@@ -36,9 +36,12 @@ Docs:
 | W / S | Climb ropes |
 | S + Space | Drop through a platform |
 | 1 to 0, mouse wheel | Pick a hotbar slot |
-| Left click | Use the held item: mine, chop, place, swing; punch with empty hands (combos: click again right after) |
-| Ctrl + mouse wheel | Mining / placing area (mining spell 1x1 to 3x3, blocks 1x1 to 2x2) |
-| E (or Tab) | Inventory |
+| Left click | Use the held item on the front layer: mine, chop, place, swing, cast; punch with empty hands |
+| Right click | Interact with what's under the cursor; otherwise the back layer (place background walls, mine them) |
+| E | Interact with the nearest thing |
+| I or Tab | Inventory, equipment (book, conduit) and spells |
+| R (hold) | Spell wheel |
+| Ctrl + mouse wheel | Mining / placing area |
 | Q | Throw the selected stack |
 | H | Put the held item away / take it out |
 | B | Debug brush on/off (wheel picks a block, left / right mouse remove / place) |
