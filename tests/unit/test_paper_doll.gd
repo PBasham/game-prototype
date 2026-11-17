@@ -248,3 +248,18 @@ func test_back_arm_borrows_front_arm_pieces_until_arms_rest_exists() -> void:
 	d.back_arm_from_front = false
 	d._update()
 	assert_eq(d._sprites[back_upper].region_rect, rig.region(back_upper, rig.rest_frame))
+
+
+func test_book_stays_still_in_front_while_running() -> void:
+	var d := _doll()
+	d.item = DevHeldItems.by_name("Book")
+	d.motion = d.item.hold_motion()
+	d.play(&"Jog")
+	var offsets: Array[Vector2] = []
+	for f in d.frame_count(&"Jog"):
+		d.frame = f
+		d._update()
+		offsets.append(d.hands[&"back"] - _shoulder(d, &"back"))
+	for o in offsets:
+		assert_almost_eq(o.distance_to(offsets[0]), 0.0, 0.5, "same hold every frame")
+	assert_gt(offsets[0].x, 3.0, "held out in front")

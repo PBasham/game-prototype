@@ -78,10 +78,11 @@ the rest frame.
 
 The arms follow the movement animation unless a **motion** is playing:
 
-- **Holding** an item plays its type's `hold` motion (looped). Melee weapons, tools and
-  the spell book are held in **your drawn arm**: the item rides in the hand and swings
+- **Holding** an item plays its type's `hold` motion (looped). Melee weapons and tools
+  are held in **your drawn arm**: the item rides in the hand and swings
   with the run, so picking it up doesn't change the arm. Aiming items (wand, crossbow,
-  bow) pose the arm to point at the cursor.
+  bow) pose the arm to point at the cursor. The spell book is held still in front by
+  the back hand.
 - **Attacking/using** plays one of its type's `attacks` (see Item types below).
 - **Switching** between your drawn arm and a code pose (starting or ending an attack,
   aiming, combo hits) slides the hand over `blend_time` (0.07 s, on the PaperDoll)
@@ -221,7 +222,7 @@ and drag points. The x axis is time through the motion (0 = start, 1 = end).
 | sword | in your drawn arm | Slash, Backslash, Thrust | hip |
 | greatsword | in your drawn arm | Overhead, Rising (both hands) | back |
 | wand | aims | Flick | hidden |
-| spell_book | back hand (drawn arm), upright | Cast (front palm pushes at the cursor) | hip |
+| spell_book | back hand, held still in front at waist height, upright | Cast (front palm pushes at the cursor; the book stays put) | hip |
 | crossbow | aims, one arm | Fire (recoil) | hip |
 | bow | aims, back hand on the string | Draw (pull back, release) | back |
 | unarmed | (empty hands) | Jab, Cross, Uppercut | |

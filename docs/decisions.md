@@ -2,6 +2,11 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Spell book hold
+
+Patrick picked option C: the back hand holds the book still, forearm out, in front at
+waist height, the same while running, jumping and casting.
+
 ## 2026-11-17: Holding uses the drawn arm; no borrowed stance
 
 - Patrick: the 3/4 Breath idle is the standing pose; the borrowed landing frame is gone.

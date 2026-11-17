@@ -6,11 +6,11 @@
 
 [sub_resource type="Curve" id="Curve_0q2gj"]
 _limits = [-180.0, 180.0, 0.0, 1.0]
-_data = [Vector2(0, 55), 0.0, 0.0, 1, 1]
+_data = [Vector2(0, 35), 0.0, 0.0, 1, 1]
 point_count = 1
 
 [sub_resource type="Curve" id="Curve_twdvp"]
-_data = [Vector2(0, 0.55), 0.0, 0.0, 1, 1]
+_data = [Vector2(0, 0.6), 0.0, 0.0, 1, 1]
 point_count = 1
 
 [sub_resource type="Resource" id="Resource_r7ihn"]
@@ -55,30 +55,42 @@ item_angle_mode = 2
 item_angle = SubResource("Curve_lm6rk")
 lunge = SubResource("Curve_7akr2")
 
-[sub_resource type="Resource" id="Resource_nvfim"]
+[sub_resource type="Curve" id="Curve_f8c54"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 35), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_xum27"]
+_data = [Vector2(0, 0.6), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_qhgxb"]
+script = ExtResource("2_jf628")
+mode = 1
+angle = SubResource("Curve_f8c54")
+reach = SubResource("Curve_xum27")
+
+[sub_resource type="Resource" id="Resource_384lb"]
 script = ExtResource("2_jf628")
 
-[sub_resource type="Resource" id="Resource_jf628"]
-script = ExtResource("2_jf628")
-
-[sub_resource type="Curve" id="Curve_dgl3l"]
+[sub_resource type="Curve" id="Curve_bp052"]
 _limits = [-180.0, 180.0, 0.0, 1.0]
 _data = [Vector2(0, -45), 0.0, 0.0, 1, 1]
 point_count = 1
 
-[sub_resource type="Resource" id="Resource_0q2gj"]
+[sub_resource type="Resource" id="Resource_dgieh"]
 script = ExtResource("1_nvfim")
 name = "Hold"
 duration = 1.0
-front = SubResource("Resource_jf628")
-back = SubResource("Resource_nvfim")
+front = SubResource("Resource_384lb")
+back = SubResource("Resource_qhgxb")
 item_angle_mode = 2
-item_angle = SubResource("Curve_dgl3l")
+item_angle = SubResource("Curve_bp052")
 
 [resource]
 script = ExtResource("3_dgl3l")
 held_in = 1
-hold = SubResource("Resource_0q2gj")
+hold = SubResource("Resource_dgieh")
 attacks = Array[ExtResource("1_nvfim")]([SubResource("Resource_yss2e")])
 stow_style = 1
 id = &"spell_book"

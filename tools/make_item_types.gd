@@ -9,6 +9,7 @@ extends SceneTree
 ## With --force, every type is rewritten from the defaults below.
 ## With --update-holds, only each existing file's `hold` motion is replaced with the
 ## default below (attacks and everything else are kept).
+## --only=<id> limits any of these to one type (e.g. --only=spell_book --force).
 ##
 ## Angles: degrees, 0 = forward, -90 = up, 90 = down, 180 = behind. For aiming motions
 ## they're relative to the direction of the cursor. Reach: hand distance from the
@@ -30,6 +31,8 @@ func _init() -> void:
 	var written := 0
 	for t: ItemTypeData in _types():
 		var path := "%s/%s.tres" % [DIR, t.id]
+		if not _selected(t):
+			continue
 		if FileAccess.file_exists(path) and not _force:
 			print("make_item_types: %s exists, kept (use --force to overwrite)" % path)
 			continue
@@ -40,8 +43,17 @@ func _init() -> void:
 	quit()
 
 
+func _selected(t: ItemTypeData) -> bool:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--only="):
+			return String(t.id) == a.trim_prefix("--only=")
+	return true
+
+
 func _update_holds() -> void:
 	for t: ItemTypeData in _types():
+		if not _selected(t):
+			continue
 		var path := "%s/%s.tres" % [DIR, t.id]
 		var existing := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as ItemTypeData
 		if existing == null:
@@ -137,8 +149,10 @@ func _spell_book() -> ItemTypeData:
 	var t := _type(&"spell_book", "Spell book")
 	t.held_in = ItemTypeData.Hand.BACK
 	t.stow_style = ItemTypeData.StowStyle.HIP
-	t.hold = _hold(null, null, ItemMotion.ItemAngle.FIXED, [[0, -45]], "")
-	var cast := _attack("Cast", 0.4, _pose([[0, 0]], [[0, 0.6], [0.35, 1.0], [1, 0.85]]), _pose([[0, 55]], [[0, 0.55]]),
+	# The back hand holds the book still in front at waist height (forearm out), while
+	# running, jumping and casting alike.
+	t.hold = _hold(null, _pose([[0, 35]], [[0, 0.6]]), ItemMotion.ItemAngle.FIXED, [[0, -45]], "")
+	var cast := _attack("Cast", 0.4, _pose([[0, 0]], [[0, 0.6], [0.35, 1.0], [1, 0.85]]), _pose([[0, 35]], [[0, 0.6]]),
 		[[0, -45]], [[0, 0], [0.35, 1], [1, 0]], "", true)
 	cast.item_angle_mode = ItemMotion.ItemAngle.FIXED
 	t.attacks = [cast]
