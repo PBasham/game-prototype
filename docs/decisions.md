@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Roadmap after Phase 4
+
+- Next: crafting (recipes as data, crafting window, stations, chests, first real
+  content), with a basic mana bar (regenerates; spells cost it; Fly drains it) and a dev
+  console command for infinite mana. Design brief first.
+- Then: equipment panel (armor, trinkets, stats), enemies / health / combat feel,
+  character creation and select.
+- Doors get resized later if the character size changes; fine to build them now.
+- Possible later: dedicated tool slots for the pickaxe and axe (they aren't weapons), so
+  they don't take hotbar space.
+
 ## 2026-11-17: Playtest round 3
 
 - Holding Down + Jump keeps dropping through platforms.
