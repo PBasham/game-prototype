@@ -21,9 +21,11 @@ const SLOT_CONDUIT := &"conduit"
 ## shortcut to a spell.
 const STARTING_KIT: Array = [
 	[&"copper_pickaxe", 1], [&"copper_axe", 1], [&"spell:mining_spell", 1], [&"wood_planks", 99],
-	[&"wood_platform", 30], [&"rope", 30], [&"tree_seed", 5], [&"grass_seeds", 10], [&"dirt", 50],
+	[&"wood_platform", 30], [&"rope", 30], [&"torch", 20], [&"tree_seed", 5], [&"grass_seeds", 10],
+	[&"dirt", 50],
 ]
-const STARTING_SPELLS: Array[StringName] = [&"mining_spell"]
+## Known and put in the book (in order) for a new character.
+const STARTING_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark"]
 
 var name := DEFAULT_NAME
 var inventory := Inventory.new()
@@ -186,10 +188,13 @@ static func load_file(path: String) -> CharacterData:
 			c.known_spells.append(StringName(s))
 	for s: String in d.get("book_spells", []):
 		c.book_spells.append(StringName(s) if c.knows(StringName(s)) else &"")
-	if not d.has("known_spells"):  # saved before magic existed
-		for s in STARTING_SPELLS:
+	# Starting spells added since the character was made (saved before they existed).
+	for s in STARTING_SPELLS:
+		if not c.knows(s):
 			c.learn_spell(s)
-			c.put_in_book(c.book_spells.size(), s)
+			var free := c.book_loadout().find(&"")
+			if free >= 0:
+				c.put_in_book(free, s)
 	return c
 
 

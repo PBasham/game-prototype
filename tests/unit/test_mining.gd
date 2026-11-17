@@ -393,3 +393,99 @@ func test_down_jump_drops_one_platform_at_a_time() -> void:
 	Input.action_release("move_down")
 	await wait_seconds(0.5)
 	assert_almost_eq(w.player.global_position.y, float((feet.y - 8) * World.TILE), 1.0, "caught by the one below")
+
+
+func test_torches_need_support_and_pop_off() -> void:
+	var torch := w.objects.index_of(&"torch")
+	var def := w.objects.def(torch) as ObjectDef
+	var feet := w.world_to_tile(w.player.global_position)
+	var t := Vector2i(feet.x + 4, feet.y - 1)  # on the ground
+	assert_true(w.can_place_object(t, def), "standing on the ground")
+	var high := Vector2i(feet.x + 4, feet.y - 6)
+	assert_false(w.can_place_object(high, def), "nothing to hold it in mid-air")
+	w.request_set_wall(high, w.walls.index_of(&"wood_wall"))
+	assert_true(w.can_place_object(high, def), "on a back wall")
+	assert_true(w.request_set_object(high, torch))
+	var drops := w.drop_count()
+	w.request_damage_wall(high, 1000.0)
+	assert_eq(w.data.get_object(high.x, high.y), WorldData.AIR, "popped off with the wall")
+	assert_eq(w.drop_count(), drops + 2, "the wall's planks and the torch")
+
+
+func test_placing_a_torch_with_the_item() -> void:
+	var inv := w.character.inventory
+	var slot := inv.ids.find(&"torch")
+	assert_gt(slot, -1, "torches in the kit")
+	w.player.select_slot(slot)
+	var feet := w.world_to_tile(w.player.global_position)
+	var t := Vector2i(feet.x + 4, feet.y - 1)
+	w.item_user.cursor_override = Vector2(t * World.TILE) + Vector2(4, 4)
+	var before := inv.counts[slot]
+	w.player.use_impact.emit(w.player.held_item)
+	assert_eq(w.data.get_object(t.x, t.y), w.objects.index_of(&"torch"))
+	assert_eq(inv.counts[slot], before - 1)
+	# Mining it takes it back in one hit.
+	assert_true(w.request_damage_block(t, 1.0))
+	assert_eq(w.data.get_object(t.x, t.y), WorldData.AIR)
+
+
+func test_rope_goes_through_platforms_and_is_climbable() -> void:
+	var feet := w.world_to_tile(w.player.global_position)
+	var t := Vector2i(feet.x + 4, feet.y - 1)
+	w.request_set_block(t, w.blocks.index_of(&"wood_platform"))
+	var rope := w.objects.def(w.objects.index_of(&"rope")) as ObjectDef
+	assert_true(w.can_place_object(t, rope), "rope can share a tile with a platform")
+	w.request_set_object(t, w.objects.index_of(&"rope"))
+	assert_true(w.is_climbable_at(Vector2(t * World.TILE) + Vector2(4, 4)))
+	assert_eq(w.data.get_block(t.x, t.y), w.blocks.index_of(&"wood_platform"), "platform still there")
+	assert_false(w.can_place_object(feet + Vector2i(0, 2), rope), "not inside a solid block")
+
+
+func test_fly_toggles_and_floats() -> void:
+	var p := w.player
+	p.ready_spell(&"fly")
+	p.toggle_concentration(ItemData.find(&"spell:fly") as SpellData)
+	assert_true(p.is_flying())
+	var y := p.global_position.y
+	Input.action_press("jump")
+	await wait_seconds(0.4)
+	Input.action_release("jump")
+	assert_lt(p.global_position.y, y - 3 * World.TILE, "went up")
+	await wait_seconds(0.3)  # coasts to a stop
+	var hover := p.global_position.y
+	await wait_seconds(0.4)
+	assert_almost_eq(p.global_position.y, hover, 2.0, "no gravity while flying")
+	p.toggle_concentration(ItemData.find(&"spell:fly") as SpellData)
+	assert_false(p.is_flying())
+
+
+func test_spark_hits_a_dummy() -> void:
+	var d := DevDummy.new()
+	d.position = w.player.global_position + Vector2(10 * World.TILE, 0)
+	w.effects.add_child(d)
+	var spark := ItemData.find(&"spell:spark") as SpellData
+	var from := w.player.chest()
+	var target := d.hit_rect().get_center()
+	w.request_spawn_projectile(spark, from, (target - from).normalized(), 1.0, w.player)
+	await wait_seconds(0.6)
+	assert_almost_eq(d.health, d.max_health - spark.damage, 0.01, "hit once")
+
+
+func test_chopping_spell_fells_trees() -> void:
+	var plants := w.plants
+	var feet := w.world_to_tile(w.player.global_position)
+	var g := PlantLayer.NONE
+	for dx in range(5, 12):
+		g = plants.sapling_spot(Vector2i(feet.x + dx, feet.y - 1))
+		if g != PlantLayer.NONE:
+			break
+	plants.request_plant_tree(g)
+	plants.grow_all()
+	await wait_seconds(0.2)
+	w.player.ready_spell(&"chopping_spell")
+	var base := plants.ground_position(g, w.player.global_position)
+	w.item_user.cursor_override = base + Vector2(0, -2 * World.TILE)
+	Input.action_press("use_primary")
+	await wait_seconds(2.5)
+	Input.action_release("use_primary")
+	assert_null(plants.plant_at(g), "felled by the beam")

@@ -18,7 +18,7 @@ extends Node2D
 ## the beam from the casting hand, and a range ring that fades in as the cursor nears
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
-enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLANT_TREE, PLANT_GRASS }
+enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE }
 
 const TILE := World.TILE
 
@@ -76,6 +76,8 @@ func _process(delta: float) -> void:
 		update_target(cursor(), true)
 		if valid.is_empty():
 			update_target(cursor(), false)
+	if _item and _item.beam and mode == Mode.CHOP and p.is_using() and not p.input_blocked and tree != PlantLayer.NONE:
+		world.plants.request_hit_tree(tree, chop_damage() * delta, p.global_position.x)
 	if _item and _item.beam and mode == Mode.MINE and p.is_using() and not p.input_blocked:
 		for t in valid:
 			if back:
@@ -94,6 +96,13 @@ func damage() -> float:
 	return _item.mining_damage * (_spell_power() if _item.is_spell() else 1.0)
 
 
+## Chopping damage of the item in use (spells: with book and conduit strength).
+func chop_damage() -> float:
+	if _item == null:
+		return 0.0
+	return _item.axe_damage * (_spell_power() if _item.is_spell() else 1.0)
+
+
 func reach() -> float:
 	if _item == null:
 		return 0.0
@@ -110,7 +119,7 @@ func reach() -> float:
 ## Blocks, walls and seeds (not tools or spells).
 static func _places(item: ItemData) -> bool:
 	return item.mining_damage <= 0.0 and item.axe_damage <= 0.0 \
-		and (item.places_block != &"" or item.places_wall != &"" or item.plants != &"")
+		and (item.places_block != &"" or item.places_wall != &"" or item.places_object != &"" or item.plants != &"")
 
 
 func _spell_power() -> float:
@@ -152,8 +161,9 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 			for t in _tiles():
 				var id := world.data.get_wall(t.x, t.y) if back else world.data.get_block(t.x, t.y)
 				var def := types.def(id) if id > 0 else null
-				if def and not def.unbreakable and def.health > 0.0 and t.y < world.data.height - 1 and _in_reach(t) \
-						and (back or not world.is_protected(t)):
+				var obj := not back and world.data.get_object(t.x, t.y) > 0 and not world.is_solid(t)
+				if (obj or (def and not def.unbreakable and def.health > 0.0 and t.y < world.data.height - 1
+						and (back or not world.is_protected(t)))) and _in_reach(t):
 					valid.append(t)
 		Mode.CHOP:
 			var g := world.plants.tree_at_point(at)
@@ -167,6 +177,14 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 				rect = Rect2i(Vector2i(floori(c.x), floori(c.y)), Vector2i.ONE)
 		Mode.PLACE_BLOCK, Mode.PLACE_WALL:
 			_place_targets()
+		Mode.PLACE_OBJECT:
+			var def := world.objects.def(world.objects.index_of(_item.places_object)) as ObjectDef
+			for t in _tiles():
+				if _in_reach(t) and world.can_place_object(t, def) and not world.plants.blocks_placement(t):
+					valid.append(t)
+			_limit_to_stack()
+		Mode.CAST, Mode.TOGGLE:
+			rect = Rect2i(Vector2i(floori(c.x), floori(c.y)), Vector2i.ONE)
 		Mode.PLANT_TREE:
 			var g := world.plants.sapling_spot(Vector2i(floori(c.x), floori(c.y)))
 			if g != PlantLayer.NONE:
@@ -193,8 +211,16 @@ func can_use(on_back: bool = false) -> bool:
 		EventBus.debug_message.emit(problem)
 		return false
 	match mode:
-		Mode.PLACE_BLOCK, Mode.PLACE_WALL, Mode.PLANT_TREE, Mode.PLANT_GRASS:
+		Mode.PLACE_BLOCK, Mode.PLACE_WALL, Mode.PLACE_OBJECT, Mode.PLANT_TREE, Mode.PLANT_GRASS:
 			return not valid.is_empty()
+		Mode.TOGGLE:
+			# One toggle per click (holding the button doesn't flip it back and forth).
+			if on_back or not Input.is_action_just_pressed("use_primary"):
+				return false
+			world.player.toggle_concentration(_item as SpellData)
+			return true
+		Mode.CAST:
+			return not on_back
 		Mode.NONE:
 			return not on_back
 	return true
@@ -240,6 +266,12 @@ func _on_area_scrolled(step: int) -> void:
 func _mode_for(item: ItemData, on_back: bool) -> Mode:
 	if item == null:
 		return Mode.NONE
+	if item is SpellData:
+		match (item as SpellData).cast:
+			SpellData.Cast.PROJECTILE:
+				return Mode.CAST
+			SpellData.Cast.TOGGLE:
+				return Mode.TOGGLE
 	if item.mining_damage > 0.0:
 		return Mode.MINE
 	if on_back:
@@ -248,6 +280,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.CHOP
 	if item.places_block != &"":
 		return Mode.PLACE_BLOCK
+	if item.places_object != &"":
+		return Mode.PLACE_OBJECT
 	if item.plants == &"tree":
 		return Mode.PLANT_TREE
 	if item.plants == &"grass":
@@ -345,8 +379,17 @@ func _on_impact(item: ItemData) -> void:
 					else:
 						world.request_damage_block(t, damage())
 		Mode.CHOP:
-			if tree != PlantLayer.NONE:
-				world.plants.request_hit_tree(tree, item.axe_damage, p.global_position.x)
+			if tree != PlantLayer.NONE and not item.beam:
+				world.plants.request_hit_tree(tree, chop_damage(), p.global_position.x)
+		Mode.PLACE_OBJECT:
+			var id := world.objects.index_of(item.places_object)
+			for t in valid:
+				if inv.counts[p.selected] > 0 and world.request_set_object(t, id):
+					inv.take(p.selected, 1)
+		Mode.CAST:
+			var spell := item as SpellData
+			var from := p.casting_hand_position()
+			world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
 		Mode.PLACE_BLOCK:
 			var id := world.blocks.index_of(item.places_block)
 			for t in valid:
@@ -385,6 +428,11 @@ func _draw() -> void:
 		return
 	var p := world.player
 	var aim := cursor()
+	if mode in [Mode.CAST, Mode.TOGGLE]:
+		# No target box: just say why it can't be cast, if it can't.
+		if problem != "":
+			draw_string(ThemeDB.fallback_font, aim + Vector2(6, -4), problem, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, invalid_color)
+		return
 	var reach_px := reach()
 	var ok := not valid.is_empty() or (mode == Mode.CHOP and tree != PlantLayer.NONE)
 	var color := (back_color if back else valid_color) if ok else invalid_color
@@ -396,7 +444,7 @@ func _draw() -> void:
 		ring.a = ring_alpha * k
 		draw_arc(p.chest(), reach_px, 0.0, TAU, 128, ring, 1.0)
 	# Ghost blocks where blocks or walls will go.
-	if mode in [Mode.PLACE_BLOCK, Mode.PLACE_WALL, Mode.PLANT_GRASS] and _item.icon:
+	if mode in [Mode.PLACE_BLOCK, Mode.PLACE_WALL, Mode.PLACE_OBJECT, Mode.PLANT_GRASS] and _item.icon:
 		var ghost_tex := _item.icon
 		if mode == Mode.PLANT_GRASS:
 			ghost_tex = (ItemData.find(&"dirt").icon if ItemData.find(&"dirt") else null)
@@ -411,6 +459,8 @@ func _draw() -> void:
 	if _item.beam and p.is_using():
 		var from := p.casting_hand_position() if _item.is_spell() else p.doll_item_position()
 		var to := Vector2(rect.position * TILE) + Vector2(rect.size * TILE) * 0.5
+		if mode == Mode.CHOP and tree != PlantLayer.NONE:
+			to = world.plants.ground_position(tree, p.global_position) + Vector2(0, -2.5 * TILE)
 		var glow := beam_color if ok else invalid_color
 		glow.a *= 0.3
 		draw_line(from, to, glow, 3.0)

@@ -7,7 +7,8 @@ extends RefCounted
 ## whenever the layout of a save changes.
 
 const MAGIC := "GPSV"
-const FORMAT_VERSION := 1
+## 2: world chunks also store the object layer (rope, torches).
+const FORMAT_VERSION := 2
 
 const KIND_CHARACTER := "character"
 const KIND_WORLD := "world"

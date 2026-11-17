@@ -136,7 +136,53 @@ func test_light_sky_is_lit_and_deep_rock_is_ambient() -> void:
 		job.solid[i] = 1 if table[i] == TileDef.Collision.SOLID else 0
 	job.run()
 	var w := ChunkData.SIZE
-	assert_eq(job.bytes[5 * w + 5], 255, "sky")
-	assert_lt(job.bytes[(ChunkData.SIZE + 3) * w + 5], 255, "3 tiles into rock is dimmer")
-	assert_gt(job.bytes[(ChunkData.SIZE + 3) * w + 5], job.bytes[(ChunkData.SIZE * 2 - 1) * w + 5], "fades with depth")
-	assert_eq(job.bytes[(ChunkData.SIZE * 2 - 1) * w + 5], int(job.ambient * 255.0 + 0.5), "deep rock is ambient")
+	var at := func(x: int, y: int) -> int: return job.bytes[(y * w + x) * 3]  # red channel (sky is white)
+	assert_eq(at.call(5, 5), 255, "sky")
+	assert_lt(at.call(5, ChunkData.SIZE + 3), 255, "3 tiles into rock is dimmer")
+	assert_gt(at.call(5, ChunkData.SIZE + 3), at.call(5, ChunkData.SIZE * 2 - 1), "fades with depth")
+	assert_eq(at.call(5, ChunkData.SIZE * 2 - 1), int(job.ambient * 255.0 + 0.5), "deep rock is ambient")
+
+
+func test_torches_light_a_dark_cave_warm() -> void:
+	# A sealed 32x32 room in rock (no sky), with a torch in the middle.
+	var stone := blocks.index_of(&"stone")
+	var room := PackedInt32Array()
+	room.resize(ChunkData.AREA)
+	room.fill(stone)
+	for y in range(4, 28):
+		for x in range(4, 28):
+			room[y * ChunkData.SIZE + x] = WorldData.AIR
+	var walls := PackedInt32Array()
+	walls.resize(ChunkData.AREA)
+	walls.fill(1)  # back walls everywhere: no sky light
+	var objs := PackedInt32Array()
+	objs.resize(ChunkData.AREA)
+	var objects := TileTypes.new(&"objects")
+	var torch := objects.index_of(&"torch")
+	objs[16 * ChunkData.SIZE + 16] = torch
+	var job := LightJob.new()
+	job.rect = Rect2i(0, 0, ChunkData.SIZE, ChunkData.SIZE)
+	job.blocks = [room]
+	job.walls = [walls]
+	job.objects = [objs]
+	var table := blocks.collision_table()
+	job.solid.resize(table.size())
+	for i in table.size():
+		job.solid[i] = 1 if table[i] == TileDef.Collision.SOLID else 0
+	var def := objects.def(torch) as ObjectDef
+	job.emitters.resize(objects.size() * 4)
+	job.emitters[torch * 4] = def.light_color.r
+	job.emitters[torch * 4 + 1] = def.light_color.g
+	job.emitters[torch * 4 + 2] = def.light_color.b
+	job.emitters[torch * 4 + 3] = def.light_radius
+	job.run()
+	var px := func(x: int, y: int) -> Color:
+		var i := (y * ChunkData.SIZE + x) * 3
+		return Color8(job.bytes[i], job.bytes[i + 1], job.bytes[i + 2])
+	var near: Color = px.call(17, 16)
+	var far: Color = px.call(5, 5)
+	var ambient := job.ambient
+	assert_gt(near.r, 0.9, "bright next to the torch")
+	assert_gt(near.r, near.b + 0.1, "warm (more red than blue)")
+	assert_lt(far.r, near.r, "dimmer in the far corner")
+	assert_almost_eq(px.call(16, 16 + 14).r, ambient, 0.02, "past its radius through rock: dark")

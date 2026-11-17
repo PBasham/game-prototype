@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="1_obj"]
+[ext_resource type="Texture2D" path="res://assets/objects/torch.png" id="2_tex"]
+
+[resource]
+script = ExtResource("1_obj")
+frames = ExtResource("2_tex")
+style = 1
+needs_support = true
+light_color = Color(1, 0.86, 0.62, 1)
+light_radius = 11.0
+collision = 0
+health = 1.0
+drop_item = &"torch"
+id = &"torch"
+display_name = "Torch"

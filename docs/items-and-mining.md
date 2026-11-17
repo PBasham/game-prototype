@@ -47,7 +47,27 @@ wood_wall planks). No hammer.
 Background walls have their own textures (`terrain` on each wall `.tres`), so a block
 and its wall can look different whenever you want them to.
 
-Copper ore, platforms and rope have no back-wall version (right click does nothing).
+Copper ore and platforms have no back-wall version (right click does nothing).
+
+## Tile objects: rope and torches
+
+A third layer, between the back wall and the front block: `data/objects/*.tres`
+(`ObjectDef`, `src/world/object_def.gd`), drawn by `ObjectLayer`. An object can share a
+tile with a platform or a back wall, never with a solid block. Items place them with
+left click (`places_object`).
+
+- **Rope:** climbable (Up / Down). Can hang through platforms. Needs something next to
+  it to be placed (a block, a platform, more rope, or a wall behind), then stays.
+- **Torch:** gives warm light (radius 11, see Lighting in the guide). Goes on a solid
+  block below or beside it, or on a back wall, and shows the matching frame (standing,
+  leaning left or right, on the wall). It can't go inside a solid block. When what holds
+  it is mined, it pops off as an item.
+- Mining (left click) takes an object first when there's no solid block in the tile;
+  objects break in one hit and drop their item.
+- Fields: `frames` (strip of 8x8 frames), `style` (ROPE or TORCH: which frames),
+  `climbable`, `needs_support`, `light_color`, `light_radius`, `health`, `drop_item`.
+- Saved with the world (world file format 2; older worlds load with no objects, and
+  rope that was a block before this change is gone).
 
 ## Items: `data/items/*.tres`
 
@@ -70,6 +90,7 @@ Each item is an `ItemData` (`src/items/item_data.gd`). Open one in the Inspector
 | **Placing** | |
 | `places_block` | Block placed with left click |
 | `places_wall` | Wall placed with right click (the back layer) |
+| `places_object` | Tile object placed with left click (rope, torch) |
 | `plants` | `tree` (a sapling on grass) or `grass` (turns dirt into grass) |
 | `free_place` | Can go anywhere in reach; otherwise it must touch a block or wall |
 | `place_area_max` | 0 = up to the spellbook's `build_area_max`; 1 = always one at a time (tree seeds, platforms, rope); other = a cap |
@@ -90,7 +111,8 @@ Current items:
 | Copper Pickaxe | 25 per hit, 2x2, reach 10 |
 | Copper Axe | 25 per hit on trees (a tree has 100), reach 10 |
 | Dirt, Stone, Wood Planks | Blocks; right click places them as background walls |
-| Copper Ore, Wood Platform, Rope | Blocks (front only) |
+| Copper Ore, Wood Platform | Blocks (front only) |
+| Rope, Torch | Tile objects |
 | Basic Spellbook | The book used when the Book slot is empty: 4 slots, power x1 |
 | Wood | From trees; becomes planks when crafting exists |
 | Tree Seed | Plant on grass; grows into a tree |
@@ -113,12 +135,31 @@ hand, the front hand channels at the cursor while held).
 
 ## Magic
 
-Spells are data: `data/spells/<id>.tres` (`SpellData`, `src/items/spell_data.gd`). A
-spell has the same mining fields as an item (beam, damage, area, reach) plus
-`requires_conduit`.
+Spells are data: `data/spells/<id>.tres` (`SpellData`, `src/items/spell_data.gd`).
+How a spell works is its `cast`:
+
+| Cast | What it does | Fields |
+| --- | --- | --- |
+| TOOL | Works on the world like a tool: mining (`mining_damage`) or chopping (`axe_damage`), as a beam while held (`beam`) or once per cast | the item fields: area, reach, `requires_conduit` |
+| PROJECTILE | Fires a bolt at the cursor that hurts the first thing it hits and fizzles on solid blocks | `damage`, `projectile_speed`, `projectile_range`, `projectile_color` |
+| TOGGLE | A concentration spell: a click turns its `effect` on or off. Only one at a time; the HUD shows "Concentrating: ..." | `effect` (&"fly") |
+
+Every spell also has `mana_cost` and `mana_per_second`, unused until mana exists.
+
+| Spell | Cast | Notes |
+| --- | --- | --- |
+| Mining Spell | TOOL beam | 55 mining per second per tile, area 2 (toggle 1 to 3), reach 12 |
+| Chopping Spell | TOOL beam | 55 chopping per second on the tree under the cursor (the copper axe is about 71/s), reach 12 |
+| Fly | TOGGLE | Click to fly, click again to stop. WASD in every direction, Space goes up. No gravity or fall damage while flying. Speed on the Player: `fly_speed` (22), `fly_accel_time` (0.15). Stays on when you switch items. |
+| Spark | PROJECTILE | 8 damage (times spell power), 40 tiles/s, 20 tiles. Hold to keep casting (one per 0.3 s). Nothing has health yet except the dev training dummy (console: `dummy`). |
+
+Damageable things are nodes in the `damageable` group with `hit_rect()` and
+`take_damage(amount, from)`; enemies will use the same.
 
 - **Spells you know** are kept on the character. A new character knows the Mining
-  Spell. (How you learn more comes with crafting and loot.)
+  Spell, Chopping Spell, Fly and Spark, all in the Basic Spellbook's 4 slots. Older
+  characters learn any starting spell they're missing when they load. (How you learn
+  more comes with crafting and loot.)
 - **The spellbook is part of the character**, not a hotbar item: the **Book** slot in
   the inventory panel. Empty = the Basic Spellbook (4 slots). Other books can have more
   slots and `spell_power`. Your loadout stays when you swap books; a smaller book just
@@ -161,8 +202,8 @@ A character is saved separately from worlds: `user://characters/default.gpchar` 
 and inventory). Until character select exists (Phase 7) there's one automatic
 character. The first time you start a world it's made with the starting kit:
 
-pickaxe, axe, a Mining Spell shortcut (slot 3), 99 planks, 30 platforms, 30 rope, 5
-tree seeds, 10 grass seeds, 50 dirt. It knows the Mining Spell, already in the book.
+pickaxe, axe, a Mining Spell shortcut (slot 3), 99 planks, 30 platforms, 30 rope, 20
+torches, 5 tree seeds, 10 grass seeds, 50 dirt. It knows the Mining Spell, already in the book.
 
 To change the kit: `STARTING_KIT` in `src/items/character_data.gd`. To get a fresh
 character, delete `default.gpchar` (in the folder Project > Open User Data Folder

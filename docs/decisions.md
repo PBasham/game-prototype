@@ -2,6 +2,20 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Objects layer, torches, colored light, new spells
+
+- A third tile layer for objects (rope, torches; chests and doors later). Rope moved
+  there, so it can hang through platforms.
+- Torches: on a block (below or beside) or a back wall, not inside solid blocks; pop off
+  when unsupported. 20 in the starting kit. Placeholder art.
+- Lighting is colored (RGB) so torches are warm.
+- Spells get a cast type: TOOL (mining, chopping), PROJECTILE (Spark), TOGGLE
+  (concentration: Fly, infinite until mana exists). Chopping Spell, Fly and Spark are
+  starting spells. Mana fields exist on spells but do nothing yet.
+- Dev-only training dummy to test damage.
+- Open question (Patrick): tools, spells, or both for mining and chopping. Both exist
+  for now.
+
 ## 2026-11-17: Playtest round (Phase 4)
 
 - Placing is near instant (12 a second held), like Starbound.

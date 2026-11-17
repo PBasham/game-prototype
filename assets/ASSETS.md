@@ -90,6 +90,10 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | items/held/<item id>.png | Sprite drawn in hand. Tools: same as the icon (grip pixel in the item's `held.grip`). Blocks 7x7, small items 9x9. |
 | items/icons/mining_spell.png | 16x16 spell icon (spells have icons only; the hand shows the equipped book) |
 | items/icons/basic_spellbook.png, items/held/basic_spellbook.png | 11x11 book, upright, spine left; grip pixel (5, 9) |
+| items/icons/{chopping_spell,fly,spark}.png | 16x16 placeholder spell icons |
+| items/icons/torch.png, items/held/torch.png | torch item |
+| objects/rope.png | 32x8: 4 frames of 8x8: single, top, middle, bottom |
+| objects/torch.png | 32x8: 4 frames of 8x8: standing, on a block to the left, to the right, on a back wall |
 | fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |
 
 Replace any of these with real art under the same name; if the size changes, check the

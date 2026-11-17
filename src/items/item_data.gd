@@ -45,6 +45,8 @@ const SPELL_PREFIX := "spell:"
 @export var places_block: StringName = &""
 ## Wall id placed with right click, as the back layer (data/walls).
 @export var places_wall: StringName = &""
+## Tile object placed with left click (data/objects): rope, torches.
+@export var places_object: StringName = &""
 ## Plants something: &"tree" (a sapling on grass) or &"grass" (turns dirt to grass).
 @export var plants: StringName = &""
 ## Can be placed anywhere in reach; otherwise it must touch a block or a wall.

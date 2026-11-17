@@ -55,9 +55,18 @@ func _items() -> Array[ItemData]:
 	var platform := _block(&"wood_platform", "Wood Platform", "Stand on it; jump up through it, Down + Jump drops through.")
 	platform.place_area_max = 1
 	out.append(platform)
-	var rope := _block(&"rope", "Rope", "Climb with Up and Down.")
+	# Tile objects (their own layer: they can share a tile with a platform or a wall).
+	var rope := _block(&"rope", "Rope", "Climb with Up and Down. Can hang through platforms.")
+	rope.places_block = &""
+	rope.places_object = &"rope"
 	rope.place_area_max = 1
 	out.append(rope)
+	var torch := _small(&"torch", "Torch", "Light. Goes on a block (below or beside) or a back wall.")
+	torch.kind = ItemData.Kind.BLOCK
+	torch.places_object = &"torch"
+	torch.place_area_max = 1
+	torch.held.grip = Vector2(3, 6)
+	out.append(torch)
 	# Materials and seeds.
 	var wood := _small(&"wood", "Wood", "From trees. Crafted into planks (crafting comes later).")
 	out.append(wood)
@@ -104,7 +113,39 @@ func _spells() -> Array[ItemData]:
 	mining.mining_area_max = 3
 	mining.reach_tiles = 12.0
 	out.append(mining)
+
+	var chop := _spell(&"chopping_spell", "Chopping Spell", "Hold to chop a tree with a beam. A bit slower than the copper axe.")
+	chop.beam = true
+	chop.axe_damage = 55.0  # per second (the copper axe is 25 per 0.35 s swing, about 71/s)
+	chop.reach_tiles = 12.0
+	out.append(chop)
+
+	var fly := _spell(&"fly", "Fly", "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up.")
+	fly.cast = SpellData.Cast.TOGGLE
+	fly.effect = &"fly"
+	fly.mana_per_second = 2.0  # not used until mana exists
+	out.append(fly)
+
+	var spark := _spell(&"spark", "Spark", "A small bolt toward the cursor. Hold to keep casting.")
+	spark.cast = SpellData.Cast.PROJECTILE
+	spark.damage = 8.0
+	spark.projectile_speed = 40.0
+	spark.projectile_range = 20.0
+	spark.impact_at = 0.35
+	spark.mana_cost = 1.0  # not used until mana exists
+	out.append(spark)
 	return out
+
+
+func _spell(spell_id: StringName, label: String, text: String) -> SpellData:
+	var s := SpellData.new()
+	s.id = spell_id
+	s.display_name = label
+	s.description = text
+	s.icon = load("res://assets/items/icons/%s.png" % spell_id) as Texture2D
+	s.kind = ItemData.Kind.SPELL
+	s.max_stack = 1
+	return s
 
 
 func _base(item_id: StringName, label: String, text: String) -> ItemData:

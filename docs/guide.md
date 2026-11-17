@@ -181,8 +181,8 @@ per pixel from a small texture of tile ids:
 
 ## Lighting
 
-`src/world/light_map.gd` (node `Lights` in the running game). A tile-level light map
-over the loaded area, drawn as a smooth multiply overlay.
+`src/world/light_map.gd` (node `Lights` in the running game). A tile-level, colored
+(RGB) light map over the loaded area, drawn as a smooth multiply overlay.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
@@ -190,10 +190,17 @@ over the loaded area, drawn as a smooth multiply overlay.
 | `open_falloff` | 0.06 | Light lost per tile through air and walls. |
 | `solid_falloff` | 0.1 | Light lost per tile through blocks (how far sunlight soaks into the ground). |
 | `min_interval` | 0.12 | Minimum seconds between recomputes. |
+| `source_solid_factor` | 3 | Light sources (torches) lose this many times more reach per tile through blocks than through air. |
 
 Open sky (no block and no wall) is the light source. The spread runs on a background
 thread (`LightJob`), so editing tiles never stalls the game; light catches up a fraction
-of a second later. Torches and other light sources come later.
+of a second later.
+
+**Light sources** are tile objects with a `light_radius` (`data/objects/*.tres`, group
+Light): torches now. A source is bright for about the inner half of its radius and
+fades to nothing at it, tinted by its `light_color` (torch: warm, radius 11). Sources
+of the same color are spread in one pass, so many torches cost about the same as one.
+Sunlight is white; the two add up.
 
 ## Backdrop
 
@@ -219,7 +226,7 @@ Debug builds only (running from the editor counts).
 | **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
-| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `clear`, `kit`, `tp <x> <y>` / `tp spawn`, `pos`, `grow`, `regen`, `cls`. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
+| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `ready <spell>`, `fly`, `clear`, `kit`, `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `place <object>` (a torch or rope at the cursor), `dummy` / `dummy clear` (a training dummy for damage spells), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |
 

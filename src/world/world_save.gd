@@ -6,8 +6,9 @@ extends RefCounted
 ##   SaveHeader (magic, format version, kind "world")
 ##   meta: Dictionary (WorldInfo.to_dict() plus "blocks" and "walls" id palettes)
 ##   chunk count: u32
-##   per chunk: x u32, y u32, blocks, walls (each a zstd-compressed PackedInt32Array:
-##              u32 raw byte size, then the compressed bytes via store_var)
+##   per chunk: x u32, y u32, blocks, walls, objects (each a zstd-compressed
+##              PackedInt32Array: u32 raw byte size, then the compressed bytes via
+##              store_var). Format version 1 files have no objects.
 ##
 ## Only chunks changed by the player are stored; everything else is regenerated from the
 ## seed. Tile numbers are saved with an id palette (index -> id) and remapped on load,
@@ -16,12 +17,13 @@ extends RefCounted
 
 const META_BLOCKS := "blocks"
 const META_WALLS := "walls"
+const META_OBJECTS := "objects"
 ## Extra world state saved in meta (plants).
 const META_PLANTS := "plants"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,
-		extra: Dictionary = {}) -> Error:
+		extra: Dictionary = {}, objects: TileTypes = null) -> Error:
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var tmp := path + ".tmp"
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
@@ -31,6 +33,8 @@ static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks
 	var meta := info.to_dict()
 	meta[META_BLOCKS] = _palette(blocks)
 	meta[META_WALLS] = _palette(walls)
+	if objects:
+		meta[META_OBJECTS] = _palette(objects)
 	meta.merge(extra)
 	f.store_var(meta)
 	f.store_32(chunks.size())
@@ -39,6 +43,7 @@ static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks
 		f.store_32(c.coord.y)
 		_store_array(f, c.blocks)
 		_store_array(f, c.walls)
+		_store_array(f, c.objects)
 	f.close()
 	# Write to a temp file first so a crash mid-save never destroys the old save.
 	if FileAccess.file_exists(path):
@@ -64,7 +69,8 @@ static func read_info(path: String) -> WorldInfo:
 
 ## The saved chunks, keyed by chunk coordinate, with tile numbers remapped to the
 ## current content. Empty if there's no file.
-static func load_chunks(path: String, blocks: TileTypes, walls: TileTypes) -> Dictionary[Vector2i, ChunkData]:
+static func load_chunks(path: String, blocks: TileTypes, walls: TileTypes,
+		objects: TileTypes = null) -> Dictionary[Vector2i, ChunkData]:
 	var out: Dictionary[Vector2i, ChunkData] = {}
 	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
@@ -76,11 +82,17 @@ static func load_chunks(path: String, blocks: TileTypes, walls: TileTypes) -> Di
 	var meta: Dictionary = f.get_var()
 	var block_map := _remap(meta.get(META_BLOCKS, []), blocks)
 	var wall_map := _remap(meta.get(META_WALLS, []), walls)
+	var object_map := _remap(meta.get(META_OBJECTS, []), objects) if objects else PackedInt32Array()
+	var has_objects: bool = header.version >= 2
 	var count := f.get_32()
 	for i in count:
 		var c := ChunkData.new(Vector2i(f.get_32(), f.get_32()))
 		c.blocks = _apply_map(_load_array(f), block_map)
 		c.walls = _apply_map(_load_array(f), wall_map)
+		if has_objects:
+			var objs := _load_array(f)
+			c.objects = _apply_map(objs, object_map) if objects else PackedInt32Array()
+			c.objects.resize(ChunkData.AREA)
 		c.modified = true
 		out[c.coord] = c
 	return out

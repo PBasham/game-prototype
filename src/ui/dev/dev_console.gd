@@ -1,7 +1,8 @@
 class_name DevConsole
 extends CanvasLayer
 ## Debug builds only: a command console, opened with ` (the ~ key). Type `help`.
-## Up / Down walk through earlier commands; Tab completes item and spell names.
+## Up / Down walk through earlier commands; Tab completes item and spell names. The log
+## scrolls with the mouse wheel or Page Up / Page Down.
 ##
 ## Items and spells can be named by id (copper_pickaxe) or by name ("copper pickaxe",
 ## any case); a unique start of either works too (copper_p).
@@ -13,7 +14,7 @@ var world: World
 var open := false
 
 var _panel: PanelContainer
-var _log: Label
+var _log: RichTextLabel
 var _entry: LineEdit
 var _lines: PackedStringArray = []
 var _history: PackedStringArray = []
@@ -35,11 +36,14 @@ func _ready() -> void:
 	add_child(_panel)
 	var box := VBoxContainer.new()
 	_panel.add_child(box)
-	_log = Label.new()
-	_log.add_theme_font_size_override("font_size", 7)
-	_log.add_theme_color_override("font_color", Color("d8e0d0"))
-	_log.custom_minimum_size = Vector2(630, LINES_SHOWN * 9)
-	_log.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_log = RichTextLabel.new()
+	_log.bbcode_enabled = false
+	_log.scroll_active = true
+	_log.scroll_following = true
+	_log.selection_enabled = true
+	_log.add_theme_font_size_override("normal_font_size", 7)
+	_log.add_theme_color_override("default_color", Color("d8e0d0"))
+	_log.custom_minimum_size = Vector2(630, LINES_SHOWN * 10)
 	box.add_child(_log)
 	_entry = LineEdit.new()
 	_entry.add_theme_font_size_override("font_size", 8)
@@ -92,6 +96,10 @@ func _on_input_key(event: InputEvent) -> void:
 		KEY_TAB:
 			_complete()
 			_entry.accept_event()
+		KEY_PAGEUP, KEY_PAGEDOWN:
+			var bar := _log.get_v_scroll_bar()
+			bar.value += (-1.0 if k.keycode == KEY_PAGEUP else 1.0) * _log.size.y * 0.8
+			_entry.accept_event()
 
 
 func _on_submit(text: String) -> void:
@@ -121,11 +129,13 @@ func run(text: String) -> bool:
 
 
 func _print(line: String) -> void:
+	if not open and not DisplayServer.get_name() == "headless" and OS.get_cmdline_user_args().size() > 0:
+		print("[console] ", line)
 	for l in line.split("\n"):
 		_lines.append(l)
-	while _lines.size() > 200:
+	while _lines.size() > 500:
 		_lines.remove_at(0)
-	_log.text = "\n".join(_lines.slice(maxi(_lines.size() - LINES_SHOWN, 0)))
+	_log.text = "\n".join(_lines)
 
 
 func _add(cmd_name: String, usage: String, help_text: String, fn: Callable) -> void:
@@ -164,6 +174,18 @@ func _register() -> void:
 		_print("%d saplings growing." % world.plants.grow_all()))
 	_add("regen", "regen", "Regenerate the world from forest.tres (same as F6).", func(_a: PackedStringArray) -> void:
 		world.regenerate())
+	_add("dig", "dig <w> <h>", "Clear a box of blocks (keeps walls) centered on the cursor.", _dig)
+	_add("place", "place <object>", "Place a tile object (torch, rope) at the cursor, no item needed.", _place)
+	_add("dummy", "dummy | dummy clear", "Spawn a training dummy at the cursor (to test damage spells).", _dummy)
+	_add("ready", "ready <spell>", "Take the spellbook out with this spell.", func(a: PackedStringArray) -> void:
+		var spell := find_spell(" ".join(a))
+		if spell:
+			world.player.ready_spell(spell.id)
+			_print("Ready: %s." % spell.display_name))
+	_add("fly", "fly", "Toggle flying (same as casting Fly).", func(_a: PackedStringArray) -> void:
+		var spell := ItemData.find(&"spell:fly") as SpellData
+		world.player.toggle_concentration(spell)
+		_print("Flying." if world.player.is_flying() else "Not flying."))
 	_add("cls", "cls", "Clear this log.", func(_a: PackedStringArray) -> void:
 		_lines.clear()
 		_log.text = "")
@@ -233,6 +255,58 @@ func _equip(a: PackedStringArray) -> void:
 			_print("Equipped %s." % item.display_name)
 			return
 	_print("%s isn't a book or a conduit." % item.display_name)
+
+
+func _dig(a: PackedStringArray) -> void:
+	if a.size() != 2 or not a[0].is_valid_int() or not a[1].is_valid_int():
+		_print("Usage: dig <w> <h>")
+		return
+	var size := Vector2i(clampi(int(a[0]), 1, 64), clampi(int(a[1]), 1, 64))
+	var c := world.world_to_tile(world.item_user.cursor())
+	var start := c - size / 2
+	for y in size.y:
+		for x in size.x:
+			world.request_set_block(start + Vector2i(x, y), WorldData.AIR)
+	_print("Dug %dx%d." % [size.x, size.y])
+
+
+func _place(a: PackedStringArray) -> void:
+	var id := world.objects.index_of(StringName(_norm(" ".join(a))))
+	if id <= 0:
+		_print("No object called '%s'. Objects: %s" % [" ".join(a), ", ".join(_object_ids())])
+		return
+	var t := world.world_to_tile(world.item_user.cursor())
+	if world.is_solid(t):
+		_print("There's a solid block there.")
+		return
+	world.request_set_object(t, id)
+	_print("Placed %s at %d, %d." % [world.objects.id_of(id), t.x, t.y])
+
+
+func _object_ids() -> PackedStringArray:
+	var out := PackedStringArray()
+	for i in range(1, world.objects.size()):
+		out.append(String(world.objects.id_of(i)))
+	return out
+
+
+func _dummy(a: PackedStringArray) -> void:
+	if a.size() == 1 and a[0] == "clear":
+		for n in world.effects.get_children():
+			if n is DevDummy:
+				n.queue_free()
+		_print("Dummies removed.")
+		return
+	var d := DevDummy.new()
+	# Stand it on the ground under the cursor.
+	var t := world.world_to_tile(world.item_user.cursor())
+	for i in 40:
+		if world.is_solid(t + Vector2i(0, 1)):
+			break
+		t.y += 1
+	d.position = Vector2((t.x + 0.5) * World.TILE, (t.y + 1) * World.TILE)
+	world.effects.add_child(d)
+	_print("Dummy at %d, %d. Cast Spark at it." % [t.x, t.y])
 
 
 func _tp(a: PackedStringArray) -> void:

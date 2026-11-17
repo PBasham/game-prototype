@@ -15,7 +15,7 @@ extends Node
 ##   --world=KIND            world generator: forest (default) or course (test course)
 ##   --seed=N                world seed (default 1337); any word works too
 ##   --size=NAME             tiny, small (default), medium, large
-##   --console=FRAME:CMD     run a dev console command at a frame (open, shown)
+##   --console=FRAME:CMD     run a dev console command at a frame (output also printed)
 ##   --aim=DX:DY             aim at this offset (px) from the player's chest instead of
 ##                           the mouse (mining, placing, facing)
 ##   --scene=doll            open a dev scene instead of a world (doll = Doll Viewer)
@@ -122,8 +122,7 @@ func _physics_process(_delta: float) -> void:
 	for c in _console:
 		var cw := get_tree().current_scene as World
 		if _frame == c[0] and cw and cw.console:
-			cw.console.set_open(true)
-			cw.console.run(c[1])
+			cw.console.run(c[1])  # without opening it, so inputs still reach the player
 	for s in _shots:
 		if _frame == s[0]:
 			_take(s[1])

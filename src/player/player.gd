@@ -22,6 +22,8 @@ signal use_impact(item: ItemData)
 signal area_scrolled(step: int)
 ## The selected hotbar slot changed.
 signal selection_changed(slot: int)
+## A concentration spell (Fly) was turned on (spell) or off (null).
+signal concentration_changed(spell: SpellData)
 
 const TILE := float(World.TILE)
 const SHEET := "res://assets/sprites/scholar"
@@ -58,6 +60,13 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export_range(0.1, 1.0) var backpedal_speed := 0.8
 ## Empty hands punch (data/item_types/unarmed.tres: jab, cross, uppercut) on click.
 @export var unarmed_attacks := true
+
+@export_group("Flying (the Fly spell)")
+## Tiles per second.
+@export var fly_speed := 22.0
+## Seconds to reach full speed or stop.
+@export var fly_accel_time := 0.15
+@export_group("")
 
 @export_group("Ground (seconds to full speed / to stop)")
 @export var ground_accel_time := 0.1
@@ -117,6 +126,8 @@ var use_back := false
 var input_blocked := false
 ## True while typing in the dev console: no movement or item input.
 var typing := false
+## The concentration spell that's on (Fly), or null. Only one at a time.
+var concentration: SpellData
 ## Optional: (back: bool) -> bool. False when using the held item now would do nothing
 ## (a block with nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
 var use_check: Callable
@@ -360,7 +371,9 @@ func _physics_process(delta: float) -> void:
 		if _drop_timer <= 0.0:
 			set_collision_mask_value(2, true)
 
-	if _climbing:
+	if is_flying():
+		_fly(input_x, input_y, delta)
+	elif _climbing:
 		_climb(input_x, input_y)
 	elif input_y != 0.0 and world and world.is_climbable_at(_body_center()):
 		_start_climb()
@@ -457,6 +470,31 @@ func _try_step_up(dir: float, delta: float) -> void:
 			global_position += up
 			velocity.y = maxf(velocity.y, 0.0)
 			return
+
+
+## Turns a concentration spell on, or off if it's the one already on. Turning one on
+## ends the previous one.
+func toggle_concentration(spell: SpellData) -> void:
+	concentration = null if concentration == spell else spell
+	if not is_flying():
+		_rising_jump = false
+		_peak_y = global_position.y  # no fall damage from where the flight ended
+	concentration_changed.emit(concentration)
+
+
+func is_flying() -> bool:
+	return concentration != null and concentration.effect == &"fly"
+
+
+## Flying: no gravity, WASD in every direction, Space also goes up.
+func _fly(input_x: float, input_y: float, delta: float) -> void:
+	_climbing = false
+	if _held("jump"):
+		input_y = -1.0
+	var target := Vector2(input_x, input_y).limit_length(1.0) * fly_speed * TILE
+	velocity = velocity.move_toward(target, fly_speed * TILE / maxf(fly_accel_time, 0.01) * delta)
+	_peak_y = global_position.y
+	move_and_slide()
 
 
 func _start_climb() -> void:
@@ -559,7 +597,11 @@ func _animate(delta: float) -> void:
 	_doll.speed_scale = 1.0
 	_doll.reverse = is_aiming() and velocity.x != 0.0 and signf(velocity.x) != float(facing)
 	_doll.dip = 0.0
-	if _climbing:
+	if is_flying():
+		_doll.play(&"Jump")
+		_doll.pause()
+		_doll.frame = clampi(jump_apex_frame - 1, 0, maxi(_doll.frame_count(&"Jump") - 1, 0))
+	elif _climbing:
 		_doll.play(&"Idle Pose")
 	elif airborne:
 		_show_jump_frame()

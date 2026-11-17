@@ -10,6 +10,8 @@ extends Node2D
 signal block_changed(tile: Vector2i, old_id: int, new_id: int)
 ## A background wall changed. Tile coords are wrapped.
 signal wall_changed(tile: Vector2i, old_id: int, new_id: int)
+## A tile object (rope, torch) changed. Tile coords are wrapped.
+signal object_changed(tile: Vector2i, old_id: int, new_id: int)
 
 ## Tile size in pixels. The Scholar is about 3 tiles wide and 8 tall.
 const TILE := 8
@@ -38,17 +40,22 @@ var info: WorldInfo
 var data: WorldData
 var blocks: TileTypes
 var walls: TileTypes
+## Tile objects (data/objects): rope, torches.
+var objects: TileTypes
 var generator: WorldGenerator
 var renderer: ChunkRenderer
 var lights: LightMap
 var backdrop: Backdrop
 var player: Player
 var plants: PlantLayer
+var object_layer: ObjectLayer
 ## The character playing (inventory). From Game.character, or a throwaway one.
 var character: CharacterData
 var item_user: ItemUser
 var hud: Hud
 var _drops: Node2D
+## Spell projectiles, damage numbers, dev dummies.
+var effects: Node2D
 var _cracks: CrackOverlay
 ## Damaged tiles: (x, y, layer 0 = block / 1 = wall) -> [damage, seconds until healed].
 var _damage: Dictionary[Vector3i, Array] = {}
@@ -64,6 +71,7 @@ func _ready() -> void:
 	Game.set_state(Game.State.LOADING)
 	blocks = TileTypes.new(&"tiles")
 	walls = TileTypes.new(&"walls")
+	objects = TileTypes.new(&"objects")
 	info = Game.world_info
 	if info == null:
 		info = WorldInfo.create("Scene run", size_preset, world_seed)
@@ -74,7 +82,7 @@ func _ready() -> void:
 	generator = WorldGenerator.create(info.kind, blocks, walls, size.x, size.y, info.seed)
 	data.generator = generator.generate_chunk
 	if not info.temporary and not info.path.is_empty():
-		data.saved = WorldSave.load_chunks(info.path, blocks, walls)
+		data.saved = WorldSave.load_chunks(info.path, blocks, walls, objects)
 
 	backdrop = Backdrop.new()
 	backdrop.name = "Backdrop"
@@ -85,6 +93,10 @@ func _ready() -> void:
 	renderer.chunks_per_frame = chunks_per_frame
 	add_child(renderer)
 	renderer.setup(self)
+	object_layer = ObjectLayer.new()
+	object_layer.name = "Objects"
+	add_child(object_layer)
+	object_layer.setup(self)
 	plants = PlantLayer.new()
 	plants.name = "Plants"
 	add_child(plants)
@@ -116,6 +128,9 @@ func _ready() -> void:
 	_drops = Node2D.new()
 	_drops.name = "Drops"
 	add_child(_drops)
+	effects = Node2D.new()
+	effects.name = "Effects"  # projectiles, damage numbers, dev dummies
+	add_child(effects)
 	_cracks = CrackOverlay.new()
 	_cracks.name = "Cracks"
 	_cracks.world = self
@@ -132,6 +147,11 @@ func _ready() -> void:
 	add_child(lights)
 	renderer.chunks_changed.connect(lights.mark_dirty)
 	block_changed.connect(func(_t: Vector2i, _o: int, _n: int) -> void: lights.mark_dirty())
+	wall_changed.connect(func(_t: Vector2i, _o: int, _n: int) -> void: lights.mark_dirty())
+	object_changed.connect(func(_t: Vector2i, _o: int, _n: int) -> void: lights.mark_dirty())
+	# Torches pop off when what holds them goes away.
+	block_changed.connect(func(t: Vector2i, _o: int, _n: int) -> void: _check_supports(t))
+	wall_changed.connect(func(t: Vector2i, _o: int, _n: int) -> void: _check_supports(t))
 	lights.rebuild_now()
 
 	if OS.is_debug_build():
@@ -242,7 +262,7 @@ func save() -> Error:
 	for c in modified:
 		coords.append(c.coord)
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
-		{WorldSave.META_PLANTS: plants.to_dict(coords)})
+		{WorldSave.META_PLANTS: plants.to_dict(coords)}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
@@ -316,7 +336,71 @@ func collision_at(p: Vector2) -> int:
 
 
 func is_climbable_at(p: Vector2) -> bool:
-	return blocks.climbable(block_at(p))
+	var t := world_to_tile(p)
+	return blocks.climbable(data.get_block(t.x, t.y)) or objects.climbable(data.get_object(t.x, t.y))
+
+
+## The tile object at a tile (null = none).
+func object_at(tile: Vector2i) -> ObjectDef:
+	var id := data.get_object(tile.x, tile.y)
+	return objects.def(id) as ObjectDef if id > 0 else null
+
+
+## True for a solid block (or below the world).
+func is_solid(tile: Vector2i) -> bool:
+	var b := data.get_block(tile.x, tile.y)
+	return b == WorldData.OUT_OF_BOUNDS or (b > 0 and blocks.collision(b) == TileDef.Collision.SOLID)
+
+
+## Whether an object can go in a tile: no object there yet, no solid block, and
+## something to hold it (see ObjectDef.needs_support).
+func can_place_object(tile: Vector2i, def: ObjectDef) -> bool:
+	if def == null or not data.in_bounds_y(tile.y) or data.get_object(tile.x, tile.y) > 0 or is_solid(tile):
+		return false
+	if def.needs_support:
+		return _supported(tile)
+	# Anything next to it, or a wall behind.
+	if data.get_wall(tile.x, tile.y) > 0:
+		return true
+	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		if data.get_block(tile.x + d.x, tile.y + d.y) != WorldData.AIR or data.get_object(tile.x + d.x, tile.y + d.y) > 0:
+			return true
+	return false
+
+
+## Torch support: a solid block below or beside, or a back wall behind.
+func _supported(tile: Vector2i) -> bool:
+	return is_solid(tile + Vector2i.DOWN) or is_solid(tile + Vector2i.LEFT) or is_solid(tile + Vector2i.RIGHT) \
+		or data.get_wall(tile.x, tile.y) > 0
+
+
+## After a block or wall changed: objects there or next to it that lost their support
+## (or got buried by a solid block) pop off as items.
+func _check_supports(tile: Vector2i) -> void:
+	for d: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		var t := wrap_tile(tile + d)
+		var def := object_at(t)
+		if def and ((def.needs_support and not _supported(t)) or is_solid(t)):
+			_break_object(t, def)
+
+
+func _break_object(tile: Vector2i, def: ObjectDef) -> void:
+	if request_set_object(tile, WorldData.AIR):
+		_drop_for(def, tile)
+
+
+## Places or removes (AIR) a tile object. Returns true if it changed.
+func request_set_object(tile: Vector2i, id: int) -> bool:
+	if not Game.is_authority():
+		return false
+	if not data.in_bounds_y(tile.y) or id < 0 or id >= objects.size():
+		return false
+	var old := data.get_object(tile.x, tile.y)
+	if old == id:
+		return false
+	data.set_object(tile.x, tile.y, id)
+	object_changed.emit(wrap_tile(tile), old, id)
+	return true
 
 
 # --- requests (host-authoritative) -------------------------------------------
@@ -355,6 +439,11 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 		return false
 	tile = wrap_tile(tile)
 	var id := data.get_wall(tile.x, tile.y) if wall else data.get_block(tile.x, tile.y)
+	# Front-layer mining takes a tile object first when there's no solid block there
+	# (rope on a platform, a torch). Objects break in one hit.
+	if not wall and data.get_object(tile.x, tile.y) > 0 and not is_solid(tile):
+		_break_object(tile, object_at(tile))
+		return true
 	if id <= 0 or tile.y >= data.height - 1:
 		return false
 	var def := (walls if wall else blocks).def(id)
@@ -373,12 +462,19 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	var removed := request_set_wall(tile, WorldData.AIR) if wall else request_set_block(tile, WorldData.AIR)
 	if not removed:
 		return false
-	var drop := def.drop_item if def.drop_item != &"" else def.id
-	if ItemData.find(drop) != null and def.drop_count > 0:
-		var pos := tile_to_world(tile) + Vector2(TILE * 0.5, TILE * 0.5)
-		pos.x += roundf((player.global_position.x - pos.x) / (data.width * TILE)) * data.width * TILE
-		request_spawn_drop(drop, def.drop_count, pos, Vector2(randf_range(-2.0, 2.0), -4.0) * TILE)
+	_drop_for(def, tile)
 	return true
+
+
+## A broken tile's item drop, popping out of the tile.
+func _drop_for(def: TileDef, tile: Vector2i) -> void:
+	var drop := def.drop_item if def.drop_item != &"" else def.id
+	if ItemData.find(drop) == null or def.drop_count <= 0:
+		return
+	var pos := tile_to_world(tile) + Vector2(TILE * 0.5, TILE * 0.5)
+	if player:
+		pos.x += roundf((player.global_position.x - pos.x) / (data.width * TILE)) * data.width * TILE
+	request_spawn_drop(drop, def.drop_count, pos, Vector2(randf_range(-2.0, 2.0), -4.0) * TILE)
 
 
 ## True when something depends on this block (a tree stands on it; chests later), so
@@ -468,6 +564,23 @@ func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vect
 	drop.position = pos
 	_drops.add_child(drop)
 	return drop
+
+
+## Fires a spell projectile from `from` along `dir` (normalized). `power` multiplies
+## its damage.
+func request_spawn_projectile(spell: SpellData, from: Vector2, dir: Vector2, power: float,
+		source: Node = null) -> SpellProjectile:
+	if not Game.is_authority() or spell == null or dir == Vector2.ZERO:
+		return null
+	var b := SpellProjectile.new()
+	b.world = self
+	b.spell = spell
+	b.direction = dir
+	b.power = power
+	b.source = source
+	b.position = from
+	effects.add_child(b)
+	return b
 
 
 func drop_count() -> int:

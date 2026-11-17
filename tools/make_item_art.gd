@@ -31,6 +31,13 @@ func _init() -> void:
 	_save(_axe(), "copper_axe", false)
 	_orb().save_png(ProjectSettings.globalize_path("%s/mining_spell.png" % ICONS))  # spell icon
 	_save(_spellbook(), "basic_spellbook", false)
+	_save(_torch_icon(), "torch", true)
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/objects"))
+	_rope_strip().save_png(ProjectSettings.globalize_path("res://assets/objects/rope.png"))
+	_torch_strip().save_png(ProjectSettings.globalize_path("res://assets/objects/torch.png"))
+	_spell_icon("chopping_spell", Color("7ac85a")).save_png(ProjectSettings.globalize_path("%s/chopping_spell.png" % ICONS))
+	_spell_icon("fly", Color("cfe8ff")).save_png(ProjectSettings.globalize_path("%s/fly.png" % ICONS))
+	_spell_icon("spark", Color("ffe066")).save_png(ProjectSettings.globalize_path("%s/spark.png" % ICONS))
 	_sapling().save_png(ProjectSettings.globalize_path("res://assets/decor/sapling.png"))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/fx"))
 	_cracks().save_png(ProjectSettings.globalize_path("res://assets/fx/cracks.png"))
@@ -223,4 +230,90 @@ func _spellbook() -> Image:
 		img.set_pixel(9, y, Color("e8e0c8"))  # page edges
 	for p: Vector2i in [Vector2i(5, 3), Vector2i(4, 4), Vector2i(6, 4), Vector2i(5, 5), Vector2i(5, 4)]:
 		img.set_pixelv(p, Color("7fd4ff"))  # emblem
+	return img
+
+
+## Rope, 4 frames of 8x8: single, top (ties on above), middle, bottom (frayed end).
+func _rope_strip() -> Image:
+	var img := Image.create_empty(32, 8, false, Image.FORMAT_RGBA8)
+	var a := Color("c8b080")
+	var b := Color("9a8456")
+	for f in 4:
+		var y0 := 2 if f == 0 or f == 1 else 0
+		var y1 := 6 if f == 0 or f == 3 else 8
+		for y in range(y0, y1):
+			img.set_pixel(f * 8 + 3 + (y / 2) % 2, y, a)
+			img.set_pixel(f * 8 + 4 - (y / 2) % 2, y, b)
+		if f == 0 or f == 1:  # knot at the top
+			for x in range(2, 6):
+				img.set_pixel(f * 8 + x, 1, b)
+		if f == 0 or f == 3:  # frayed end
+			img.set_pixel(f * 8 + 2, 6, b)
+			img.set_pixel(f * 8 + 5, 6, a)
+	return img
+
+
+## Torch, 4 frames of 8x8: standing, leaning on a block to the left, to the right, on a
+## back wall.
+func _torch_strip() -> Image:
+	var img := Image.create_empty(32, 8, false, Image.FORMAT_RGBA8)
+	var stick := Color("7a5230")
+	var flame := [Color("fff2a8"), Color("ffc94a"), Color("ff8a2a")]
+	# frame: [stick from, stick to, lean]
+	var specs: Array = [[Vector2i(3, 7), Vector2i(3, 3), 0], [Vector2i(1, 7), Vector2i(3, 3), -1],
+		[Vector2i(6, 7), Vector2i(4, 3), 1], [Vector2i(3, 6), Vector2i(3, 3), 0]]
+	for f in 4:
+		var from: Vector2i = specs[f][0]
+		var to: Vector2i = specs[f][1]
+		for i in 5:
+			var p := Vector2i(roundi(lerpf(from.x, to.x, i / 4.0)), roundi(lerpf(from.y, to.y, i / 4.0)))
+			img.set_pixel(f * 8 + p.x, p.y, stick)
+			if f == 3 and i == 1:
+				img.set_pixel(f * 8 + p.x - 1, p.y, Color("5e4022"))  # wall bracket
+				img.set_pixel(f * 8 + p.x + 1, p.y, Color("5e4022"))
+		var tip := to
+		img.set_pixel(f * 8 + tip.x, tip.y - 1, flame[1])
+		img.set_pixel(f * 8 + tip.x + 1, tip.y - 1, flame[2])
+		img.set_pixel(f * 8 + tip.x, tip.y - 2, flame[0])
+		img.set_pixel(f * 8 + tip.x, tip.y - 3, flame[1])
+	return img
+
+
+func _torch_icon() -> Image:
+	var img := _canvas()
+	_line(img, Vector2i(5, 14), Vector2i(9, 6), Color("7a5230"), Color("5e4022"))
+	for p: Vector2i in [Vector2i(9, 5), Vector2i(10, 5), Vector2i(9, 4), Vector2i(10, 4), Vector2i(10, 3), Vector2i(9, 2)]:
+		img.set_pixelv(p, Color("ffc94a"))
+	img.set_pixel(9, 4, Color("fff2a8"))
+	img.set_pixel(11, 4, Color("ff8a2a"))
+	return img
+
+
+## Placeholder spell icons: a glowing disc with a simple glyph.
+func _spell_icon(kind: String, c: Color) -> Image:
+	var img := _canvas()
+	for y in 16:
+		for x in 16:
+			var d := Vector2(x + 0.5, y + 0.5).distance_to(Vector2(8, 8))
+			if d < 7.0:
+				var k := 1.0 - d / 7.0
+				img.set_pixel(x, y, Color(c.r * 0.35, c.g * 0.35, c.b * 0.45, 0.55 + 0.35 * k))
+	var g := c.lightened(0.2)
+	match kind:
+		"chopping_spell":  # a little axe
+			_line(img, Vector2i(5, 12), Vector2i(10, 5), Color("c8a070"))
+			for p: Vector2i in [Vector2i(9, 4), Vector2i(10, 4), Vector2i(11, 4), Vector2i(11, 5), Vector2i(11, 6), Vector2i(10, 6), Vector2i(12, 5)]:
+				img.set_pixelv(p, g)
+		"fly":  # a wing
+			for i in 7:
+				_line(img, Vector2i(4 + i, 11 - i / 2), Vector2i(4 + i, 11), g)
+			for p: Vector2i in [Vector2i(11, 7), Vector2i(12, 6), Vector2i(12, 8)]:
+				img.set_pixelv(p, g)
+		"spark":  # a star
+			for p: Vector2i in [Vector2i(8, 3), Vector2i(8, 4), Vector2i(8, 5), Vector2i(8, 11), Vector2i(8, 12),
+					Vector2i(3, 8), Vector2i(4, 8), Vector2i(5, 8), Vector2i(11, 8), Vector2i(12, 8),
+					Vector2i(7, 7), Vector2i(8, 7), Vector2i(9, 7), Vector2i(7, 8), Vector2i(8, 8), Vector2i(9, 8),
+					Vector2i(7, 9), Vector2i(8, 9), Vector2i(9, 9), Vector2i(6, 6), Vector2i(10, 10), Vector2i(10, 6), Vector2i(6, 10)]:
+				img.set_pixelv(p, g)
+			img.set_pixel(8, 8, Color.WHITE)
 	return img

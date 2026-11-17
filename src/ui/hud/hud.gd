@@ -146,6 +146,8 @@ func _process(_delta: float) -> void:
 	_update_tooltip(over)
 	var item := p.held_item
 	_name_label.text = item.display_name if item else ""
+	if p.concentration:
+		_name_label.text += ("\n" if _name_label.text != "" else "") + "Concentrating: %s" % p.concentration.display_name
 	if cursor_count > 0:
 		_grid.queue_redraw()
 

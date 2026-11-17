@@ -7,11 +7,15 @@ extends Sprite2D
 ## sunlight soaks a few blocks into the ground and caves get dark. `ambient` keeps the
 ## darkest areas faintly visible. Recomputed (on a worker thread, see LightJob) when
 ## chunks load or a block changes.
-## (Torches and other light sources come later.)
+## Light sources (tile objects with a light_radius, like torches) add colored light,
+## so the overlay is RGB.
 
 @export var ambient := 0.16
 @export var open_falloff := 0.06
 @export var solid_falloff := 0.1
+## Light sources lose this many times more reach per tile through solid blocks than
+## through air.
+@export var source_solid_factor := 3.0
 ## Minimum seconds between recomputes.
 @export var min_interval := 0.12
 
@@ -88,6 +92,15 @@ func _make_job() -> LightJob:
 	job.ambient = ambient
 	job.open_falloff = open_falloff
 	job.solid_falloff = solid_falloff
+	job.source_solid_factor = source_solid_factor
+	job.emitters.resize(world.objects.size() * 4)
+	for id in range(1, world.objects.size()):
+		var def := world.objects.def(id) as ObjectDef
+		if def and def.light_radius > 0.0:
+			job.emitters[id * 4] = def.light_color.r
+			job.emitters[id * 4 + 1] = def.light_color.g
+			job.emitters[id * 4 + 2] = def.light_color.b
+			job.emitters[id * 4 + 3] = def.light_radius
 	var table := world.blocks.collision_table()
 	job.solid.resize(table.size())
 	for i in table.size():
@@ -99,6 +112,7 @@ func _make_job() -> LightJob:
 			var chunk := world.data.peek_chunk(first + Vector2i(cx, cy))
 			job.blocks.append(chunk.blocks if chunk else PackedInt32Array())
 			job.walls.append(chunk.walls if chunk else PackedInt32Array())
+			job.objects.append(chunk.objects if chunk else PackedInt32Array())
 	return job
 
 
@@ -107,7 +121,7 @@ func _apply(job: LightJob) -> void:
 	var t := Time.get_ticks_usec()
 	var w := job.rect.size.x
 	var h := job.rect.size.y
-	var image := Image.create_from_data(w, h, false, Image.FORMAT_L8, job.bytes)
+	var image := Image.create_from_data(w, h, false, Image.FORMAT_RGB8, job.bytes)
 	if _texture == null or _texture.get_size() != Vector2(w, h):
 		_texture = ImageTexture.create_from_image(image)
 		texture = _texture

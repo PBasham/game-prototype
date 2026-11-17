@@ -22,8 +22,10 @@ func test_lookup_by_id() -> void:
 func test_collision_kinds() -> void:
 	assert_eq(blocks.collision(blocks.index_of(&"stone")), TileDef.Collision.SOLID)
 	assert_eq(blocks.collision(blocks.index_of(&"wood_platform")), TileDef.Collision.PLATFORM)
-	assert_eq(blocks.collision(blocks.index_of(&"rope")), TileDef.Collision.NONE)
-	assert_true(blocks.climbable(blocks.index_of(&"rope")))
+	var objects := TileTypes.new(&"objects")
+	assert_eq(blocks.index_of(&"rope"), -1, "rope is a tile object now")
+	assert_true(objects.climbable(objects.index_of(&"rope")))
+	assert_eq((objects.def(objects.index_of(&"torch")) as ObjectDef).style, ObjectDef.Style.TORCH)
 
 
 func test_solids_connect_to_any_solid_others_only_to_themselves() -> void:

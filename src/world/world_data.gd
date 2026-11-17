@@ -214,3 +214,21 @@ func set_wall(x: int, y: int, id: int) -> bool:
 	chunk.modified = true
 	chunk.revision += 1
 	return true
+
+
+func get_object(x: int, y: int) -> int:
+	if not in_bounds_y(y):
+		return AIR
+	var wx := wrap_x(x)
+	return get_chunk(Vector2i(wx / CHUNK, y / CHUNK)).objects[ChunkData.local_index(wx % CHUNK, y % CHUNK)]
+
+
+func set_object(x: int, y: int, id: int) -> bool:
+	if not in_bounds_y(y):
+		return false
+	var wx := wrap_x(x)
+	var chunk := get_chunk(Vector2i(wx / CHUNK, y / CHUNK))
+	chunk.objects[ChunkData.local_index(wx % CHUNK, y % CHUNK)] = id
+	chunk.modified = true
+	chunk.revision += 1
+	return true

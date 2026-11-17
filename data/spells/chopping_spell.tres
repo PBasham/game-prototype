@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/chopping_spell.png" id="1_va71t"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_sphsb"]
+
+[resource]
+script = ExtResource("2_sphsb")
+kind = 4
+icon = ExtResource("1_va71t")
+max_stack = 1
+axe_damage = 55.0
+beam = true
+reach_tiles = 12.0
+id = &"chopping_spell"
+display_name = "Chopping Spell"
+description = "Hold to chop a tree with a beam. A bit slower than the copper axe."
