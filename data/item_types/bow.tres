@@ -44,43 +44,43 @@ back = SubResource("Resource_ipi56")
 item_angle_mode = 1
 item_angle = SubResource("Curve_e5csf")
 
-[sub_resource type="Resource" id="Resource_yg8dn"]
+[sub_resource type="Resource" id="Resource_yhrow"]
 script = ExtResource("2_s3qsp")
 mode = 2
 
-[sub_resource type="Curve" id="Curve_kvgwt"]
+[sub_resource type="Curve" id="Curve_s3qsp"]
 _limits = [-180.0, 180.0, 0.0, 1.0]
 _data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
 point_count = 1
 
-[sub_resource type="Curve" id="Curve_rmi43"]
+[sub_resource type="Curve" id="Curve_kgmil"]
 _data = [Vector2(0, 1), 0.0, 0.0, 1, 1]
 point_count = 1
 
-[sub_resource type="Resource" id="Resource_nr151"]
+[sub_resource type="Resource" id="Resource_8ohsn"]
 script = ExtResource("2_s3qsp")
 mode = 1
-angle = SubResource("Curve_kvgwt")
-reach = SubResource("Curve_rmi43")
+angle = SubResource("Curve_s3qsp")
+reach = SubResource("Curve_kgmil")
 
-[sub_resource type="Curve" id="Curve_txr8a"]
+[sub_resource type="Curve" id="Curve_ipi56"]
 _limits = [-180.0, 180.0, 0.0, 1.0]
 _data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
 point_count = 1
 
-[sub_resource type="Resource" id="Resource_qwp60"]
+[sub_resource type="Resource" id="Resource_hfx60"]
 script = ExtResource("1_yhrow")
 name = "Hold"
 duration = 1.0
 aims = true
-front = SubResource("Resource_nr151")
-back = SubResource("Resource_yg8dn")
+front = SubResource("Resource_8ohsn")
+back = SubResource("Resource_yhrow")
 item_angle_mode = 1
-item_angle = SubResource("Curve_txr8a")
+item_angle = SubResource("Curve_ipi56")
 
 [resource]
 script = ExtResource("3_kgmil")
-hold = SubResource("Resource_qwp60")
+hold = SubResource("Resource_hfx60")
 attacks = Array[ExtResource("1_yhrow")]([SubResource("Resource_w3d2t")])
 two_handed = true
 id = &"bow"

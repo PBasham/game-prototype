@@ -115,17 +115,8 @@ func _process(delta: float) -> void:
 ## Sets one doll's state the way Player._animate_arms() would.
 func _drive(d: PaperDoll, attacking: bool, mouse: Vector2) -> void:
 	d.play(ANIMS[_anim])
-	var stance := ANIMS[_anim] == &"Breath" and (attacking or (d.item != null and not _stowed))
-	if stance and d.item == null and d != _using[_using.size() - 1]:
-		stance = false
-	if stance:
-		# Same as Player._show_stance(): side-view stand while holding or attacking.
-		if d.has_animation(&"Stand"):
-			d.play(&"Stand")
-		else:
-			d.play(&"Jump")
-			d.pause()
-			d.frame = d.frame_count(&"Jump") - 1
+	if ANIMS[_anim] == &"Breath" and d.has_animation(&"Stand") and (attacking or d.item != null):
+		d.play(&"Stand")  # same as Player._show_stance()
 	d.force_posed = _forced
 	d.stowed = _stowed
 	d.aim_global = mouse

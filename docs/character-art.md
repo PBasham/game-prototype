@@ -56,7 +56,7 @@ applies to one channel and wins over the plain one for that channel.
 | `Jump` | In the air. Frames are picked from the arc, not a timer (see guide.md, Player animation). |
 | `Idle Pose` | Climbing (for now). Its first frame is also the **rest frame** for code-posed arms unless `arms/Rest` exists. |
 | `Land` | Optional. Brief landing pose. Without it, code drops the upper body 2 px (`land_dip`). |
-| `Stand` | Optional, recommended. **Side-view** standing pose, used when standing still with an item out or while attacking. Without it, the last frame of `Jump` (legs together) is held instead (`stance_fallback_anim` / `stance_fallback_frame` on the Player). |
+| `Stand` | Optional. A standing pose used instead of `Breath` when standing still with an item out or while attacking (for example a side-view combat stance). Without it, `Breath` is used. |
 
 **Arm tags** (all optional; until they exist, arms are code-posed):
 
@@ -78,8 +78,14 @@ the rest frame.
 
 The arms follow the movement animation unless a **motion** is playing:
 
-- **Holding** an item plays its type's `hold` motion (looped).
+- **Holding** an item plays its type's `hold` motion (looped). Melee weapons, tools and
+  the spell book are held in **your drawn arm**: the item rides in the hand and swings
+  with the run, so picking it up doesn't change the arm. Aiming items (wand, crossbow,
+  bow) pose the arm to point at the cursor.
 - **Attacking/using** plays one of its type's `attacks` (see Item types below).
+- **Switching** between your drawn arm and a code pose (starting or ending an attack,
+  aiming, combo hits) slides the hand over `blend_time` (0.07 s, on the PaperDoll)
+  instead of jumping.
 
 A motion plays **hand-drawn frames** if the art has them, else **code poses** the arms
 from the motion's curves. The doll looks for drawn frames in this order, and uses the
@@ -100,15 +106,13 @@ combo on a loop (bottom row), plus unarmed punches. **Code posing: forced** swit
 code posing everywhere, to compare once you've drawn some poses. The line under the
 buttons lists the arm tags your art has.
 
-### Why a side-view stance
+### 3/4 idle vs side view
 
-`Breath` and `Idle Pose` are drawn in a **3/4 view**: the shoulders are far apart and
-the back shoulder sits behind the torso. Arms posed in front of the body (holding a
-two-handed weapon, aiming) can't look right from there: the back arm ends up hidden
-behind the torso. `Jog` and `Jump` are side views, where they work. So whenever an item
-is out or you're attacking, standing still uses a side-view stance instead of Breath.
-Draw a `Stand` tag (side view, can be a slow breathing loop) to replace the borrowed
-Jump frame. With empty hands you keep the 3/4 idle.
+`Breath` and `Idle Pose` are drawn in a **3/4 view** (shoulders far apart, the back
+shoulder behind the torso); `Jog` and `Jump` are side views. Holding items uses your
+drawn arms, so that's fine. Only code-posed moves (attacks, aiming) reach from the 3/4
+shoulders while standing, where the back arm can end up behind the torso. If that ever
+bothers you, a `Stand` tag (side view) replaces Breath while an item is out.
 
 ## Joints (pivots)
 
@@ -189,13 +193,13 @@ and drag points. The x axis is time through the motion (0 = start, 1 = end).
 
 | Type | Hold | Attacks (combo) | Put away |
 | --- | --- | --- | --- |
-| tool | one hand | Swing (overhead to forward) | back |
-| big_tool | both hands | Slam | back |
-| dagger | one hand, low | Stab, Stab2, Slash | hip |
-| sword | one hand | Slash, Backslash, Thrust | hip |
-| greatsword | both hands | Overhead, Rising | back |
+| tool | in your drawn arm | Swing (overhead to forward) | back |
+| big_tool | in your drawn arm | Slam (both hands) | back |
+| dagger | in your drawn arm | Stab, Stab2, Slash | hip |
+| sword | in your drawn arm | Slash, Backslash, Thrust | hip |
+| greatsword | in your drawn arm | Overhead, Rising (both hands) | back |
 | wand | aims | Flick | hidden |
-| spell_book | back hand, upright | Cast (front palm pushes at the cursor) | hip |
+| spell_book | back hand (drawn arm), upright | Cast (front palm pushes at the cursor) | hip |
 | crossbow | aims, one arm | Fire (recoil) | hip |
 | bow | aims, back hand on the string | Draw (pull back, release) | back |
 | unarmed | (empty hands) | Jab, Cross, Uppercut | |
@@ -205,7 +209,8 @@ Empty hands use the **unarmed** type: clicking punches (jab, cross, uppercut com
 empty-hand clicks while it's on.
 
 To regenerate the defaults: `godot --headless --path . --script res://tools/make_item_types.gd -- --force`
-(this overwrites your edits; without `--force` existing files are kept).
+(this overwrites your edits; without `--force` existing files are kept; with
+`--update-holds` only the hold motions are replaced).
 
 Where stowed items sit is on the PaperDoll: `stow_back_offset/angle`,
 `stow_hip_offset/angle`.

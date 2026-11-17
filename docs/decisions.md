@@ -2,6 +2,15 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Holding uses the drawn arm; no borrowed stance
+
+- Patrick: the 3/4 Breath idle is the standing pose; the borrowed landing frame is gone.
+  A `Stand` tag replaces Breath only if he draws one.
+- Melee weapons, tools and the book are held in the drawn arm (the item rides in the
+  hand), so picking something up doesn't change the arm. Aiming items still pose.
+- Switching between drawn and code-posed arms blends over 0.07 s.
+- The paper doll has physics interpolation off (parts drawn between stale positions).
+
 ## 2026-11-17: Movement animation fixes
 
 - Step down up to 1 tile without falling (floor snap), mirror of the step-up.

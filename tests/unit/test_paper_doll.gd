@@ -15,6 +15,7 @@ func _doll() -> PaperDoll:
 	var d := PaperDoll.new()
 	add_child_autofree(d)
 	d.setup(rig, palette)
+	d.blend_time = 0.0  # tests check poses directly, without the slide between them
 	return d
 
 
@@ -46,6 +47,38 @@ func _shoulder(d: PaperDoll, side: StringName) -> Vector2:
 	return rig.shoulders[side][f] - rig.anchor + Vector2(d.motion.lunge_at(d.motion_t) if d.motion else 0.0, 0)
 
 
+func test_melee_hold_keeps_the_drawn_arm() -> void:
+	var d := _doll()
+	d.play(&"Jog")
+	d._update()
+	var before: Vector2 = d.hands[&"front"]
+	d.item = DevHeldItems.by_name("Sword")
+	d.motion = d.item.hold_motion()
+	d._update()
+	assert_almost_eq(d.hands[&"front"].distance_to(before), 0.0, 0.01, "same arm with or without the sword")
+	assert_eq(d._slots[rig.arms[&"front"].upper].rotation, 0.0, "drawn, not posed")
+	assert_almost_eq(d.get_node("Item").position.distance_to(before), 0.0, 0.01, "sword in that hand")
+
+
+func test_switching_poses_slides_the_hand() -> void:
+	var d := _doll()
+	d.blend_time = 0.1
+	d.item = DevHeldItems.by_name("Wand")
+	d.motion = null
+	d._update()
+	var start: Vector2 = d.hands[&"front"]
+	d.motion = d.item.hold_motion()
+	d.aim_global = d.to_global(Vector2(80, -60))
+	d._update()  # blend starts: still at the old hand position
+	assert_almost_eq(d.hands[&"front"].distance_to(start), 0.0, 0.5)
+	d._process(0.05)
+	var mid: Vector2 = d.hands[&"front"]
+	d._process(0.1)
+	var done: Vector2 = d.hands[&"front"]
+	assert_gt(mid.distance_to(start), 0.5, "moving")
+	assert_gt(done.distance_to(start), mid.distance_to(start), "arrives")
+
+
 func test_shoulders_follow_each_frames_art() -> void:
 	# Breath is a 3/4 pose (shoulders far apart); Jog is side view (close together).
 	var breath := rig.tag_range(&"legs", &"Breath").x
@@ -74,7 +107,7 @@ func test_elbow_does_not_flip_as_the_arm_sweeps() -> void:
 func test_pose_track_puts_the_hand_at_angle_and_reach() -> void:
 	var d := _doll()
 	d.item = DevHeldItems.by_name("Tool")
-	d.motion = d.item.hold_motion()
+	d.motion = d.item.attacks()[0]
 	d.motion_t = 0.0
 	d._update()
 	var track := d.motion.front
@@ -96,11 +129,12 @@ func test_aiming_motion_points_the_arm_at_the_target() -> void:
 		assert_almost_eq(dir.angle_to((target - shoulder).normalized()), 0.0, 0.05, "aims at %s" % target)
 
 
-func test_two_hand_hold_puts_the_back_hand_on_the_item() -> void:
+func test_two_hand_swing_puts_the_back_hand_on_the_item() -> void:
 	var d := _doll()
 	var big := DevHeldItems.by_name("2H sword")
 	d.item = big
-	d.motion = big.hold_motion()
+	d.motion = big.attacks()[0]
+	d.motion_t = 0.5
 	d._update()
 	var expected := d.hands[&"front"] + (big.grip2 - big.grip).rotated(d.item_rotation + PI / 4.0)
 	assert_almost_eq(d.hands[&"back"].distance_to(expected), 0.0, 1.0, "back hand on the second grip")

@@ -135,7 +135,9 @@ Rules that keep this safe and host-authoritative:
 sheet once per character (cached, read-only) and measures joints; the doll has one
 sprite per body layer plus item sprites, and each frame `Player._animate()` sets its
 state (legs animation, arm mode, aim point, held item, facing). The doll never changes
-game state. Items describe how they're held with a `HeldItemLook` resource. Colors are a
+game state. Items describe how they're held with a `HeldItemLook` resource. The doll
+sets its parts every frame, so it has physics interpolation off (the Player body around
+it is still interpolated); otherwise parts were drawn blended between stale positions. Colors are a
 palette swap (`palette_swap.gdshader`) driven by `CharacterLook`. Details in
 character-art.md.
 

@@ -115,29 +115,29 @@ back = SubResource("Resource_ws0dk")
 item_angle = SubResource("Curve_d1su6")
 lunge = SubResource("Curve_r5xl0")
 
-[sub_resource type="Resource" id="Resource_617x5"]
+[sub_resource type="Resource" id="Resource_2f2gb"]
 script = ExtResource("2_avtyu")
 
-[sub_resource type="Resource" id="Resource_sbnpk"]
+[sub_resource type="Resource" id="Resource_avtyu"]
 script = ExtResource("2_avtyu")
 
-[sub_resource type="Curve" id="Curve_3nggj"]
+[sub_resource type="Curve" id="Curve_q2ytj"]
 _limits = [-180.0, 180.0, 0.0, 1.0]
 _data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
 point_count = 1
 
-[sub_resource type="Resource" id="Resource_vjmir"]
+[sub_resource type="Resource" id="Resource_y5xj7"]
 script = ExtResource("1_2f2gb")
 name = "Hold"
 duration = 1.0
-front = SubResource("Resource_sbnpk")
-back = SubResource("Resource_617x5")
+front = SubResource("Resource_avtyu")
+back = SubResource("Resource_2f2gb")
 item_angle_mode = 2
-item_angle = SubResource("Curve_3nggj")
+item_angle = SubResource("Curve_q2ytj")
 
 [resource]
 script = ExtResource("3_q2ytj")
-hold = SubResource("Resource_vjmir")
+hold = SubResource("Resource_y5xj7")
 attacks = Array[ExtResource("1_2f2gb")]([SubResource("Resource_tjhsp"), SubResource("Resource_kycn4"), SubResource("Resource_fkyxm")])
 stow_style = 2
 id = &"unarmed"

@@ -42,10 +42,6 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var air_grace_time := 0.08
 ## Pixels the upper body drops in the landing squash (when there's no "Land" tag).
 @export var land_dip := 2.0
-## Standing still with an item out (or attacking) uses a side-view stance: the "Stand"
-## tag if the art has one, else this frame of this tag (numbered like Aseprite).
-@export var stance_fallback_anim: StringName = &"Jump"
-@export var stance_fallback_frame := 7
 
 @export_group("Speed (tiles/s)")
 @export var walk_speed := 10.0
@@ -390,20 +386,14 @@ func _animate(delta: float) -> void:
 	_animate_arms()
 
 
-## Standing with an item out or attacking: a side-view stance, so arms posed in front of
-## the body line up (Breath is drawn 3/4 view, where the back arm hides behind the torso).
+## Standing with an item out or attacking plays "Stand" instead of Breath, if the art
+## has a Stand tag (optional: a side-view stance). Without one, Breath is used.
 func _in_stance() -> bool:
-	return _attack != null or (held != null and not stowed)
+	return _doll.has_animation(&"Stand") and (_attack != null or (held != null and not stowed))
 
 
-## Plays "Stand" if the art has it, else holds one frame of another tag (stance_fallback).
 func _show_stance() -> void:
-	if _doll.has_animation(&"Stand"):
-		_doll.play(&"Stand")
-		return
-	_doll.play(stance_fallback_anim)
-	_doll.pause()
-	_doll.frame = clampi(stance_fallback_frame - 1, 0, maxi(_doll.frame_count(stance_fallback_anim) - 1, 0))
+	_doll.play(&"Stand")
 
 
 func _animate_arms() -> void:

@@ -81,43 +81,29 @@ back = SubResource("Resource_6ltun")
 item_angle = SubResource("Curve_kkg06")
 lunge = SubResource("Curve_pa3b3")
 
-[sub_resource type="Resource" id="Resource_0ptil"]
+[sub_resource type="Resource" id="Resource_31t1y"]
 script = ExtResource("2_se3he")
-mode = 2
 
-[sub_resource type="Curve" id="Curve_whslc"]
-_limits = [-180.0, 180.0, 0.0, 1.0]
-_data = [Vector2(0, 50), 0.0, 0.0, 1, 1]
-point_count = 1
-
-[sub_resource type="Curve" id="Curve_d83tc"]
-_data = [Vector2(0, 0.8), 0.0, 0.0, 1, 1]
-point_count = 1
-
-[sub_resource type="Resource" id="Resource_6fx4i"]
+[sub_resource type="Resource" id="Resource_se3he"]
 script = ExtResource("2_se3he")
-mode = 1
-angle = SubResource("Curve_whslc")
-reach = SubResource("Curve_d83tc")
 
-[sub_resource type="Curve" id="Curve_rtmkw"]
+[sub_resource type="Curve" id="Curve_vsgax"]
 _limits = [-180.0, 180.0, 0.0, 1.0]
-_data = [Vector2(0, -60), 0.0, 0.0, 1, 1]
+_data = [Vector2(0, -150), 0.0, 0.0, 1, 1]
 point_count = 1
 
-[sub_resource type="Resource" id="Resource_pg8if"]
+[sub_resource type="Resource" id="Resource_ag7ct"]
 script = ExtResource("1_31t1y")
 name = "Hold"
 duration = 1.0
-front = SubResource("Resource_6fx4i")
-back = SubResource("Resource_0ptil")
-item_angle_mode = 2
-item_angle = SubResource("Curve_rtmkw")
+front = SubResource("Resource_se3he")
+back = SubResource("Resource_31t1y")
+item_angle = SubResource("Curve_vsgax")
 drawn_tag = "Hold2H"
 
 [resource]
 script = ExtResource("3_vsgax")
-hold = SubResource("Resource_pg8if")
+hold = SubResource("Resource_ag7ct")
 attacks = Array[ExtResource("1_31t1y")]([SubResource("Resource_31725"), SubResource("Resource_n2l6h")])
 two_handed = true
 id = &"greatsword"

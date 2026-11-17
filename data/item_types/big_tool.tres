@@ -43,43 +43,29 @@ item_angle = SubResource("Curve_yq15u")
 lunge = SubResource("Curve_8m2xg")
 drawn_tag = "Use"
 
-[sub_resource type="Resource" id="Resource_p7aos"]
+[sub_resource type="Resource" id="Resource_fhdi2"]
 script = ExtResource("2_1r24q")
-mode = 2
 
-[sub_resource type="Curve" id="Curve_7qqvq"]
-_limits = [-180.0, 180.0, 0.0, 1.0]
-_data = [Vector2(0, 50), 0.0, 0.0, 1, 1]
-point_count = 1
-
-[sub_resource type="Curve" id="Curve_c4fr5"]
-_data = [Vector2(0, 0.8), 0.0, 0.0, 1, 1]
-point_count = 1
-
-[sub_resource type="Resource" id="Resource_3245d"]
+[sub_resource type="Resource" id="Resource_1r24q"]
 script = ExtResource("2_1r24q")
-mode = 1
-angle = SubResource("Curve_7qqvq")
-reach = SubResource("Curve_c4fr5")
 
-[sub_resource type="Curve" id="Curve_ku73y"]
+[sub_resource type="Curve" id="Curve_xj0fs"]
 _limits = [-180.0, 180.0, 0.0, 1.0]
-_data = [Vector2(0, -55), 0.0, 0.0, 1, 1]
+_data = [Vector2(0, -145), 0.0, 0.0, 1, 1]
 point_count = 1
 
-[sub_resource type="Resource" id="Resource_67e4n"]
+[sub_resource type="Resource" id="Resource_fdcin"]
 script = ExtResource("1_fhdi2")
 name = "Hold"
 duration = 1.0
-front = SubResource("Resource_3245d")
-back = SubResource("Resource_p7aos")
-item_angle_mode = 2
-item_angle = SubResource("Curve_ku73y")
+front = SubResource("Resource_1r24q")
+back = SubResource("Resource_fhdi2")
+item_angle = SubResource("Curve_xj0fs")
 drawn_tag = "Hold2H"
 
 [resource]
 script = ExtResource("3_xj0fs")
-hold = SubResource("Resource_67e4n")
+hold = SubResource("Resource_fdcin")
 attacks = Array[ExtResource("1_fhdi2")]([SubResource("Resource_pygsp")])
 two_handed = true
 id = &"big_tool"

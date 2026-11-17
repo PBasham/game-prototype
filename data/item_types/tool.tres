@@ -41,42 +41,29 @@ item_angle = SubResource("Curve_6cafn")
 lunge = SubResource("Curve_04i7q")
 drawn_tag = "Use"
 
-[sub_resource type="Resource" id="Resource_247ak"]
+[sub_resource type="Resource" id="Resource_o1wj5"]
 script = ExtResource("2_07sag")
 
-[sub_resource type="Curve" id="Curve_dcrmm"]
-_limits = [-180.0, 180.0, 0.0, 1.0]
-_data = [Vector2(0, 55), 0.0, 0.0, 1, 1]
-point_count = 1
-
-[sub_resource type="Curve" id="Curve_e36vm"]
-_data = [Vector2(0, 0.75), 0.0, 0.0, 1, 1]
-point_count = 1
-
-[sub_resource type="Resource" id="Resource_rjsko"]
+[sub_resource type="Resource" id="Resource_07sag"]
 script = ExtResource("2_07sag")
-mode = 1
-angle = SubResource("Curve_dcrmm")
-reach = SubResource("Curve_e36vm")
 
-[sub_resource type="Curve" id="Curve_pv4m4"]
+[sub_resource type="Curve" id="Curve_0eiup"]
 _limits = [-180.0, 180.0, 0.0, 1.0]
-_data = [Vector2(0, -65), 0.0, 0.0, 1, 1]
+_data = [Vector2(0, -155), 0.0, 0.0, 1, 1]
 point_count = 1
 
-[sub_resource type="Resource" id="Resource_l6pki"]
+[sub_resource type="Resource" id="Resource_nysne"]
 script = ExtResource("1_o1wj5")
 name = "Hold"
 duration = 1.0
-front = SubResource("Resource_rjsko")
-back = SubResource("Resource_247ak")
-item_angle_mode = 2
-item_angle = SubResource("Curve_pv4m4")
+front = SubResource("Resource_07sag")
+back = SubResource("Resource_o1wj5")
+item_angle = SubResource("Curve_0eiup")
 drawn_tag = "Hold1H"
 
 [resource]
 script = ExtResource("3_0eiup")
-hold = SubResource("Resource_l6pki")
+hold = SubResource("Resource_nysne")
 attacks = Array[ExtResource("1_o1wj5")]([SubResource("Resource_nsdg1")])
 id = &"tool"
 display_name = "Tool (pickaxe, axe, hammer)"

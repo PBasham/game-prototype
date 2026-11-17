@@ -30,6 +30,9 @@ const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 @export_group("")
 ## Show code-posed arms even when drawn frames exist (to compare).
 @export var force_posed := false
+## Seconds the hands take to slide to a new pose when the motion changes (picking up,
+## attacking, aiming, between combo hits), instead of jumping there.
+@export var blend_time := 0.07
 
 var rig: DollRig
 var palette: CharacterPalette
@@ -76,6 +79,10 @@ var _stow_back: Sprite2D
 var _stow_hip: Sprite2D
 var _material: ShaderMaterial
 var _head_part := -1
+var _last_motion: ItemMotion
+var _last_in_hand := false
+var _blend_left := 0.0
+var _from_hands: Dictionary[StringName, Vector2] = {}
 ## Hand positions (local) from the last update, for items, tests and debugging.
 var hands: Dictionary[StringName, Vector2] = {}
 ## Item angle (radians) from the last update.
@@ -85,6 +92,10 @@ var item_rotation := 0.0
 func setup(doll_rig: DollRig, doll_palette: CharacterPalette = null) -> void:
 	rig = doll_rig
 	palette = doll_palette
+	# The doll moves its parts every frame (_process), not on physics ticks, so physics
+	# interpolation would blend between stale part positions (items drawn at the feet,
+	# arms in between poses). The Player body around it is still interpolated.
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_material = ShaderMaterial.new()
 	_material.shader = SWAP_SHADER
 	material = _material
@@ -206,6 +217,7 @@ func _process(delta: float) -> void:
 	if rig == null:
 		return
 	_advance(delta)
+	_blend_left = maxf(_blend_left - delta, 0.0)
 	_update()
 
 
@@ -233,6 +245,14 @@ func _update() -> void:
 	var legs_abs := legs_r.x + frame
 	var body_abs := _follow(&"body", legs_abs)
 	var shift := Vector2(motion.lunge_at(motion_t) if motion else 0.0, dip)
+	var in_hand := item != null and not stowed
+	if motion != _last_motion or in_hand != _last_in_hand:
+		# The pose changed: slide the hands from where they were.
+		if not hands.is_empty() and blend_time > 0.0:
+			_from_hands = hands.duplicate()
+			_blend_left = blend_time
+		_last_motion = motion
+		_last_in_hand = in_hand
 	hands.clear()
 
 	for pi in rig.part_names.size():
@@ -341,10 +361,23 @@ func _channel(side: StringName) -> StringName:
 func _natural(side: StringName, legs_abs: int, body_abs: int, shift: Vector2) -> void:
 	var channel := _channel(side)
 	var f := _follow(channel, legs_abs)
+	if not rig.arms.has(side):
+		for pi in _parts_of(channel):
+			_show_frame(pi, f, shift)
+		return
+	var shoulder := _shoulder(side, body_abs, shift)
+	var hand := _drawn_hand(rig.arms[side], f, shoulder)
+	if _blending(side):
+		# Mid-blend: a code-posed arm sliding toward where the drawn arm's hand is.
+		_reach(rig.arms[side], _parts_of(channel), shoulder, hand)
+		return
 	for pi in _parts_of(channel):
 		_show_frame(pi, f, shift)
-	if rig.arms.has(side):
-		hands[side] = _drawn_hand(rig.arms[side], f, _shoulder(side, body_abs, shift))
+	hands[side] = hand
+
+
+func _blending(side: StringName) -> bool:
+	return _blend_left > 0.0 and _from_hands.has(side) and not force_posed
 
 
 func _parts_of(channel: StringName) -> PackedInt32Array:
@@ -357,6 +390,10 @@ func _parts_of(channel: StringName) -> PackedInt32Array:
 
 ## Two-bone arm bent so the hand reaches `target` (clamped to the arm's length).
 func _reach(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, target: Vector2) -> void:
+	var side := &"front" if rig.arms.get(&"front") == arm else &"back"
+	if _blending(side):
+		var k := 1.0 - _blend_left / blend_time
+		target = _from_hands[side].lerp(target, k * k * (3.0 - 2.0 * k))
 	var s0: Vector2 = arm.shoulder
 	var e0: Vector2 = arm.elbow
 	var h0: Vector2 = arm.hand
@@ -381,7 +418,7 @@ func _reach(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, target:
 		# Any extra layers in the arm channel follow the lower arm.
 		if pi != arm.upper and pi != arm.lower:
 			_bone(pi, e0, elbow, a2 - (h0 - e0).angle())
-	hands[&"front" if rig.arms.get(&"front") == arm else &"back"] = hand
+	hands[side] = hand
 
 
 ## Draws a part from the rest frame, rotated by `rot` around `joint_rest` placed at `at`.

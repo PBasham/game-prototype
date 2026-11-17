@@ -7,6 +7,8 @@ extends SceneTree
 ##
 ## Without --force, existing files are left alone (so your Inspector edits are safe).
 ## With --force, every type is rewritten from the defaults below.
+## With --update-holds, only each existing file's `hold` motion is replaced with the
+## default below (attacks and everything else are kept).
 ##
 ## Angles: degrees, 0 = forward, -90 = up, 90 = down, 180 = behind. For aiming motions
 ## they're relative to the direction of the cursor. Reach: hand distance from the
@@ -20,6 +22,10 @@ var _force := false
 
 func _init() -> void:
 	_force = OS.get_cmdline_user_args().has("--force")
+	if OS.get_cmdline_user_args().has("--update-holds"):
+		_update_holds()
+		quit()
+		return
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
 	var written := 0
 	for t: ItemTypeData in _types():
@@ -34,6 +40,19 @@ func _init() -> void:
 	quit()
 
 
+func _update_holds() -> void:
+	for t: ItemTypeData in _types():
+		var path := "%s/%s.tres" % [DIR, t.id]
+		var existing := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as ItemTypeData
+		if existing == null:
+			ResourceSaver.save(t, path)
+			print("make_item_types: wrote %s (new)" % path)
+			continue
+		existing.hold = t.hold
+		ResourceSaver.save(existing, path)
+		print("make_item_types: updated the hold in %s" % path)
+
+
 func _types() -> Array[ItemTypeData]:
 	return [_tool(), _big_tool(), _dagger(), _sword(), _greatsword(), _wand(), _spell_book(),
 		_crossbow(), _bow(), _unarmed()]
@@ -43,7 +62,7 @@ func _types() -> Array[ItemTypeData]:
 
 func _tool() -> ItemTypeData:
 	var t := _type(&"tool", "Tool (pickaxe, axe, hammer)")
-	t.hold = _hold(_pose([[0, 55]], [[0, 0.75]]), null, ItemMotion.ItemAngle.FIXED, [[0, -65]], "Hold1H")
+	t.hold = _natural_hold(-65)
 	t.attacks = [_attack("Swing", 0.35,
 		_pose([[0, -140], [0.45, -60], [0.7, 20], [1, 35]], [[0, 0.9], [0.6, 1.0], [1, 0.9]]), null,
 		[[0, 0]], [[0, 0], [0.6, 2], [1, 0]], "Use")]
@@ -53,7 +72,7 @@ func _tool() -> ItemTypeData:
 func _big_tool() -> ItemTypeData:
 	var t := _type(&"big_tool", "Two-handed tool (sledgehammer, big pick)")
 	t.two_handed = true
-	t.hold = _hold(_pose([[0, 50]], [[0, 0.8]]), _grip(), ItemMotion.ItemAngle.FIXED, [[0, -55]], "Hold2H")
+	t.hold = _natural_hold(-55, "Hold2H")
 	t.attacks = [_attack("Slam", 0.5,
 		_pose([[0, -160], [0.3, -150], [0.65, 10], [0.8, 40], [1, 35]], [[0, 0.9], [0.65, 1.0], [1, 0.95]]), _grip(),
 		[[0, 0]], [[0, -1], [0.65, 3], [1, 0]], "Use")]
@@ -64,7 +83,7 @@ func _dagger() -> ItemTypeData:
 	var t := _type(&"dagger", "Dagger")
 	t.stow_style = ItemTypeData.StowStyle.HIP
 	t.combo_window = 0.3
-	t.hold = _hold(_pose([[0, 70]], [[0, 0.7]]), null, ItemMotion.ItemAngle.FIXED, [[0, -20]], "Hold1H")
+	t.hold = _natural_hold(-20)
 	t.attacks = [
 		_attack("Stab", 0.2, _pose([[0, 40], [0.4, 5], [1, 30]], [[0, 0.5], [0.4, 1.0], [1, 0.6]]), null,
 			[[0, 0]], [[0, 0], [0.4, 3], [1, 0]]),
@@ -79,7 +98,7 @@ func _dagger() -> ItemTypeData:
 func _sword() -> ItemTypeData:
 	var t := _type(&"sword", "One-handed sword")
 	t.stow_style = ItemTypeData.StowStyle.HIP
-	t.hold = _hold(_pose([[0, 60]], [[0, 0.75]]), null, ItemMotion.ItemAngle.FIXED, [[0, -70]], "Hold1H")
+	t.hold = _natural_hold(-70)
 	t.attacks = [
 		_attack("Slash", 0.3, _pose([[0, -130], [0.55, 30], [1, 45]], [[0, 0.95]]), null,
 			[[0, 0]], [[0, 0], [0.55, 2], [1, 0]], "Use"),
@@ -94,7 +113,7 @@ func _sword() -> ItemTypeData:
 func _greatsword() -> ItemTypeData:
 	var t := _type(&"greatsword", "Two-handed sword")
 	t.two_handed = true
-	t.hold = _hold(_pose([[0, 50]], [[0, 0.8]]), _grip(), ItemMotion.ItemAngle.FIXED, [[0, -60]], "Hold2H")
+	t.hold = _natural_hold(-60, "Hold2H")
 	t.attacks = [
 		_attack("Overhead", 0.55, _pose([[0, -165], [0.25, -160], [0.6, 25], [1, 40]], [[0, 0.95]]), _grip(),
 			[[0, 0]], [[0, 0], [0.6, 3], [1, 0]], "Use"),
@@ -118,8 +137,7 @@ func _spell_book() -> ItemTypeData:
 	var t := _type(&"spell_book", "Spell book")
 	t.held_in = ItemTypeData.Hand.BACK
 	t.stow_style = ItemTypeData.StowStyle.HIP
-	var book_arm := _pose([[0, 55]], [[0, 0.55]])
-	t.hold = _hold(null, book_arm, ItemMotion.ItemAngle.FIXED, [[0, -45]], "")
+	t.hold = _hold(null, null, ItemMotion.ItemAngle.FIXED, [[0, -45]], "")
 	var cast := _attack("Cast", 0.4, _pose([[0, 0]], [[0, 0.6], [0.35, 1.0], [1, 0.85]]), _pose([[0, 55]], [[0, 0.55]]),
 		[[0, -45]], [[0, 0], [0.35, 1], [1, 0]], "", true)
 	cast.item_angle_mode = ItemMotion.ItemAngle.FIXED
@@ -186,6 +204,13 @@ func _hold(front: ArmTrack, back: ArmTrack, angle_mode: ItemMotion.ItemAngle, it
 	m.item_angle = _curve(item_angle, -180, 180)
 	m.drawn_tag = drawn
 	return m
+
+
+## Held in the arm as you drew it (it swings with the run); the item rides in the hand,
+## pointing `angle` degrees (0 = forward, -90 = up) when the arm hangs straight down and
+## tilting with the arm as it swings. Picking the item up doesn't change the arm.
+func _natural_hold(angle: float, drawn: String = "Hold1H") -> ItemMotion:
+	return _hold(null, null, ItemMotion.ItemAngle.ARM, [[0, angle - 90.0]], drawn)
 
 
 func _attack(motion_name: String, duration: float, front: ArmTrack, back: ArmTrack, item_angle: Array,
