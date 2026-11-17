@@ -263,3 +263,17 @@ func test_book_stays_still_in_front_while_running() -> void:
 	for o in offsets:
 		assert_almost_eq(o.distance_to(offsets[0]), 0.0, 0.5, "same hold every frame")
 	assert_gt(offsets[0].x, 3.0, "held out in front")
+
+
+func test_book_stays_put_while_casting_at_different_angles() -> void:
+	var d := _doll()
+	d.item = DevHeldItems.by_name("Book")
+	d.motion = d.item.attacks()[0]
+	d.motion_t = 0.5
+	var spots: Array[Vector2] = []
+	for target: Vector2 in [Vector2(80, -100), Vector2(80, 40), Vector2(-60, -80)]:
+		d.aim_global = d.to_global(target)
+		d._update()
+		spots.append(d.hands[&"back"])
+	assert_almost_eq(spots[0].distance_to(spots[1]), 0.0, 0.01)
+	assert_almost_eq(spots[0].distance_to(spots[2]), 0.0, 0.01)

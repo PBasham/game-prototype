@@ -16,6 +16,7 @@ point_count = 1
 [sub_resource type="Resource" id="Resource_r7ihn"]
 script = ExtResource("2_jf628")
 mode = 1
+follows_aim = false
 angle = SubResource("Curve_0q2gj")
 reach = SubResource("Curve_twdvp")
 
@@ -67,6 +68,7 @@ point_count = 1
 [sub_resource type="Resource" id="Resource_qhgxb"]
 script = ExtResource("2_jf628")
 mode = 1
+follows_aim = false
 angle = SubResource("Curve_f8c54")
 reach = SubResource("Curve_xum27")
 

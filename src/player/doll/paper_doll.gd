@@ -346,7 +346,8 @@ func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 			_natural(side, legs_abs, body_abs, shift)
 		elif mode == ArmTrack.Mode.POSE:
 			var length := ((arm.hand as Vector2) - (arm.shoulder as Vector2)).length()
-			var dir := Vector2.from_angle(aim_angle + deg_to_rad(track.angle_at(motion_t)))
+			var base := aim_angle if track.follows_aim else 0.0
+			var dir := Vector2.from_angle(base + deg_to_rad(track.angle_at(motion_t)))
 			_reach(arm, _parts_of(_channel(side)), shoulder, shoulder + dir * length * track.reach_at(motion_t))
 		else:  # GRIP: the item's other grip, pulled back along the item
 			var axis := Vector2.from_angle(item_rotation)

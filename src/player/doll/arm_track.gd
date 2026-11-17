@@ -15,6 +15,10 @@ extends Resource
 enum Mode { NATURAL, POSE, GRIP }
 
 @export var mode := Mode.NATURAL
+## When the motion aims, this arm's angle is measured from the aim direction (it turns
+## with the cursor). Off = measured from forward, so the arm stays put while the other
+## one aims (the hand holding a spell book).
+@export var follows_aim := true
 @export var angle: Curve
 @export var reach: Curve
 @export var pull: Curve

@@ -209,6 +209,10 @@ Each **arm track** (`ArmTrack`) is one of:
 - `GRIP`: the hand holds the item's `grip2`, pulled back along the item by `pull`
   pixels (that's the bow draw).
 
+`follows_aim` (on by default): when the motion aims, the arm's angle is measured from
+the cursor direction, so it turns with the cursor. Turn it off for an arm that should
+stay put while the other aims (the hand holding the spell book).
+
 All of these are **curves**: in the Inspector, click a curve to open the curve editor
 and drag points. The x axis is time through the motion (0 = start, 1 = end).
 

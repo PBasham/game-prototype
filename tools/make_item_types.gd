@@ -151,8 +151,10 @@ func _spell_book() -> ItemTypeData:
 	t.stow_style = ItemTypeData.StowStyle.HIP
 	# The back hand holds the book still in front at waist height (forearm out), while
 	# running, jumping and casting alike.
-	t.hold = _hold(null, _pose([[0, 35]], [[0, 0.6]]), ItemMotion.ItemAngle.FIXED, [[0, -45]], "")
-	var cast := _attack("Cast", 0.4, _pose([[0, 0]], [[0, 0.6], [0.35, 1.0], [1, 0.85]]), _pose([[0, 35]], [[0, 0.6]]),
+	var book_arm := _pose([[0, 35]], [[0, 0.6]])
+	book_arm.follows_aim = false  # the book stays put while the front hand aims
+	t.hold = _hold(null, book_arm, ItemMotion.ItemAngle.FIXED, [[0, -45]], "")
+	var cast := _attack("Cast", 0.4, _pose([[0, 0]], [[0, 0.6], [0.35, 1.0], [1, 0.85]]), book_arm.duplicate(true),
 		[[0, -45]], [[0, 0], [0.35, 1], [1, 0]], "", true)
 	cast.item_angle_mode = ItemMotion.ItemAngle.FIXED
 	t.attacks = [cast]
