@@ -489,3 +489,61 @@ func test_chopping_spell_fells_trees() -> void:
 	await wait_seconds(2.5)
 	Input.action_release("use_primary")
 	assert_null(plants.plant_at(g), "felled by the beam")
+
+
+func test_holding_down_jump_keeps_dropping() -> void:
+	var feet := w.world_to_tile(w.player.global_position)
+	var plat := w.blocks.index_of(&"wood_platform")
+	for x in range(feet.x - 2, feet.x + 3):
+		for dy in [10, 8, 6]:
+			w.request_set_block(Vector2i(x, feet.y - dy), plat)
+	w.teleport_player(w.tile_to_world(Vector2i(feet.x, feet.y - 10)) + Vector2(4, -1))
+	await wait_seconds(0.3)
+	Input.action_press("move_down")
+	Input.action_press("jump")
+	await wait_seconds(1.2)
+	Input.action_release("jump")
+	Input.action_release("move_down")
+	assert_gt(w.player.global_position.y, float((feet.y - 6) * World.TILE) + 1.0, "through all three")
+
+
+func test_pickup_notes_add_up() -> void:
+	for i in 5:
+		EventBus.item_picked_up.emit(&"dirt", 1)
+	EventBus.item_picked_up.emit(&"stone", 2)
+	assert_eq(w.hud._note_labels.size(), 2, "one line per item")
+	assert_eq(w.hud._note_labels[&"dirt"].text, "+5 Dirt")
+
+
+func test_grass_under_a_block_turns_to_dirt() -> void:
+	var feet := w.world_to_tile(w.player.global_position)
+	var t := Vector2i(feet.x + 5, feet.y)
+	assert_eq(w.data.get_block(t.x, t.y), w.blocks.index_of(&"grass"))
+	w.request_set_block(t + Vector2i.UP, w.blocks.index_of(&"wood_planks"))
+	assert_eq(w.data.get_block(t.x, t.y), w.blocks.index_of(&"dirt"))
+
+
+func test_feet_follow_the_slope_over_a_step() -> void:
+	var p := w.player
+	var feet := w.world_to_tile(p.global_position)
+	# A 1-tile step up to the right of the column we stand on.
+	w.request_set_block(Vector2i(feet.x + 1, feet.y - 1), w.blocks.index_of(&"dirt"))
+	await wait_physics_frames(2)
+	# Standing in the middle of our column: flat.
+	p.global_position.x = feet.x * World.TILE + 4.0
+	assert_almost_eq(p._slope_offset(), 0.0, 0.01)
+	# Right at the edge between the columns: halfway up the step (drawn 4 px higher).
+	p.global_position.x = (feet.x + 1) * World.TILE
+	assert_almost_eq(p._slope_offset(), -4.0, 0.01)
+
+
+func test_dev_reach() -> void:
+	w.player.select_slot(0)
+	var u := w.item_user
+	var far := w.player.chest() + Vector2(60 * World.TILE, 20 * World.TILE)
+	u.update_target(far)
+	assert_eq(u.valid.size(), 0)
+	w.console.run("reach")
+	u.update_target(far)
+	assert_gt(u.valid.size(), 0, "anything on screen")
+	w.console.run("reach")

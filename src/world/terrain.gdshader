@@ -214,7 +214,10 @@ void fragment() {
 	}
 	if (!drew) {
 		bool done = false;
-		for (int k = 1; k <= 5; k++) {
+		// Grass blades poke up into open tiles, not into rooms (a built back wall).
+		int wb = wal(here_t);
+		bool indoors = wb > 0 && built_walls[wb] > 0.5;
+		for (int k = 1; k <= (indoors ? 0 : 5); k++) {
 			vec2 q = p + vec2(0.0, float(k));
 			if (solid(q)) {
 				if (grass_slots[mat_at(q)] > 0.5) {

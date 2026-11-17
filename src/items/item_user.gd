@@ -38,6 +38,8 @@ const TILE := World.TILE
 @export_group("")
 
 var world: World
+## Dev console `reach`: mining, chopping and placing reach anywhere on screen.
+var infinite_reach := false
 ## Tests and scripted runs aim here instead of at the mouse (INF = use the mouse).
 var cursor_override := Vector2.INF
 ## Chosen area size per item id (Ctrl + wheel).
@@ -106,6 +108,8 @@ func chop_damage() -> float:
 func reach() -> float:
 	if _item == null:
 		return 0.0
+	if infinite_reach:
+		return 100000.0
 	var c := world.player.character
 	if _places(_item):
 		# Building reach comes from the spellbook (the book is the building tool).
@@ -439,7 +443,7 @@ func _draw() -> void:
 	# Range ring: fades in near the edge of reach (and stays when past it).
 	var d := aim.distance_to(p.chest())
 	var k := clampf((d - ring_fade_start * reach_px) / maxf((1.0 - ring_fade_start) * reach_px, 1.0), 0.0, 1.0)
-	if k > 0.0:
+	if k > 0.0 and not infinite_reach:
 		var ring := valid_color if d <= reach_px else invalid_color
 		ring.a = ring_alpha * k
 		draw_arc(p.chest(), reach_px, 0.0, TAU, 128, ring, 1.0)

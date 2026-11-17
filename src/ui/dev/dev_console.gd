@@ -174,6 +174,10 @@ func _register() -> void:
 		_print("%d saplings growing." % world.plants.grow_all()))
 	_add("regen", "regen", "Regenerate the world from forest.tres (same as F6).", func(_a: PackedStringArray) -> void:
 		world.regenerate())
+	_add("fill", "fill <block|air> <w> <h>", "Fill a box with a block (front layer) at the cursor.", func(a: PackedStringArray) -> void:
+		_fill(a, false))
+	_add("fillwall", "fillwall <wall|air> <w> <h>", "Fill a box with a background wall at the cursor.", func(a: PackedStringArray) -> void:
+		_fill(a, true))
 	_add("dig", "dig <w> <h>", "Clear a box of blocks (keeps walls) centered on the cursor.", _dig)
 	_add("place", "place <object>", "Place a tile object (torch, rope) at the cursor, no item needed.", _place)
 	_add("dummy", "dummy | dummy clear", "Spawn a training dummy at the cursor (to test damage spells).", _dummy)
@@ -182,6 +186,9 @@ func _register() -> void:
 		if spell:
 			world.player.ready_spell(spell.id)
 			_print("Ready: %s." % spell.display_name))
+	_add("reach", "reach", "Toggle unlimited reach for mining, chopping and placing.", func(_a: PackedStringArray) -> void:
+		world.item_user.infinite_reach = not world.item_user.infinite_reach
+		_print("Unlimited reach %s." % ("on" if world.item_user.infinite_reach else "off")))
 	_add("fly", "fly", "Toggle flying (same as casting Fly).", func(_a: PackedStringArray) -> void:
 		var spell := ItemData.find(&"spell:fly") as SpellData
 		world.player.toggle_concentration(spell)
@@ -255,6 +262,26 @@ func _equip(a: PackedStringArray) -> void:
 			_print("Equipped %s." % item.display_name)
 			return
 	_print("%s isn't a book or a conduit." % item.display_name)
+
+
+func _fill(a: PackedStringArray, wall: bool) -> void:
+	if a.size() != 3 or not a[1].is_valid_int() or not a[2].is_valid_int():
+		_print("Usage: fill%s <id|air> <w> <h>" % ("wall" if wall else ""))
+		return
+	var types := world.walls if wall else world.blocks
+	var id := 0 if a[0] == "air" else types.index_of(StringName(_norm(a[0])))
+	if id < 0:
+		_print("No %s called '%s'." % ["wall" if wall else "block", a[0]])
+		return
+	var size := Vector2i(clampi(int(a[1]), 1, 64), clampi(int(a[2]), 1, 64))
+	var start := world.world_to_tile(world.item_user.cursor()) - size / 2
+	for y in size.y:
+		for x in size.x:
+			if wall:
+				world.request_set_wall(start + Vector2i(x, y), id)
+			else:
+				world.request_set_block(start + Vector2i(x, y), id)
+	_print("Filled %dx%d with %s." % [size.x, size.y, a[0]])
 
 
 func _dig(a: PackedStringArray) -> void:

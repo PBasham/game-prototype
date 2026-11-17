@@ -101,6 +101,9 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 ## Seconds the sprite takes to catch up after a step up or down (the body moves a whole
 ## tile in one tick; the sprite eases into place so stairs look smooth).
 @export var step_smooth_time := 0.06
+## Draw the character on the smooth slope the terrain shows over 1-tile steps, instead
+## of on the step the body stands on (so feet don't sink going up or float going down).
+@export var follow_slopes := true
 ## Walk up ledges this many tiles high without jumping.
 @export var max_step_tiles := 2
 ## Longest that platforms are ignored after Down + Jump. They catch you again as soon
@@ -398,6 +401,9 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 	var gravity := jv.x * (1.0 if velocity.y < 0.0 else fall_gravity_multiplier)
 	velocity.y = minf(velocity.y + gravity * delta, max_fall_speed * TILE)
 
+	# Holding Down + Jump keeps dropping through platform after platform.
+	if _held("jump") and input_y > 0.0 and is_on_floor() and _drop_timer <= 0.0 and _standing_on_platform():
+		_buffer = jump_buffer_time
 	# Jump, or drop through a platform with Down + Jump.
 	if _buffer > 0.0 and _coyote > 0.0:
 		_buffer = 0.0
@@ -586,7 +592,11 @@ func _animate(delta: float) -> void:
 	_takeoff_timer = maxf(_takeoff_timer - delta, 0.0)
 	_land_timer = maxf(_land_timer - delta, 0.0)
 	_air_time = 0.0 if is_on_floor() else _air_time + delta
-	_step_offset = move_toward(_step_offset, 0.0, maxf(absf(_step_offset) / maxf(step_smooth_time, 0.001), 30.0) * delta)
+	# Ease toward where the feet should be: on flat ground that's the body; on stairs
+	# it's the smooth slope the terrain is drawn as (see _slope_offset).
+	var target := _slope_offset() if follow_slopes and is_on_floor() and not _climbing and not is_flying() else 0.0
+	var gap := absf(_step_offset - target)
+	_step_offset = move_toward(_step_offset, target, maxf(gap / maxf(step_smooth_time, 0.001), 30.0) * delta)
 	_doll.position.y = _step_offset
 	# Moving = actually moving, or steering while not against a wall (so turning around
 	# doesn't flash the idle). Pushing into a wall counts as standing still.
@@ -672,6 +682,36 @@ func jump_frame_for(count: int) -> int:
 		return apex
 	var f := clampf((vy - apex_band) / maxf(jump_frame_speed - apex_band, 0.001), 0.0, 1.0)
 	return apex + 1 + mini(int(f * falling), falling - 1)
+
+
+## Pixels to draw the body lower (+) or higher (-) so the feet sit on the slope: the
+## ground height is interpolated between the two nearest tile columns, which is how
+## the terrain shader draws 1-tile steps (as a slope). 0 on flat ground and at cliffs.
+func _slope_offset() -> float:
+	if world == null:
+		return 0.0
+	var feet := global_position
+	var u := feet.x / TILE - 0.5
+	var c0 := floori(u)
+	var h0 := _ground_top(c0, feet.y)
+	var h1 := _ground_top(c0 + 1, feet.y)
+	if is_inf(h0) or is_inf(h1) or absf(h0 - h1) > TILE + 0.5:
+		return 0.0
+	return clampf(lerpf(h0, h1, u - c0) - feet.y, -TILE, TILE)
+
+
+## Top (px) of the ground in a tile column near the feet, or INF if there's none
+## within two tiles up or down.
+func _ground_top(col: int, feet_y: float) -> float:
+	var r := floori((feet_y - 1.0) / TILE)
+	for row in range(r - 2, r + 3):
+		var b := world.data.get_block(col, row)
+		var above := world.data.get_block(col, row - 1)
+		var standable := b == WorldData.OUT_OF_BOUNDS or (b > 0 and world.blocks.collision(b) != TileDef.Collision.NONE)
+		var open_above := above == WorldData.AIR or (above > 0 and world.blocks.collision(above) != TileDef.Collision.SOLID)
+		if standable and open_above:
+			return float(row * TILE)
+	return INF
 
 
 func _standing_on_platform() -> bool:

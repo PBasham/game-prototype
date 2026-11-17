@@ -39,6 +39,8 @@ const EQUIP_SLOTS: Array[StringName] = [CharacterData.SLOT_BOOK, CharacterData.S
 ## Holding R this long (seconds) opens the spell wheel; a shorter tap takes the
 ## spellbook out or puts it back.
 @export var wheel_hold_seconds := 0.2
+## Seconds a pickup note stays after the last item of that kind arrived.
+@export var note_seconds := 1.6
 
 var world: World
 var open := false
@@ -58,6 +60,9 @@ var _name_label: Label
 var _tooltip: PanelContainer
 var _tooltip_text: Label
 var _notes: VBoxContainer
+var _note_labels: Dictionary[StringName, Label] = {}
+var _note_counts: Dictionary[StringName, int] = {}
+var _note_age: Dictionary[StringName, float] = {}
 
 
 ## Draws the slots and handles clicks on them.
@@ -134,7 +139,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_notes(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open)
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
@@ -670,18 +676,39 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 	return "\n".join(lines)
 
 
+## Pickup notes: one line per item, adding up while items keep arriving.
 func _on_picked_up(item_id: StringName, count: int) -> void:
+	var note: Label = _note_labels.get(item_id)
+	if note == null or not is_instance_valid(note):
+		note = Label.new()
+		note.add_theme_font_size_override("font_size", 8)
+		note.add_theme_color_override("font_color", TEXT)
+		note.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
+		_notes.add_child(note)
+		_note_labels[item_id] = note
+		_note_counts[item_id] = 0
+	_note_counts[item_id] += count
 	var item := ItemData.find(item_id)
-	var l := Label.new()
-	l.text = "+%d %s" % [count, item.display_name if item else String(item_id)]
-	l.add_theme_font_size_override("font_size", 8)
-	l.add_theme_color_override("font_color", TEXT)
-	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
-	_notes.add_child(l)
+	note.text = "+%d %s" % [_note_counts[item_id], item.display_name if item else String(item_id)]
+	note.modulate.a = 1.0
+	_note_age[item_id] = 0.0
+	_place_notes()
+
+
+func _update_notes(delta: float) -> void:
+	for item_id: StringName in _note_age.keys():
+		_note_age[item_id] += delta
+		var note: Label = _note_labels.get(item_id)
+		var age: float = _note_age[item_id]
+		if age > note_seconds:
+			note.modulate.a = 1.0 - (age - note_seconds) / 0.5
+		if age > note_seconds + 0.5:
+			note.queue_free()
+			_note_labels.erase(item_id)
+			_note_counts.erase(item_id)
+			_note_age.erase(item_id)
+			_place_notes.call_deferred()
+
+
+func _place_notes() -> void:
 	_notes.position.y = 344 - _notes.get_child_count() * 12
-	var tw := l.create_tween()
-	tw.tween_interval(1.6)
-	tw.tween_property(l, "modulate:a", 0.0, 0.5)
-	tw.tween_callback(func() -> void:
-		l.queue_free()
-		_notes.position.y = 344 - (_notes.get_child_count() - 1) * 12)

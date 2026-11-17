@@ -262,6 +262,9 @@ where the ring appears), `ring_alpha`, `swing_cut_tiles`.
 
 ## Drops (`src/items/item_drop.gd`)
 
+Picking items up shows one note per item that adds up ("+12 Dirt") while more keep
+arriving (`note_seconds` on `Hud`, 1.6).
+
 Items pop out, fall, land on blocks and platforms, and fly to you inside 3 tiles of
 your body (measured to the nearest point of the body, so drops at your feet count).
 Tunables per drop: `magnet_tiles` (3), `pickup_tiles` (0.6), `magnet_speed`,
@@ -284,7 +287,10 @@ saved with the world yet.
   world runs, once there are `grow_clearance` (10) clear tiles above it.
 - **Flowers:** any tool or weapon swing cuts flowers in front of you; mining or
   placing over them breaks them too. `grass_seed_chance` (0.35) to drop grass seeds.
-- **Grass spread:** dirt that touches air and sits next to grass turns into grass.
+- **Grass spread:** dirt that touches air and sits next to grass turns into grass,
+  but not under a solid block. Putting a solid block on grass turns it back to dirt.
+  The grass blades that poke up from a grass block aren't drawn into a tile with a built
+  back wall (a room), so floors indoors stay clean.
   `grass_spread_checks_per_second` (1500 random checks over the loaded area) sets the
   speed: higher spreads faster.
 - Saved with the world for every chunk whose plants or blocks changed.

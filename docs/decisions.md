@@ -2,6 +2,19 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Playtest round 3
+
+- Holding Down + Jump keeps dropping through platforms.
+- Character size vs blocks (8 tiles tall, doors 8 to 9 tiles): **undecided**. Options:
+  shrink to about 6 tiles (redrawn at about 48 px, not scaled), keep 8 and build tall,
+  or 16 px tiles (big rework).
+- Feet on slopes: the sprite follows the smooth slope over 1-tile steps instead of
+  lagging behind the body (the lag made feet sink uphill and float downhill). No
+  per-leg IK for now.
+- Grass under a solid block becomes dirt; grass blades aren't drawn into rooms (built
+  back walls).
+- Pickup notes add up per item. Dev console: `reach`, `fill`, `fillwall`.
+
 ## 2026-11-17: Objects layer, torches, colored light, new spells
 
 - A third tile layer for objects (rope, torches; chests and doors later). Rope moved

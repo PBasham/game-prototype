@@ -285,7 +285,8 @@ func _spread_grass(delta: float) -> void:
 	_grass_budget -= n
 	for i in n:
 		var t := rect.position + Vector2i(randi() % rect.size.x, randi() % rect.size.y)
-		if world.data.get_block(t.x, t.y) == _dirt_id and _exposed(t) and _near_grass(t):
+		if world.data.get_block(t.x, t.y) == _dirt_id and _exposed(t) and _near_grass(t) \
+				and not world.is_solid(t + Vector2i.UP):  # grass doesn't grow under a block
 			world.request_set_block(t, _grass_id)
 
 
@@ -308,6 +309,11 @@ func _near_grass(t: Vector2i) -> bool:
 # --- changes ---------------------------------------------------------------------------
 
 func _on_block_changed(tile: Vector2i, _old: int, new_id: int) -> void:
+	# Grass covered by a solid block dies back to dirt (and won't spread back under it).
+	if new_id > 0 and world.blocks.collision(new_id) == TileDef.Collision.SOLID:
+		var under := world.wrap_tile(tile + Vector2i.DOWN)
+		if world.data.get_block(under.x, under.y) == _grass_id and not _plants.has(under):
+			world.request_set_block(under, _dirt_id)
 	# The ground under a plant went away (or stopped being grass/dirt): it breaks.
 	var p: Plant = _plants.get(tile)
 	if p and new_id != _grass_id and new_id != _dirt_id:
