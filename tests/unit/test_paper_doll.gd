@@ -42,9 +42,33 @@ func test_prefixed_tags_win_for_their_channel() -> void:
 
 
 func _shoulder(d: PaperDoll, side: StringName) -> Vector2:
-	var arm: Dictionary = rig.arms[side]
 	var f := rig.tag_range(&"legs", d.animation).x + d.frame
-	return (arm.shoulder as Vector2) + rig.body_offset[f] - rig.anchor + Vector2(d.motion.lunge_at(d.motion_t) if d.motion else 0.0, 0)
+	return rig.shoulders[side][f] - rig.anchor + Vector2(d.motion.lunge_at(d.motion_t) if d.motion else 0.0, 0)
+
+
+func test_shoulders_follow_each_frames_art() -> void:
+	# Breath is a 3/4 pose (shoulders far apart); Jog is side view (close together).
+	var breath := rig.tag_range(&"legs", &"Breath").x
+	var jog := rig.tag_range(&"legs", &"Jog").x
+	var spread_breath := absf(rig.shoulders[&"front"][breath].x - rig.shoulders[&"back"][breath].x)
+	var spread_jog := absf(rig.shoulders[&"front"][jog].x - rig.shoulders[&"back"][jog].x)
+	assert_gt(spread_breath, spread_jog + 5.0)
+
+
+func test_elbow_does_not_flip_as_the_arm_sweeps() -> void:
+	var d := _doll()
+	d.item = DevHeldItems.by_name("Wand")
+	d.motion = d.item.hold_motion()
+	var upper: int = rig.arms[&"front"].upper
+	var last := INF
+	for i in range(0, 361, 5):
+		var a := deg_to_rad(float(i))
+		d.aim_global = d.to_global(_shoulder(d, &"front") + Vector2.from_angle(a) * 40.0)
+		d._update()
+		var rot := wrapf(d._slots[upper].rotation - a, -PI, PI)
+		if last != INF:
+			assert_lt(absf(wrapf(rot - last, -PI, PI)), 0.6, "no elbow flip at %d degrees" % i)
+		last = rot
 
 
 func test_pose_track_puts_the_hand_at_angle_and_reach() -> void:

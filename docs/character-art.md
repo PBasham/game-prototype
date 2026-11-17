@@ -56,6 +56,7 @@ applies to one channel and wins over the plain one for that channel.
 | `Jump` | In the air. Frames are picked from the arc, not a timer (see guide.md, Player animation). |
 | `Idle Pose` | Climbing (for now). Its first frame is also the **rest frame** for code-posed arms unless `arms/Rest` exists. |
 | `Land` | Optional. Brief landing pose. Without it, code drops the upper body 2 px (`land_dip`). |
+| `Stand` | Optional, recommended. **Side-view** standing pose, used when standing still with an item out or while attacking. Without it, the last frame of `Jump` (legs together) is held instead (`stance_fallback_anim` / `stance_fallback_frame` on the Player). |
 
 **Arm tags** (all optional; until they exist, arms are code-posed):
 
@@ -99,13 +100,31 @@ combo on a loop (bottom row), plus unarmed punches. **Code posing: forced** swit
 code posing everywhere, to compare once you've drawn some poses. The line under the
 buttons lists the arm tags your art has.
 
+### Why a side-view stance
+
+`Breath` and `Idle Pose` are drawn in a **3/4 view**: the shoulders are far apart and
+the back shoulder sits behind the torso. Arms posed in front of the body (holding a
+two-handed weapon, aiming) can't look right from there: the back arm ends up hidden
+behind the torso. `Jog` and `Jump` are side views, where they work. So whenever an item
+is out or you're attacking, standing still uses a side-view stance instead of Breath.
+Draw a `Stand` tag (side view, can be a slow breathing loop) to replace the borrowed
+Jump frame. With empty hands you keep the 3/4 idle.
+
 ## Joints (pivots)
 
-Code needs the shoulder, elbow and hand of each arm. They're **measured** from the rest
-frame: shoulder = top of the upper arm, elbow = bottom of the upper arm, hand = bottom
-of the lower arm. If a measurement looks off (an arm rotating around the wrong point),
-add a layer named **`Pivots`** and put single pixels in these exact colors on the rest
-frame:
+Code needs the shoulder, elbow and hand of each arm.
+
+- **Shoulders are measured in every frame** (top of that frame's upper arm), so posed
+  arms attach where the body actually is in each pose.
+- **Elbow and hand** come from the rest frame: elbow = bottom of the upper arm,
+  hand = bottom of the lower arm. They define the arm's bone lengths.
+- **The elbow always bends the same way** (clockwise of the shoulder-to-hand line on a
+  right-facing character): below the arm for a forward reach, behind it for a downward
+  one, in front when raised.
+
+If a measurement looks off (an arm rotating around the wrong point), add a layer named
+**`Pivots`** and put single pixels in these exact colors (shoulders on any frame where
+they're wrong, hands on the rest frame):
 
 | Color | Joint |
 | --- | --- |

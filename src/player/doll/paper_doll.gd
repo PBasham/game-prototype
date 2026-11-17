@@ -273,10 +273,9 @@ func _set_region(pi: int, region: Rect2, offset: Vector2) -> void:
 
 
 func _shoulder(side: StringName, body_abs: int, shift: Vector2) -> Vector2:
-	var arm: Dictionary = rig.arms.get(side, {})
-	if arm.is_empty():
+	if not rig.shoulders.has(side):
 		return Vector2.ZERO
-	return (arm.shoulder as Vector2) + rig.body_offset[body_abs] - rig.anchor + shift
+	return rig.shoulders[side][body_abs] - rig.anchor + shift
 
 
 ## Natural arms, drawn motion frames, or code-posed motion.
@@ -369,8 +368,10 @@ func _reach(arm: Dictionary, parts: PackedInt32Array, shoulder: Vector2, target:
 	var d := clampf(to.length(), absf(l1 - l2) + 0.01, l1 + l2 - 0.01)
 	var base := to.angle()
 	var bend := acos(clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0))
-	# Elbow below the shoulder-hand line (bend toward +y), like a relaxed arm.
-	var a1 := base + (bend if cos(base) >= 0.0 else -bend)
+	# The elbow always bends to the same side (clockwise of the shoulder-to-hand line):
+	# below for a forward reach, behind for a downward one, in front when raised. Picking
+	# the side by direction made it flip when the arm passed straight up or down.
+	var a1 := base + bend
 	var elbow := shoulder + Vector2.from_angle(a1) * l1
 	var hand := shoulder + to.normalized() * d
 	var a2 := (hand - elbow).angle()

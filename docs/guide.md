@@ -108,6 +108,9 @@ Movement animations (`_animate()` in `player.gd`):
   `land_dip` pixels for `land_time`. A `Land` tag in the .aseprite replaces this.
 - **Walking backwards:** while aiming or using an item you face the cursor; moving the
   other way plays the legs in reverse at `backpedal_speed`.
+- **Stance:** standing still with an item out, or attacking, switches from the 3/4
+  Breath idle to a side-view stance (`Stand` tag, or the last Jump frame until it
+  exists), so arms posed in front of the body line up.
 
 F3 shows the current animation, frame, "rev" when reversed, and the arm mode.
 

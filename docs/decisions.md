@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Arm fixes, side-view stance
+
+- Code-posed arms attach at shoulders measured per frame (the 3/4 idle and the side-view
+  run have very different shoulder positions; using the idle's put arms on the wrong
+  side in runs and jumps).
+- The elbow always bends clockwise of the shoulder-to-hand line; choosing by direction
+  made it flip when the arm passed vertical.
+- Standing with an item out or attacking uses a side-view stance (`Stand` tag, fallback
+  the last Jump frame): the 3/4 idle hides the back arm behind the torso.
+
 ## 2026-11-17: Item types and attack animations
 
 - **Item types** (`data/item_types/`) define how items are held and their attacks;

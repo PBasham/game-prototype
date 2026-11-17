@@ -46,8 +46,13 @@ var rest_frame := 0
 ## elbow, hand: Vector2 in rest-frame pixels}. Missing if the art has no such arm.
 var arms: Dictionary[StringName, Dictionary] = {}
 ## Torso position per frame relative to the rest frame (how far the body bobs), so
-## posed arms and stowed items move with it.
+## stowed items move with it.
 var body_offset := PackedVector2Array()
+## Shoulder per arm side per frame (frame-local pixels): where code-posed arms attach.
+## Measured in every frame (top of that frame's upper arm), because poses differ: a 3/4
+## standing pose has the shoulders far apart, a side-view run has them close together.
+## A Pivots layer overrides it per frame.
+var shoulders: Dictionary[StringName, PackedVector2Array] = {}
 ## Head top-left per frame (for hair and helmets).
 var head_pos := PackedVector2Array()
 ## Pivots from the Pivots layer, per frame (may be empty).
@@ -124,6 +129,7 @@ func _load(base_path: String) -> void:
 		var arm := _measure_arm(img, side)
 		if not arm.is_empty():
 			arms[side] = arm
+			shoulders[side] = _measure_shoulders(img, side, arm)
 
 	var torso := _first_part_with(["Torso", "Body", "Chest"])
 	var head := _first_part_with(["Head"])
@@ -187,6 +193,21 @@ func _measure_arm(img: Image, side: StringName) -> Dictionary:
 	if pv.has("%s_hand" % side):
 		hand = Vector2(pv["%s_hand" % side][0], pv["%s_hand" % side][1])
 	return {"upper": upper, "lower": lower, "shoulder": shoulder, "elbow": elbow, "hand": hand}
+
+
+func _measure_shoulders(img: Image, side: StringName, arm: Dictionary) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var key := "%s_shoulder" % side
+	for f in frame_count:
+		var pv: Dictionary = pivots[f] if f < pivots.size() else {}
+		var r := _rect(arm.upper, f)
+		if pv.has(key):
+			out.append(Vector2(pv[key][0], pv[key][1]))
+		elif r.size != Vector2i.ZERO:
+			out.append(_row_center(img, arm.upper, f, r.position.y) + Vector2(0, 1))
+		else:
+			out.append((arm.shoulder as Vector2) + body_offset[f] if f < body_offset.size() else arm.shoulder)
+	return out
 
 
 ## Center of the opaque pixels in one row of a part's frame (frame-local, pixel center).
