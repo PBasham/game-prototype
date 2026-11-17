@@ -15,6 +15,7 @@ extends Node
 ##   --world=KIND            world generator: forest (default) or course (test course)
 ##   --seed=N                world seed (default 1337); any word works too
 ##   --size=NAME             tiny, small (default), medium, large
+##   --scene=doll            open a dev scene instead of a world (doll = Doll Viewer)
 ##   --menu                  stay on the main menu (otherwise any of these arguments
 ##                           skips the menu and starts a temporary, unsaved world)
 
@@ -31,6 +32,8 @@ var _world_kind := "forest"
 var _seed_text := "1337"
 var _size_name := "small"
 var _menu := false
+## Dev scene to open instead of a world ("doll"), or "".
+var scene_override := ""
 var _any_args := false
 
 
@@ -69,12 +72,14 @@ func _ready() -> void:
 				_seed_text = parts[1]
 			"size":
 				_size_name = parts[1]
+			"scene":
+				scene_override = parts[1]
 	set_physics_process(not (_shots.is_empty() and _holds.is_empty() and _quit_at < 0 and _log_every == 0))
 
 
 ## True when the command line asks for a scripted run, so the menu should be skipped.
 func wants_world() -> bool:
-	return _any_args and not _menu
+	return _any_args and not _menu and scene_override == ""
 
 
 ## The temporary world a scripted run plays in.

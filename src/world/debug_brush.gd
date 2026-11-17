@@ -2,7 +2,8 @@ class_name DebugBrush
 extends Node2D
 ## Debug builds only, until real mining arrives in Phase 3:
 ##   Left mouse: remove block. Right mouse: place block. Mouse wheel: change block.
-## Goes through World.request_set_block like real gameplay will.
+## Goes through World.request_set_block like real gameplay will. Off while the player
+## holds an item (clicks use the item instead; H puts it away).
 
 const PLACEABLE := [&"dirt", &"stone", &"copper_ore", &"wood_planks", &"wood_platform", &"rope"]
 
@@ -25,6 +26,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	if world.player and world.player.held != null and not world.player.stowed:
+		return  # clicks belong to the held item
 	var tile := world.world_to_tile(get_global_mouse_position())
 	if Input.is_action_pressed("use_primary"):
 		world.request_set_block(tile, WorldData.AIR)

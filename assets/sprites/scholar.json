@@ -121,6 +121,48 @@
       "x": 1188
     }
   ],
+  "parts": [
+    {
+      "name": "Back Leg Lower",
+      "row": 0
+    },
+    {
+      "name": "Back Leg Upper",
+      "row": 1
+    },
+    {
+      "name": "Back Arm Lower",
+      "row": 2
+    },
+    {
+      "name": "Back Arm Upper",
+      "row": 3
+    },
+    {
+      "name": "Front Leg Lower",
+      "row": 4
+    },
+    {
+      "name": "Front Leg Upper",
+      "row": 5
+    },
+    {
+      "name": "Head",
+      "row": 6
+    },
+    {
+      "name": "Torso",
+      "row": 7
+    },
+    {
+      "name": "Front Arm Lower",
+      "row": 8
+    },
+    {
+      "name": "Front Arm Upper",
+      "row": 9
+    }
+  ],
   "source": "Scholar-casual.aseprite",
   "tags": {
     "Breath": [

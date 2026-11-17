@@ -2,6 +2,27 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Phase 3, character rig (paper doll)
+
+Inserted before mining, because mining is where arm poses matter. Mining and items
+move to Phase 4.
+
+- **Paper doll** (Starbound style): each body layer is its own sprite. Legs carry
+  the animation; torso and head follow; arms have modes (swing, hold, use, aim).
+  Armor and clothes become overlays on single parts, so they need few frames.
+- **Aim: free rotation** of the arm sprites around the shoulder (no pre-drawn angles).
+- **Hold and use poses: hand-drawn** (`arms/Hold1H`, `arms/Hold2H`, `arms/Use`), with
+  code-posed two-bone arms as the fallback until they exist. The Doll Viewer shows both
+  so Patrick can compare.
+- **Facing:** face the cursor while aiming or using; moving the other way walks
+  backwards (legs reversed) at 80% speed (`backpedal_speed`).
+- **Put away (H):** each item says where it goes: back, hip or hidden.
+- **Customization:** palette swap by color group + hairstyle sprite, one placeholder
+  hairstyle. Character creation screen comes with character saves.
+- **Armor sleeves:** hand-drawn (not auto-generated from masks).
+- **Aseprite layout:** one file; tag prefixes (`arms/`, `legs/`, `body/`) target one
+  channel, plain tags apply to all.
+
 ## 2026-11-17: Phase 2, forest world generation and the main menu
 
 Brief answered "defaults" on every point:

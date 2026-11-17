@@ -5,6 +5,9 @@ extends CharacterBody2D
 ## a little, but not turn around instantly.
 ##
 ## Hold Run (Shift) to run; Toggle Walk (C) switches the default pace to a walk.
+## Drawn as a PaperDoll (separate body parts): see src/player/doll/paper_doll.gd.
+## Holding an item: left click uses it, H puts it away / takes it out. Aiming items
+## face the cursor; moving away from it walks backwards at backpedal_speed.
 ## Every number is exported: select the Player in the running game's Remote tree and
 ## tune it live. Distances are in tiles (8 px), speeds in tiles per second.
 
@@ -15,8 +18,11 @@ signal fall_damage_taken(amount: int)
 
 const TILE := float(World.TILE)
 const SHEET := "res://assets/sprites/scholar"
-## Placeholder frames for tags the main sheet doesn't have yet (landing).
-const PLACEHOLDER_SHEET := "res://assets/sprites/scholar_placeholder"
+const PALETTE := "res://assets/sprites/scholar_palette.tres"
+const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
+
+## Colors and hairstyle. Null uses assets/sprites/scholar_look.tres.
+@export var look: CharacterLook
 
 @export_group("Animation")
 ## Seconds the first Jump frame (takeoff) shows after a jump starts.
@@ -28,14 +34,18 @@ const PLACEHOLDER_SHEET := "res://assets/sprites/scholar_placeholder"
 ## Frames after the apex are spread from apex_band up to this falling speed (tiles/s);
 ## falling faster holds the last frame.
 @export var jump_frame_speed := 50.0
-## Seconds the landing pose shows when landing without moving.
-@export var land_time := 0.08
+## Seconds the landing squash shows when landing without moving.
+@export var land_time := 0.1
+## Pixels the upper body drops in the landing squash (when there's no "Land" tag).
+@export var land_dip := 2.0
 
 @export_group("Speed (tiles/s)")
 @export var walk_speed := 10.0
 @export var jog_speed := 18.0
 @export var run_speed := 28.0
 @export var climb_speed := 12.0
+## Speed multiplier when moving away from where you're facing (aiming backwards).
+@export_range(0.1, 1.0) var backpedal_speed := 0.8
 
 @export_group("Ground (seconds to full speed / to stop)")
 @export var ground_accel_time := 0.1
@@ -86,8 +96,13 @@ var _airborne := false
 var _peak_y := 0.0
 var _takeoff_timer := 0.0
 var _land_timer := 0.0
+## Held item (null = empty hands) and whether it's put away.
+var held: HeldItemLook
+var stowed := false
+## Seconds left in the current use (swing); 0 when not using.
+var _use_left := 0.0
 
-@onready var _sprite: AnimatedSprite2D = $Sprite
+@onready var _doll: PaperDoll = $Doll
 
 
 ## Gravity (px/s^2) and launch speed (px/s) that reach `height_tiles` in `apex_time`.
@@ -97,12 +112,35 @@ static func jump_values(height_tiles: float, apex_time: float) -> Vector2:
 
 
 func _ready() -> void:
-	var sheet := SpriteSheet.load_from(SHEET)
-	sheet.add_tags_from(PLACEHOLDER_SHEET)
-	_sprite.sprite_frames = sheet.frames
-	_sprite.centered = false
-	_sprite.offset = -sheet.anchor
-	_sprite.play(&"Breath")
+	_doll.setup(DollRig.load_from(SHEET), load(PALETTE) as CharacterPalette)
+	_doll.look = look if look else load(DEFAULT_LOOK) as CharacterLook
+
+
+## Puts an item in the player's hands (null = empty hands). Inventory and hotbar call
+## this in Phase 4; debug builds use DevHeldItems (keys 1 to 4).
+func hold(item: HeldItemLook) -> void:
+	held = item
+	stowed = false
+	_use_left = 0.0
+	_doll.item = item
+	_doll.stowed = false
+
+
+## Puts the held item away or takes it back out (H).
+func toggle_stowed() -> void:
+	if held == null:
+		return
+	stowed = not stowed
+	_use_left = 0.0
+	_doll.stowed = stowed
+
+
+## True while the arms point at the cursor (so the body faces it).
+func is_aiming() -> bool:
+	if held == null or stowed:
+		return false
+	return held.hold_style == HeldItemLook.HoldStyle.AIM or held.face_cursor or _use_left > 0.0 \
+		or (held.use_style == HeldItemLook.UseStyle.AIM and Input.is_action_pressed("use_primary"))
 
 
 func _physics_process(delta: float) -> void:
@@ -126,7 +164,12 @@ func _physics_process(delta: float) -> void:
 	else:
 		_move(input_x, input_y, delta)
 
-	if input_x != 0.0:
+	_update_use(delta)
+	if is_aiming():
+		var dx := get_global_mouse_position().x - global_position.x
+		if absf(dx) > 2.0:
+			facing = 1 if dx > 0.0 else -1
+	elif input_x != 0.0:
 		facing = 1 if input_x > 0.0 else -1
 	_track_fall()
 	_animate(delta)
@@ -155,6 +198,8 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 		_rising_jump = false
 
 	var top := _current_speed() * TILE
+	if input_x != 0.0 and signf(input_x) != float(facing):
+		top *= backpedal_speed  # walking backwards (aiming the other way)
 	var target := input_x * top
 	var grounded := is_on_floor()
 	var rate: float
@@ -216,32 +261,64 @@ func _climb(input_x: float, input_y: float) -> void:
 	move_and_slide()
 
 
+func _update_use(delta: float) -> void:
+	if Input.is_action_just_pressed("put_away"):
+		toggle_stowed()
+	if held == null or stowed:
+		_use_left = 0.0
+		return
+	if _use_left > 0.0:
+		_use_left = maxf(_use_left - delta, 0.0)
+	elif held.use_style == HeldItemLook.UseStyle.SWING and Input.is_action_pressed("use_primary"):
+		_use_left = held.use_time  # holding the button keeps swinging
+
+
 func _animate(delta: float) -> void:
 	_takeoff_timer = maxf(_takeoff_timer - delta, 0.0)
 	_land_timer = maxf(_land_timer - delta, 0.0)
-	_sprite.flip_h = facing < 0
-	_sprite.speed_scale = 1.0
+	_doll.scale.x = float(facing)
+	_doll.speed_scale = 1.0
+	_doll.reverse = is_aiming() and velocity.x != 0.0 and signf(velocity.x) != float(facing)
+	_doll.dip = 0.0
 	if _climbing:
-		_sprite.play(&"Idle Pose")
+		_doll.play(&"Idle Pose")
 	elif not is_on_floor():
 		_show_jump_frame()
 	elif absf(velocity.x) > 4.0:
-		_sprite.play(&"Jog")
-		_sprite.speed_scale = clampf(absf(velocity.x) / (jog_speed * TILE), 0.5, 1.8)
+		_doll.play(&"Jog")
+		_doll.speed_scale = clampf(absf(velocity.x) / (jog_speed * TILE), 0.5, 1.8)
 	elif _land_timer > 0.0:
-		_sprite.play(_first_of([&"Land"], &"Breath"))
+		if _doll.has_animation(&"Land"):
+			_doll.play(&"Land")
+		else:
+			_doll.play(&"Breath")
+			_doll.dip = land_dip
 	else:
-		_sprite.play(&"Breath")
+		_doll.play(&"Breath")
+	_animate_arms()
+
+
+func _animate_arms() -> void:
+	_doll.aim_global = get_global_mouse_position()
+	if held == null or stowed:
+		_doll.arm_mode = PaperDoll.ArmMode.SWING
+	elif _use_left > 0.0:
+		_doll.arm_mode = PaperDoll.ArmMode.USE
+		_doll.use_progress = 1.0 - _use_left / maxf(held.use_time, 0.01)
+	elif held.hold_style == HeldItemLook.HoldStyle.AIM \
+			or (held.use_style == HeldItemLook.UseStyle.AIM and Input.is_action_pressed("use_primary")):
+		_doll.arm_mode = PaperDoll.ArmMode.AIM
+	else:
+		_doll.arm_mode = PaperDoll.ArmMode.HOLD
 
 
 ## Picks the Jump frame from the arc instead of a timer. Frame 1 is the takeoff. Frames
 ## between it and the apex follow rising speed, the apex frame holds around the top, and
 ## the frames after it follow falling speed.
 func _show_jump_frame() -> void:
-	if _sprite.animation != &"Jump":
-		_sprite.play(&"Jump")
-	_sprite.pause()
-	_sprite.frame = jump_frame_for(_sprite.sprite_frames.get_frame_count(&"Jump"))
+	_doll.play(&"Jump")
+	_doll.pause()
+	_doll.frame = jump_frame_for(_doll.frame_count(&"Jump"))
 
 
 func jump_frame_for(count: int) -> int:
@@ -265,13 +342,6 @@ func jump_frame_for(count: int) -> int:
 		return apex
 	var f := clampf((vy - apex_band) / maxf(jump_frame_speed - apex_band, 0.001), 0.0, 1.0)
 	return apex + 1 + mini(int(f * falling), falling - 1)
-
-
-func _first_of(names: Array[StringName], fallback: StringName) -> StringName:
-	for anim_name in names:
-		if _sprite.sprite_frames.has_animation(anim_name):
-			return anim_name
-	return fallback
 
 
 func _standing_on_platform() -> bool:
@@ -315,5 +385,5 @@ func _debug_watch() -> void:
 	DebugOverlay.watch("tile", "%d, %d" % [t.x, t.y])
 	DebugOverlay.watch("move", "%s %.1f t/s%s%s" % [pace, absf(velocity.x) / TILE,
 		"  climbing" if _climbing else "", "  floor" if is_on_floor() else ""])
-	DebugOverlay.watch("anim", "%s %d  vy %.0f" % [_sprite.animation, _sprite.frame + 1,
-		velocity.y / TILE])
+	DebugOverlay.watch("anim", "%s %d%s  vy %.0f  arms %s" % [_doll.animation, _doll.frame + 1,
+		" rev" if _doll.reverse else "", velocity.y / TILE, PaperDoll.ArmMode.keys()[_doll.arm_mode]])

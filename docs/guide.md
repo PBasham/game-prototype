@@ -19,7 +19,7 @@ dive: [world-generation.md](world-generation.md).
 
 1. [Starting the game: menu, worlds, saves](#starting-the-game-menu-worlds-saves)
 2. [Player movement](#player-movement)
-3. [Player animation](#player-animation)
+3. [Player animation](#player-animation) and [holding items](#holding-items)
 4. [The world: tiles, chunks, wrap](#the-world-tiles-chunks-wrap)
 5. [Terrain look](#terrain-look)
 6. [Lighting](#lighting)
@@ -38,6 +38,8 @@ dive: [world-generation.md](world-generation.md).
   number or word; blank picks a random one. The same seed always makes the same world.
 - **Load World:** saved worlds, most recently played first, with Delete.
 - **Test Course** (debug builds only): the Phase 1 movement course. Never saved.
+- **Doll Viewer** (debug builds only): every arm mode side by side, drawn vs
+  code-posed, with recolor and hair buttons.
 - **Quit.**
 
 **Esc** in game opens the pause menu (`src/ui/menu/pause_menu.gd`): Resume, Save,
@@ -87,8 +89,13 @@ interpolation on, so motion is smooth at any refresh rate (see architecture.md).
 
 ## Player animation
 
-The Scholar's frames come from `art/Scholar-casual.aseprite` (tags `Idle Pose`, `Jump`,
-`Breath`, `Jog`) via the importer (see Art pipeline). `_animate()` in `player.gd` picks:
+The Scholar is a **paper doll**: each body layer of `art/Scholar-casual.aseprite` is
+its own sprite, and each part picks its own frame. Legs play the movement animation,
+the torso and head follow, and the arms depend on what you're holding. Everything about
+drawing for it (layers, tags, arm poses, pivots, items, colors, hair, armor) is in
+[character-art.md](character-art.md).
+
+Movement animations (`_animate()` in `player.gd`):
 
 - **Breath** standing still, **Jog** moving (playback speed follows how fast you move),
   **Idle Pose** while climbing.
@@ -97,12 +104,30 @@ The Scholar's frames come from `art/Scholar-casual.aseprite` (tags `Idle Pose`, 
   (`jump_apex_frame`, 4) holds while vertical speed is within `apex_band` of zero, and
   later frames follow falling speed up to `jump_frame_speed`. A short hop and a full
   jump both hit the tuck at the top.
-- **Land:** a brief crouch (`land_time`) when landing still after falling 2+ tiles.
-  This is placeholder art (`assets/sprites/scholar_placeholder.png`); add a `Land` tag
-  to the .aseprite and it's used instead, no code changes.
+- **Landing:** after a fall of 2+ tiles, standing still, the upper body drops
+  `land_dip` pixels for `land_time`. A `Land` tag in the .aseprite replaces this.
+- **Walking backwards:** while aiming or using an item you face the cursor; moving the
+  other way plays the legs in reverse at `backpedal_speed`.
 
-Any tag in the .aseprite overrides a placeholder of the same name. F3 shows the current
-animation and frame.
+F3 shows the current animation, frame, "rev" when reversed, and the arm mode.
+
+## Holding items
+
+Real items arrive with mining (Phase 4). Debug builds have placeholder items to test
+the doll:
+
+| Key | Item |
+| --- | --- |
+| 1 | Empty hands |
+| 2 | One-handed tool (click swings; put away on the back) |
+| 3 | Two-handed tool (both hands; on the back) |
+| 4 | Wand (arms aim at the cursor; disappears when put away) |
+| 5 | Small one-handed item (at the hip) |
+| H | Put away / take out |
+| Left click | Use (hold to keep swinging) |
+
+While holding an item, the debug brush is off (clicks use the item); press H or 1 to
+free your hands and dig again.
 
 ## The world: tiles, chunks, wrap
 
@@ -171,6 +196,7 @@ Debug builds only (running from the editor counts).
 | Key / tool | What it does |
 | --- | --- |
 | **F3** | Debug overlay: FPS, position, speed, animation frame, chunk counts, timings (frames over 25 / 50 ms, chunk and light job times). |
+| **1 to 5, H** | Placeholder held items, put away (see Holding items). |
 | **Mouse wheel** | Debug brush: pick a block type. |
 | **Left / right mouse** | Debug brush: remove / place a block (until real mining). |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
@@ -195,6 +221,7 @@ godot --path . -- --seed=42 --spawn=1440 --hold=move_right:20:60 --shot=58:/tmp/
 | `--quit=FRAME` | Quit |
 | `--watch=KEY`, `--log=N` | Print overlay values |
 | `--perf` | Print timings on quit |
+| `--scene=doll` | Open the Doll Viewer |
 | `--menu` | Stay on the main menu instead |
 
 ## Art pipeline
@@ -203,14 +230,14 @@ Real art comes from you; generated placeholders fill the gaps. `assets/ASSETS.md
 every asset, its size and layout.
 
 - **Scholar:** edit `art/Scholar-casual.aseprite`, then run the importer, which reads the
-  .aseprite directly (no Aseprite install needed) and writes `assets/sprites/scholar.png`
-  + `.json`:
+  .aseprite directly (no Aseprite install needed) and writes the parts sheet
+  (`scholar_parts.png`) and `scholar.json`. Full details in
+  [character-art.md](character-art.md):
   ```
   godot --headless --path . --script res://tools/import_aseprite.gd -- --in=res://art/Scholar-casual.aseprite --out=res://assets/sprites/scholar
   ```
-  Hidden layers and layers named `backdrop` or `Ref` are skipped; the rest are
-  flattened per frame.
-  Tags become animations.
+  Hidden layers and layers named `backdrop` or `Ref` are skipped. Tags become
+  animations.
 - **Terrain, trees, backdrop:** generated by `tools/generate_tiles.gd`
   (`-- --export=game`; add `--wood=A|B|C` to pick the wood variant).
 

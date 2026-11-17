@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="CharacterLook" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/character_look.gd" id="1_look"]
+[ext_resource type="Texture2D" path="res://assets/sprites/hair/short.png" id="2_hair"]
+
+[resource]
+script = ExtResource("1_look")
+hair = ExtResource("2_hair")

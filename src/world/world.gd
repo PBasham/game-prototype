@@ -91,6 +91,10 @@ func _ready() -> void:
 		brush.name = "DebugBrush"
 		brush.world = self
 		add_child(brush)
+		var dev_items := DevHeldItems.new()
+		dev_items.name = "DevHeldItems"
+		dev_items.player = player
+		add_child(dev_items)
 
 	_pause_menu = PauseMenu.new()
 	_pause_menu.name = "PauseMenu"

@@ -9,6 +9,7 @@ Docs:
 
 - [docs/guide.md](docs/guide.md): how every feature works and what you can tweak.
 - [docs/world-generation.md](docs/world-generation.md): world generation in depth.
+- [docs/character-art.md](docs/character-art.md): drawing for the paper doll character.
 - [docs/architecture.md](docs/architecture.md): how the code is organized and its rules.
 - [docs/decisions.md](docs/decisions.md): decision log.
 
@@ -20,8 +21,8 @@ Docs:
 ## Getting started
 
 1. Open Godot, choose **Import**, select this folder's `project.godot`.
-2. Press **F5** to run. The main menu opens: **New World**, **Load World**, or
-   **Test Course** (the movement test course, debug builds only).
+2. Press **F5** to run. The main menu opens: **New World**, **Load World**, and in
+   debug builds **Test Course** (movement test course) and **Doll Viewer**.
 3. **F3** toggles the debug overlay (FPS, position, speed, chunks, last fall).
 
 ## Controls (current)
@@ -35,7 +36,10 @@ Docs:
 | W / S | Climb ropes |
 | S + Space | Drop through a platform |
 | Mouse wheel | Debug brush: pick block |
-| Left / right mouse | Debug brush: remove / place block (until mining in Phase 3) |
+| Left / right mouse | Debug brush: remove / place block, empty hands only (until mining in Phase 4) |
+| Left click | Use the held item (debug builds: or dig with the brush when hands are empty) |
+| H | Put the held item away / take it out |
+| 1 to 5 | Debug: placeholder held items (empty, tool, two-hander, wand, small) |
 | Esc | Pause menu (resume, save, quit to menu) |
 | F3 | Debug overlay |
 | F6 | Regenerate the world from `data/worldgen/forest.tres` (debug builds) |
@@ -82,7 +86,8 @@ tools/     editor-time scripts (placeholder generation, etc.)
 
 `assets/ASSETS.md` lists every asset, its size and layout.
 
-- **Scholar:** edit `art/Scholar-casual.aseprite`, then re-import:
+- **Scholar:** edit `art/Scholar-casual.aseprite`, then re-import (how to draw for the
+  paper doll: [docs/character-art.md](docs/character-art.md)):
   ```
   godot --headless --path . --script res://tools/import_aseprite.gd -- --in=res://art/Scholar-casual.aseprite --out=res://assets/sprites/scholar
   ```

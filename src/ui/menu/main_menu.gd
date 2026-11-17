@@ -6,6 +6,8 @@ extends Node2D
 ## Scripted runs (DevCli world or input arguments) skip the menu and go straight into a
 ## temporary world, so screenshot commands keep working. `-- --menu` stays here.
 
+const DOLL_VIEWER := "res://scenes/dev/doll_viewer.tscn"
+
 var _ui: CanvasLayer
 var _page: Control
 var _camera: Camera2D
@@ -13,6 +15,9 @@ var _camera: Camera2D
 
 func _ready() -> void:
 	Game.set_state(Game.State.MAIN_MENU)
+	if DevCli.scene_override == "doll":
+		get_tree().change_scene_to_file.call_deferred(DOLL_VIEWER)
+		return
 	if DevCli.wants_world():
 		Game.start_world.call_deferred(DevCli.world_info())
 		return
@@ -52,6 +57,7 @@ func _show_main() -> void:
 	if OS.is_debug_build():
 		box.add_child(UiKit.label("dev", 8, UiKit.DIM))
 		box.add_child(UiKit.button("Test Course", func() -> void: Game.start_world(WorldInfo.test_course())))
+		box.add_child(UiKit.button("Doll Viewer", func() -> void: get_tree().change_scene_to_file(DOLL_VIEWER)))
 	box.add_child(UiKit.button("Quit", func() -> void: get_tree().quit()))
 	(box.get_child(2) as Button).grab_focus.call_deferred()
 

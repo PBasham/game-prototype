@@ -1,9 +1,9 @@
 # Working on game-prototype
 
 Godot 4.7.2 (GDScript) 2D sandbox. Read docs/architecture.md before changing core systems.
-docs/guide.md explains every feature; docs/world-generation.md covers generation. Keep
-all three up to date when behavior or tunables change: Patrick tweaks things by hand
-from these docs.
+docs/guide.md explains every feature; docs/world-generation.md covers generation;
+docs/character-art.md covers the paper doll. Keep them up to date when behavior or
+tunables change: Patrick tweaks things by hand from these docs.
 
 ## Collaboration rules
 
@@ -28,6 +28,9 @@ from these docs.
 ## Art pipeline
 
 - Player sprite: `godot --headless --path . --script res://tools/import_aseprite.gd -- --in=res://art/Scholar-casual.aseprite --out=res://assets/sprites/scholar`
+- Character colors: `godot --headless --path . --script res://tools/make_character_palette.gd` (after color changes)
+- The player is a paper doll (docs/character-art.md). Prefer code-posed fallbacks over
+  asking Patrick for frames; he draws real poses later.
 - Terrain, trees, backdrop: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game` (style V5 = "t5")
 - Tile size is 8 px (`World.TILE`). The Scholar is ~3 tiles wide, ~8 tall.
 

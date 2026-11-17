@@ -11,7 +11,7 @@ seamlessly and blend between materials. Regenerate everything with:
 godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game
 ```
 
-## Player: `sprites/scholar.png` + `sprites/scholar.json`
+## Player: `sprites/scholar*`
 
 Made from Patrick's `art/Scholar-casual.aseprite` by the importer:
 
@@ -19,24 +19,20 @@ Made from Patrick's `art/Scholar-casual.aseprite` by the importer:
 godot --headless --path . --script res://tools/import_aseprite.gd -- --in=res://art/Scholar-casual.aseprite --out=res://assets/sprites/scholar
 ```
 
-All frames side by side, cropped to the union of their bounds (currently 44x64 each).
-The JSON has the foot anchor, per-frame durations and the Aseprite tags. The game uses
-these tags: `Breath` (standing), `Jog` (moving, speed scales with velocity),
-`Jump` (in the air), `Idle Pose` (climbing for now). Layers named `backdrop` and `Ref`
-are skipped. Edit the .aseprite file and re-run the importer; nothing else changes.
+| File | What |
+| --- | --- |
+| `scholar_parts.png` | What the game draws: every frame, one row per body layer (paper doll parts) |
+| `scholar.json` | Frame size, foot anchor, durations, tags, part list, pivots |
+| `scholar.png` | Flattened frames (one-piece), for previews; not used in game |
+| `scholar_palette.tres` | Recolorable color groups (skin, tunic, pants, leather, trim, hair), from `tools/make_character_palette.gd` |
+| `scholar_look.tres` | Default look: colors (none changed) and hairstyle |
+| `hair/short.png` | **Placeholder** hairstyle, 9x6, faces right (drawn by `make_character_palette.gd`) |
 
-The `Jump` tag can have any number of frames, picked from the arc rather than a timer:
-frame 1 is the takeoff (`takeoff_time`), frames before the apex follow rising speed, the
-apex frame (`jump_apex_frame`, currently 4) holds while vertical speed is within
-`apex_band`, and the frames after it follow falling speed up to `jump_frame_speed`.
-All are exported on the Player under Animation.
+Frames are 44x64, feet at (20, 64). How to draw for the paper doll (layers, tags,
+pivots, arm poses) is in [docs/character-art.md](../docs/character-art.md).
 
-### Placeholder: `sprites/scholar_placeholder.png` + `.json`
-
-`Land` (one frame, the idle pose crouched), from
-`tools/placeholders/make_scholar_placeholder.py` (Python + Pillow). Shown briefly when
-landing still after a fall of 2+ tiles. Add a `Land` tag to the .aseprite and re-run the
-importer to replace it: tags in the main sheet always win over the placeholder.
+Held items in debug builds (keys 1 to 5) are **placeholder** gray shapes drawn in code
+(`src/player/doll/dev_held_items.gd`); real items come in Phase 4.
 
 ## Terrain: `terrain/*.png` (64x64, seamless)
 
