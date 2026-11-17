@@ -28,6 +28,10 @@ var chunks_y: int
 ## coordinate (no shared state written): it runs on worker threads.
 var generator: Callable
 
+## Chunks loaded from the save file, used instead of generating. Each moves into _chunks
+## the first time it's needed.
+var saved: Dictionary[Vector2i, ChunkData] = {}
+
 var _chunks: Dictionary[Vector2i, ChunkData] = {}
 var _gen_jobs: Dictionary[Vector2i, GenJob] = {}
 
@@ -74,6 +78,8 @@ func get_chunk(chunk_coord: Vector2i) -> ChunkData:
 	if _gen_jobs.has(c):
 		_finish_job(c)
 		return _chunks[c]
+	if _take_saved(c):
+		return _chunks[c]
 	chunk = ChunkData.new(c)
 	if generator.is_valid():
 		var t := Time.get_ticks_usec()
@@ -94,6 +100,8 @@ func request_chunk(chunk_coord: Vector2i) -> bool:
 	var c := Vector2i(posmod(chunk_coord.x, chunks_x), chunk_coord.y)
 	if _chunks.has(c):
 		return true
+	if _take_saved(c):
+		return true
 	if not _gen_jobs.has(c) and in_bounds_y(c.y * CHUNK):
 		var job := GenJob.new()
 		job.chunk = ChunkData.new(c)
@@ -101,6 +109,35 @@ func request_chunk(chunk_coord: Vector2i) -> bool:
 		job.task = WorkerThreadPool.add_task(job.run, false, "generate chunk")
 		_gen_jobs[c] = job
 	return false
+
+
+func _take_saved(c: Vector2i) -> bool:
+	var chunk: ChunkData = saved.get(c)
+	if chunk == null:
+		return false
+	saved.erase(c)
+	_chunks[c] = chunk
+	return true
+
+
+## Every chunk that differs from what the generator makes: edited this session or
+## loaded from the save. This is what WorldSave writes.
+func modified_chunks() -> Array[ChunkData]:
+	var out: Array[ChunkData] = []
+	for chunk: ChunkData in _chunks.values():
+		if chunk.modified:
+			out.append(chunk)
+	out.append_array(saved.values())
+	return out
+
+
+## Drops every generated chunk that hasn't been edited, so it regenerates (F6 in debug
+## builds, after changing generation settings). Edited and saved chunks are kept.
+func discard_unmodified() -> void:
+	wait_all()
+	for c: Vector2i in _chunks.keys():
+		if not _chunks[c].modified:
+			_chunks.erase(c)
 
 
 ## Main thread: stores chunks whose background generation finished. Returns how many.

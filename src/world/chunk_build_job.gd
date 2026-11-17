@@ -35,7 +35,7 @@ var collision: PackedInt32Array
 var atlas_row: PackedInt32Array
 var grass_id: int
 ## Decoration rules (pure functions of x). Null skips decorations.
-var generator: TestWorldGenerator
+var generator: WorldGenerator
 
 # --- outputs ---
 ## TEX x TEX RGBA8: R = block terrain slot, G = wall slot.

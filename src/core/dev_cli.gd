@@ -12,6 +12,11 @@ extends Node
 ##   --log=EVERY             print watched values every EVERY frames
 ##   --spawn=X               spawn the player at tile column X (on the surface)
 ##   --perf                  print PerfStats (frames, chunks, lighting) on quit
+##   --world=KIND            world generator: forest (default) or course (test course)
+##   --seed=N                world seed (default 1337); any word works too
+##   --size=NAME             tiny, small (default), medium, large
+##   --menu                  stay on the main menu (otherwise any of these arguments
+##                           skips the menu and starts a temporary, unsaved world)
 
 var _frame := 0
 var _shots: Array[Array] = []
@@ -22,14 +27,23 @@ var _log_every := 0
 ## Tile column to spawn at, or -1. Read by World.
 var spawn_x := -1
 var _perf := false
+var _world_kind := "forest"
+var _seed_text := "1337"
+var _size_name := "small"
+var _menu := false
+var _any_args := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	for arg in OS.get_cmdline_user_args():
 		var parts := arg.trim_prefix("--").split("=", true, 1)
+		_any_args = true
 		if parts[0] == "perf":
 			_perf = true
+			continue
+		if parts[0] == "menu":
+			_menu = true
 			continue
 		if parts.size() < 2:
 			continue
@@ -49,7 +63,27 @@ func _ready() -> void:
 				spawn_x = int(v[0])
 			"log":
 				_log_every = int(v[0])
+			"world":
+				_world_kind = parts[1]
+			"seed":
+				_seed_text = parts[1]
+			"size":
+				_size_name = parts[1]
 	set_physics_process(not (_shots.is_empty() and _holds.is_empty() and _quit_at < 0 and _log_every == 0))
+
+
+## True when the command line asks for a scripted run, so the menu should be skipped.
+func wants_world() -> bool:
+	return _any_args and not _menu
+
+
+## The temporary world a scripted run plays in.
+func world_info() -> WorldInfo:
+	var size: WorldData.Size = WorldData.Size.get(_size_name.to_upper(), WorldData.Size.SMALL)
+	var info := WorldInfo.create("Scripted run", size, WorldInfo.seed_from_text(_seed_text))
+	info.kind = StringName(_world_kind)
+	info.temporary = true
+	return info
 
 
 func _physics_process(_delta: float) -> void:

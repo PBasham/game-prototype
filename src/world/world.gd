@@ -13,32 +13,49 @@ signal block_changed(tile: Vector2i, old_id: int, new_id: int)
 const TILE := 8
 const PLAYER_SCENE := preload("res://src/player/player.tscn")
 
+@export_group("When run directly")
+## Used only when this scene is run on its own (F6 in the editor, "Run Current Scene"),
+## with no world chosen in the menu. Not saved.
 @export var size_preset: WorldData.Size = WorldData.Size.SMALL
 @export var world_seed: int = 1337
+@export_enum("forest", "course") var world_kind := "forest"
+@export_group("")
+## Minutes between autosaves (saved worlds only). 0 turns autosave off.
+@export var autosave_minutes := 5.0
 ## Chunks kept loaded around the camera, each direction.
 @export var load_radius := Vector2i(2, 2)
 ## Max finished chunks turned into nodes per frame while moving (building happens on
 ## worker threads; this caps the main-thread part).
 @export var chunks_per_frame: int = 1
 
+var info: WorldInfo
 var data: WorldData
 var blocks: TileTypes
 var walls: TileTypes
-var generator: TestWorldGenerator
+var generator: WorldGenerator
 var renderer: ChunkRenderer
 var lights: LightMap
 var backdrop: Backdrop
 var player: Player
+var _pause_menu: PauseMenu
+var _autosave_left := 0.0
 
 
 func _ready() -> void:
 	Game.set_state(Game.State.LOADING)
 	blocks = TileTypes.new(&"tiles")
 	walls = TileTypes.new(&"walls")
-	var size: Vector2i = WorldData.SIZES[size_preset]
+	info = Game.world_info
+	if info == null:
+		info = WorldInfo.create("Scene run", size_preset, world_seed)
+		info.kind = StringName(world_kind)
+		info.temporary = true
+	var size := info.dimensions()
 	data = WorldData.new(size.x, size.y)
-	generator = TestWorldGenerator.new(blocks, walls, size.x, size.y, world_seed)
+	generator = WorldGenerator.create(info.kind, blocks, walls, size.x, size.y, info.seed)
 	data.generator = generator.generate_chunk
+	if not info.temporary and not info.path.is_empty():
+		data.saved = WorldSave.load_chunks(info.path, blocks, walls)
 
 	backdrop = Backdrop.new()
 	backdrop.name = "Backdrop"
@@ -75,17 +92,38 @@ func _ready() -> void:
 		brush.world = self
 		add_child(brush)
 
-	DebugOverlay.watch("world", "%dx%d seed %d" % [data.width, data.height, world_seed])
+	_pause_menu = PauseMenu.new()
+	_pause_menu.name = "PauseMenu"
+	_pause_menu.world = self
+	add_child(_pause_menu)
+	_autosave_left = autosave_minutes * 60.0
+
+	DebugOverlay.watch("world", "%s: %s %dx%d seed %d" % [info.name, info.kind, data.width, data.height, info.seed])
 	Game.set_state(Game.State.PLAYING)
 	EventBus.world_loaded.emit()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if autosave_minutes > 0.0 and is_saved():
+		_autosave_left -= delta
+		if _autosave_left <= 0.0:
+			_autosave_left = autosave_minutes * 60.0
+			save()
 	var cam := get_viewport().get_camera_2d()
 	var center := cam.get_screen_center_position() if cam else player.position
 	renderer.update(center)
 	DebugOverlay.watch("chunks", "%d loaded, %d generated, %d queued" % [renderer.loaded_count(),
 		data.generated_chunk_count(), renderer.pending_count() + data.pending_generation_count()])
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"ui_cancel"):
+		_pause_menu.toggle()
+		get_viewport().set_input_as_handled()
+	elif OS.is_debug_build() and event is InputEventKey and event.pressed and not event.echo \
+			and (event as InputEventKey).physical_keycode == KEY_F6:
+		regenerate()
+		get_viewport().set_input_as_handled()
 
 
 func _exit_tree() -> void:
@@ -96,7 +134,53 @@ func _exit_tree() -> void:
 		renderer.wait_all()
 	if data:
 		data.wait_all()
+		save()
 	EventBus.world_unloaded.emit()
+
+
+## True for worlds that have a save file (not the test course or scripted runs).
+func is_saved() -> bool:
+	return info != null and not info.temporary and not info.path.is_empty()
+
+
+## Writes the world file: its info and every chunk the player changed. Returns OK for
+## temporary worlds without writing anything.
+func save() -> Error:
+	if not is_saved():
+		return OK
+	info.last_played_unix = int(Time.get_unix_time_from_system())
+	var t := Time.get_ticks_usec()
+	var err := WorldSave.save(info.path, info, data.modified_chunks(), blocks, walls)
+	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
+	if err != OK:
+		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
+	else:
+		EventBus.debug_message.emit("World saved")
+	return err
+
+
+## Debug (F6): rebuilds the generator from data/worldgen/forest.tres as saved on disk and
+## regenerates every chunk the player hasn't edited. For tuning generation while playing:
+## edit the .tres in the editor, save it, press F6 in the running game.
+func regenerate() -> void:
+	var size := info.dimensions()
+	lights.wait()
+	renderer.clear()
+	data.discard_unmodified()
+	if info.kind == &"forest":
+		generator = ForestGenerator.new(blocks, walls, size.x, size.y, info.seed, ForestGenerator.default_settings(true))
+	else:
+		generator = WorldGenerator.create(info.kind, blocks, walls, size.x, size.y, info.seed)
+	data.generator = generator.generate_chunk
+	var spawn := generator.spawn_tile()
+	backdrop.surface_y = tile_to_world(spawn).y - 60.0
+	# Stand the player on the new surface where they are.
+	var col := wrap_tile(world_to_tile(player.global_position)).x
+	var pos := tile_to_world(Vector2i(col, generator.surface_at(col))) + Vector2(TILE * 0.5, 0)
+	renderer.load_all_now(pos)
+	teleport_player(pos)
+	lights.rebuild_now()
+	EventBus.debug_message.emit("Regenerated from forest.tres")
 
 
 ## Moves the player instantly (spawn, respawn, rewrapping x later). Use this, not
@@ -150,6 +234,8 @@ func request_set_block(tile: Vector2i, id: int) -> bool:
 		return false  # Clients will send this to the host (multiplayer phase).
 	if not data.in_bounds_y(tile.y) or id < 0 or id >= blocks.size():
 		return false
+	if tile.y >= data.height - 1:
+		return false  # The bottom row is the world's floor: it can't be dug or replaced.
 	var old := data.get_block(tile.x, tile.y)
 	if old == id:
 		return false

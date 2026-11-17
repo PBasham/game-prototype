@@ -7,13 +7,13 @@ const H := 2048
 
 var blocks: TileTypes
 var walls: TileTypes
-var gen: TestWorldGenerator
+var gen: CourseGenerator
 
 
 func before_all() -> void:
 	blocks = TileTypes.new(&"tiles")
 	walls = TileTypes.new(&"walls")
-	gen = TestWorldGenerator.new(blocks, walls, W, H, 1337)
+	gen = CourseGenerator.new(blocks, walls, W, H, 1337)
 
 
 func _world() -> WorldData:

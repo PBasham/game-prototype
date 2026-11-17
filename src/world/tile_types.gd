@@ -40,6 +40,11 @@ func index_of(id: StringName) -> int:
 	return _index.get(id, -1)
 
 
+## The id at an index ("" for empty or out of range). Saves store ids, not indices.
+func id_of(index: int) -> StringName:
+	return _defs[index].id if index > 0 and index < _defs.size() else &""
+
+
 func def(index: int) -> TileDef:
 	return _defs[index] if index > 0 and index < _defs.size() else null
 

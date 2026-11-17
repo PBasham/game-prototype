@@ -10,7 +10,25 @@ extends Node
 
 enum State { BOOT, MAIN_MENU, LOADING, PLAYING, PAUSED }
 
+const MENU_SCENE := "res://scenes/menu/main_menu.tscn"
+const WORLD_SCENE := "res://scenes/world/world.tscn"
+
 var state: State = State.BOOT
+## The world to load or being played. Set by start_world(); read by World._ready().
+var world_info: WorldInfo
+
+
+## Loads a world (new or saved) and switches to the world scene.
+func start_world(info: WorldInfo) -> void:
+	world_info = info
+	get_tree().paused = false
+	get_tree().change_scene_to_file(WORLD_SCENE)
+
+
+## Back to the main menu. The World saves itself as it leaves the tree.
+func quit_to_menu() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file(MENU_SCENE)
 
 
 func set_state(new_state: State) -> void:

@@ -12,8 +12,8 @@ func before_all() -> void:
 	walls = TileTypes.new(&"walls")
 
 
-func _gen(seed: int) -> TestWorldGenerator:
-	return TestWorldGenerator.new(blocks, walls, W, H, seed)
+func _gen(seed: int) -> CourseGenerator:
+	return CourseGenerator.new(blocks, walls, W, H, seed)
 
 
 func test_same_seed_same_world() -> void:
@@ -62,7 +62,7 @@ func test_decorations_are_deterministic_and_off_the_course() -> void:
 	var b := _gen(5)
 	for x in range(0, W, 13):
 		assert_eq(a.tree_at(x), b.tree_at(x))
-	for rx in range(-TestWorldGenerator.COURSE, TestWorldGenerator.COURSE + 1):
+	for rx in range(-CourseGenerator.COURSE, CourseGenerator.COURSE + 1):
 		if rx == -110 or rx == 132:
 			continue
-		assert_eq(a.tree_at(TestWorldGenerator.SPAWN_X + rx), -1)
+		assert_eq(a.tree_at(CourseGenerator.SPAWN_X + rx), -1)

@@ -2,6 +2,38 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Phase 2, forest world generation and the main menu
+
+Brief answered "defaults" on every point:
+
+- **Terrain:** rolling hills (about ±20 tiles), a few big hills (up to 50), rare
+  cliffs 6 to 12 tall. Between Terraria's flat forest and Starbound's drama.
+- **Spawn:** flat 60 wide, no cave entrances or shallow caves within 40 tiles; spawn
+  column 200 so the wrap seam is a short walk.
+- **Test course:** removed from real worlds; dev-only "Test Course" world (menu in
+  debug builds, `--world=course`).
+- **Layers:** dirt 15 to 30 deep over stone with pockets of each in the other; stone to
+  the bottom (underground layers later); bottom row can't be dug.
+- **Caves:** surface entrances every 400 to 800 tiles, winding tunnels, caverns more
+  common with depth. Medium density. Sized for the Scholar (8 tall, 3 wide): tunnels
+  about 13 tall, entrances 7 to 10 wide. The first draft used Terraria-sized caves,
+  which were crawl spaces at our scale.
+- **Copper:** blobs of 4 to 10 tiles, from 6 deep, more common down to 150.
+- **Surface:** tree groves with clearings, flowers in the clearings, no trees on steep
+  slopes.
+- **Generation stays per chunk** from the seed (instant, threaded). Lakes and
+  structures will use a precomputed feature map later.
+- **Settings are data** (`data/worldgen/forest.tres`) because Patrick will tune
+  generation himself. "Amount" settings are calibrated against the noise so they mean
+  what they say. F6 regenerates in game; `tools/preview_world.gd` renders maps.
+- **Main menu** with New World (name, size, seed), Load World, Test Course, Quit. Esc
+  pause menu. Seeds can be words.
+- **World saves:** only player-edited chunks, with tile id palettes. Tradeoff: changing
+  generation settings changes unedited parts of old worlds. Fine for development;
+  revisit before release.
+- **Workflow:** Claude Code never pushes (Patrick reviews and pushes). Cloud sessions
+  push phase branches only when Patrick asks.
+
 ## 2026-11-13: Smooth motion and no streaming hitches
 
 - **Physics interpolation on** (60 Hz physics). Playtest on a high refresh monitor

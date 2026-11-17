@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ForestGenSettings" format=3]
+
+[ext_resource type="Script" path="res://src/world/generation/forest_gen_settings.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"forest"
+display_name = "Forest"
+description = "Surface forest world generation. See docs/world-generation.md."

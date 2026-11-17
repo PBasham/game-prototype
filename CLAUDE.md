@@ -1,17 +1,29 @@
 # Working on game-prototype
 
 Godot 4.7.2 (GDScript) 2D sandbox. Read docs/architecture.md before changing core systems.
+docs/guide.md explains every feature; docs/world-generation.md covers generation. Keep
+all three up to date when behavior or tunables change: Patrick tweaks things by hand
+from these docs.
 
 ## Collaboration rules
 
 - Before building any gameplay system, send Patrick a short design brief (the choices
   that matter, with defaults) and wait for his input.
-- One phase per branch (`phase-NN-name`), one PR per phase, PR lists what to playtest.
+- One phase per branch (`phase-NN-name`); the handoff lists what to playtest.
+- Never push, merge, open or retarget PRs unless Patrick asks for it in that session.
+  Commit locally on the phase branch; Patrick reviews and pushes.
 - Never use en dashes in docs, comments or messages.
 - Patrick supplies real art and audio; use placeholders and record them in assets/ASSETS.md.
 - No dark outlines on terrain, trees or decorations; transitions use texture.
 - Don't invent biomes, ores or content. Current scope: surface forest, copper only.
   New content gets a design brief first.
+- World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
+  plans to tune generation himself.
+
+## World generation
+
+- Whole-world map: `godot --headless --path . --script res://tools/preview_world.gd -- --seed=42` (options in docs/world-generation.md)
+- F6 in game regenerates from the saved settings. Caves must fit the Scholar (8 tall, 3 wide).
 
 ## Art pipeline
 
@@ -30,12 +42,13 @@ Godot 4.7.2 (GDScript) 2D sandbox. Read docs/architecture.md before changing cor
   `Game.is_authority()` is true, through the owning system's request API.
 - Exported tunables (`@export`) for anything Patrick may want to tweak while playtesting.
 
-## Verify before pushing
+## Verify before committing
 
 ```
 godot --headless --path . --import          # must print no SCRIPT ERROR
 godot --headless --path . -s addons/gut/gut_cmdln.gd   # must exit 0
-godot --headless --path . --quit-after 120  # main scene runs without errors
+godot --headless --path . --quit-after 120  # main menu runs without errors
+godot --headless --path . -- --quit=120     # a forest world runs without errors
 ```
 
 ## Screenshots for Patrick

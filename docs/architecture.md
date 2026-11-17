@@ -1,6 +1,8 @@
 # Architecture
 
 How the game is put together and the rules every system follows. Updated as systems land.
+For a feature-by-feature tour with everything you can tweak, see [guide.md](guide.md);
+for world generation, [world-generation.md](world-generation.md).
 
 ## Autoloads (src/core)
 
@@ -10,8 +12,36 @@ How the game is put together and the rules every system follows. Updated as syst
 | `Settings` | Player settings in `user://settings.cfg`, with defaults. |
 | `Registry` | Loads every content definition under `res://data` and looks them up by id. |
 | `SaveManager` | Save folders, file naming, versioned save headers. |
-| `Game` | Top-level state (menu, loading, playing) and network role. |
+| `Game` | Top-level state (menu, loading, playing, paused), network role, and the world being played (`world_info`, `start_world`, `quit_to_menu`). |
 | `DebugOverlay` | F3 stats panel; `DebugOverlay.watch(key, value)` from anywhere. |
+| `DevCli` | Scripted runs from the command line (screenshots, smoke tests). |
+
+## Scenes and session flow
+
+```
+main_menu.tscn --(WorldInfo)--> Game.start_world() --> world.tscn
+      ^                                                    |
+      +---------------- Game.quit_to_menu() <--------------+  (World saves on exit)
+```
+
+- `scenes/menu/main_menu.tscn` is the main scene. Scripted runs (DevCli arguments) skip
+  it and start a temporary world.
+- `WorldInfo` (`src/world/world_info.gd`) describes a world: name, generator kind,
+  seed, size, save path, and whether it's temporary (never saved).
+- `World` (`src/world/world.gd`) builds everything from `Game.world_info`. Run directly
+  from the editor, it falls back to its own exports.
+
+## World saves
+
+`WorldSave` (`src/world/world_save.gd`) writes `user://worlds/<name>.gpworld`:
+`SaveHeader`, the world's info plus block and wall **id palettes**, then every chunk
+the player changed (zstd-compressed tile arrays). Unchanged chunks are regenerated from
+the seed. On load the palette maps saved tile numbers to the current ones, so content
+changes don't corrupt worlds. Saved chunks go into `WorldData.saved` and are used
+instead of generating. Writes go to a temp file and are swapped in.
+
+Characters will be saved separately (`user://characters/`) when the character system
+lands.
 
 ## Content is data
 
@@ -46,6 +76,11 @@ Multiplayer is planned for later, so the game is built as if it were already net
 - **Horizontal wrap:** chunk x coordinates wrap modulo the world width; the renderer
   uses unwrapped coordinates near the camera, so the seam is invisible.
 - **Seeded:** the same seed always generates the same world (tested).
+- **Generators** extend `WorldGenerator` and are pure functions of (seed, x, y), safe on
+  worker threads. `WorldGenerator.create(kind, ...)` picks one: `forest`
+  (`ForestGenerator`, tuned by `data/worldgen/forest.tres`) or `course` (the dev test
+  course). Details in world-generation.md.
+- **Floor:** the bottom row can't be changed (`World.request_set_block` refuses it).
 
 ## Rendering a chunk
 

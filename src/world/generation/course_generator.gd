@@ -1,9 +1,9 @@
-class_name TestWorldGenerator
-extends RefCounted
-## Phase 1 test world (forest only): rolling surface, caves, copper, trees, flowers,
-## and a movement test course near spawn. Any chunk is generated on demand from a pure
-## function of (x, y), so it's instant and seamless across the wrap.
-## Replaced by the real generator in Phase 2.
+class_name CourseGenerator
+extends WorldGenerator
+## Dev-only "Test Course" world: the Phase 1 movement test course (steps, walls, pit,
+## platforms, deep shaft, rope shaft, house) on simple rolling ground. Launch it from the
+## main menu (Test Course) or with `-- --world=course`. Never used for real worlds; the
+## real generator is ForestGenerator.
 ##
 ## Units are tiles (8 px). The Scholar is about 3 tiles wide and 8 tall.
 
@@ -12,24 +12,12 @@ const SPAWN_X := 200
 ## The hand-made course spans this many tiles either side of spawn.
 const COURSE := 140
 
-var width: int
-var height: int
-var seed: int
 var ground: int  ## surface row at spawn
-
-var _b := {}  ## block ids by name
-var _w := {}  ## wall ids by name
 
 
 func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: int, world_seed: int) -> void:
-	width = world_width
-	height = world_height
-	seed = world_seed
+	super(tiles, walls, world_width, world_height, world_seed)
 	ground = int(height * 0.3)
-	for id in ["dirt", "grass", "stone", "copper_ore", "wood_planks", "wood_platform", "rope"]:
-		_b[id] = tiles.index_of(StringName(id))
-	for id in ["dirt_wall", "stone_wall", "wood_wall"]:
-		_w[id] = walls.index_of(StringName(id))
 
 
 func spawn_tile() -> Vector2i:
@@ -48,7 +36,7 @@ func generate_chunk(chunk: ChunkData) -> void:
 
 ## Signed distance from spawn, the short way around the wrapped world.
 func rel_x(x: int) -> int:
-	return posmod(x - SPAWN_X + width / 2, width) - width / 2
+	return wrap_delta(x, SPAWN_X)
 
 
 func _hills(x: int) -> float:
@@ -101,29 +89,29 @@ func block_at(x: int, y: int) -> int:
 	if depth > 30 and _cave(x, y):
 		return WorldData.AIR
 	if depth == 0:
-		return _b.grass
+		return _b[&"grass"]
 	var dirt_depth := 18 + floori(GenUtil.hash01(x / 6, 0, seed + 5) * 8.0)
 	if depth < dirt_depth:
 		# Pockets of stone poking up into the dirt.
 		if depth > 8 and GenUtil.hash01(x / 6, y / 6, seed + 3) < 0.06:
-			return _b.stone
-		return _b.dirt
+			return _b[&"stone"]
+		return _b[&"dirt"]
 	# Pockets of dirt down in the stone, and copper veins.
 	if GenUtil.hash01(x / 7, y / 7, seed + 9) < 0.08:
-		return _b.dirt
+		return _b[&"dirt"]
 	if GenUtil.hash01(x / 3, y / 3, seed + 11) < 0.035:
-		return _b.copper_ore
-	return _b.stone
+		return _b[&"copper_ore"]
+	return _b[&"stone"]
 
 
 func wall_at(x: int, y: int) -> int:
 	var rx := rel_x(x)
 	if rx >= 100 and rx <= 122 and y >= ground - 15 and y <= ground:
-		return _w.wood_wall
+		return _w[&"wood_wall"]
 	var depth := y - surface_at(x)
 	if depth < 4:
 		return WorldData.AIR
-	return _w.dirt_wall if depth < 24 else _w.stone_wall
+	return _w[&"dirt_wall"] if depth < 24 else _w[&"stone_wall"]
 
 
 func _cave(x: int, y: int) -> bool:
@@ -142,39 +130,39 @@ func _course_block(x: int, y: int) -> int:
 	if rx >= 20 and rx <= 40 and y < g:
 		var step := mini((rx - 20) / 3 + 1, 5)
 		if y >= g - step:
-			return _b.grass if y == g - step else _b.dirt
+			return _b[&"grass"] if y == g - step else _b[&"dirt"]
 	# Walls: 4 tall (small hop) and 10 tall (near a full jump).
 	if rx >= 48 and rx <= 51 and y >= g - 4 and y < g:
-		return _b.stone
+		return _b[&"stone"]
 	if rx >= 60 and rx <= 63 and y >= g - 10 and y < g:
-		return _b.stone
+		return _b[&"stone"]
 	# Pit: 16 wide, 20 deep.
 	if rx >= 72 and rx <= 87 and y >= g and y < g + 20:
 		return WorldData.AIR
 	# Floating wood platforms, stepping up to the left.
 	if y == g - 8 and rx >= -28 and rx <= -14:
-		return _b.wood_platform
+		return _b[&"wood_platform"]
 	if y == g - 16 and rx >= -44 and rx <= -30:
-		return _b.wood_platform
+		return _b[&"wood_platform"]
 	if y == g - 24 and rx >= -26 and rx <= -12:
-		return _b.wood_platform
+		return _b[&"wood_platform"]
 	# Deep shaft (fall damage test): 8 wide, 90 deep.
 	if rx >= -84 and rx <= -77 and y >= g and y < g + 90:
 		return WorldData.AIR
 	# Rope shaft next to it, joined at the bottom by a tunnel.
 	if rx >= -68 and rx <= -64 and y >= g and y < g + 90:
-		return _b.rope if rx == -66 and y < g + 88 else WorldData.AIR
+		return _b[&"rope"] if rx == -66 and y < g + 88 else WorldData.AIR
 	if rx >= -84 and rx <= -64 and y >= g + 78 and y < g + 90:
 		return WorldData.AIR
 	# House: plank frame and floor, a doorway on the left, a platform shelf inside.
 	if rx >= 100 and rx <= 122 and y == g:
-		return _b.wood_planks
+		return _b[&"wood_planks"]
 	if rx >= 100 and rx <= 122 and y >= g - 15 and y < g:
 		if y <= g - 14:
-			return _b.wood_planks
+			return _b[&"wood_planks"]
 		if rx == 122 or (rx == 100 and y < g - 10):
-			return _b.wood_planks
+			return _b[&"wood_planks"]
 		if y == g - 7 and rx >= 104 and rx <= 112:
-			return _b.wood_platform
+			return _b[&"wood_platform"]
 		return WorldData.AIR
 	return -1
