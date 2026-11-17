@@ -37,6 +37,9 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var jump_frame_speed := 50.0
 ## Seconds the landing squash shows when landing without moving.
 @export var land_time := 0.1
+## Seconds without ground before the animation shows falling (unless you jumped), so
+## tiny drops and bumps don't flicker the run.
+@export var air_grace_time := 0.08
 ## Pixels the upper body drops in the landing squash (when there's no "Land" tag).
 @export var land_dip := 2.0
 ## Standing still with an item out (or attacking) uses a side-view stance: the "Stand"
@@ -81,6 +84,12 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var jump_buffer_time := 0.12
 
 @export_group("Terrain")
+## Walking off a drop this high (tiles) keeps you on the ground instead of falling, the
+## mirror of max_step_tiles. 0 = every drop is a fall.
+@export var max_step_down_tiles := 1
+## Seconds the sprite takes to catch up after a step up or down (the body moves a whole
+## tile in one tick; the sprite eases into place so stairs look smooth).
+@export var step_smooth_time := 0.06
 ## Walk up ledges this many tiles high without jumping.
 @export var max_step_tiles := 2
 @export var platform_drop_time := 0.25
@@ -103,6 +112,10 @@ var _airborne := false
 var _peak_y := 0.0
 var _takeoff_timer := 0.0
 var _land_timer := 0.0
+var _air_time := 0.0
+var _input_x := 0.0
+## Sprite offset (pixels) easing back to 0 after a step.
+var _step_offset := 0.0
 ## Held item (null = empty hands) and whether it's put away.
 var held: HeldItemLook
 var stowed := false
@@ -124,6 +137,7 @@ static func jump_values(height_tiles: float, apex_time: float) -> Vector2:
 
 
 func _ready() -> void:
+	floor_snap_length = max_step_down_tiles * TILE + 2.0
 	_doll.setup(DollRig.load_from(SHEET), load(PALETTE) as CharacterPalette)
 	_doll.look = look if look else load(DEFAULT_LOOK) as CharacterLook
 
@@ -186,6 +200,7 @@ func _hold_motion() -> ItemMotion:
 func _physics_process(delta: float) -> void:
 	var input_x := Input.get_axis("move_left", "move_right")
 	var input_y := Input.get_axis("move_up", "move_down")
+	_input_x = input_x
 	if Input.is_action_just_pressed("toggle_walk"):
 		walk_toggled = not walk_toggled
 
@@ -258,9 +273,14 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 		rate = top / air_accel_time
 	velocity.x = move_toward(velocity.x, target, rate * delta)
 
+	var y_before := global_position.y
 	if grounded and input_x != 0.0 and max_step_tiles > 0:
 		_try_step_up(signf(input_x), delta)
 	move_and_slide()
+	# A step up or down moves the body a whole tile in one tick: let the sprite ease.
+	var dy := global_position.y - y_before
+	if grounded and is_on_floor() and absf(dy) > 2.0:
+		_step_offset = clampf(_step_offset - dy, -TILE * 3.0, TILE * 3.0)
 
 
 func _current_speed() -> float:
@@ -338,15 +358,23 @@ func _end_attack(finished: bool) -> void:
 func _animate(delta: float) -> void:
 	_takeoff_timer = maxf(_takeoff_timer - delta, 0.0)
 	_land_timer = maxf(_land_timer - delta, 0.0)
+	_air_time = 0.0 if is_on_floor() else _air_time + delta
+	_step_offset = move_toward(_step_offset, 0.0, maxf(absf(_step_offset) / maxf(step_smooth_time, 0.001), 30.0) * delta)
+	_doll.position.y = _step_offset
+	# Moving = actually moving, or steering while not against a wall (so turning around
+	# doesn't flash the idle). Pushing into a wall counts as standing still.
+	var moving := absf(get_real_velocity().x) > 4.0 or (_input_x != 0.0 and is_on_floor() and not is_on_wall())
+	# Falling = off the ground a moment, or jumped. Brief bumps keep the run going.
+	var airborne := not is_on_floor() and (_air_time > air_grace_time or velocity.y < 0.0)
 	_doll.scale.x = float(facing)
 	_doll.speed_scale = 1.0
 	_doll.reverse = is_aiming() and velocity.x != 0.0 and signf(velocity.x) != float(facing)
 	_doll.dip = 0.0
 	if _climbing:
 		_doll.play(&"Idle Pose")
-	elif not is_on_floor():
+	elif airborne:
 		_show_jump_frame()
-	elif absf(velocity.x) > 4.0:
+	elif moving:
 		_doll.play(&"Jog")
 		_doll.speed_scale = clampf(absf(velocity.x) / (jog_speed * TILE), 0.5, 1.8)
 	elif _land_timer > 0.0 and not _in_stance():

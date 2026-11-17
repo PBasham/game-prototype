@@ -200,13 +200,50 @@ func _measure_shoulders(img: Image, side: StringName, arm: Dictionary) -> Packed
 	var key := "%s_shoulder" % side
 	for f in frame_count:
 		var pv: Dictionary = pivots[f] if f < pivots.size() else {}
-		var r := _rect(arm.upper, f)
 		if pv.has(key):
 			out.append(Vector2(pv[key][0], pv[key][1]))
-		elif r.size != Vector2i.ZERO:
+			continue
+		var upper := _pixels(img, arm.upper, f)
+		var lower := _pixels(img, arm.lower, f)
+		if upper.is_empty():
+			out.append(arm.shoulder)
+			continue
+		if lower.is_empty():
+			var r := _rect(arm.upper, f)
 			out.append(_row_center(img, arm.upper, f, r.position.y) + Vector2(0, 1))
-		else:
-			out.append((arm.shoulder as Vector2) + body_offset[f] if f < body_offset.size() else arm.shoulder)
+			continue
+		# Elbow = the upper-arm pixel nearest the lower arm; shoulder = the upper-arm
+		# pixel farthest from it. Works however the arm is swung in the frame.
+		var elbow := upper[0]
+		var best := INF
+		for p in upper:
+			for q in lower:
+				var d := p.distance_squared_to(q)
+				if d < best:
+					best = d
+					elbow = p
+		var far := elbow
+		var far_d := -1.0
+		for p in upper:
+			var d := p.distance_squared_to(elbow)
+			if d > far_d:
+				far_d = d
+				far = p
+		# One pixel in from the very end, toward the elbow.
+		out.append(far + (elbow - far).normalized() + Vector2(0.5, 0.5))
+	return out
+
+
+## Opaque pixels of a part in a frame (frame-local).
+func _pixels(img: Image, part: int, frame: int) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var r := _rect(part, frame)
+	var x0 := frame * frame_size.x
+	var y0 := part * frame_size.y
+	for y in range(r.position.y, r.end.y):
+		for x in range(r.position.x, r.end.x):
+			if img.get_pixel(x0 + x, y0 + y).a > 0.5:
+				out.append(Vector2(x, y))
 	return out
 
 

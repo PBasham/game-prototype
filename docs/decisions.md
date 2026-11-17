@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Movement animation fixes
+
+- Step down up to 1 tile without falling (floor snap), mirror of the step-up.
+- Steps move the body a tile per tick; the sprite eases over 0.06 s so stairs look smooth.
+- Falling animation needs 0.08 s off the ground (or a jump), so bumps don't flicker.
+- Pushing into a wall is standing still (velocity flickered between 0 and 3 t/s).
+- Shoulders: farthest point of the upper arm from the lower arm, per frame.
+
 ## 2026-11-17: Arm fixes, side-view stance
 
 - Code-posed arms attach at shoulders measured per frame (the 3/4 idle and the side-view

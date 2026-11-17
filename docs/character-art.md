@@ -114,8 +114,9 @@ Jump frame. With empty hands you keep the 3/4 idle.
 
 Code needs the shoulder, elbow and hand of each arm.
 
-- **Shoulders are measured in every frame** (top of that frame's upper arm), so posed
-  arms attach where the body actually is in each pose.
+- **Shoulders are measured in every frame**: the end of that frame's upper arm farthest
+  from the lower arm (so a swung or raised arm still finds its shoulder). Posed arms
+  attach where the body actually is in each pose.
 - **Elbow and hand** come from the rest frame: elbow = bottom of the upper arm,
   hand = bottom of the lower arm. They define the arm's bone lengths.
 - **The elbow always bends the same way** (clockwise of the shoulder-to-hand line on a

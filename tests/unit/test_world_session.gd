@@ -87,3 +87,39 @@ func test_attack_combo_and_bare_hands() -> void:
 	assert_null(p._attack)
 	w.queue_free()
 	await wait_physics_frames(2)
+
+
+func test_running_down_steps_and_into_walls_keeps_a_steady_animation() -> void:
+	var w := _start(WorldInfo.test_course())
+	await wait_physics_frames(3)
+	var p := w.player
+	var g: int = (w.generator as CourseGenerator).ground
+	# Top of the 1-tile steps (course x = spawn + 39), then run left down them.
+	w.teleport_player(w.tile_to_world(Vector2i(CourseGenerator.SPAWN_X + 39, g - 5)) + Vector2(4, 0))
+	await wait_physics_frames(10)
+	var start_y := p.global_position.y
+	Input.action_press("move_left")
+	Input.action_press("run")
+	var anims: Array[StringName] = []
+	for i in 50:
+		await wait_physics_frames(1)
+		anims.append(p._doll.animation)
+	Input.action_release("move_left")
+	Input.action_release("run")
+	assert_gt(p.global_position.y - start_y, World.TILE * 3.5, "went down the steps")
+	assert_false(anims.has(&"Jump"), "no falling frames running down 1-tile steps: %s" % [anims])
+	# Push into the 4-tall wall: the animation settles instead of flickering.
+	w.teleport_player(w.tile_to_world(Vector2i(CourseGenerator.SPAWN_X + 45, g)))
+	await wait_physics_frames(10)
+	Input.action_press("move_right")
+	var changes := 0
+	var last: StringName = p._doll.animation
+	for i in 60:
+		await wait_physics_frames(1)
+		if p._doll.animation != last:
+			changes += 1
+			last = p._doll.animation
+	Input.action_release("move_right")
+	assert_lte(changes, 2, "jog then stand, no flicker")
+	w.queue_free()
+	await wait_physics_frames(2)

@@ -81,7 +81,7 @@ grouped in the Inspector. Distances in tiles, speeds in tiles per second.
 | Ground | `ground_accel_time` 0.1, `ground_decel_time` 0.12 | Seconds to reach full speed / to stop. Lower = snappier. |
 | Air control | `air_accel_time` 0.55, `air_turn_time` 0.4, `air_drag_time` 1.6 | How much you can steer mid-jump. `air_turn_time` is how long holding the other way takes to cancel your speed, which is what lets you slow down and drift back a bit. |
 | Jump | `jump_height` 11, `time_to_apex` 0.36, `fall_gravity_multiplier` 1.5, `jump_cut` 0.45, `max_fall_speed` 90, `coyote_time` 0.1, `jump_buffer_time` 0.12 | Gravity and launch speed are worked out from height and time, so you tune the feel directly. Releasing jump early keeps `jump_cut` of the upward speed (short hops). Coyote time lets you jump just after leaving a ledge; the buffer remembers a jump pressed just before landing. |
-| Terrain | `max_step_tiles` 2, `platform_drop_time` 0.25 | Walks up ledges this high without jumping. Down + Jump drops through platforms. |
+| Terrain | `max_step_tiles` 2, `max_step_down_tiles` 1, `step_smooth_time` 0.06, `platform_drop_time` 0.25 | Walks up ledges this high without jumping, and stays on the ground walking down drops this high (no tiny falls). The body moves a whole tile per step; the sprite eases into place over `step_smooth_time` so stairs look smooth. Down + Jump drops through platforms. |
 | Fall damage | `fall_damage_start` 50, `fall_damage_per_tile` 5 | Tiles fallen before damage, and damage per tile beyond. Health arrives later; the overlay shows the last fall. |
 
 Collision is 16x60 px (2 x 7.5 tiles). The camera follows in physics mode with
@@ -98,7 +98,9 @@ drawing for it (layers, tags, arm poses, pivots, items, colors, hair, armor) is 
 Movement animations (`_animate()` in `player.gd`):
 
 - **Breath** standing still, **Jog** moving (playback speed follows how fast you move),
-  **Idle Pose** while climbing.
+  **Idle Pose** while climbing. Pushing into a wall counts as standing still.
+- **Falling** only shows after `air_grace_time` (0.08 s) off the ground, or right away
+  if you jumped, so bumps and small drops don't flicker the run.
 - **Jump** is scrubbed from the arc, not played on a timer: frame 1 is the takeoff (for
   `takeoff_time`), frames before the apex follow your rising speed, the apex frame
   (`jump_apex_frame`, 4) holds while vertical speed is within `apex_band` of zero, and
