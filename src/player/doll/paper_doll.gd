@@ -309,11 +309,19 @@ func _pose_arm(side: StringName, legs_abs: int, body_abs: int) -> void:
 		front_shoulder = (rig.arms[&"front"].shoulder as Vector2) + rig.body_offset[body_abs] - rig.anchor + up
 	match mode:
 		ArmMode.AIM:
+			# Front arm aims. Back arm: on the second grip of a two-handed item, aims too
+			# when the hands are empty (casting), and just swings with a one-handed item.
 			var target := to_local(aim_global)
-			if side == &"back" and two_hand and _item_sprite.visible:
+			var empty := item == null or stowed
+			if side == &"front" or empty:
+				_rigid(arm, parts, shoulder, (target - shoulder).angle())
+			elif two_hand:
 				_reach(arm, parts, shoulder, _second_grip())
 			else:
-				_rigid(arm, parts, shoulder, (target - shoulder).angle())
+				var abs_frame := _follow(channel, legs_abs)
+				for pi in parts:
+					_show_frame(pi, abs_frame, up)
+				hands[side] = _drawn_hand(arm, abs_frame, shoulder)
 		ArmMode.USE:
 			var a := deg_to_rad(lerpf(item.swing_from if item else -140.0, item.swing_to if item else 30.0, _ease(use_progress)))
 			if side == &"front" or not two_hand:
@@ -444,7 +452,7 @@ func item_angle() -> float:
 		ArmMode.USE:
 			return deg_to_rad(lerpf(item.swing_from, item.swing_to, _ease(use_progress)))
 		ArmMode.AIM:
-			if hands.has(&"front") and rig.arms.has(&"front"):
+			if item.aim_rotates and hands.has(&"front") and rig.arms.has(&"front"):
 				return (to_local(aim_global) - hands[&"front"]).angle()
 	return deg_to_rad(item.hold_angle)
 

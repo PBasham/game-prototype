@@ -116,17 +116,23 @@ F3 shows the current animation, frame, "rev" when reversed, and the arm mode.
 Real items arrive with mining (Phase 4). Debug builds have placeholder items to test
 the doll:
 
-| Key | Item |
-| --- | --- |
-| 1 | Empty hands |
-| 2 | One-handed tool (click swings; put away on the back) |
-| 3 | Two-handed tool (both hands; on the back) |
-| 4 | Wand (arms aim at the cursor; disappears when put away) |
-| 5 | Small one-handed item (at the hip) |
-| H | Put away / take out |
-| Left click | Use (hold to keep swinging) |
+| Key | Item | Hold | Use | Put away |
+| --- | --- | --- | --- | --- |
+| 1 | Empty hands | | click: both arms aim (casting) | |
+| 2 | Tool (pickaxe-like) | one hand | swing | back |
+| 3 | Two-handed tool | both hands | swing | back |
+| 4 | Wand | aims (front arm) | aim | hidden |
+| 5 | Dagger | one hand | quick swing | hip |
+| 6 | Sword | one hand | swing | hip |
+| 7 | Two-handed sword | both hands | wide, slow swing | back |
+| 8 | Spell book | one hand, upright | front arm aims, book stays upright | hip |
+| 9 | Hand crossbow | aims (front arm) | aim | hip |
+| 0 | Bow | aims, back hand on the string | aim | back |
+| H | Put away / take out | | | |
+| Left click | Use (hold to keep swinging or aiming) | | | |
 
-While holding an item, the debug brush is off (clicks use the item); press H or 1 to
+These are placeholders drawn in code (`src/player/doll/dev_held_items.gd`); nothing
+fires or hits yet. While holding an item, the debug brush is off (clicks use the item); press H or 1 to
 free your hands and dig again.
 
 ## The world: tiles, chunks, wrap

@@ -1,39 +1,42 @@
 class_name DollViewer
 extends Node2D
-## Dev scene: every arm mode side by side, to check art and compare drawn frames with
-## code-posed arms. Open from the main menu (Doll Viewer, debug builds), with
-## `-- --scene=doll`, or run scenes/dev/doll_viewer.tscn directly (F6 in the editor).
+## Dev scene: the character holding and using every placeholder item, to check art and
+## poses. Open from the main menu (Doll Viewer, debug builds), with `-- --scene=doll`,
+## or run scenes/dev/doll_viewer.tscn directly (F6 in the editor).
 ##
-## Top row: drawn frames where the art has them (otherwise code-posed, labeled).
-## Bottom row: always code-posed. Aiming dolls point at the mouse.
-## Buttons: legs animation, facing, colors, hair. Re-import the .aseprite and reopen
-## this scene to see new art.
+## Top row: holding each item. Bottom row: using it (swinging, or aiming at the mouse).
+## Arms use hand-drawn frames (arms/Hold1H, arms/Hold2H, arms/Use) where the art has
+## them and code posing otherwise; "Code posing: forced" shows code posing everywhere,
+## to compare once drawn frames exist.
 
 const SHEET := "res://assets/sprites/scholar"
 const PALETTE := "res://assets/sprites/scholar_palette.tres"
 const LOOK := "res://assets/sprites/scholar_look.tres"
-const COLUMNS := ["Empty", "Hold 1H", "Hold 2H", "Use 1H", "Use 2H", "Aim", "On back", "At hip"]
 const ANIMS: Array[StringName] = [&"Breath", &"Jog", &"Jump", &"Idle Pose"]
 const SKINS := ["eec39a", "c98e62", "8d5a3b", "f5d7c0", "5c3a28"]
 const CLOTHES := ["2f68d9", "3c8a3c", "a83232", "6a4aa8", "c8a040", "444a52"]
 const HAIRS := ["5c3a22", "1c1814", "c89a48", "a04020", "d8d0c0"]
+const SPACING := 58.0
 
 var _rig: DollRig
 var _palette: CharacterPalette
 var _look: CharacterLook
-var _items: Array[HeldItemLook]
-var _dolls: Array[PaperDoll] = []
+var _held: Array[PaperDoll] = []
+var _using: Array[PaperDoll] = []
 var _anim := 0
 var _facing := 1.0
 var _time := 0.0
+var _forced := false
+var _stowed := false
 var _info: Label
+var _force_button: Button
+var _stow_button: Button
 
 
 func _ready() -> void:
 	_rig = DollRig.load_from(SHEET)
 	_palette = load(PALETTE) as CharacterPalette
 	_look = (load(LOOK) as CharacterLook).duplicate() as CharacterLook
-	_items = DevHeldItems.make_items()
 	var bg := ColorRect.new()
 	bg.color = Color("5a6a78")
 	bg.size = Vector2(640, 360)
@@ -43,20 +46,14 @@ func _ready() -> void:
 	cam.process_callback = Camera2D.CAMERA2D_PROCESS_PHYSICS
 	add_child(cam)
 
-	for row in 2:
-		for col in COLUMNS.size():
-			var d := PaperDoll.new()
-			add_child(d)
-			d.setup(_rig, _palette)
-			d.look = _look
-			d.position = Vector2(48 + col * 78, 170 + row * 120)
-			d.force_posed = row == 1
-			_configure(d, col)
-			_dolls.append(d)
-			var label := UiKit.label(_column_label(col, row == 1), 8, UiKit.TEXT)
-			label.position = Vector2(d.position.x - 38, d.position.y + 4)
-			label.size = Vector2(76, 12)
-			add_child(label)
+	var catalog := DevHeldItems.catalog()
+	for i in catalog.size():
+		var x := 36.0 + i * SPACING
+		_held.append(_make_doll(Vector2(x, 168), catalog[i][1]))
+		_using.append(_make_doll(Vector2(x, 300), catalog[i][1]))
+		_label(String(catalog[i][0]), Vector2(x, 306))
+	_label("holding", Vector2(18, 92), true)
+	_label("using (click / aim at mouse)", Vector2(18, 226), true)
 
 	var ui := CanvasLayer.new()
 	add_child(ui)
@@ -64,81 +61,89 @@ func _ready() -> void:
 	bar.position = Vector2(6, 6)
 	bar.add_theme_constant_override("separation", 4)
 	ui.add_child(bar)
-	bar.add_child(UiKit.button("Animation", _next_anim, 70))
-	bar.add_child(UiKit.button("Flip", func() -> void: _facing = -_facing, 40))
-	bar.add_child(UiKit.button("Colors", _random_colors, 50))
-	bar.add_child(UiKit.button("Reset colors", _reset_colors, 76))
-	bar.add_child(UiKit.button("Hair", _toggle_hair, 40))
-	bar.add_child(UiKit.button("Back", func() -> void: Game.quit_to_menu(), 40))
+	bar.add_child(UiKit.button("Animation", _next_anim, 62))
+	_force_button = UiKit.button("", _toggle_forced, 112)
+	bar.add_child(_force_button)
+	_stow_button = UiKit.button("", _toggle_stowed, 58)
+	bar.add_child(_stow_button)
+	bar.add_child(UiKit.button("Flip", func() -> void: _facing = -_facing, 32))
+	bar.add_child(UiKit.button("Colors", _random_colors, 44))
+	bar.add_child(UiKit.button("Reset", _reset_colors, 40))
+	bar.add_child(UiKit.button("Hair", _toggle_hair, 34))
+	bar.add_child(UiKit.button("Back", func() -> void: Game.quit_to_menu(), 36))
 	_info = UiKit.label("", 8, UiKit.TEXT)
 	_info.position = Vector2(6, 30)
 	_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	ui.add_child(_info)
-	_update_info()
+	_refresh()
 
 
-func _column_label(col: int, posed_row: bool) -> String:
-	var name: String = COLUMNS[col]
-	if posed_row:
-		return name + " (code)"
-	var tag := ""
-	match col:
-		1, 3:
-			tag = "Hold1H" if col == 1 else "Use"
-		2, 4:
-			tag = "Hold2H" if col == 2 else "Use"
-	if tag != "" and not _rig.tags.has("arms/" + tag):
-		return name + " (no art)"
-	return name
+func _make_doll(pos: Vector2, item: HeldItemLook) -> PaperDoll:
+	var d := PaperDoll.new()
+	add_child(d)
+	d.setup(_rig, _palette)
+	d.look = _look
+	d.position = pos
+	d.item = item
+	return d
 
 
-func _configure(d: PaperDoll, col: int) -> void:
-	match col:
-		0:
-			d.item = null
-		1:
-			d.item = _items[0]
-			d.arm_mode = PaperDoll.ArmMode.HOLD
-		2:
-			d.item = _items[1]
-			d.arm_mode = PaperDoll.ArmMode.HOLD
-		3:
-			d.item = _items[0]
-			d.arm_mode = PaperDoll.ArmMode.USE
-		4:
-			d.item = _items[1]
-			d.arm_mode = PaperDoll.ArmMode.USE
-		5:
-			d.item = _items[2]
-			d.arm_mode = PaperDoll.ArmMode.AIM
-		6:
-			d.item = _items[0]
-			d.stowed = true
-		7:
-			d.item = _items[3]
-			d.stowed = true
+func _label(text: String, pos: Vector2, left: bool = false) -> void:
+	var l := UiKit.label(text, 8, UiKit.TEXT)
+	l.size = Vector2(SPACING if not left else 300, 12)
+	l.position = pos - Vector2(0 if left else SPACING / 2.0, 0)
+	if left:
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	add_child(l)
 
 
 func _process(delta: float) -> void:
 	_time += delta
 	var mouse := get_global_mouse_position()
-	if DevCli.wants_world() or DevCli.scene_override != "":
+	if DevCli.scene_override != "":
 		# Scripted screenshots: aim at a point circling above the dolls.
-		mouse = Vector2(320 + cos(_time * 2.0) * 200, 60 + sin(_time * 2.0) * 40)
-	for d in _dolls:
-		d.scale.x = _facing
-		d.play(ANIMS[_anim])
-		d.aim_global = mouse
-		if d.arm_mode == PaperDoll.ArmMode.USE:
-			var t := d.item.use_time if d.item else 0.4
-			d.use_progress = fposmod(_time, t + 0.3) / t
-			if d.use_progress > 1.0:
-				d.use_progress = 1.0
+		mouse = Vector2(320 + cos(_time * 1.5) * 220, 40 + sin(_time * 1.5) * 30)
+	for i in _held.size():
+		_drive(_held[i], false, mouse)
+		_drive(_using[i], true, mouse)
+
+
+## Sets one doll's state the way Player._animate_arms() would.
+func _drive(d: PaperDoll, using: bool, mouse: Vector2) -> void:
+	d.play(ANIMS[_anim])
+	d.force_posed = _forced
+	d.stowed = _stowed
+	d.aim_global = mouse
+	var item := d.item
+	var facing := _facing
+	if item == null or _stowed:
+		d.arm_mode = PaperDoll.ArmMode.AIM if using and item == null else PaperDoll.ArmMode.SWING
+	elif using and item.use_style == HeldItemLook.UseStyle.SWING:
+		d.arm_mode = PaperDoll.ArmMode.USE
+		var cycle := item.use_time + 0.35
+		d.use_progress = minf(fposmod(_time, cycle) / item.use_time, 1.0)
+	elif item.aim_when_held or (using and item.use_style == HeldItemLook.UseStyle.AIM):
+		d.arm_mode = PaperDoll.ArmMode.AIM
+	else:
+		d.arm_mode = PaperDoll.ArmMode.HOLD
+	if d.arm_mode == PaperDoll.ArmMode.AIM:
+		facing = 1.0 if mouse.x >= d.global_position.x else -1.0  # face the cursor
+	d.scale.x = facing
+
+
+func _toggle_forced() -> void:
+	_forced = not _forced
+	_refresh()
+
+
+func _toggle_stowed() -> void:
+	_stowed = not _stowed
+	_refresh()
 
 
 func _next_anim() -> void:
 	_anim = (_anim + 1) % ANIMS.size()
-	_update_info()
+	_refresh()
 
 
 func _random_colors() -> void:
@@ -160,9 +165,16 @@ func _toggle_hair() -> void:
 
 
 func _apply_look() -> void:
-	for d in _dolls:
+	for d in _held + _using:
 		d.look = _look
 
 
-func _update_info() -> void:
-	_info.text = "Legs: %s   Top: drawn art where it exists. Bottom: code-posed. Aim follows the mouse." % ANIMS[_anim]
+func _refresh() -> void:
+	_force_button.text = "Code posing: %s" % ("forced" if _forced else "auto")
+	_stow_button.text = "Put away" if not _stowed else "Take out"
+	var drawn := PackedStringArray()
+	for tag: String in ["Hold1H", "Hold2H", "Use"]:
+		if _rig.tags.has("arms/" + tag):
+			drawn.append(tag)
+	_info.text = "Legs: %s.  Hand-drawn arm frames: %s." % [ANIMS[_anim],
+		", ".join(drawn) if drawn.size() > 0 else "none yet, so every arm pose here is code-posed"]

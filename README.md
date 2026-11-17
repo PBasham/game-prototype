@@ -39,7 +39,7 @@ Docs:
 | Left / right mouse | Debug brush: remove / place block, empty hands only (until mining in Phase 4) |
 | Left click | Use the held item (debug builds: or dig with the brush when hands are empty) |
 | H | Put the held item away / take it out |
-| 1 to 5 | Debug: placeholder held items (empty, tool, two-hander, wand, small) |
+| 1 to 0 | Debug: placeholder held items (empty, tools, wand, dagger, swords, spell book, crossbow, bow) |
 | Esc | Pause menu (resume, save, quit to menu) |
 | F3 | Debug overlay |
 | F6 | Regenerate the world from `data/worldgen/forest.tres` (debug builds) |

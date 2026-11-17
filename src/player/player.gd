@@ -139,7 +139,7 @@ func toggle_stowed() -> void:
 func is_aiming() -> bool:
 	if held == null or stowed:
 		return false
-	return held.hold_style == HeldItemLook.HoldStyle.AIM or held.face_cursor or _use_left > 0.0 \
+	return held.aim_when_held or held.face_cursor or _use_left > 0.0 \
 		or (held.use_style == HeldItemLook.UseStyle.AIM and Input.is_action_pressed("use_primary"))
 
 
@@ -305,7 +305,7 @@ func _animate_arms() -> void:
 	elif _use_left > 0.0:
 		_doll.arm_mode = PaperDoll.ArmMode.USE
 		_doll.use_progress = 1.0 - _use_left / maxf(held.use_time, 0.01)
-	elif held.hold_style == HeldItemLook.HoldStyle.AIM \
+	elif held.aim_when_held \
 			or (held.use_style == HeldItemLook.UseStyle.AIM and Input.is_action_pressed("use_primary")):
 		_doll.arm_mode = PaperDoll.ArmMode.AIM
 	else:

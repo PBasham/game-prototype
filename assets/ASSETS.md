@@ -31,7 +31,8 @@ godot --headless --path . --script res://tools/import_aseprite.gd -- --in=res://
 Frames are 44x64, feet at (20, 64). How to draw for the paper doll (layers, tags,
 pivots, arm poses) is in [docs/character-art.md](../docs/character-art.md).
 
-Held items in debug builds (keys 1 to 5) are **placeholder** gray shapes drawn in code
+Held items in debug builds (keys 1 to 0: tools, wand, dagger, swords, spell book,
+crossbow, bow) are **placeholder** shapes drawn in code
 (`src/player/doll/dev_held_items.gd`); real items come in Phase 4.
 
 ## Terrain: `terrain/*.png` (64x64, seamless)

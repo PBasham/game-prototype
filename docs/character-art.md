@@ -78,10 +78,13 @@ the rest frame.
 | Swing | Empty hands, or item put away | (the movement animation) | |
 | Hold | Item held, not in use | `arms/Hold1H` / `arms/Hold2H` | Code bends the arm so the hand sits at `one_hand_reach` / `two_hand_reach` from the shoulder |
 | Use | Clicking a SWING item | `arms/Use` | Code swings the straight arm from `swing_from` to `swing_to` (item settings) |
-| Aim | AIM items, or holding click with an AIM-use item | (always code) | Both arms rotate around the shoulder to point at the cursor; with a two-handed item the back hand goes to the second grip |
+| Aim | Items with `aim_when_held`, or holding click with an AIM-use item | (always code) | The front arm rotates around the shoulder to point at the cursor. Back arm: on the second grip for a two-handed item (bow), also aiming with empty hands (casting), and swinging normally with a one-handed item (wand, crossbow, book) |
 
-The **Doll Viewer** shows every mode twice: the top row uses drawn frames where they
-exist ("no art" otherwise), the bottom row is always code-posed, so you can compare.
+The **Doll Viewer** shows the character holding (top row) and using (bottom row) every
+placeholder item. Arms use your drawn frames where they exist and code posing
+otherwise; the **Code posing: forced** button switches everything to code posing so you
+can compare once you've drawn some poses. The line under the buttons lists which arm
+tags the art has.
 
 ## Joints (pivots)
 
@@ -110,12 +113,14 @@ Each item has a `HeldItemLook` (`held_item_look.gd`):
 | `texture` | Drawn pointing **up and to the right**, handle at the bottom left (like an inventory icon) |
 | `grip` | Pixel the front hand holds |
 | `grip2` | Pixel the back hand holds (two-handed) |
-| `hold_style` | `ONE_HAND`, `TWO_HAND`, or `AIM` (arms follow the cursor while held) |
+| `hold_style` | `ONE_HAND` or `TWO_HAND` |
+| `aim_when_held` | Arms follow the cursor the whole time it's held (wands, crossbows, bows) |
 | `use_style` | `SWING` (click swings), `AIM` (click aims), `NONE` |
 | `stow_style` | Where it goes when put away (H): `BACK`, `HIP`, `HIDDEN` |
 | `hold_angle` | Angle while just held (0 = forward, -90 = straight up) |
 | `use_time`, `swing_from`, `swing_to` | Swing length and arc |
-| `face_cursor` | Face the cursor while held (AIM items always do; using always does) |
+| `face_cursor` | Face the cursor while held (`aim_when_held` items always do; using always does) |
+| `aim_rotates` | While aiming, the item points at the cursor. Off for things held upright while the arm aims (spell book) |
 
 Where stowed items sit is on the PaperDoll: `stow_back_offset/angle`,
 `stow_hip_offset/angle`.

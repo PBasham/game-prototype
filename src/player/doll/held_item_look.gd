@@ -9,7 +9,6 @@ extends Resource
 enum HoldStyle {
 	ONE_HAND,  ## front hand holds it; back arm free
 	TWO_HAND,  ## both hands (second hand at grip2)
-	AIM,       ## arms point at the cursor while held (wands, spells, guns)
 }
 enum UseStyle {
 	SWING,  ## clicking swings it overhead to forward (pickaxe, sword, axe)
@@ -24,6 +23,9 @@ enum StowStyle {
 
 @export var texture: Texture2D
 @export var hold_style := HoldStyle.ONE_HAND
+## The arm(s) point at the cursor the whole time it's held (wands, bows, crossbows).
+## One-handed: only the front arm aims. Two-handed: the back hand stays on grip2.
+@export var aim_when_held := false
 @export var use_style := UseStyle.SWING
 @export var stow_style := StowStyle.BACK
 ## Pixel in the texture the front hand holds.
@@ -37,5 +39,8 @@ enum StowStyle {
 ## Swing arc: arm angle at the start and end, degrees (0 = forward, -90 = up).
 @export var swing_from := -140.0
 @export var swing_to := 30.0
-## Faces the cursor while held (AIM always does). Use always faces the cursor.
+## Faces the cursor while held (aim_when_held items always do; using always does).
 @export var face_cursor := false
+## While aiming, the item turns to point at the cursor (wands, bows). Off for things
+## held upright while the arm aims (a spell book).
+@export var aim_rotates := true

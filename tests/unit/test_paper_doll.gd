@@ -100,3 +100,36 @@ func test_recolor_keeps_relative_shading() -> void:
 func test_palette_groups_cover_the_art() -> void:
 	for g: StringName in [&"skin", &"tunic", &"pants", &"leather", &"hair"]:
 		assert_true(palette.groups.has(g), "palette has %s" % g)
+
+
+func test_one_handed_aim_uses_only_the_front_arm() -> void:
+	var d := _doll()
+	d.item = DevHeldItems.by_name("Crossbow")
+	d.arm_mode = PaperDoll.ArmMode.AIM
+	d.aim_global = d.to_global(Vector2(80, -100))
+	d._update()
+	var back_upper: int = rig.arms[&"back"].upper
+	assert_eq(d._slots[back_upper].rotation, 0.0, "back arm not rotated toward the cursor")
+	var front_upper: int = rig.arms[&"front"].upper
+	assert_ne(d._slots[front_upper].rotation, 0.0, "front arm aims")
+
+
+func test_bow_back_hand_on_the_string() -> void:
+	var d := _doll()
+	var bow := DevHeldItems.by_name("Bow")
+	d.item = bow
+	d.arm_mode = PaperDoll.ArmMode.AIM
+	d.aim_global = d.to_global(Vector2(80, -40))
+	d._update()
+	var expected := d.hands[&"front"] + (bow.grip2 - bow.grip).rotated(d.item_angle() + PI / 4.0)
+	assert_almost_eq(d.hands[&"back"].distance_to(expected), 0.0, 1.0)
+
+
+func test_book_stays_upright_while_aiming() -> void:
+	var d := _doll()
+	var book := DevHeldItems.by_name("Book")
+	d.item = book
+	d.arm_mode = PaperDoll.ArmMode.AIM
+	d.aim_global = d.to_global(Vector2(80, -100))
+	d._update()
+	assert_almost_eq(d.item_angle(), deg_to_rad(book.hold_angle), 0.001)
