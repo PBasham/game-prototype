@@ -26,6 +26,8 @@ var source_solid_factor := 3.0
 ## 1 where a block id is solid (index = block id).
 var solid := PackedByteArray()
 var ambient := 0.16
+## Sky light color and brightness (WorldClock.sun_light()): multiplies sunlight.
+var sky := Color.WHITE
 var open_falloff := 0.06
 var solid_falloff := 0.1
 
@@ -95,7 +97,7 @@ func run() -> void:
 	bytes.resize(w * h * 3)
 	for i in w * h:
 		for ch in 3:
-			var l := light[i]
+			var l: float = light[i] * sky[ch]
 			if not colored.is_empty():
 				l += (colored[ch] as PackedFloat32Array)[i]
 			l = clampf(l, 0.0, 1.0)

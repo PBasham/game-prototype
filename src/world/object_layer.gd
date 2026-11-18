@@ -59,7 +59,7 @@ func _on_changed(tile: Vector2i, _old: int, _new: int) -> void:
 	for c: Vector2i in _views:
 		var lx := posmod(wx - c.x * SIZE + 1, world.data.width) - 1
 		var ly := tile.y - c.y * SIZE
-		if lx >= -1 and lx <= SIZE and ly >= -1 and ly <= SIZE + 8:
+		if lx >= -2 and lx <= SIZE + 1 and ly >= -1 and ly <= SIZE + 8:
 			_views[c].queue_redraw()
 			if lx >= 0 and lx < SIZE and ly >= 0 and ly < SIZE:
 				_sync_bodies(_views[c])
@@ -111,9 +111,12 @@ func draw_chunk(view: ChunkObjects) -> void:
 			var frame := frame_for(def, origin + Vector2i(lx, ly), id)
 			var h := maxi(def.height_tiles, 1)
 			var w := maxi(def.width_tiles, 1) if def.style == ObjectDef.Style.FURNITURE else 1
-			# Taller objects grow upward from their tile; furniture also rightward.
-			view.draw_texture_rect_region(def.frames, Rect2(lx * TILE, (ly - h + 1) * TILE, w * TILE, h * TILE),
-				Rect2(frame * w * TILE, 0, w * TILE, h * TILE))
+			# Taller objects grow upward from their tile; furniture also rightward. A sprite
+			# wider than its footprint is centered on it.
+			var sw := def.sprite_width_px if def.sprite_width_px > 0 else w * TILE
+			var x := lx * TILE + (w * TILE - sw) / 2
+			view.draw_texture_rect_region(def.frames, Rect2(x, (ly - h + 1) * TILE, sw, h * TILE),
+				Rect2(frame * sw, 0, sw, h * TILE))
 
 
 ## Which frame of the strip an object shows at a tile.

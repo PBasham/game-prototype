@@ -39,10 +39,10 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 ## Tiles of clear space above the ground a sapling needs to grow.
 @export var grow_clearance := 10
 @export_group("Saplings")
-## Seconds a sapling takes to grow into a tree (random in this range, while the world
-## is running).
-@export var grow_min_seconds := 60.0
-@export var grow_max_seconds := 150.0
+## In-game days a sapling takes to grow into a tree (random in this range, while the
+## world is running). A day is 24 real minutes (WorldClock.day_minutes).
+@export var grow_min_days := 1.0
+@export var grow_max_days := 2.0
 @export_group("Things on the grass")
 ## Share of the generator's flower spots that are sticks, rocks or flint instead.
 @export_range(0.0, 1.0) var pickup_share := 0.4
@@ -59,14 +59,13 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 @export var berries_max := 3
 ## Share of bushes the world starts with full grown (the rest are young).
 @export_range(0.0, 1.0) var bush_grown_share := 0.7
-## Seconds for a young bush to grow full size (with berries). Young bushes have none.
-@export var bush_grow_min_seconds := 4320.0
-@export var bush_grow_max_seconds := 7200.0
-## Seconds until a picked bush has berries again (72 to 120 minutes: about 3 to 5
-## in-game days once there's a day clock). Wild bushes are slow and stingy on purpose;
-## farming will be the better way to get food.
-@export var regrow_min_seconds := 4320.0
-@export var regrow_max_seconds := 7200.0
+## In-game days for a young bush to grow full size (with berries). Young bushes have none.
+@export var bush_grow_min_days := 2.0
+@export var bush_grow_max_days := 3.0
+## In-game days until a picked bush has berries again. Wild bushes are slow and stingy
+## on purpose; farming will be the better way to get food.
+@export var regrow_min_days := 2.0
+@export var regrow_max_days := 3.0
 @export_group("Flowers and grass")
 ## Chance that cutting a flower drops grass seeds.
 @export_range(0.0, 1.0) var grass_seed_chance := 0.35
@@ -218,7 +217,7 @@ func request_plant_tree(ground: Vector2i) -> bool:
 	if not Game.is_authority() or sapling_spot(ground) != world.wrap_tile(ground):
 		return false
 	var p := _add(world.wrap_tile(ground), Kind.SAPLING, 0)
-	p.grow_left = randf_range(grow_min_seconds, grow_max_seconds)
+	p.grow_left = _days(randf_range(grow_min_days, grow_max_days))
 	return true
 
 
@@ -252,7 +251,7 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array) -> void:
 				var young := _hash(ground, 37) >= bush_grown_share
 				var bush := _add(ground, Kind.BUSH, BUSH_YOUNG if young else BUSH_GROWN, false)
 				if young:
-					bush.health = randf_range(bush_grow_min_seconds, bush_grow_max_seconds)
+					bush.health = _days(randf_range(bush_grow_min_days, bush_grow_max_days))
 					_young.append(ground)
 			elif _hash(ground, 11) < pickup_share:
 				var h := _hash(ground, 23)
@@ -347,7 +346,7 @@ func request_pick_berries(ground: Vector2i, who: Player) -> bool:
 			EventBus.item_picked_up.emit(&"berries", n - left)
 		if left > 0:
 			world.request_spawn_drop(&"berries", left, who.chest())
-	p.grow_left = randf_range(regrow_min_seconds, regrow_max_seconds)
+	p.grow_left = _days(randf_range(regrow_min_days, regrow_max_days))
 	_regrowing.append(ground)
 	_dirty[_chunk_of(ground)] = true
 	_refresh_node(ground, p)
@@ -416,6 +415,11 @@ func _grow_bushes(delta: float) -> void:
 			_young.erase(g)
 			_dirty[_chunk_of(g)] = true
 			_refresh_node(g, p)
+
+
+## Real seconds for in-game days (the world's clock).
+func _days(n: float) -> float:
+	return world.clock.days(n) if world and world.clock else n * 24.0 * 60.0
 
 
 func _regrow(delta: float) -> void:

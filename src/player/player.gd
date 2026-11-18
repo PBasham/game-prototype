@@ -81,15 +81,15 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var max_health := 100.0
 ## Health per second refilled, once you've gone health_regen_delay seconds unhurt (and
 ## you're not starving).
-@export var health_regen := 1.0
+@export var health_regen := 0.5
 @export var health_regen_delay := 5.0
 ## Seconds you can't be hurt again after a hit (except by starving).
 @export var hurt_cooldown := 0.4
 @export_group("Hunger")
 @export var max_hunger := 100.0
-## Seconds per point of hunger lost: standing or walking, and running (Shift).
-## Spells (Fly included) don't make you hungry.
-@export var hunger_seconds_per_point := 20.0
+## In-game days a full hunger bar lasts (1.5 = 36 real minutes with 24 minute days),
+## standing or walking. Spells (Fly included) don't make you hungry.
+@export var hunger_full_days := 1.5
 @export var hunger_run_multiplier := 2.0
 ## Starving (hunger 0): no health regen, and this much damage every starve_interval.
 @export var starve_damage := 1.0
@@ -186,6 +186,8 @@ var hunger_on := true
 var _since_hurt := 99.0
 var _starve_timer := 0.0
 var dead := false
+## The world's clock (for hunger in days). Null: 24 minute days.
+var clock: WorldClock
 ## Optional: (back: bool) -> bool. False when using the held item now would do nothing
 ## (a block with nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
 var use_check: Callable
@@ -641,6 +643,10 @@ func eat(food: float, heal_amount: float = 0.0) -> void:
 	heal(heal_amount)
 
 
+func _day_seconds() -> float:
+	return clock.days(1.0) if clock else 24.0 * 60.0
+
+
 ## Forget the current fall (after a teleport: no fall damage for the jump).
 func reset_fall() -> void:
 	_airborne = false
@@ -667,7 +673,7 @@ func _update_health(delta: float) -> void:
 		return
 	if hunger_on:
 		var running := _held("run") and absf(velocity.x) > 1.0 and is_on_floor()
-		var rate := 1.0 / maxf(hunger_seconds_per_point, 0.1) * (hunger_run_multiplier if running else 1.0)
+		var rate := max_hunger / maxf(_day_seconds() * hunger_full_days, 1.0) * (hunger_run_multiplier if running else 1.0)
 		hunger = maxf(hunger - rate * delta, 0.0)
 	else:
 		hunger = max_hunger

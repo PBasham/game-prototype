@@ -1,6 +1,33 @@
-# Health, hunger, food and dying
+# Day and night, health, hunger, food and dying
 
-Phase 6. The bars are bottom left (health, mana, hunger). Everything here is an export
+Phase 6.
+
+## Day and night (`WorldClock`, src/world/world_clock.gd, the World's `Clock` node)
+
+A day is 24 real minutes: daytime from 4:30 to 19:30 (15 hours), night the rest, with
+an hour of dawn and dusk. A new world starts at 6:30. The time shows on the health
+panel and is saved with the world. At night the sky light dims and turns blue (torches
+matter), the sky and hills darken, stars come out and the moon crosses the sky; the sun
+crosses it by day. Growth and hunger are set in in-game days.
+
+| Export | Default | What it does |
+| --- | --- | --- |
+| `day_minutes` | 24 | Real minutes per in-game day |
+| `sunrise_hour`, `sunset_hour` | 4.5, 19.5 | |
+| `twilight_hours` | 1 | How long dawn and dusk take |
+| `start_hour` | 6.5 | When a new world starts |
+| `night_light` | 0.28 | Sky light at night (0 dark, 1 day) |
+| `day_color`, `twilight_color`, `night_color` | | Tint of the sky light |
+| `speed` | 1 | Multiplies how fast time passes |
+
+Sky colors are on the Backdrop (`day_sky`, `twilight_sky`, `night_sky`).
+
+| Timer | In-game days |
+| --- | --- |
+| Sapling to tree (`grow_min_days`, `grow_max_days` on Plants) | 1 to 2 |
+| Young bush to full grown | 2 to 3 |
+| Picked bush grows berries back | 2 to 3 |
+| Full hunger bar empties (`hunger_full_days` on Player) | 1.5 | The bars are bottom left (health, mana, hunger). Everything here is an export
 you can tweak live on the `Player`, `World` or `Plants` node.
 
 ## Health (`Player`, src/player/player.gd)
@@ -8,7 +35,7 @@ you can tweak live on the `Player`, `World` or `Plants` node.
 | Export | Default | What it does |
 | --- | --- | --- |
 | `max_health` | 100 | |
-| `health_regen` | 1 | Health per second refilled... |
+| `health_regen` | 0.5 | Health per second refilled... |
 | `health_regen_delay` | 5 | ...once you've gone this many seconds without being hurt (and you're not starving) |
 | `hurt_cooldown` | 0.4 | Seconds you can't be hurt again after a hit (starving ignores it) |
 | `fall_damage_start` | 25 | Tiles you can fall without getting hurt (the Scholar is 8 tall; a full jump is 11) |
@@ -22,7 +49,7 @@ climbing reset the fall. Falls are the only damage so far; enemies come later.
 | Export | Default | What it does |
 | --- | --- | --- |
 | `max_hunger` | 100 | |
-| `hunger_seconds_per_point` | 20 | Seconds per point lost (100 points = about 33 minutes) |
+| `hunger_full_days` | 1.5 | In-game days a full bar lasts (36 real minutes) |
 | `hunger_run_multiplier` | 2 | Running (Shift) makes you hungry this much faster |
 | `starve_damage`, `starve_interval` | 1, 3 | At 0 hunger: no health regen, and 1 damage every 3 seconds |
 
@@ -35,19 +62,19 @@ stays full.
   eat one: +10 hunger (`food_value`), +2 health (`heal_value`). You can't eat while
   both are full.
 - **Berry bushes** grow on the grass like flowers. Right click (or E near) a ripe one
-  to pick 1 to 3 berries; it grows them back in 72 to 120 minutes. Breaking the ground
+  to pick 1 to 3 berries; it grows them back in 2 to 3 in-game days. Breaking the ground
   under a ripe bush drops its berries. Exports on the `Plants` node:
 
 | Export | Default | What it does |
 | --- | --- | --- |
 | `bush_share` | 0.06 | Share of flower spots that are a berry bush |
 | `berries_min`, `berries_max` | 1, 3 | Berries per picking |
-| `regrow_min_seconds`, `regrow_max_seconds` | 4320, 7200 | Time until a picked bush is ripe again (72 to 120 minutes) |
+| `regrow_min_days`, `regrow_max_days` | 2, 3 | In-game days until a picked bush is ripe again |
 | `bush_grown_share` | 0.7 | Share of the world's bushes that start full grown; the rest are young |
-| `bush_grow_min_seconds`, `bush_grow_max_seconds` | 4320, 7200 | Time for a young bush to grow full size |
+| `bush_grow_min_days`, `bush_grow_max_days` | 2, 3 | In-game days for a young bush to grow full size |
 
 Wild bushes are slow and stingy on purpose: farming (later) should be the better way
-to get food. With a day clock these become about 3 to 5 in-game days.
+to get food.
 
 Young bushes are small and have no berries; once full grown (bigger) they bear berries.
 Art: `assets/decor/berry_bush.png` / `berry_bush_bare.png` (full grown, 24x19) and
@@ -83,5 +110,6 @@ left. A character saved while dead comes back full.
 ## Dev console
 
 `god` (no damage), `hurt <n>`, `kill`, `heal` (full health and hunger), `hunger <n>`,
-`mana` (infinite mana), `bush` / `bush young` (a ripe berry bush on the grass under the cursor), `grow` (also
+`mana` (infinite mana), `time` (show), `time <hour>` or `time day | noon | dusk | night | dawn`, `time speed <x>`,
+`bush` / `bush young` (a ripe berry bush on the grass under the cursor), `grow` (also
 makes picked bushes ripe and young bushes full grown).

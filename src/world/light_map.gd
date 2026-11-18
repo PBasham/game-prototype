@@ -16,6 +16,8 @@ extends Sprite2D
 ## Light sources lose this many times more reach per tile through solid blocks than
 ## through air.
 @export var source_solid_factor := 3.0
+## Recompute when the sky light (day and night) changes by more than this.
+@export var sky_change := 0.012
 ## Minimum seconds between recomputes.
 @export var min_interval := 0.12
 
@@ -24,6 +26,7 @@ var _dirty := true
 var _cooldown := 0.0
 var _job: LightJob
 var _texture: ImageTexture
+var _last_sky := Color.WHITE
 
 
 func _ready() -> void:
@@ -42,6 +45,11 @@ func mark_dirty() -> void:
 	_dirty = true
 
 
+## The sky light for this moment (white at noon, dim blue at night).
+func _sky() -> Color:
+	return world.clock.sun_light() if world and world.clock else Color.WHITE
+
+
 func _process(delta: float) -> void:
 	_cooldown -= delta
 	if _job != null and WorkerThreadPool.is_task_completed(_job.task):
@@ -49,6 +57,9 @@ func _process(delta: float) -> void:
 		PerfStats.add("light rebuild (worker)", _job.usec)
 		_apply(_job)
 		_job = null
+	var sky := _sky()
+	if absf(sky.r - _last_sky.r) + absf(sky.g - _last_sky.g) + absf(sky.b - _last_sky.b) > sky_change:
+		_dirty = true
 	if _dirty and _job == null and _cooldown <= 0.0:
 		rebuild()
 
@@ -90,6 +101,8 @@ func _make_job() -> LightJob:
 	var job := LightJob.new()
 	job.rect = rect
 	job.ambient = ambient
+	_last_sky = _sky()
+	job.sky = _last_sky
 	job.open_falloff = open_falloff
 	job.solid_falloff = solid_falloff
 	job.source_solid_factor = source_solid_factor

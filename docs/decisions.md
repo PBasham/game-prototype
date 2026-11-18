@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-18: Day and night clock, door sizes
+
+- A day is 24 real minutes (15 day, 9 night). Growth is in in-game days: saplings 1 to
+  2, young bushes 2 to 3, berries back in 2 to 3. Hunger lasts 1.5 days. Health regen
+  0.5/s.
+- Doors are sized to the Scholar: closed is a thick slab edge on in the doorway, open
+  shows the door's face 3 tiles wide over the wall.
+
 ## 2026-11-17: Phase 6, health, hunger and dying
 
 - Health 100, regenerates 1/s after 5 s unhurt. Fall damage after 25 tiles, 5 per tile.

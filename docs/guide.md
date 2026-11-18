@@ -5,7 +5,7 @@ you can tweak. For the rules the code follows (data-driven content, host-authori
 threading) see [architecture.md](architecture.md). World generation has its own deep
 dive: [world-generation.md](world-generation.md); items, mining, placing, magic and plants are
 in [items-and-mining.md](items-and-mining.md); crafting, stations, furniture and mana in
-[crafting.md](crafting.md); health, hunger, food and dying in [survival.md](survival.md).
+[crafting.md](crafting.md); day and night, health, hunger, food and dying in [survival.md](survival.md).
 
 **Tweaking in general:** almost every number is an `@export` on a node or a setting in a
 `.tres` file. Two ways to change them:

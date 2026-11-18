@@ -41,8 +41,9 @@ func test_damage_regen_and_god_mode() -> void:
 func test_hunger_drains_and_running_is_faster() -> void:
 	var p := w.player
 	p.hunger = 50.0
-	p._update_health(p.hunger_seconds_per_point * 4.0)
-	assert_almost_eq(p.hunger, 46.0, 0.01, "one point per hunger_seconds_per_point")
+	var per_point := w.clock.days(p.hunger_full_days) / p.max_hunger
+	p._update_health(per_point * 4.0)
+	assert_almost_eq(p.hunger, 46.0, 0.01, "a full bar lasts hunger_full_days")
 	p.hunger_on = false
 	p._update_health(100.0)
 	assert_eq(p.hunger, p.max_hunger, "world option off: always full")
@@ -89,7 +90,7 @@ func test_berry_bushes_pick_and_regrow() -> void:
 	assert_between(got, w.plants.berries_min, w.plants.berries_max)
 	assert_false(w.plants.is_ripe(ground), "picked")
 	assert_false(w.plants.request_pick_berries(ground, w.player), "nothing left")
-	w.plants._regrow(w.plants.regrow_max_seconds + 1.0)
+	w.plants._regrow(w.plants._days(w.plants.regrow_max_days) + 1.0)
 	assert_true(w.plants.is_ripe(ground), "grew back")
 
 

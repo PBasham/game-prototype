@@ -5,7 +5,7 @@ docs/guide.md explains every feature; docs/world-generation.md covers generation
 docs/character-art.md covers the paper doll; docs/items-and-mining.md covers items,
 the inventory, layers, mining, placing, magic and plants; docs/crafting.md covers
 crafting, stations, furniture, chests, doors, pickups and mana; docs/survival.md covers
-health, hunger, food, berry bushes, dying and the magic bag. Keep them up to date when behavior or
+day and night, health, hunger, food, berry bushes, dying and the magic bag. Keep them up to date when behavior or
 tunables change: Patrick tweaks things by hand from these docs.
 
 ## Collaboration rules

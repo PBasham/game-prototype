@@ -570,6 +570,13 @@ func _draw_status(g: Control) -> void:
 	var p := world.player
 	var font := ThemeDB.fallback_font
 	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
+	if world.clock:
+		# The time of day on the panel's top edge.
+		var text := world.clock.label()
+		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+		var r := Rect2(g.size.x - tw - 14, -6, tw + 10, 11)
+		UiSkin.title(g, r, "")
+		g.draw_string(font, r.position + Vector2(5, 8), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.INK)
 	var values := [
 		[p.health, p.max_health, false], [p.mana, p.max_mana, p.infinite_mana], [p.hunger, p.max_hunger, false],
 	]
@@ -1385,4 +1392,4 @@ func _update_notes(delta: float) -> void:
 
 func _place_notes() -> void:
 	# Above the health, mana and hunger panel.
-	_notes.position.y = _view_size().y - STATUS_SIZE.y - MARGIN.y - 14 - _notes.get_child_count() * 12
+	_notes.position.y = _view_size().y - STATUS_SIZE.y - MARGIN.y - 20 - _notes.get_child_count() * 12

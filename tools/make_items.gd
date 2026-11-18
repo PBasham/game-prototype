@@ -224,6 +224,7 @@ func _objects() -> Array[ObjectDef]:
 		open.blocks_movement = false
 		open.frames = load("res://assets/objects/door_open.png") as Texture2D
 		open.frame = 1 if left else 0
+		open.sprite_width_px = 24  # the door's face, 3 tiles wide, over the wall
 		open.toggles_to = &"door"
 		open.toggles_to_left = &""
 		out.append(open)

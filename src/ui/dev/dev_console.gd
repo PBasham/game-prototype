@@ -166,11 +166,12 @@ func _register() -> void:
 				var bush := world.plants._add(world.wrap_tile(g), PlantLayer.Kind.BUSH,
 					PlantLayer.BUSH_YOUNG if young else PlantLayer.BUSH_GROWN)
 				if young:
-					bush.health = world.plants.bush_grow_min_seconds
+					bush.health = world.plants._days(world.plants.bush_grow_min_days)
 					world.plants._young.append(world.wrap_tile(g))
 				_print("A berry bush at %d, %d." % [g.x, g.y])
 				return
 		_print("Needs open grass under the cursor."))
+	_add("time", "time [hour | day | night | dusk | dawn | speed <x>]", "Show or set the time of day (24 minute days).", _time)
 	_add("god", "god", "Toggle taking no damage.", func(_a: PackedStringArray) -> void:
 		world.player.invincible = not world.player.invincible
 		_print("No damage: %s." % ("on" if world.player.invincible else "off")))
@@ -294,6 +295,24 @@ func _forget(a: PackedStringArray) -> void:
 	c.known_spells.erase(spell.id)
 	c.magic_changed.emit()
 	_print("Forgot %s." % spell.display_name)
+
+
+func _time(a: PackedStringArray) -> void:
+	var c := world.clock
+	if a.size() >= 2 and a[0] == "speed" and a[1].is_valid_float():
+		c.speed = float(a[1])
+		_print("Time runs x%s." % a[1])
+		return
+	if a.size() >= 1:
+		var named := {"day": 8.0, "noon": 12.0, "dusk": c.sunset_hour, "night": 23.0, "dawn": c.sunrise_hour}
+		if named.has(a[0]):
+			c.set_hour(named[a[0]])
+		elif a[0].is_valid_float():
+			c.set_hour(float(a[0]))
+		else:
+			_print("Usage: time [hour | day | noon | dusk | night | dawn | speed <x>]")
+			return
+	_print(c.label())
 
 
 func _color(a: PackedStringArray) -> void:

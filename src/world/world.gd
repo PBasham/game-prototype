@@ -54,6 +54,8 @@ var generator: WorldGenerator
 var renderer: ChunkRenderer
 var lights: LightMap
 var backdrop: Backdrop
+## Time of day (day and night, growth timers in days).
+var clock: WorldClock
 var player: Player
 var plants: PlantLayer
 var object_layer: ObjectLayer
@@ -100,8 +102,14 @@ func _ready() -> void:
 	if not info.temporary and not info.path.is_empty():
 		data.saved = WorldSave.load_chunks(info.path, blocks, walls, objects)
 
+	clock = WorldClock.new()
+	clock.name = "Clock"
+	if is_saved():
+		clock.from_dict(WorldSave.read_extra(info.path, WorldSave.META_TIME))
+	add_child(clock)
 	backdrop = Backdrop.new()
 	backdrop.name = "Backdrop"
+	backdrop.clock = clock
 	add_child(backdrop)
 	renderer = ChunkRenderer.new()
 	renderer.name = "Chunks"
@@ -140,6 +148,7 @@ func _ready() -> void:
 	add_child(player)
 	teleport_player(player.position)
 	player.hunger_on = info.hunger
+	player.clock = clock
 	if character.health > 0.0:
 		player.health = minf(character.health, player.max_health)
 	if character.hunger >= 0.0:
@@ -294,7 +303,7 @@ func save() -> Error:
 		coords.append(c.coord)
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
 		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_CONTAINERS: _containers_to_dict(),
-			WorldSave.META_BAGS: {"list": bags_to_list()}}, objects)
+			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict()}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])

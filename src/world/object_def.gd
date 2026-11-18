@@ -45,6 +45,10 @@ enum Style {
 ## Column of the footprint the object turns around when it toggles (a door's hinge):
 ## the toggled object is placed so its hinge column lands on the same tile.
 @export var hinge_offset := 0
+## Sprite width in px when it's wider than the footprint (an open door is drawn 3
+## tiles wide over the wall around its 1 tile doorway). Centered on the footprint;
+## 0 = the footprint's width.
+@export var sprite_width_px := 0
 ## Storage slots (chests). It can only be picked up when empty.
 @export var container_slots := 0
 ## Internal: the filler that marks the tiles furniture covers besides its anchor.

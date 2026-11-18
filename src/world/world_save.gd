@@ -24,6 +24,8 @@ const META_PLANTS := "plants"
 const META_CONTAINERS := "containers"
 ## Magic bags left where characters died: {"list": [ItemBag.to_dict()...]}.
 const META_BAGS := "bags"
+## The clock: {"time": fraction of the day, "day": n}.
+const META_TIME := "time"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

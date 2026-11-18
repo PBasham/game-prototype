@@ -342,6 +342,8 @@ func _phase5_art() -> void:
 	_big_bush(true).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush.png"))
 	_big_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_bare.png"))
 	_magic_bag().save_png(ProjectSettings.globalize_path("res://assets/objects/magic_bag.png"))
+	_moon().save_png(ProjectSettings.globalize_path("res://assets/backdrop/moon.png"))
+	_stars().save_png(ProjectSettings.globalize_path("res://assets/backdrop/stars.png"))
 	_save(_hand_hammer(), "hand_hammer", true)
 	_save(_stone_tool(false), "stone_pickaxe", false)
 	_save(_stone_tool(true), "stone_axe", false)
@@ -357,7 +359,7 @@ func _phase5_art() -> void:
 		if key == "door":
 			img = _door_open()  # the icon shows the door's face, not its edge
 		# Icon: the object (first frame) scaled into 16x16.
-		var w := img.get_width() if key != "door" else 8
+		var w := img.get_width() if key != "door" else 24
 		var frame := img.get_region(Rect2i(0, 0, w, img.get_height()))
 		var icon := _canvas()
 		var scale := minf(14.0 / frame.get_width(), 14.0 / frame.get_height())
@@ -552,63 +554,71 @@ func _chest() -> Image:
 ## edge on (a narrow slab in its frame), and an open door has swung toward you and
 ## shows its face.
 
-## Door frame: lintel on top and a sill at the bottom (both images share it).
-func _door_frame(img: Image, x0: int) -> void:
-	for x in range(x0, x0 + 8):
-		img.set_pixel(x, 0, Color("6e5030"))
-		img.set_pixel(x, 1, Color("8a6a40"))
-		img.set_pixel(x, 2, Color("6e5030"))
-		img.set_pixel(x, 62, Color("8a6a40"))
-		img.set_pixel(x, 63, Color("6e5030"))
-
-
-## Closed, 8x64 (1x8 tiles): a 4 px slab of planks seen edge on, with a handle nub.
+## Closed, 8x64 (1x8 tiles): the door seen edge on in its doorway: a lintel, a 4 px
+## thick slab (light edge, darker side, iron straps at the rails), the hinge knuckles
+## on one side and the handle on both faces.
 func _door() -> Image:
 	var img := Image.create_empty(8, 64, false, Image.FORMAT_RGBA8)
-	_door_frame(img, 0)
-	for y in range(3, 62):
+	for x in 8:
+		img.set_pixel(x, 0, Color("5e4022"))
+		img.set_pixel(x, 1, Color("8a6a40"))
+		img.set_pixel(x, 2, Color("6e5030"))
+	for y in range(3, 64):
 		for x in range(2, 6):
-			var c := Color("8c6a42")
-			if x == 2:
-				c = Color("6e5030")
-			elif x == 5:
-				c = Color("5e4022")
-			elif (y * 7 + x * 3) % 13 == 0:
-				c = Color("7a5a36")
-			for rail: int in [5, 32, 59]:
-				if y >= rail - 1 and y <= rail and x > 2 and x < 5:
-					c = Color("a8845a")
+			var c := Color("a88252") if x == 3 else (Color("8c6a42") if x == 4 else Color("6e5030"))
+			if (y * 7 + x * 5) % 17 == 0:
+				c = c.darkened(0.1)
+			for rail: int in [7, 33, 58]:
+				if y >= rail and y <= rail + 1:
+					c = Color("6a6a6e") if y == rail else Color("4a4a4e")  # iron strap
 			img.set_pixel(x, y, c)
-	img.fill_rect(Rect2i(6, 32, 1, 3), Color("b08a3a"))  # handle, both sides
-	img.fill_rect(Rect2i(1, 32, 1, 3), Color("b08a3a"))
+	for y: int in [10, 11, 54, 55]:
+		img.set_pixel(1, y, Color("5a5a5e"))  # hinge knuckles
+	img.fill_rect(Rect2i(6, 32, 1, 3), Color("c8a040"))  # handles
+	img.fill_rect(Rect2i(1, 32, 1, 3), Color("c8a040"))
 	return img
 
 
-## One pixel of a door face (planks, three rails, a handle on the right).
-func _door_pixel(x: int, y: int, light: float) -> Color:
-	var c := Color("a88252") if (x / 2) % 2 == 0 else Color("9a7448")
-	if (x * 13 + y * 7) % 19 == 0:
-		c = c.darkened(0.08)  # grain
-	if x == 0 or x == 7:
-		c = Color("7a5a36")  # edges
-	for rail: int in [6, 32, 57]:
-		if y >= rail - 1 and y <= rail + 1:
-			c = Color("b8946a") if y < rail + 1 else Color("8a6a40")
-	if x >= 5 and x <= 6 and y >= 34 and y <= 36:
-		c = Color("e8c860") if y == 34 else Color("b08a3a")  # handle
-	return c.darkened(1.0 - light)
+## One pixel of the door's face, 24 px wide: vertical boards, three rails, a diagonal
+## brace, iron hinge straps on the left, a ring handle on the right.
+func _door_face_pixel(x: int, y: int) -> Color:
+	var c := Color("a88252") if (x / 4) % 2 == 0 else Color("9a7448")
+	if x % 4 == 3:
+		c = Color("7a5a36")  # board seams
+	elif (x * 13 + y * 7) % 23 == 0:
+		c = c.darkened(0.08)
+	# Brace from the bottom of the left side up to the middle rail on the right.
+	var brace_y := 58 - int(float(x) / 23.0 * 24.0)
+	if y >= brace_y - 1 and y <= brace_y + 1 and y > 34 and y < 58:
+		c = Color("b8946a") if y == brace_y - 1 else Color("8a6a40")
+	for rail: int in [5, 34, 58]:
+		if y >= rail - 2 and y <= rail + 1:
+			c = Color("b8946a") if y == rail - 2 else (Color("7a5a36") if y == rail + 1 else Color("a88252"))
+	if x == 0 or x == 23:
+		c = Color("6e5030")
+	if (y >= 9 and y <= 11 or y >= 53 and y <= 55) and x <= 8:
+		c = Color("6a6a6e") if y == 9 or y == 53 else Color("4a4a4e")  # hinge straps
+	return c
 
 
-## Open, 2 frames of 8x64: the door face on in its frame (frame 0 handle right,
-## frame 1 handle left).
+## Open, 2 frames of 24x64 (drawn 3 tiles wide, centered on the 1 tile doorway): the door
+## swung toward you, face on. Frame 1 is the mirror.
 func _door_open() -> Image:
-	var img := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
-	for f in 2:
-		_door_frame(img, f * 8)
-		for y in range(3, 62):
-			for x in 8:
-				var src := x if f == 0 else 7 - x
-				img.set_pixel(f * 8 + x, y, _door_pixel(src, y, 1.0))
+	var img := Image.create_empty(48, 64, false, Image.FORMAT_RGBA8)
+	var frame := Image.create_empty(24, 64, false, Image.FORMAT_RGBA8)
+	for y in range(1, 64):
+		for x in 24:
+			frame.set_pixel(x, y, _door_face_pixel(x, y))
+	for x in 24:
+		frame.set_pixel(x, 0, Color("6e5030"))
+	# Ring handle.
+	for p: Vector2i in [Vector2i(19, 31), Vector2i(20, 31), Vector2i(18, 32), Vector2i(21, 32),
+			Vector2i(18, 33), Vector2i(21, 33), Vector2i(19, 34), Vector2i(20, 34)]:
+		frame.set_pixel(p.x, p.y, Color("c8a040"))
+	frame.set_pixel(19, 30, Color("8a6a2a"))
+	img.blit_rect(frame, Rect2i(0, 0, 24, 64), Vector2i.ZERO)
+	frame.flip_x()
+	img.blit_rect(frame, Rect2i(0, 0, 24, 64), Vector2i(24, 0))
 	return img
 
 
@@ -739,4 +749,38 @@ func _big_bush(ripe: bool) -> Image:
 			img.set_pixel(p.x + 1, p.y, Color("d02a3a"))
 			img.set_pixel(p.x, p.y + 1, Color("8a1a28"))
 			img.set_pixel(p.x + 1, p.y + 1, Color("a01e2e"))
+	return img
+
+
+## Moon 28x28 for the night sky: a pale disc with soft craters and a faint glow.
+func _moon() -> Image:
+	var img := Image.create_empty(28, 28, false, Image.FORMAT_RGBA8)
+	for y in 28:
+		for x in 28:
+			var d := Vector2(x - 13.5, y - 13.5).length()
+			if d < 9.0:
+				var c := Color("e8ecf4")
+				if d > 7.5:
+					c = Color("c8d0e0")
+				for cr: Vector3 in [Vector3(11, 10, 2.2), Vector3(16, 15, 1.6), Vector3(10, 17, 1.4)]:
+					if Vector2(x - cr.x, y - cr.y).length() < cr.z:
+						c = Color("b8c0d4")
+				img.set_pixel(x, y, c)
+			elif d < 13.5:
+				img.set_pixel(x, y, Color(0.8, 0.85, 1.0, 0.18 * (13.5 - d) / 4.5))
+	return img
+
+
+## Stars 320x130, tiling across the night sky (fade in at night).
+func _stars() -> Image:
+	var img := Image.create_empty(320, 130, false, Image.FORMAT_RGBA8)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for i in 90:
+		var p := Vector2i(rng.randi_range(0, 319), rng.randi_range(0, 129))
+		var a := rng.randf_range(0.35, 1.0) * (1.0 - float(p.y) / 160.0)
+		img.set_pixel(p.x, p.y, Color(1, 1, 0.95, a))
+		if rng.randf() < 0.12 and p.x < 319 and p.y < 129:
+			img.set_pixel(p.x + 1, p.y, Color(1, 1, 0.95, a * 0.5))
+			img.set_pixel(p.x, p.y + 1, Color(1, 1, 0.95, a * 0.5))
 	return img
