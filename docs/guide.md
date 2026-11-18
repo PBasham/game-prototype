@@ -17,6 +17,9 @@ in [items-and-mining.md](items-and-mining.md); crafting, stations, furniture and
 - **Permanently:** edit the default in the script (the `@export var x := ...` line) or
   in the `.tres` file.
 
+Before testing a batch of phases, see [playtest.md](playtest.md): what to check and the
+handy console commands.
+
 ## Contents
 
 1. [Starting the game: menu, worlds, saves](#starting-the-game-menu-worlds-saves)
