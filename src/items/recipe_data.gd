@@ -14,9 +14,10 @@ extends GameData
 ## Item ids that must be somewhere in your inventory but aren't used up (the Hand
 ## Hammer for the Workbench).
 @export var requires: Array[StringName] = []
-## Only shown (and craftable) while this spell is in the crafter's spellbook: copying a
-## spell you have into a scroll ("Copy: Fly"). Empty = always.
-@export var requires_book_spell: StringName = &""
+## Mana used per craft (copying a spell into a scroll). The Copy tab makes these.
+@export var mana := 0.0
+## A short note shown with the recipe ("Known spell: half cost"). Not saved.
+var note := ""
 ## What it makes, and how many per craft.
 @export var output: StringName = &""
 @export var output_count := 1

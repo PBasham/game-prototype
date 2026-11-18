@@ -5,31 +5,69 @@ extends RefCounted
 
 
 ## The recipes made at a station kind (&"" = by hand), up to a station tier, in a
-## stable order (by name). With a character, "Copy: <spell>" recipes show only for spells
-## in their book; without one they're left out.
-static func recipes_for(station: StringName, tier: int = 1, c: CharacterData = null) -> Array[RecipeData]:
+## stable order (by name).
+static func recipes_for(station: StringName, tier: int = 1) -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	for d in Registry.get_all(&"recipes"):
 		var r := d as RecipeData
-		if r and r.station == station and r.station_tier <= tier and allowed(r, c):
+		if r and r.station == station and r.station_tier <= tier:
 			out.append(r)
 	out.sort_custom(func(a: RecipeData, b: RecipeData) -> bool: return a.display_name < b.display_name)
 	return out
 
 
-## Whether a character may use a recipe (a copy recipe needs its spell in their book).
-static func allowed(r: RecipeData, c: CharacterData) -> bool:
-	return r.requires_book_spell == &"" or (c != null and c.in_book(r.requires_book_spell))
+## A spell scroll recipe as this character pays for it: spells they know cost `share`
+## of the materials (rounded up; the Blank Scroll is still needed). Other recipes come
+## back unchanged.
+static func for_crafter(r: RecipeData, c: CharacterData, share: float) -> RecipeData:
+	var out := ItemData.find(r.output)
+	if c == null or out == null or out.teaches_spell == &"" or not c.knows(out.teaches_spell):
+		return r
+	var cheap := r.duplicate() as RecipeData
+	cheap.inputs = r.inputs.duplicate()  # its own copy: never touch the real recipe
+	for k: StringName in cheap.inputs:
+		if k != &"blank_scroll":
+			cheap.inputs[k] = maxi(1, ceili(r.inputs[k] * share))
+	cheap.note = "Known spell: %d%% of the materials" % roundi(share * 100.0)
+	return cheap
 
 
-## How many times the recipe can be made from what's in the inventory (0 = can't).
-static func times_craftable(inv: Inventory, r: RecipeData) -> int:
+## Copy tab: a recipe per spell the character knows: a Blank Scroll plus mana makes that
+## spell's scroll. Mana is the spell's cost (per cast, or 2 seconds of a beam or
+## concentration) times `factor`, kept between `low` and `high`.
+static func copy_recipes(c: CharacterData, factor: float, low: float, high: float) -> Array[RecipeData]:
+	var out: Array[RecipeData] = []
+	if c == null:
+		return out
+	for id in c.known_spells:
+		var spell := ItemData.find(ItemData.spell_key(id)) as SpellData
+		var scroll := StringName("scroll_" + String(id))
+		if spell == null or ItemData.find(scroll) == null:
+			continue
+		var r := RecipeData.new()
+		r.id = StringName("copy_" + String(id))
+		r.display_name = "Copy: %s" % spell.display_name
+		r.station = &"spell_weaving"
+		r.inputs = {&"blank_scroll": 1}
+		r.output = scroll
+		r.mana = clampf(maxf(spell.mana_cost, spell.mana_per_second * 2.0) * factor, low, high)
+		r.note = "Copied from your known spells, with %d mana" % roundi(r.mana)
+		out.append(r)
+	out.sort_custom(func(a: RecipeData, b: RecipeData) -> bool: return a.display_name < b.display_name)
+	return out
+
+
+## How many times the recipe can be made from what's in the inventory (0 = can't), and
+## with `mana` to spend on recipes that use it.
+static func times_craftable(inv: Inventory, r: RecipeData, mana: float = INF) -> int:
 	for q in r.requires:
 		if inv.count_of(q) <= 0:
 			return 0
 	var times := 1000000
 	for k: StringName in r.inputs:
 		times = mini(times, inv.count_of(k) / maxi(r.inputs[k], 1))
+	if r.mana > 0.0 and mana != INF:
+		times = mini(times, floori(mana / r.mana))
 	return times
 
 
@@ -47,9 +85,9 @@ static func missing(inv: Inventory, r: RecipeData) -> PackedStringArray:
 
 
 ## Crafts up to `times`: takes the inputs, adds the outputs. Returns [times made,
-## outputs that didn't fit] (the caller drops the extra).
-static func craft(inv: Inventory, r: RecipeData, times: int) -> Array:
-	var n := mini(times, times_craftable(inv, r))
+## outputs that didn't fit] (the caller drops the extra, and spends r.mana * times made).
+static func craft(inv: Inventory, r: RecipeData, times: int, mana: float = INF) -> Array:
+	var n := mini(times, times_craftable(inv, r, mana))
 	if n <= 0:
 		return [0, 0]
 	for k: StringName in r.inputs:

@@ -33,7 +33,7 @@ const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
 enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CHEST, CHEST_TAKE,
-	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE }
+	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
 const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
@@ -46,6 +46,11 @@ const EQUIP_W := 3 * STEP - GAP
 ## Crafting window: size, list width, row height.
 const CRAFT_SIZE := Vector2(288, 214)
 const LIST_W := 134
+## Stations whose window has tabs: station kind to tab names. The Spell Weaving Table:
+## Craft (scroll recipes; known spells cost less) and Copy (any known spell into a
+## scroll, for mana). Create and Empower come with Magic progression.
+const STATION_TABS := {&"spell_weaving": ["Craft", "Copy"]}
+const TAB_H := 14
 const ROW_H := 18
 ## Craft buttons: how many each makes (0 = as many as you can).
 const CRAFT_AMOUNTS: Array[int] = [1, 10, 0]
@@ -86,6 +91,10 @@ var chest := World.NO_TILE
 var bag: ItemBag
 ## Selected crafting entry (an index into recipes(); recipes().size() = the upgrade).
 var selected_recipe := 0
+## Which tab of a station with tabs is shown (STATION_TABS).
+var craft_tab := 0
+var _recipe_cache: Array[RecipeData] = []
+var _recipe_key := ""
 ## First crafting row shown (mouse wheel over the list scrolls).
 var _craft_scroll := 0
 
@@ -339,6 +348,7 @@ func _open_crafting() -> void:
 	crafting = true
 	selected_recipe = 0
 	_craft_scroll = 0
+	craft_tab = 0
 	_layout()
 
 
@@ -786,11 +796,52 @@ func _draw_chest(g: Control) -> void:
 # --- drawing: crafting -------------------------------------------------------------------
 
 ## The recipes the window shows: the open station's, or hand crafting.
+## The recipes in the open crafting window (and tab), as this character pays for them.
+## Cached until the station, tab, known spells or scroll settings change.
 func recipes() -> Array[RecipeData]:
 	var def := world.object_at(station) if station != World.NO_TILE else null
-	if def and def.station != &"":
-		return Crafting.recipes_for(def.station, def.station_tier, world.character)
-	return Crafting.recipes_for(&"", 1, world.character)
+	var c := world.character
+	var key := "%s|%d|%d|%d|%s|%s" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
+		hash(c.known_spells) if c else 0, world.known_scroll_discount,
+		[world.copy_mana_factor, world.copy_mana_min, world.copy_mana_max]]
+	if key == _recipe_key:
+		return _recipe_cache
+	var list: Array[RecipeData] = []
+	if def and def.station == &"spell_weaving" and craft_tab == 1:
+		list = Crafting.copy_recipes(c, world.copy_mana_factor, world.copy_mana_min, world.copy_mana_max)
+	else:
+		var base := Crafting.recipes_for(def.station, def.station_tier) if def and def.station != &"" \
+			else Crafting.recipes_for(&"")
+		for r in base:
+			list.append(Crafting.for_crafter(r, c, world.known_scroll_discount))
+	_recipe_key = key
+	_recipe_cache = list
+	return list
+
+
+## Tab names for the open station (none for most).
+func _tabs() -> Array:
+	var def := _station_def()
+	return STATION_TABS.get(def.station, []) if def else []
+
+
+func _tab_rect(i: int) -> Rect2:
+	return Rect2(PAD + i * 58, 22, 56, TAB_H)
+
+
+## Below the tabs, when there are any.
+func _body_top() -> float:
+	return 22.0 + (TAB_H + 3.0 if not _tabs().is_empty() else 0.0)
+
+
+## Mana there is to spend on a recipe that uses it.
+func _mana_for_crafting() -> float:
+	var p := world.player
+	return INF if p.infinite_mana else p.mana
+
+
+func _times(r: RecipeData) -> int:
+	return Crafting.times_craftable(_inventory(), r, _mana_for_crafting())
 
 
 func _station_def() -> ObjectDef:
@@ -808,7 +859,8 @@ func _entry_count() -> int:
 
 
 func _list_rect() -> Rect2:
-	return Rect2(PAD, 22, LIST_W, CRAFT_SIZE.y - 22 - PAD)
+	var top := _body_top()
+	return Rect2(PAD, top, LIST_W, CRAFT_SIZE.y - top - PAD)
 
 
 func _rows_shown() -> int:
@@ -822,7 +874,8 @@ func _row_rect(i: int) -> Rect2:
 
 func _detail_rect() -> Rect2:
 	var x := PAD + LIST_W + 6
-	return Rect2(x, 22, CRAFT_SIZE.x - x - PAD, CRAFT_SIZE.y - 22 - PAD)
+	var top := _body_top()
+	return Rect2(x, top, CRAFT_SIZE.x - x - PAD, CRAFT_SIZE.y - top - PAD)
 
 
 func _craft_button_rects() -> Array[Rect2]:
@@ -840,6 +893,9 @@ func _craft_button_rects() -> Array[Rect2]:
 func _craft_hit(local: Vector2) -> Array:
 	if _close_rect(_craft).has_point(local):
 		return [Area.CLOSE, 0]
+	for i in _tabs().size():
+		if _tab_rect(i).has_point(local):
+			return [Area.TAB, i]
 	for i in range(_craft_scroll, mini(_entry_count(), _craft_scroll + _rows_shown())):
 		if _row_rect(i).has_point(local):
 			return [Area.RECIPE, i]
@@ -860,13 +916,18 @@ func _draw_crafting(g: Control) -> void:
 	UiSkin.title(g, Rect2(4, 4, g.size.x - 24, TITLE_H), def.display_name if is_station else "Crafting by hand",
 		"Tier %d" % def.station_tier if is_station else "")
 	_close_button(g, hover[0] == Area.CLOSE)
+	var tabs := _tabs()
+	for i in tabs.size():
+		var state := UiSkin.Btn.PRESSED if i == craft_tab else (UiSkin.Btn.HOT if hover[0] == Area.TAB and hover[1] == i else UiSkin.Btn.NORMAL)
+		UiSkin.button(g, _tab_rect(i), String(tabs[i]), state)
 	var list := recipes()
 	selected_recipe = clampi(selected_recipe, 0, maxi(_entry_count() - 1, 0))
 	# The list.
 	var lr := _list_rect()
 	g.draw_rect(lr, Color(0, 0, 0, 0.22))
 	if list.is_empty():
-		g.draw_string(font, lr.position + Vector2(4, 12), "Nothing to craft here yet", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
+		var empty := "No known spells to copy" if not tabs.is_empty() and craft_tab == 1 else "Nothing to craft here yet"
+		g.draw_string(font, lr.position + Vector2(4, 12), empty, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
 	for i in range(_craft_scroll, mini(_entry_count(), _craft_scroll + _rows_shown())):
 		var rect := _row_rect(i)
 		var hot: bool = hover[0] == Area.RECIPE and hover[1] == i
@@ -881,15 +942,17 @@ func _draw_crafting(g: Control) -> void:
 				HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 26, 7, UiSkin.GOLD)
 			continue
 		var r := list[i]
-		var times := Crafting.times_craftable(inv, r)
+		var times := _times(r)
 		var a := 1.0 if times > 0 else 0.45
 		var out := ItemData.find(r.output)
 		_draw_icon(g, out.icon if out else null, rect.position + Vector2(3, 1), a)
 		var label_text := (out.display_name if out else String(r.output)) + (" x%d" % r.output_count if r.output_count > 1 else "")
-		if r.requires_book_spell != &"":
-			label_text = r.display_name + " (from your book)"
+		if r.mana > 0.0:
+			label_text = r.display_name
+		# Known spells' scrolls (cheaper) are listed in green.
+		var label_color := UiSkin.GOOD if r.note != "" and r.mana <= 0.0 else UiSkin.TEXT
 		g.draw_string(font, rect.position + Vector2(22, 12), label_text, HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 46, 7,
-			Color(UiSkin.TEXT, a))
+			Color(label_color, a))
 		if times > 0:
 			var t := str(times)
 			var tw := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
@@ -937,10 +1000,22 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 	g.draw_multiline_string(font, d.position + Vector2(42, 22), sub, HORIZONTAL_ALIGNMENT_LEFT, d.size.x - 42, 6, 2,
 		UiSkin.DIM)
 	var y := d.position.y + 48
+	if r.note != "":
+		g.draw_string(font, Vector2(d.position.x, y - 4), r.note, HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.GOOD)
+		y += 6
 	g.draw_string(font, Vector2(d.position.x, y), "Needs", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 	y += 4
 	for k: StringName in r.inputs:
 		y = _ingredient_row(g, font, d, y, k, "%d / %d" % [inv.count_of(k), r.inputs[k]], inv.count_of(k) >= r.inputs[k])
+	if r.mana > 0.0:
+		var have := _mana_for_crafting()
+		var ok := have >= r.mana
+		var right := "%s / %d" % ["inf" if have == INF else str(floori(have)), roundi(r.mana)]
+		g.draw_string(font, Vector2(d.position.x + 15, y + 10), "Mana", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
+		var rw := font.get_string_size(right, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+		g.draw_string(font, Vector2(d.end.x - rw, y + 10), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 7,
+			UiSkin.GOOD if ok else UiSkin.BAD)
+		y += 14
 	if not r.requires.is_empty():
 		y += 4
 		g.draw_string(font, Vector2(d.position.x, y + 8), "Tools (kept)", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
@@ -948,7 +1023,7 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 		for q in r.requires:
 			var has := inv.count_of(q) > 0
 			y = _ingredient_row(g, font, d, y, q, "have" if has else "missing", has)
-	var times := Crafting.times_craftable(inv, r)
+	var times := _times(r)
 	var labels := ["Craft", "x10", "All (%d)" % times]
 	var b := _craft_button_rects()
 	for i in b.size():
@@ -1086,6 +1161,10 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 	match h[0]:
 		Area.CLOSE:
 			close_window()
+		Area.TAB:
+			craft_tab = h[1]
+			selected_recipe = 0
+			_craft_scroll = 0
 		Area.RECIPE:
 			selected_recipe = h[1]
 			if mb.double_click and selected_recipe < recipes().size():
@@ -1096,7 +1175,7 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 			else:
 				var r := recipes()[selected_recipe]
 				var amount := CRAFT_AMOUNTS[h[1]]
-				craft(r, amount if amount > 0 else Crafting.times_craftable(_inventory(), r))
+				craft(r, amount if amount > 0 else _times(r))
 	_redraw()
 
 
@@ -1105,7 +1184,9 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 func craft(r: RecipeData, times: int) -> int:
 	if times <= 0:
 		return 0
-	var result := Crafting.craft(world.character.inventory, r, times)
+	var result := Crafting.craft(world.character.inventory, r, times, _mana_for_crafting())
+	if r.mana > 0.0 and int(result[0]) > 0:
+		world.player.spend_mana(r.mana * int(result[0]))
 	if int(result[1]) > 0:
 		world.request_spawn_drop(r.output, int(result[1]), world.player.chest(), Vector2.ZERO, true)
 	if int(result[0]) > 0:

@@ -202,19 +202,41 @@ func test_scrolls_teach_spells() -> void:
 	assert_eq(drill.station, &"spell_weaving")
 
 
-func test_copy_recipes_only_for_spells_in_your_book() -> void:
+func test_known_spells_craft_cheaper_and_copy_for_mana() -> void:
 	var c := w.character
-	var copy := Registry.get_def(&"recipes", &"copy_scroll_blink") as RecipeData
-	assert_eq(copy.requires_book_spell, &"blink")
-	assert_eq(copy.output, &"scroll_blink", "makes the same scroll")
-	assert_eq(copy.inputs[&"copper_bar"], 1, "half of 2, rounded up")
-	c.book_spells.erase(&"blink")
-	assert_false(copy in Crafting.recipes_for(&"spell_weaving", 1, c), "not in the book: hidden")
-	c.put_in_book(0, &"blink")
-	assert_true(copy in Crafting.recipes_for(&"spell_weaving", 1, c), "in the book: shown")
-	assert_false(copy in Crafting.recipes_for(&"spell_weaving", 1, null))
-	var gel := Registry.get_def(&"recipes", &"copy_scroll_gel_cushion") as RecipeData
-	assert_eq(gel.inputs[&"slime"], 10, "half the slime")
+	var p := w.player
+	var plain := Registry.get_def(&"recipes", &"scroll_hyper_drill") as RecipeData
+	c.known_spells.erase(&"hyper_drill")
+	assert_eq(Crafting.for_crafter(plain, c, 0.5), plain, "unknown: full price")
+	c.learn_spell(&"hyper_drill")
+	var cheap := Crafting.for_crafter(plain, c, 0.5)
+	assert_eq(cheap.inputs[&"copper_bar"], 5, "known: half of 10")
+	assert_eq(cheap.inputs[&"blank_scroll"], 1, "still a Blank Scroll")
+	assert_ne(cheap.note, "")
+	assert_eq(plain.inputs[&"copper_bar"], 10, "the real recipe is untouched")
+	var other := Registry.get_def(&"recipes", &"wooden_sword") as RecipeData
+	assert_eq(Crafting.for_crafter(other, c, 0.5), other, "not a scroll: unchanged")
+	# Copy tab: every known spell (not only the book), for a Blank Scroll and mana.
+	c.book_spells.erase(&"hyper_drill")
+	var copies := Crafting.copy_recipes(c, 3.0, 10.0, 60.0)
+	var with_scrolls := c.known_spells.filter(func(id: StringName) -> bool:
+		return ItemData.find(StringName("scroll_" + String(id))) != null)
+	assert_eq(copies.size(), with_scrolls.size(), "one per known spell that has a scroll")
+	var drill: RecipeData = copies.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_hyper_drill")[0]
+	assert_eq(drill.inputs, {&"blank_scroll": 1} as Dictionary[StringName, int])
+	assert_eq(drill.mana, 60.0, "30/s x 2 s x 3, capped at 60")
+	var spark: RecipeData = copies.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_spark")[0]
+	assert_eq(spark.mana, 10.0, "2 x 3 = 6, at least 10")
+	# Making copies spends mana and is limited by it.
+	c.inventory.add(&"blank_scroll", 5)
+	p.infinite_mana = false
+	p.mana = 130.0
+	assert_eq(Crafting.times_craftable(c.inventory, drill, p.mana), 2, "two copies' worth of mana")
+	var hud := w.hud
+	hud.station = w.world_to_tile(p.global_position)  # no station: crafting needs only the recipe here
+	assert_eq(hud.craft(drill, 5), 2)
+	assert_almost_eq(p.mana, 10.0, 0.01, "60 per copy")
+	assert_eq(c.inventory.count_of(&"scroll_hyper_drill"), 2)
 
 
 func test_scroll_casts_share_the_cooldown() -> void:

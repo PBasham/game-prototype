@@ -604,18 +604,15 @@ func _recipes() -> Array[RecipeData]:
 		[&"spell_weaving_table", &"workbench", {&"wood_planks": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
 	]
 	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by
-	# tier (until scrolls come from loot). And a cheaper copy of any spell in your book.
+	# tier (until scrolls come from loot). Known spells cost less, and the table's Copy tab
+	# copies known spells for mana (Crafting.for_crafter, copy_recipes).
 	for sp in _spells():
 		var spell := sp as SpellData
 		var cost: Dictionary = SCROLL_COSTS.get(spell.id,
 			{&"blank_scroll": 1, &"copper_bar": SCROLL_BARS[clampi(spell.tier, 1, 3) - 1]})
 		table.append([StringName("scroll_" + String(spell.id)), &"spell_weaving", cost,
 			StringName("scroll_" + String(spell.id)), 1, []])
-		var copy_cost := {}
-		for k: StringName in cost:
-			copy_cost[k] = cost[k] if k == &"blank_scroll" else ceili(cost[k] / 2.0)
-		table.append([StringName("copy_scroll_" + String(spell.id)), &"spell_weaving", copy_cost,
-			StringName("scroll_" + String(spell.id)), 1, [], spell.id])
+
 	for e: Array in table:
 		var r := RecipeData.new()
 		r.id = e[0]
@@ -627,10 +624,6 @@ func _recipes() -> Array[RecipeData]:
 		for q: StringName in e[5]:
 			r.requires.append(q)
 		r.display_name = String(e[3]).capitalize()
-		if e.size() > 6:
-			r.requires_book_spell = e[6]
-			var sp := ItemData.find(ItemData.spell_key(e[6]))
-			r.display_name = "Copy: %s" % (sp.display_name if sp else String(e[6]).capitalize())
 		out.append(r)
 	return out
 

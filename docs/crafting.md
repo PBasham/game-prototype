@@ -146,12 +146,26 @@ Not playtested yet.
 | 20 Wood Planks + 5 Copper Bars + 4 Paper | Workbench | Spell Weaving Table (6x3, station `spell_weaving`) |
 | 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table | Scroll: <spell>, one recipe per spell |
 | 1 Blank Scroll + 20 Slime | Spell Weaving Table | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
-| 1 Blank Scroll + half the bars (1 / 3 / 5; Gel Cushion 10 Slime) | Spell Weaving Table | **Copy: <spell>**, the same scroll, cheaper. Shown only while that spell is in your book (`RecipeData.requires_book_spell`) |
+| 1 Blank Scroll + mana | Spell Weaving Table, **Copy** tab | **Copy: <spell>**, for any spell you know |
+
+The **Spell Weaving Table** window has two tabs:
+
+- **Craft:** the scroll recipes. A spell you know (learned, in your book or not) costs
+  half the materials, rounded up (`World.known_scroll_discount`, 0.5); the Blank Scroll
+  is still needed. Those are listed in green with a note. The plain recipes stay until
+  scrolls come from loot.
+- **Copy:** every spell you know, written onto a Blank Scroll with your mana: the
+  spell's cost (per cast, or 2 seconds of a beam or concentration) times
+  `World.copy_mana_factor` (3), kept between `copy_mana_min` (10) and `copy_mana_max`
+  (60). This is also how you'll make more of spells that can't be crafted at all.
+  Recipes come from `Crafting.copy_recipes` (made on the fly, not data files).
+
+Tabs per station are `Hud.STATION_TABS` (Create and Empower join later). A recipe's
+`mana` is spent per craft and limits how many you can make.
 
 A scroll (`ItemData.teaches_spell`, kind SCROLL) is one use: left click casts its spell
 once for free, right click at a Spell Weaving Table learns it for the spell's
-`learn_cost` (items-and-mining.md, Magic). The plain scroll recipes stay until scrolls
-come from loot; copies from your book are the cheap way to stock up.
+`learn_cost` (items-and-mining.md, Magic).
 The bar costs per tier are `SCROLL_BARS` in tools/make_items.gd. The table becomes the
 Create and Empower table in the Magic progression phase.
 

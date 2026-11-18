@@ -45,6 +45,16 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 @export var block_heal_seconds := 5.0
 ## E interacts with things this close (tiles).
 @export var interact_tiles := 6.0
+
+@export_group("Spell scrolls")
+## Crafting a scroll of a spell you know uses this share of its materials.
+@export var known_scroll_discount := 0.5
+## Copying a known spell into a scroll (Spell Weaving Table, Copy tab): mana is the spell's
+## cost times copy_mana_factor, kept between copy_mana_min and copy_mana_max.
+@export var copy_mana_factor := 3.0
+@export var copy_mana_min := 10.0
+@export var copy_mana_max := 60.0
+@export_group("")
 ## Seconds dead before you respawn at the world spawn.
 @export var respawn_seconds := 3.0
 
