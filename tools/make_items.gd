@@ -215,16 +215,15 @@ func _objects() -> Array[ObjectDef]:
 	out[5].blocks_movement = true
 	out[5].toggles_to = &"door_open"
 	out[5].toggles_to_left = &"door_open_left"
-	# Open doors are 2 tiles wide: the hinge column plus the swung panel.
+	# Open doors keep the 1x8 footprint (Starbound style): the door swings toward you,
+	# seen edge on. door_open hinges on the left, door_open_left on the right.
 	for left: bool in [false, true]:
 		var open := out[5].duplicate() as ObjectDef
 		open.id = &"door_open_left" if left else &"door_open"
 		open.display_name = "Door (open)"
-		open.width_tiles = 2
 		open.blocks_movement = false
 		open.frames = load("res://assets/objects/door_open.png") as Texture2D
 		open.frame = 1 if left else 0
-		open.hinge_offset = 1 if left else 0
 		open.toggles_to = &"door"
 		open.toggles_to_left = &""
 		out.append(open)

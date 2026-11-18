@@ -46,9 +46,9 @@ stays full.
 | `bush_grown_share` | 0.7 | Share of the world's bushes that start full grown; the rest are young |
 | `bush_grow_min_seconds`, `bush_grow_max_seconds` | 300, 600 | Time for a young bush to grow full size |
 
-Young bushes are small and give half the berries; full grown bushes are bigger. Art:
-`assets/decor/berry_bush.png` / `berry_bush_bare.png` (full grown, 24x19) and
-`berry_bush_young.png` / `berry_bush_young_bare.png` (14x12). Later: crops, and moving
+Young bushes are small and have no berries; once full grown (bigger) they bear berries.
+Art: `assets/decor/berry_bush.png` / `berry_bush_bare.png` (full grown, 24x19) and
+`berry_bush_young.png` (14x12). Later: crops, and moving
 bushes with special tools (a brief first).
 
 ## Dying and the magic bag

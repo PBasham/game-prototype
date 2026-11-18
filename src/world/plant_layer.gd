@@ -59,7 +59,7 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 @export var berries_max := 4
 ## Share of bushes the world starts with full grown (the rest are young).
 @export_range(0.0, 1.0) var bush_grown_share := 0.7
-## Seconds for a young bush to grow full size. Young bushes give half the berries.
+## Seconds for a young bush to grow full size (with berries). Young bushes have none.
 @export var bush_grow_min_seconds := 300.0
 @export var bush_grow_max_seconds := 600.0
 ## Seconds until a picked bush has berries again.
@@ -99,7 +99,7 @@ var _trees: Array[Texture2D] = []
 var _flowers: Array[Texture2D] = []
 var _sapling_tex: Texture2D
 var _pickup_tex: Array[Texture2D] = []
-## [young ripe, young picked, grown ripe, grown picked].
+## [young, grown ripe, grown picked].
 var _bush_tex: Array[Texture2D] = []
 ## Young bushes growing up (their Plant.health counts down the seconds left).
 var _young: Array[Vector2i] = []
@@ -118,7 +118,7 @@ func setup(w: World) -> void:
 	for i in 5:
 		_flowers.append(load("res://assets/decor/flower_%d.png" % i) as Texture2D)
 	_sapling_tex = load("res://assets/decor/sapling.png") as Texture2D
-	for f: String in ["berry_bush_young", "berry_bush_young_bare", "berry_bush", "berry_bush_bare"]:
+	for f: String in ["berry_bush_young", "berry_bush", "berry_bush_bare"]:
 		_bush_tex.append(load("res://assets/decor/%s.png" % f) as Texture2D)
 	for kind: StringName in PICKUP_ITEMS:
 		_pickup_tex.append(load("res://assets/decor/pickup_%s.png" % kind) as Texture2D)
@@ -323,7 +323,12 @@ func _bush_near(tile: Vector2i) -> Vector2i:
 
 func is_ripe(ground: Vector2i) -> bool:
 	var p: Plant = _plants.get(world.wrap_tile(ground))
-	return p != null and p.kind == Kind.BUSH and p.grow_left <= 0.0
+	return _ripe(p)
+
+
+## Only full grown bushes have berries.
+static func _ripe(p: Plant) -> bool:
+	return p != null and p.kind == Kind.BUSH and p.variant == BUSH_GROWN and p.grow_left <= 0.0
 
 
 ## Picks the berries off a ripe bush (`ground` = the grass tile it grows on). They grow
@@ -331,11 +336,9 @@ func is_ripe(ground: Vector2i) -> bool:
 func request_pick_berries(ground: Vector2i, who: Player) -> bool:
 	ground = world.wrap_tile(ground)
 	var p: Plant = _plants.get(ground)
-	if not Game.is_authority() or p == null or p.kind != Kind.BUSH or p.grow_left > 0.0:
+	if not Game.is_authority() or not _ripe(p):
 		return false
 	var n := randi_range(berries_min, berries_max)
-	if p.variant == BUSH_YOUNG:
-		n = maxi(1, n / 2)
 	if who and who.character:
 		var left := who.character.inventory.add(&"berries", n)
 		if left < n:
@@ -363,7 +366,7 @@ func nearest_pickup(feet: Vector2i, r: int) -> Vector2i:
 		for dx in range(-r, r + 1):
 			var g := world.wrap_tile(feet + Vector2i(dx, dy))
 			var p: Plant = _plants.get(g)
-			var ripe := p != null and p.kind == Kind.BUSH and p.grow_left <= 0.0
+			var ripe := _ripe(p)
 			if p and (p.kind == Kind.PICKUP or ripe) and Vector2(dx, dy).length() < best_d:
 				best = feet + Vector2i(dx, dy)
 				best_d = Vector2(dx, dy).length()
@@ -540,7 +543,7 @@ func _break(g: Vector2i, p: Plant) -> void:
 		Kind.PICKUP:
 			world.request_spawn_drop(PICKUP_ITEMS[p.variant % PICKUP_ITEMS.size()], 1, pos, _pop())
 		Kind.BUSH:
-			if p.grow_left <= 0.0:
+			if _ripe(p):
 				world.request_spawn_drop(&"berries", randi_range(berries_min, berries_max), pos, _pop())
 	_remove(g)
 
@@ -614,7 +617,9 @@ func _texture(p: Plant) -> Texture2D:
 		Kind.PICKUP:
 			return _pickup_tex[p.variant % _pickup_tex.size()]
 		Kind.BUSH:
-			return _bush_tex[(2 if p.variant == BUSH_GROWN else 0) + (0 if p.grow_left <= 0.0 else 1)]
+			if p.variant != BUSH_GROWN:
+				return _bush_tex[0]  # young: no berries yet
+			return _bush_tex[1 if p.grow_left <= 0.0 else 2]
 	return _flowers[p.variant % _flowers.size()]
 
 

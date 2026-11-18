@@ -100,10 +100,10 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | objects/furnace.png | 32x40 (4x5 tiles), glows orange in game |
 | objects/copper_anvil.png, objects/chest.png | 24x24 (3x3 tiles); the anvil sits on a stump |
 | objects/door.png | 8x64 (1x8 tiles), closed: planks, three rails, hinges on the left, handle on the right |
-| objects/door_open.png | 32x64: 2 frames of 16x64 (2x8 tiles), one connected piece: the door's 3 px edge at the side of the doorway, and the door face on in the next tile, hinges across both (frame 0 opens right, frame 1 is the mirror) |
+| objects/door_open.png | 16x64: 2 frames of 8x64 (1x8 tiles, like closed), Starbound style: lintel and a thin post, the door edge on (3 px) along the hinge side with its handle (frame 0 hinge left, frame 1 hinge right) |
 | objects/magic_bag.png | 12x12, bottom-centered: the bag your items go into when you die |
 | decor/berry_bush.png, decor/berry_bush_bare.png | 24x19, bottom-centered: full grown, ripe and picked |
-| decor/berry_bush_young.png, decor/berry_bush_young_bare.png | 14x12, bottom-centered: young, ripe and picked |
+| decor/berry_bush_young.png | 14x12, bottom-centered: young bush (no berries yet) |
 | items/{icons,held}/berries.png | berries (food) |
 | decor/pickup_{stick,rock,flint}.png | lying on the grass, bottom-centered: stick 12x5, rock 9x7, flint 7x6 |
 | fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |

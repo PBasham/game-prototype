@@ -11,10 +11,11 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - Dying: respawn at the world spawn after 3 s, full bars. Items go into a magic bag
   (Valheim tombstone idea, Terraria tombstone physics), saved with the world.
 - World options: Hunger on / off, On death: magic bag / keep items.
-- Doors open Terraria style: separate closed and open images; open shows the door's
-  edge in the doorway and the door flat in the next tile, connected at the hinges.
-- Berry bushes have a young (small) and a full grown (bigger) stage; young ones grow
-  up. Planned: crops, and transplanting bushes with special tools.
+- Doors open Starbound style: separate closed and open images, same 1x8 footprint; open
+  shows the frame and the door edge on along its hinge side.
+- Berry bushes have a young (small, no berries) and a full grown (bigger, berries)
+  stage; young ones grow up. Planned: crops, and transplanting bushes with special
+  tools.
 
 ## 2026-11-17: Phase 6, house review
 

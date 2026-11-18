@@ -338,8 +338,7 @@ func _phase5_art() -> void:
 	_save(_rock(Color("4a4a52"), Color("8a8a9a")), "flint", true)
 	_save(_bar(), "copper_bar", true)
 	_save(_berries(), "berries", true)
-	_bush(true).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_young.png"))
-	_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_young_bare.png"))
+	_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_young.png"))
 	_big_bush(true).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush.png"))
 	_big_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_bare.png"))
 	_magic_bag().save_png(ProjectSettings.globalize_path("res://assets/objects/magic_bag.png"))
@@ -576,31 +575,36 @@ func _door_pixel(x: int, y: int, light: float) -> Color:
 	return c.darkened(1.0 - light)
 
 
-## Open door, 2 frames of 16x64 (2x8 tiles), Terraria style, one connected piece: in
-## the doorway only the door's edge shows (its thickness, against the far side of the
-## doorway), and the door itself stands flat in the next tile, hinged to that edge, a
-## little shaded. The doorway is left open. Frame 0 opens to the right, frame 1 is the
-## mirror.
+## Open door, 2 frames of 8x64 (1x8 tiles, same footprint as closed), Starbound style:
+## a door frame (lintel on top, a thin post on the latch side) and the door swung open
+## toward you, seen edge on against the hinge side: a narrow slab with its hinges and
+## the handle sticking out. Frame 0 hinges on the left, frame 1 on the right.
 func _door_open() -> Image:
-	var img := Image.create_empty(32, 64, false, Image.FORMAT_RGBA8)
-	var frame := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
+	var img := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
+	var frame := Image.create_empty(8, 64, false, Image.FORMAT_RGBA8)
 	for y in 64:
-		# The door's edge, seen end on: 3 px of wood at the doorway's right side.
-		for x in range(5, 8):
-			var c := Color("7a5a36") if x == 5 else Color("8c6a42")
-			if y == 0 or y == 63:
-				c = Color("6e5030")
+		# The door, edge on: 3 px of planks along the hinge side.
+		for x in range(0, 3):
+			var c := Color("6e5030") if x == 0 else (Color("9a7448") if x == 1 else Color("7a5a36"))
+			for rail: int in [3, 31, 59]:
+				if y >= rail - 1 and y <= rail + 1:
+					c = Color("a8845a") if x < 2 else Color("8c6a42")
 			frame.set_pixel(x, y, c)
-		# The door, face on, hinge side (x 0 of the closed art) against the edge.
-		for x in 8:
-			frame.set_pixel(8 + x, y, _door_pixel(x, y, 0.9))
-		# Hinge straps reach across the edge onto the door.
-		if y >= 8 and y <= 10 or y >= 52 and y <= 54:
-			for x in range(5, 11):
-				frame.set_pixel(x, y, Color("7a7a7e") if y == 8 or y == 52 else Color("5a5a5e"))
-	img.blit_rect(frame, Rect2i(0, 0, 16, 64), Vector2i.ZERO)
+		# The thin post on the latch side.
+		frame.set_pixel(7, y, Color("6e5030"))
+	# Lintel across the top and a sill at the bottom.
+	for x in 8:
+		frame.set_pixel(x, 0, Color("6e5030"))
+		frame.set_pixel(x, 1, Color("8a6a40"))
+		frame.set_pixel(x, 63, Color("6e5030"))
+	# Hinges and the handle.
+	for y: int in [9, 10, 53, 54]:
+		frame.set_pixel(0, y, Color("5a5a5e"))
+	frame.fill_rect(Rect2i(3, 32, 2, 3), Color("b08a3a"))
+	frame.set_pixel(4, 32, Color("e8c860"))
+	img.blit_rect(frame, Rect2i(0, 0, 8, 64), Vector2i.ZERO)
 	frame.flip_x()
-	img.blit_rect(frame, Rect2i(0, 0, 16, 64), Vector2i(16, 0))
+	img.blit_rect(frame, Rect2i(0, 0, 8, 64), Vector2i(8, 0))
 	return img
 
 

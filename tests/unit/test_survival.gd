@@ -100,11 +100,11 @@ func test_young_bushes_grow_up() -> void:
 	var bush := w.plants._add(ground, PlantLayer.Kind.BUSH, PlantLayer.BUSH_YOUNG)
 	bush.health = 10.0
 	w.plants._young.append(ground)
-	var before := w.character.inventory.count_of(&"berries")
-	assert_true(w.plants.request_pick_berries(ground, w.player))
-	assert_lte(w.character.inventory.count_of(&"berries") - before, w.plants.berries_max / 2, "young: fewer berries")
+	assert_false(w.plants.is_ripe(ground), "young: no berries")
+	assert_false(w.plants.request_pick_berries(ground, w.player))
 	w.plants._grow_bushes(11.0)
 	assert_eq(w.plants.plant_at(ground).variant, PlantLayer.BUSH_GROWN, "grew up")
+	assert_true(w.plants.is_ripe(ground), "full grown: berries")
 
 
 func test_dying_drops_a_magic_bag_and_respawns() -> void:
