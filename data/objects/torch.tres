@@ -7,6 +7,7 @@
 script = ExtResource("1_obj")
 frames = ExtResource("2_tex")
 style = 1
+height_tiles = 2
 needs_support = true
 light_color = Color(1, 0.86, 0.62, 1)
 light_radius = 11.0

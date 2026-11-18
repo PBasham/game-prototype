@@ -104,6 +104,13 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 ## Draw the character on the smooth slope the terrain shows over 1-tile steps, instead
 ## of on the step the body stands on (so feet don't sink going up or float going down).
 @export var follow_slopes := true
+## Pixels: falling, the body lands on a block or platform whose top is this far above
+## the collision box's bottom (the jump pose tucks the legs up, so the drawn feet are
+## higher than the box). 0 = off.
+@export var ledge_assist_px := 10.0
+## Pixels each side of the center where the feet are, for slopes: the body is drawn
+## at the higher of the two so no foot sinks into a hill (the other may hang a little).
+@export var foot_spread_px := 4.0
 ## Walk up ledges this many tiles high without jumping.
 @export var max_step_tiles := 2
 ## Longest that platforms are ignored after Down + Jump. They catch you again as soon
@@ -135,7 +142,7 @@ var concentration: SpellData
 ## (a block with nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
 var use_check: Callable
 ## Tiles/s a dropped stack (Q) is thrown at.
-@export var throw_speed := 14.0
+@export var throw_speed := 8.0
 var walk_toggled := false
 var facing := 1
 
@@ -145,6 +152,8 @@ var _rising_jump := false
 var _climbing := false
 var _drop_timer := 0.0
 var _drop_from_y := 0.0
+## Falling after Down + Jump (until landing): no ledge assist back onto that platform.
+var _dropping := false
 var _airborne := false
 var _peak_y := 0.0
 var _takeoff_timer := 0.0
@@ -364,6 +373,8 @@ func _physics_process(delta: float) -> void:
 		walk_toggled = not walk_toggled
 
 	_coyote = coyote_time if is_on_floor() else maxf(_coyote - delta, 0.0)
+	if is_on_floor() and _drop_timer <= 0.0:
+		_dropping = false
 	_buffer = jump_buffer_time if _just("jump") else maxf(_buffer - delta, 0.0)
 	if _drop_timer > 0.0:
 		_drop_timer -= delta
@@ -411,6 +422,7 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 			set_collision_mask_value(2, false)
 			_drop_timer = platform_drop_time
 			_drop_from_y = global_position.y
+			_dropping = true
 		else:
 			velocity.y = -jv.y
 			_rising_jump = true
@@ -443,6 +455,8 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 	velocity.x = move_toward(velocity.x, target, rate * delta)
 
 	var y_before := global_position.y
+	if not grounded:
+		_ledge_assist()
 	if grounded and input_x != 0.0 and max_step_tiles > 0:
 		_try_step_up(signf(input_x), delta)
 	move_and_slide()
@@ -464,18 +478,53 @@ func _current_speed() -> float:
 
 
 ## If a low ledge blocks us and there's room above it, lift the body onto it.
+## Only solid blocks count: platforms are ignored while testing, so walking through a
+## stack of platforms never lifts you onto them.
 func _try_step_up(dir: float, delta: float) -> void:
 	var motion := Vector2(dir * maxf(absf(velocity.x) * delta, 2.0), 0.0)
-	if not test_move(global_transform, motion):
+	var platforms := get_collision_mask_value(2)
+	set_collision_mask_value(2, false)
+	if test_move(global_transform, motion):
+		for step in range(1, max_step_tiles + 1):
+			var up := Vector2(0.0, -TILE * step - 1.0)
+			if test_move(global_transform, up):
+				break
+			if not test_move(global_transform.translated(up), motion):
+				global_position += up
+				velocity.y = maxf(velocity.y, 0.0)
+				break
+	set_collision_mask_value(2, platforms)
+
+
+## Falling past a ledge or platform whose top is just below the drawn feet (the jump
+## pose tucks the legs up): land on it instead of slipping past.
+func _ledge_assist() -> void:
+	if ledge_assist_px <= 0.0 or velocity.y < 0.0 or world == null:
 		return
-	for step in range(1, max_step_tiles + 1):
-		var up := Vector2(0.0, -TILE * step - 1.0)
-		if test_move(global_transform, up):
-			return
-		if not test_move(global_transform.translated(up), motion):
-			global_position += up
-			velocity.y = maxf(velocity.y, 0.0)
-			return
+	var feet := global_position.y
+	for dx: float in [-6.0, 0.0, 6.0]:
+		var col := floori((global_position.x + dx) / TILE)
+		var row := floori((feet - 0.5) / TILE)  # the tile the feet are in
+		var top := float(row * TILE)
+		if feet - top <= 0.5 or feet - top > ledge_assist_px:
+			continue
+		var b := world.data.get_block(col, row)
+		var above := world.data.get_block(col, row - 1)
+		var standable := b > 0 and world.blocks.collision(b) != TileDef.Collision.NONE
+		if b > 0 and world.blocks.collision(b) == TileDef.Collision.PLATFORM \
+				and (not get_collision_mask_value(2) or (_dropping and top <= _drop_from_y + 0.5)):
+			standable = false  # dropping through this one
+		var open := above == WorldData.AIR or (above > 0 and world.blocks.collision(above) != TileDef.Collision.SOLID)
+		if standable and open:
+			var lift := Vector2(0.0, top - feet - 0.5)
+			var platforms := get_collision_mask_value(2)
+			set_collision_mask_value(2, false)
+			var blocked := test_move(global_transform, lift)
+			set_collision_mask_value(2, platforms)
+			if not blocked:
+				global_position += lift
+				velocity.y = 0.0
+				return
 
 
 ## Turns a concentration spell on, or off if it's the one already on. Turning one on
@@ -505,6 +554,7 @@ func _fly(input_x: float, input_y: float, delta: float) -> void:
 
 func _start_climb() -> void:
 	_climbing = true
+	set_collision_mask_value(2, false)  # climb through platforms
 	_rising_jump = false
 	_peak_y = global_position.y
 
@@ -512,6 +562,8 @@ func _start_climb() -> void:
 func _climb(input_x: float, input_y: float) -> void:
 	if not world.is_climbable_at(_body_center()) or _just("jump"):
 		_climbing = false
+		if _drop_timer <= 0.0:
+			set_collision_mask_value(2, true)
 		if _just("jump"):
 			velocity.y = -jump_values(jump_height, time_to_apex).y * 0.7
 		return
@@ -691,23 +743,37 @@ func _slope_offset() -> float:
 	if world == null:
 		return 0.0
 	var feet := global_position
-	var u := feet.x / TILE - 0.5
+	var best := INF
+	for dx: float in [-foot_spread_px, foot_spread_px]:
+		var h := _ramp_at(feet.x + dx, feet.y)
+		if is_inf(h):
+			return 0.0
+		best = minf(best, h)  # the higher foot (smaller y)
+	return clampf(best - feet.y, -TILE, TILE)
+
+
+## Ground height (px) at x, interpolated between the two nearest tile columns; INF at
+## a cliff (more than one tile between them) or with no ground nearby.
+func _ramp_at(x: float, feet_y: float) -> float:
+	var u := x / TILE - 0.5
 	var c0 := floori(u)
-	var h0 := _ground_top(c0, feet.y)
-	var h1 := _ground_top(c0 + 1, feet.y)
+	var h0 := _ground_top(c0, feet_y)
+	var h1 := _ground_top(c0 + 1, feet_y)
 	if is_inf(h0) or is_inf(h1) or absf(h0 - h1) > TILE + 0.5:
-		return 0.0
-	return clampf(lerpf(h0, h1, u - c0) - feet.y, -TILE, TILE)
+		return INF
+	return lerpf(h0, h1, u - c0)
 
 
-## Top (px) of the ground in a tile column near the feet, or INF if there's none
-## within two tiles up or down.
+## Top (px) of the ground in a tile column near the feet: a solid block one tile up
+## (a step), at the feet, or one tile down; platforms only at or below the feet (not
+## ones overhead). INF if there's none.
 func _ground_top(col: int, feet_y: float) -> float:
-	var r := floori((feet_y - 1.0) / TILE)
-	for row in range(r - 2, r + 3):
+	var r := floori((feet_y - 1.0) / TILE)  # the tile the feet are in
+	for row in range(r, r + 3):
 		var b := world.data.get_block(col, row)
 		var above := world.data.get_block(col, row - 1)
-		var standable := b == WorldData.OUT_OF_BOUNDS or (b > 0 and world.blocks.collision(b) != TileDef.Collision.NONE)
+		var standable := b == WorldData.OUT_OF_BOUNDS or (b > 0 and world.blocks.collision(b) == TileDef.Collision.SOLID) \
+			or (row > r and b > 0 and world.blocks.collision(b) == TileDef.Collision.PLATFORM)
 		var open_above := above == WorldData.AIR or (above > 0 and world.blocks.collision(above) != TileDef.Collision.SOLID)
 		if standable and open_above:
 			return float(row * TILE)

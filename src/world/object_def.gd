@@ -5,7 +5,8 @@ extends TileDef
 ## platform or a wall, never with a solid block. Rope and torches now; chests, doors and
 ## signs later.
 ##
-## Art: `frames`, a strip of 8x8 frames; which frame shows depends on `style`.
+## Art: `frames`, a strip of frames 8 wide and 8 * height_tiles tall; which frame
+## shows depends on `style`.
 
 enum Style {
 	ROPE,   ## frames: single, top, middle, bottom (joins ropes above and below)
@@ -14,6 +15,9 @@ enum Style {
 
 @export var frames: Texture2D
 @export var style := Style.ROPE
+## How many tiles tall it's drawn, upward from its tile (frames are 8 x 8*height). The
+## tiles above it must be free of solid blocks; a block placed there pops it off.
+@export var height_tiles := 1
 ## What it needs to stay put. Torches need a solid block below or beside them, or a
 ## back wall behind; they pop off as an item when it's gone. Rope needs anything next
 ## to it (a block, a platform, more rope, or a wall behind) to be placed, and then stays.

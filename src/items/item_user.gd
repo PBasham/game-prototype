@@ -226,7 +226,10 @@ func can_use(on_back: bool = false) -> bool:
 		Mode.CAST:
 			return not on_back
 		Mode.NONE:
-			return not on_back
+			# Empty hands punch and weapons swing; materials, books and the like have no
+			# use, so the arm just keeps holding them.
+			var held := world.player.held_item
+			return not on_back and (held == null or held.kind in [ItemData.Kind.WEAPON, ItemData.Kind.TOOL])
 	return true
 
 

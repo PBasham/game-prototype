@@ -74,8 +74,10 @@ func draw_chunk(view: ChunkObjects) -> void:
 			if def == null or def.frames == null:
 				continue
 			var frame := frame_for(def, origin + Vector2i(lx, ly), id)
-			view.draw_texture_rect_region(def.frames, Rect2(lx * TILE, ly * TILE, TILE, TILE),
-				Rect2(frame * TILE, 0, TILE, TILE))
+			var h := maxi(def.height_tiles, 1)
+			# Taller objects grow upward from their tile.
+			view.draw_texture_rect_region(def.frames, Rect2(lx * TILE, (ly - h + 1) * TILE, TILE, h * TILE),
+				Rect2(frame * TILE, 0, TILE, h * TILE))
 
 
 ## Which frame of the strip an object shows at a tile.

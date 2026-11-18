@@ -357,6 +357,8 @@ func is_solid(tile: Vector2i) -> bool:
 func can_place_object(tile: Vector2i, def: ObjectDef) -> bool:
 	if def == null or not data.in_bounds_y(tile.y) or data.get_object(tile.x, tile.y) > 0 or is_solid(tile):
 		return false
+	if not _room_above(tile, def):
+		return false
 	if def.needs_support:
 		return _supported(tile)
 	# Anything next to it, or a wall behind.
@@ -366,6 +368,14 @@ func can_place_object(tile: Vector2i, def: ObjectDef) -> bool:
 		if data.get_block(tile.x + d.x, tile.y + d.y) != WorldData.AIR or data.get_object(tile.x + d.x, tile.y + d.y) > 0:
 			return true
 	return false
+
+
+## Tall objects (a 2-tile torch) need the tiles above them free of solid blocks.
+func _room_above(tile: Vector2i, def: ObjectDef) -> bool:
+	for k in range(1, def.height_tiles):
+		if is_solid(tile - Vector2i(0, k)):
+			return false
+	return true
 
 
 ## Torch support: a solid block below or beside, or a back wall behind.
@@ -380,7 +390,7 @@ func _check_supports(tile: Vector2i) -> void:
 	for d: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 		var t := wrap_tile(tile + d)
 		var def := object_at(t)
-		if def and ((def.needs_support and not _supported(t)) or is_solid(t)):
+		if def and ((def.needs_support and not _supported(t)) or is_solid(t) or not _room_above(t, def)):
 			_break_object(t, def)
 
 

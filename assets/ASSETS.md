@@ -93,7 +93,7 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | items/icons/{chopping_spell,fly,spark}.png | 16x16 placeholder spell icons |
 | items/icons/torch.png, items/held/torch.png | torch item |
 | objects/rope.png | 32x8: 4 frames of 8x8: single, top, middle, bottom |
-| objects/torch.png | 32x8: 4 frames of 8x8: standing, on a block to the left, to the right, on a back wall |
+| objects/torch.png | 32x16: 4 frames of 8x16 (2 tiles tall): standing, on a block to the left, to the right, on a back wall |
 | fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |
 
 Replace any of these with real art under the same name; if the size changes, check the

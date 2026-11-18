@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Phase 4 closing fixes
+
+- Torches are 2 tiles tall. Materials don't swing when clicked. Thrown items stop when
+  they land. Console keeps the cursor in the box after Enter.
+- Movement: stepping up ignores platforms; climbing rope goes through platforms; falling
+  lands on a platform the tucked-up feet are already over; on slopes the body is drawn
+  for the higher foot.
+
 ## 2026-11-17: Roadmap after Phase 4
 
 - Next: crafting (recipes as data, crafting window, stations, chests, first real

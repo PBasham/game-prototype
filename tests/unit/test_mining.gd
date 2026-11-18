@@ -529,12 +529,17 @@ func test_feet_follow_the_slope_over_a_step() -> void:
 	# A 1-tile step up to the right of the column we stand on.
 	w.request_set_block(Vector2i(feet.x + 1, feet.y - 1), w.blocks.index_of(&"dirt"))
 	await wait_physics_frames(2)
-	# Standing in the middle of our column: flat.
+	p.global_position.y = feet.y * World.TILE  # exactly on the ground (no step offset noise)
+	# One foot point: the middle of our column is flat; the edge is halfway up the step.
+	p.foot_spread_px = 0.0
 	p.global_position.x = feet.x * World.TILE + 4.0
-	assert_almost_eq(p._slope_offset(), 0.0, 0.01)
-	# Right at the edge between the columns: halfway up the step (drawn 4 px higher).
+	assert_almost_eq(p._slope_offset(), 0.0, 0.05)
 	p.global_position.x = (feet.x + 1) * World.TILE
-	assert_almost_eq(p._slope_offset(), -4.0, 0.01)
+	assert_almost_eq(p._slope_offset(), -4.0, 0.05)
+	# Two feet 4 px each side: drawn for the higher foot, so neither sinks in.
+	p.foot_spread_px = 4.0
+	p.global_position.x = feet.x * World.TILE + 4.0
+	assert_almost_eq(p._slope_offset(), -4.0, 0.05, "front foot at the step's edge")
 
 
 func test_dev_reach() -> void:
@@ -547,3 +552,79 @@ func test_dev_reach() -> void:
 	u.update_target(far)
 	assert_gt(u.valid.size(), 0, "anything on screen")
 	w.console.run("reach")
+
+
+func test_walking_under_platforms_doesnt_lift_you_onto_them() -> void:
+	var feet := w.world_to_tile(w.player.global_position)
+	var plat := w.blocks.index_of(&"wood_platform")
+	# A stack of platforms at head height, 1 to 4 tiles up, to the right.
+	for x in range(feet.x + 2, feet.x + 12):
+		for dy in [1, 2, 3, 4]:
+			w.request_set_block(Vector2i(x, feet.y - dy), plat)
+	var y0 := w.player.global_position.y
+	Input.action_press("move_right")
+	await wait_seconds(0.8)
+	Input.action_release("move_right")
+	assert_almost_eq(w.player.global_position.y, y0, 1.0, "still on the ground")
+
+
+func test_jumping_onto_a_platform_with_tucked_legs() -> void:
+	var p := w.player
+	var feet := w.world_to_tile(p.global_position)
+	var plat := w.blocks.index_of(&"wood_platform")
+	for x in range(feet.x - 3, feet.x + 4):
+		w.request_set_block(Vector2i(x, feet.y - 3), plat)
+	# Falling with the box's bottom 6 px below the platform's top (the drawn feet are above it).
+	p.global_position.y = (feet.y - 3) * World.TILE + 6.0
+	p.velocity = Vector2(0, 20)
+	await wait_physics_frames(3)
+	assert_almost_eq(p.global_position.y, float((feet.y - 3) * World.TILE), 1.0, "landed on it")
+
+
+func test_materials_dont_swing() -> void:
+	var inv := w.character.inventory
+	inv.set_slot(4, &"wood", 10)
+	w.player.select_slot(4)
+	assert_false(w.item_user.can_use(false), "wood has no use")
+	w.player.select_slot(0)
+	assert_true(w.item_user.can_use(false), "the pickaxe swings")
+
+
+func test_thrown_items_stop_quickly() -> void:
+	var d := w.request_spawn_drop(&"stone", 5, w.player.chest() + Vector2(0, -2 * World.TILE),
+		Vector2(8.0 * World.TILE, -6.0 * World.TILE), true)
+	d.magnet_tiles = 0.0  # don't fly back to the player for this test
+	await wait_seconds(1.5)
+	var x := d.global_position.x
+	await wait_seconds(0.5)
+	assert_almost_eq(d.global_position.x, x, 0.5, "stopped")
+
+
+func test_rope_climbs_through_platforms() -> void:
+	var p := w.player
+	var feet := w.world_to_tile(p.global_position)
+	var rope := w.objects.index_of(&"rope")
+	var plat := w.blocks.index_of(&"wood_platform")
+	for dy in range(1, 15):
+		w.request_set_object(Vector2i(feet.x, feet.y - dy), rope)
+	w.request_set_block(Vector2i(feet.x, feet.y - 9), plat)
+	w.request_set_block(Vector2i(feet.x - 1, feet.y - 9), plat)
+	w.request_set_block(Vector2i(feet.x + 1, feet.y - 9), plat)
+	p.global_position.x = feet.x * World.TILE + 4.0
+	Input.action_press("move_up")
+	await wait_seconds(1.5)
+	Input.action_release("move_up")
+	assert_lt(p.global_position.y, float((feet.y - 9) * World.TILE), "climbed up past the platform")
+
+
+func test_tall_torches_need_room_above() -> void:
+	var torch := w.objects.def(w.objects.index_of(&"torch")) as ObjectDef
+	assert_eq(torch.height_tiles, 2)
+	var feet := w.world_to_tile(w.player.global_position)
+	var t := Vector2i(feet.x + 4, feet.y - 1)
+	w.request_set_block(t + Vector2i.UP, w.blocks.index_of(&"stone"))
+	assert_false(w.can_place_object(t, torch), "a block right above")
+	w.request_set_block(t + Vector2i.UP, WorldData.AIR)
+	assert_true(w.request_set_object(t, w.objects.index_of(&"torch")))
+	w.request_set_block(t + Vector2i.UP, w.blocks.index_of(&"stone"))
+	assert_eq(w.data.get_object(t.x, t.y), WorldData.AIR, "popped off")

@@ -35,6 +35,8 @@ Inventory panel (I): 4 rows of 10, the top row is the hotbar.
 While the mouse is over the hotbar or panel, you're carrying a stack, or the spell wheel
 is open, clicks don't use items.
 
+Items with no use (wood, books, conduits) are just held: clicking doesn't swing.
+
 ## Front and back layers (Starbound-style)
 
 Every tile has a front block and a back wall. One item covers both: Dirt, Stone and
@@ -56,15 +58,18 @@ A third layer, between the back wall and the front block: `data/objects/*.tres`
 tile with a platform or a back wall, never with a solid block. Items place them with
 left click (`places_object`).
 
-- **Rope:** climbable (Up / Down). Can hang through platforms. Needs something next to
+- **Rope:** climbable (Up / Down), right through platforms (climbing ignores them).
+  Can hang through platforms. Needs something next to
   it to be placed (a block, a platform, more rope, or a wall behind), then stays.
-- **Torch:** gives warm light (radius 11, see Lighting in the guide). Goes on a solid
+- **Torch:** 2 tiles tall (`height_tiles`; drawn upward from its tile, which needs no
+  solid block above it). Gives warm light (radius 11, see Lighting in the guide). Goes on a solid
   block below or beside it, or on a back wall, and shows the matching frame (standing,
   leaning left or right, on the wall). It can't go inside a solid block. When what holds
   it is mined, it pops off as an item.
 - Mining (left click) takes an object first when there's no solid block in the tile;
   objects break in one hit and drop their item.
-- Fields: `frames` (strip of 8x8 frames), `style` (ROPE or TORCH: which frames),
+- Fields: `frames` (strip of frames 8 x 8*height), `height_tiles`, `style` (ROPE or
+  TORCH: which frames),
   `climbable`, `needs_support`, `light_color`, `light_radius`, `health`, `drop_item`.
 - Saved with the world (world file format 2; older worlds load with no objects, and
   rope that was a block before this change is gone).
@@ -261,6 +266,9 @@ where the ring appears), `ring_alpha`, `swing_cut_tiles`.
 - Placing a block where a flower or sapling stands breaks it.
 
 ## Drops (`src/items/item_drop.gd`)
+
+Thrown stacks (Q, or clicking the world with a stack) fly at `throw_speed` (8 tiles/s,
+on the Player) and stop as soon as they land.
 
 Picking items up shows one note per item that adds up ("+12 Dirt") while more keep
 arriving (`note_seconds` on `Hud`, 1.6).

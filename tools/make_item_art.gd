@@ -253,29 +253,38 @@ func _rope_strip() -> Image:
 	return img
 
 
-## Torch, 4 frames of 8x8: standing, leaning on a block to the left, to the right, on a
-## back wall.
+## Torch, 2 tiles tall: 4 frames of 8x16: standing, leaning on a block to the left,
+## to the right, on a back wall (with a bracket).
 func _torch_strip() -> Image:
-	var img := Image.create_empty(32, 8, false, Image.FORMAT_RGBA8)
+	var img := Image.create_empty(32, 16, false, Image.FORMAT_RGBA8)
 	var stick := Color("7a5230")
-	var flame := [Color("fff2a8"), Color("ffc94a"), Color("ff8a2a")]
-	# frame: [stick from, stick to, lean]
-	var specs: Array = [[Vector2i(3, 7), Vector2i(3, 3), 0], [Vector2i(1, 7), Vector2i(3, 3), -1],
-		[Vector2i(6, 7), Vector2i(4, 3), 1], [Vector2i(3, 6), Vector2i(3, 3), 0]]
+	var stick_dark := Color("5e4022")
+	var flame: Array[Color] = [Color("fff6c8"), Color("ffd45a"), Color("ff9a30"), Color("e8601c")]
+	# frame: [stick bottom, stick top]
+	var specs: Array = [[Vector2i(3, 15), Vector2i(3, 6)], [Vector2i(0, 13), Vector2i(3, 6)],
+		[Vector2i(7, 13), Vector2i(4, 6)], [Vector2i(3, 13), Vector2i(3, 6)]]
 	for f in 4:
 		var from: Vector2i = specs[f][0]
 		var to: Vector2i = specs[f][1]
-		for i in 5:
-			var p := Vector2i(roundi(lerpf(from.x, to.x, i / 4.0)), roundi(lerpf(from.y, to.y, i / 4.0)))
+		var n := maxi(absi(from.x - to.x), absi(from.y - to.y))
+		for i in n + 1:
+			var p := Vector2i(roundi(lerpf(from.x, to.x, float(i) / n)), roundi(lerpf(from.y, to.y, float(i) / n)))
 			img.set_pixel(f * 8 + p.x, p.y, stick)
-			if f == 3 and i == 1:
-				img.set_pixel(f * 8 + p.x - 1, p.y, Color("5e4022"))  # wall bracket
-				img.set_pixel(f * 8 + p.x + 1, p.y, Color("5e4022"))
-		var tip := to
-		img.set_pixel(f * 8 + tip.x, tip.y - 1, flame[1])
-		img.set_pixel(f * 8 + tip.x + 1, tip.y - 1, flame[2])
-		img.set_pixel(f * 8 + tip.x, tip.y - 2, flame[0])
-		img.set_pixel(f * 8 + tip.x, tip.y - 3, flame[1])
+			if p.x + 1 < 8 and img.get_pixel(f * 8 + p.x + 1, p.y).a == 0.0:
+				img.set_pixel(f * 8 + p.x + 1, p.y, stick_dark)
+		if f == 3:  # wall bracket
+			for x in range(2, 6):
+				img.set_pixel(f * 8 + x, 12, stick_dark)
+		# Head wrap and a flame about 5 px tall.
+		img.set_pixel(f * 8 + to.x, to.y, Color("4a3020"))
+		img.set_pixel(f * 8 + to.x + 1, to.y, Color("4a3020"))
+		var fx := f * 8 + to.x
+		for p: Array in [[0, -1, 3], [1, -1, 2], [-1, -1, 3], [0, -2, 1], [1, -2, 2], [0, -3, 0], [0, -4, 1],
+				[1, -3, 1], [0, -5, 2]]:
+			var x: int = fx + int(p[0])
+			var y: int = to.y + int(p[1])
+			if x >= f * 8 and x < f * 8 + 8 and y >= 0:
+				img.set_pixel(x, y, flame[int(p[2])])
 	return img
 
 

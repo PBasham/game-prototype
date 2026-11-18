@@ -88,8 +88,10 @@ func _physics_process(delta: float) -> void:
 		# Lost the player (walked away, inventory full): don't keep the flying speed.
 		_magnetized = false
 		velocity = velocity.limit_length(max_loose_speed * TILE)
+	# On the ground? (checked before gravity, which makes velocity.y non-zero again)
+	var grounded := _on_ground()
 	velocity.y = minf(velocity.y + gravity * TILE * delta, max_fall * TILE)
-	velocity.x = move_toward(velocity.x, 0.0, (ground_friction if _on_ground() else air_friction) * TILE * delta)
+	velocity.x = move_toward(velocity.x, 0.0, (ground_friction if grounded else air_friction) * TILE * delta)
 	var next := global_position + velocity * delta
 	# Sideways: stop at solid blocks.
 	if world.collision_at(Vector2(next.x, global_position.y - 2.0)) == TileDef.Collision.SOLID:

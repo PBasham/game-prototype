@@ -48,6 +48,7 @@ func _ready() -> void:
 	_entry = LineEdit.new()
 	_entry.add_theme_font_size_override("font_size", 8)
 	_entry.placeholder_text = "command (help for the list)"
+	_entry.keep_editing_on_text_submit = true  # stay in the box after Enter
 	_entry.text_submitted.connect(_on_submit)
 	_entry.gui_input.connect(_on_input_key)
 	box.add_child(_entry)
