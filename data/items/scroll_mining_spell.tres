@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"mining_spell"
 id = &"scroll_mining_spell"
 display_name = "Scroll: Mining Spell"
-description = "Left click to learn Mining Spell. The scroll is used up."
+description = "One use. Left click: cast Mining Spell once for free. Right click: learn it."

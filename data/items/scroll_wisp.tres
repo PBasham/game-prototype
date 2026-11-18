@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"wisp"
 id = &"scroll_wisp"
 display_name = "Scroll: Wisp"
-description = "Left click to learn Wisp. The scroll is used up."
+description = "One use. Left click: cast Wisp once for free. Right click: learn it."

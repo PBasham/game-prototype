@@ -86,9 +86,12 @@ const SPELL_PREFIX := "spell:"
 ## A helmet that hides the hair.
 @export var hides_hair := false
 @export_group("Scroll")
-## A spell scroll: left click while holding it to learn this spell (the scroll is used
-## up). Made at the Spell Weaving Table.
+## A spell scroll, one use (made at the Spell Weaving Table). Left click: cast this spell
+## once for free (no mana, reagents, book or tier needed). Right click: learn it.
 @export var teaches_spell: StringName = &""
+## Left click on a concentration or held-beam spell: how long it runs free (seconds).
+## 0 = the defaults (Player.scroll_concentration_seconds / scroll_beam_seconds).
+@export var scroll_seconds := 0.0
 @export_group("Food")
 ## Eating it (left click while holding it) refills this much hunger...
 @export var food_value := 0.0

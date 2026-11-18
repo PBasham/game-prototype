@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"gel_cushion"
 id = &"scroll_gel_cushion"
 display_name = "Scroll: Gel Cushion"
-description = "Left click to learn Gel Cushion. The scroll is used up."
+description = "One use. Left click: cast Gel Cushion once for free. Right click: learn it."

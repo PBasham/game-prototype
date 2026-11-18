@@ -268,6 +268,11 @@ var ritual: SpellData
 var ritual_left := 0.0
 var _ritual_from := Vector2.ZERO
 var _ritual_fx: SpellEffect
+## A spell cast from a scroll runs free (no mana) for this long: concentration spells
+## (Fly, Levitate, Mend) and held beams (Mining Spell, Hyper Drill). Shown as a buff.
+@export var scroll_concentration_seconds := 60.0
+@export var scroll_beam_seconds := 15.0
+var _ritual_free := false
 ## Set when R was used for a quick cast, so letting go of R does nothing else.
 var r_combo_used := false
 ## Seconds in the air since leaving the ground (for double jump).
@@ -662,7 +667,7 @@ func _update_mana(delta: float) -> void:
 	# A concentration spell drains while it's on; it ends when mana runs out.
 	if concentration and concentration.effect == &"mend":
 		heal(concentration.heal_per_second * spell_power() * delta)
-	if concentration and concentration.mana_per_second > 0.0:
+	if concentration and concentration.mana_per_second > 0.0 and not is_free_spell(concentration):
 		var cost := concentration.mana_per_second * (concentration.boost_mana_mult if is_boosting() else 1.0)
 		if not spend_mana(cost * delta):
 			toggle_concentration(concentration)
@@ -810,7 +815,12 @@ func stop_using() -> void:
 ## Turns a concentration spell on, or off if it's the one already on. Turning one on
 ## ends the previous one.
 func toggle_concentration(spell: SpellData) -> void:
+	var before := concentration
 	concentration = null if concentration == spell else spell
+	# Turned off by hand, or swapped for another: a scroll's free time for it is gone.
+	if before and before != concentration and is_free_spell(before):
+		buffs.erase(_scroll_key(before))
+		buff_spells.erase(_scroll_key(before))
 	EventBus.sound_requested.emit(&"toggle_on" if concentration else &"toggle_off", global_position)
 	if character and concentration and concentration.effect in [&"fly", &"levitate"]:
 		character.movement_spell = concentration.id
@@ -1396,8 +1406,11 @@ func has_buff(effect: StringName) -> bool:
 func end_buff(effect: StringName, used: bool = false) -> void:
 	if not buffs.has(effect):
 		return
+	var spell: SpellData = buff_spells.get(effect)
 	buffs.erase(effect)
 	buff_spells.erase(effect)
+	if String(effect).begins_with("scroll_") and spell:
+		_end_scroll_spell(spell)
 	if effect == &"barrier_shield":
 		shield = 0.0
 		if is_instance_valid(_shield_fx):
@@ -1405,6 +1418,36 @@ func end_buff(effect: StringName, used: bool = false) -> void:
 	buff_ended.emit(effect, used)
 	if not used:
 		EventBus.sound_requested.emit(&"buff_end", global_position)
+
+
+func _scroll_key(spell: SpellData) -> StringName:
+	return StringName("scroll_" + String(spell.id))
+
+
+## Whether a spell is running free from a scroll right now.
+func is_free_spell(spell: SpellData) -> bool:
+	return spell != null and has_buff(_scroll_key(spell))
+
+
+## A scroll's free time for a spell (concentration or a held beam), shown as a buff.
+func start_scroll_spell(spell: SpellData, seconds: float) -> void:
+	buffs[_scroll_key(spell)] = seconds
+	buff_spells[_scroll_key(spell)] = spell
+	buff_started.emit(spell)
+	if spell.cast == SpellData.Cast.TOGGLE and concentration != spell:
+		toggle_concentration(spell)
+	elif spell.cast == SpellData.Cast.TOOL:
+		ready_spell(spell.id)
+
+
+## The free time ran out: concentration stops, and a beam not in your book is put away.
+func _end_scroll_spell(spell: SpellData) -> void:
+	if concentration == spell:
+		toggle_concentration(spell)
+	if spell.cast == SpellData.Cast.TOOL and selected < 0 and _readied == spell \
+			and (character == null or not character.in_book(spell.id)):
+		_end_attack(false)
+		select_slot(maxi(_slot_before_book, 0))
 
 
 ## Barrier goes off: the barrier buff ends and a shield takes its place.
@@ -1425,10 +1468,12 @@ func _pop_barrier() -> void:
 # --- rituals ------------------------------------------------------------------------
 
 ## Starts a ritual: stand still for its `ritual_seconds`. False if one is going already.
-func start_ritual(spell: SpellData) -> bool:
+## `free`: from a scroll, no mana when it completes.
+func start_ritual(spell: SpellData, free: bool = false) -> bool:
 	if ritual:
 		return false
 	ritual = spell
+	_ritual_free = free
 	ritual_left = spell.ritual_seconds
 	_ritual_from = global_position
 	if world and world.effects:
@@ -1469,7 +1514,7 @@ func _complete_ritual() -> void:
 	ritual = null
 	if is_instance_valid(_ritual_fx):
 		_ritual_fx.queue_free()
-	if not spend_mana(spell.mana_cost):
+	if not _ritual_free and not spend_mana(spell.mana_cost):
 		EventBus.debug_message.emit("%s: not enough mana" % spell.display_name)
 		ritual_finished.emit(spell, false)
 		return

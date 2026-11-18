@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"spark_ward"
 id = &"scroll_spark_ward"
 display_name = "Scroll: Spark Ward"
-description = "Left click to learn Spark Ward. The scroll is used up."
+description = "One use. Left click: cast Spark Ward once for free. Right click: learn it."

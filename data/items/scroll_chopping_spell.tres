@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"chopping_spell"
 id = &"scroll_chopping_spell"
 display_name = "Scroll: Chopping Spell"
-description = "Left click to learn Chopping Spell. The scroll is used up."
+description = "One use. Left click: cast Chopping Spell once for free. Right click: learn it."

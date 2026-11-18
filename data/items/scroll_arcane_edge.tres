@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"arcane_edge"
 id = &"scroll_arcane_edge"
 display_name = "Scroll: Arcane Edge"
-description = "Left click to learn Arcane Edge. The scroll is used up."
+description = "One use. Left click: cast Arcane Edge once for free. Right click: learn it."

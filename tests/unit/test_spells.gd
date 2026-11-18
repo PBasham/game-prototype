@@ -178,7 +178,8 @@ func test_scrolls_teach_spells() -> void:
 	c.known_spells.erase(&"blink")
 	c.inventory.set_slot(0, &"scroll_blink", 2)
 	p.select_slot(0)
-	assert_eq(w.item_user._mode_for(p.held_item, false), ItemUser.Mode.LEARN)
+	assert_eq(w.item_user._mode_for(p.held_item, true), ItemUser.Mode.LEARN, "right click learns")
+	assert_eq(w.item_user._mode_for(p.held_item, false), ItemUser.Mode.SCROLL, "left click casts")
 	assert_true(w.item_user.read_scroll())
 	assert_true(c.knows(&"blink"))
 	assert_eq(c.inventory.counts[0], 1, "one scroll used")
@@ -478,3 +479,60 @@ func test_sounds_play_and_throttle() -> void:
 	assert_true(Sounds.play(&"enemy_hit", w.player.chest()))
 	assert_false(Sounds.play(&"enemy_hit", w.player.chest()), "not twice in a row")
 	assert_true(Sounds.play(&"craft"))
+
+
+
+func test_scroll_left_click_casts_free() -> void:
+	var p := w.player
+	var c := w.character
+	var u := w.item_user
+	# Blink from a scroll: no mana, not in the book, the scroll is used.
+	c.put_in_book(0, &"mining_spell")
+	c.inventory.set_slot(0, &"scroll_blink", 2)
+	p.select_slot(0)
+	p.mana = 0.0
+	u.cursor_override = p.chest() + Vector2(8 * World.TILE * p.facing, 0)
+	var start := p.global_position
+	assert_true(u.cast_scroll())
+	assert_gt(absf(p.global_position.x - start.x), 4.0 * World.TILE, "blinked")
+	assert_eq(p.mana, 0.0, "free")
+	assert_eq(c.inventory.counts[0], 1, "one scroll used")
+	# A cast that can't happen keeps the scroll.
+	c.inventory.set_slot(1, &"scroll_conjure_platform", 1)
+	p.select_slot(1)
+	u.cursor_override = p.global_position + Vector2(0, 2 * World.TILE)  # in the ground
+	assert_false(u.cast_scroll())
+	assert_eq(c.inventory.counts[1], 1, "not used")
+	u.cursor_override = Vector2.INF
+
+
+func test_scroll_fly_runs_free_then_stops() -> void:
+	var p := w.player
+	var c := w.character
+	c.inventory.set_slot(0, &"scroll_fly", 1)
+	p.select_slot(0)
+	p.mana = 50.0
+	assert_true(w.item_user.cast_scroll())
+	assert_true(p.is_flying())
+	assert_true(p.is_free_spell(_spell(&"fly")))
+	assert_true(c.inventory.is_empty(0), "used")
+	await wait_seconds(0.6)
+	assert_gte(p.mana, 50.0, "no drain while free")
+	p.buffs[&"scroll_fly"] = 0.05
+	await wait_seconds(0.2)
+	assert_false(p.is_flying(), "stops when the time is up")
+
+
+func test_scroll_beam_then_back_to_the_hotbar() -> void:
+	var p := w.player
+	var c := w.character
+	c.book_spells.erase(&"hyper_drill")
+	c.inventory.set_slot(2, &"scroll_hyper_drill", 1)
+	p.select_slot(2)
+	assert_true(w.item_user.cast_scroll())
+	assert_eq(p.held_item.id, &"hyper_drill", "ready to use, without a tier 3 book")
+	await wait_seconds(0.2)
+	assert_eq(w.item_user.problem, "", "no book or mana problem")
+	p.buffs[&"scroll_hyper_drill"] = 0.05
+	await wait_seconds(0.2)
+	assert_eq(p.selected, 2, "put away when the time is up")

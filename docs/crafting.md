@@ -147,8 +147,8 @@ Not playtested yet.
 | 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table | Scroll: <spell>, one recipe per spell |
 | 1 Blank Scroll + 20 Slime | Spell Weaving Table | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
 
-A scroll (`ItemData.teaches_spell`, kind SCROLL) is read with left click while holding it:
-you learn the spell and the scroll is used up. If you already know it, nothing is used.
+A scroll (`ItemData.teaches_spell`, kind SCROLL) is one use: left click casts its spell
+once for free, right click learns it (items-and-mining.md, Magic).
 The bar costs per tier are `SCROLL_BARS` in tools/make_items.gd. The table becomes the
 Create and Empower table in the Magic progression phase.
 

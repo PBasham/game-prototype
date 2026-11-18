@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"levitate"
 id = &"scroll_levitate"
 display_name = "Scroll: Levitate"
-description = "Left click to learn Levitate. The scroll is used up."
+description = "One use. Left click: cast Levitate once for free. Right click: learn it."

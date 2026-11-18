@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"chain_spark"
 id = &"scroll_chain_spark"
 display_name = "Scroll: Chain Spark"
-description = "Left click to learn Chain Spark. The scroll is used up."
+description = "One use. Left click: cast Chain Spark once for free. Right click: learn it."

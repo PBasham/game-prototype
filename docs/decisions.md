@@ -20,6 +20,12 @@ Newest first. Each entry: what was decided, why, and what it affects.
   Spark Ward (ward), Familiar (summon), Conjure Platform (conjure), Arcane Edge (imbue),
   Barrier (reactive), Chain Spark (chain), Recall (ritual), Seek Ore (sense). All tier 1,
   learned from scrolls.
+- **Scrolls, one use:** left click casts the spell once free (no mana, reagents, book or
+  tier; concentration 60 s, held beams 15 s, bolts at full charge), right click learns
+  it. Fizzled casts keep the scroll.
+- **Tomes (for Magic progression):** reusable, still cost mana, work apart from the book,
+  and have their own modifiers you can enchant (e.g. extra damage). Some spells only
+  found in chests in hard places. Work in progress.
 - **Placeholder sounds:** synthesized, through one `Sounds` autoload fed by
   `EventBus.sound_requested`; Patrick's real files replace them by name.
 

@@ -634,7 +634,7 @@ func _scrolls() -> Array[ItemData]:
 	for sp in _spells():
 		var spell := sp as SpellData
 		var scroll := _small(StringName("scroll_" + String(spell.id)), "Scroll: %s" % spell.display_name,
-			"Left click to learn %s. The scroll is used up." % spell.display_name)
+			"One use. Left click: cast %s once for free. Right click: learn it." % spell.display_name)
 		scroll.kind = ItemData.Kind.SCROLL
 		scroll.teaches_spell = spell.id
 		scroll.max_stack = 20

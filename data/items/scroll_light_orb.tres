@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"light_orb"
 id = &"scroll_light_orb"
 display_name = "Scroll: Light Orb"
-description = "Left click to learn Light Orb. The scroll is used up."
+description = "One use. Left click: cast Light Orb once for free. Right click: learn it."

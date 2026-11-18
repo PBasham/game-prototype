@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"barrier"
 id = &"scroll_barrier"
 display_name = "Scroll: Barrier"
-description = "Left click to learn Barrier. The scroll is used up."
+description = "One use. Left click: cast Barrier once for free. Right click: learn it."

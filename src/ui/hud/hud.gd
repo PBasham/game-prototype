@@ -1480,9 +1480,48 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 			lines.append("Can't cast now: %s" % c.cast_problem(spell))
 	elif item.places_wall != &"":
 		lines.append("Right click: place as a back wall")
+	if item.teaches_spell != &"":
+		lines.append_array(scroll_lines(item, c))
+		return "\n".join(lines)
 	if item.description != "":
 		lines.append(item.description)
 	return "\n".join(lines)
+
+
+## What a scroll does, for its tooltip: both buttons, how long it lasts, one use.
+static func scroll_lines(item: ItemData, c: CharacterData) -> PackedStringArray:
+	var spell := ItemData.find(ItemData.spell_key(item.teaches_spell)) as SpellData
+	var out := PackedStringArray()
+	if spell == null:
+		return out
+	var cast_text := "Left click: cast %s once, free (no mana or reagents, no book needed)" % spell.display_name
+	match spell.cast:
+		SpellData.Cast.TOGGLE:
+			var secs := item.scroll_seconds if item.scroll_seconds > 0.0 else 60.0
+			cast_text += ". Runs for %d seconds" % roundi(secs)
+		SpellData.Cast.TOOL:
+			var secs := item.scroll_seconds if item.scroll_seconds > 0.0 else 15.0
+			cast_text += ". You can use it for %d seconds" % roundi(secs)
+		SpellData.Cast.CHARGED:
+			cast_text += ", at full charge"
+		SpellData.Cast.RITUAL:
+			cast_text += " (you still stand still for %s s)" % String.num(spell.ritual_seconds, 1).trim_suffix(".0")
+		_:
+			if spell.duration > 0.0 and spell.cast in [SpellData.Cast.BUFF, SpellData.Cast.LIGHT, SpellData.Cast.ZONE,
+					SpellData.Cast.WARD, SpellData.Cast.SUMMON, SpellData.Cast.CONJURE, SpellData.Cast.SENSE]:
+				cast_text += ". Lasts %s" % _secs_text(spell.duration)
+	out.append(cast_text + ".")
+	if c and c.knows(spell.id):
+		out.append("Right click: you already know %s." % spell.display_name)
+	else:
+		out.append("Right click: learn %s (it joins your known spells)." % spell.display_name)
+	out.append("One use: the scroll is used up either way.")
+	out.append(spell.display_name + ": " + spell.description)
+	return out
+
+
+static func _secs_text(secs: float) -> String:
+	return "%d minutes" % roundi(secs / 60.0) if secs >= 120.0 else "%d seconds" % roundi(secs)
 
 
 ## Pickup notes: one line per item, adding up while items keep arriving.

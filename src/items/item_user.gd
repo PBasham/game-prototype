@@ -19,7 +19,7 @@ extends Node2D
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT, LEARN,
-	CHARGE }
+	CHARGE, SCROLL }
 
 const TILE := World.TILE
 
@@ -83,7 +83,8 @@ func _process(delta: float) -> void:
 		if valid.is_empty():
 			update_target(cursor(), false)
 	# Spell beams drain mana while they run, and stop when it's gone.
-	if _item and _item.beam and _item.is_spell() and p.is_using() and not p.input_blocked:
+	if _item and _item.beam and _item.is_spell() and p.is_using() and not p.input_blocked \
+			and not p.is_free_spell(_item as SpellData):
 		if not p.spend_mana((_item as SpellData).mana_per_second * delta):
 			p.stop_using()
 			EventBus.debug_message.emit("Out of mana")
@@ -168,6 +169,8 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 		var need := sp.mana_cost * (sp.charge_min_mana if sp.cast == SpellData.Cast.CHARGED else 1.0)
 		if problem == "" and not turning_off and not p.has_mana(maxf(need, minf(sp.mana_per_second * 0.1, 1.0))):
 			problem = "Not enough mana"
+		if p.is_free_spell(sp):
+			problem = ""  # from a scroll: no book or mana needed
 	var size := area_size(_item)
 	var c := at / TILE
 	rect = Rect2i(Vector2i(floori(c.x - size / 2.0 + 0.5), floori(c.y - size / 2.0 + 0.5)), Vector2i(size, size))
@@ -255,8 +258,12 @@ func can_use(on_back: bool = false) -> bool:
 				eat_held()
 			return false  # no swing
 		Mode.LEARN:
-			if not on_back and Input.is_action_just_pressed("use_primary"):
+			if on_back and Input.is_action_just_pressed("use_secondary"):
 				read_scroll()
+			return false
+		Mode.SCROLL:
+			if not on_back and Input.is_action_just_pressed("use_primary"):
+				cast_scroll()
 			return false
 		Mode.CHARGE:
 			return false  # charged in _update_charge, no swing
@@ -302,8 +309,48 @@ func melee_hit(item: ItemData) -> int:
 	return hit
 
 
-## Reads the held spell scroll: learns its spell and uses up the scroll. Returns true if
-## a spell was learned.
+## Casts the held scroll's spell once, free: no mana, reagents, cooldown, book or tier.
+## Concentration spells and held beams run free for a while (a buff shows the time
+## left); a charged bolt fires at full charge; a ritual still needs you to stand still.
+## The scroll is used up only if the spell went off. Returns true if it did.
+func cast_scroll() -> bool:
+	var p := world.player
+	var item := p.held_item
+	if item == null or item.teaches_spell == &"" or p.selected < 0 or p.character == null:
+		return false
+	var spell := ItemData.find(ItemData.spell_key(item.teaches_spell)) as SpellData
+	if spell == null:
+		return false
+	var slot := p.selected
+	var ok := true
+	match spell.cast:
+		SpellData.Cast.TOGGLE:
+			var secs := item.scroll_seconds if item.scroll_seconds > 0.0 else p.scroll_concentration_seconds
+			p.start_scroll_spell(spell, secs)
+		SpellData.Cast.TOOL:
+			var secs := item.scroll_seconds if item.scroll_seconds > 0.0 else p.scroll_beam_seconds
+			p.character.inventory.take(slot, 1)
+			p.start_scroll_spell(spell, secs)
+			EventBus.debug_message.emit("%s: free for %d seconds" % [spell.display_name, roundi(secs)])
+			return true
+		SpellData.Cast.CHARGED:
+			var from := p.casting_hand_position()
+			var bolt := world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
+			ok = bolt != null
+			if bolt:
+				bolt.size = 1.8
+				EventBus.sound_requested.emit(&"bolt_fire", from)
+		SpellData.Cast.RITUAL:
+			ok = p.start_ritual(spell, true)
+		_:
+			ok = cast(spell)
+	if ok:
+		p.character.inventory.take(slot, 1)
+	return ok
+
+
+## Reads the held spell scroll (right click): learns its spell and uses up the scroll.
+## Returns true if a spell was learned.
 func read_scroll() -> bool:
 	var p := world.player
 	var item := p.held_item
@@ -396,7 +443,7 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 	if item.kind == ItemData.Kind.FOOD:
 		return Mode.EAT if not on_back else Mode.NONE
 	if item.teaches_spell != &"":
-		return Mode.LEARN if not on_back else Mode.NONE
+		return Mode.LEARN if on_back else Mode.SCROLL
 	if on_back:
 		return Mode.PLACE_WALL if item.places_wall != &"" else Mode.NONE
 	if item.axe_damage > 0.0:
@@ -749,6 +796,18 @@ func _draw() -> void:
 		draw_circle(at, lerpf(1.5, 5.0, k), Color(spell.projectile_color, 0.5))
 		draw_circle(at, lerpf(0.8, 2.2, k), Color(1, 1, 1, 0.9))
 		draw_arc(at, lerpf(12.0, 6.0, k), 0.0, TAU * k, 24, Color(spell.projectile_color, 0.8), 1.0)
+	if mode in [Mode.SCROLL, Mode.LEARN] and p.held_item:
+		# Holding a scroll: what each button does.
+		var sp := ItemData.find(ItemData.spell_key(p.held_item.teaches_spell))
+		var known := sp != null and p.character.knows(sp.id)
+		var font := ThemeDB.fallback_font
+		draw_string_outline(font, aim + Vector2(8, 4), "Left: cast once (free)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2,
+			Color(0, 0, 0, 0.7))
+		draw_string(font, aim + Vector2(8, 4), "Left: cast once (free)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, valid_color)
+		var right := "Right: learn" if not known else "Already known"
+		draw_string_outline(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.7))
+		draw_string(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
+			valid_color if not known else Color(valid_color, 0.5))
 	if mode in [Mode.CAST, Mode.TOGGLE, Mode.CHARGE]:
 		# No target box: just say why it can't be cast, if it can't.
 		if problem != "":

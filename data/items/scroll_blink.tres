@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"blink"
 id = &"scroll_blink"
 display_name = "Scroll: Blink"
-description = "Left click to learn Blink. The scroll is used up."
+description = "One use. Left click: cast Blink once for free. Right click: learn it."
