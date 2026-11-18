@@ -74,9 +74,12 @@ in it is hit once per swing.
 
 ## Equipment
 
-The inventory's right column: Head, Chest, Legs, three Accessory slots, plus the
-existing Book and Conduit. Empty slots show a dim label. Shift-click equips (accessories
-go to the first empty accessory slot). Items don't show on the character yet; only the
+Its own window: press **P** or the **Equip (P)** button in the inventory. It opens in
+the middle of the screen, can be dragged by its title bar, and keeps its spot until you
+quit. Columns: Head, Chest, Legs; three Accessory slots; Book and Conduit. Stats are
+listed on the right. Empty slots show a dim label. Ctrl + right click an inventory item
+equips it (accessories go to the first empty accessory slot); click with an item on the
+mouse to put it in a slot. Items don't show on the character yet; only the
 stats change.
 
 Armor and accessories use the Equipment group on `ItemData`:
@@ -99,7 +102,7 @@ Stats (`CharacterData.STATS`), all summed across equipment:
 | `mining_speed` | Multiplies mining damage. |
 | `magic_damage` | Multiplies spell power. |
 
-The panel next to the spellbook lists Defense and every non-zero stat.
+The equipment window lists Defense and every non-zero stat.
 
 | Item | Slot | Defense | Recipe (Anvil) |
 |---|---|---|---|

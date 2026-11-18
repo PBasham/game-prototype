@@ -12,7 +12,7 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Melee:** swords hit everything in a box in front, on the swing's impact frame.
 - **Defense:** enemy damage reduced by half the player's defense, minimum 1.
 - **Equipment:** head, chest, legs, 3 accessories. Stats only, nothing drawn on the
-  character yet.
+  character yet. Its own window (P), opened in the middle and draggable, per Patrick.
 - **Beds:** set the spawn point any time; sleep only at night with no enemies within 20
   tiles. Sleeping skips to morning, grows plants, drains hunger.
 - **Slime use for now:** torches (slime + stick).

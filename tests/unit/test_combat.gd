@@ -169,3 +169,37 @@ func test_beds_set_the_respawn_point_and_sleep_through_the_night() -> void:
 	var spawn := w.respawn_position()
 	assert_eq(spawn, w.tile_to_world(w.generator.spawn_tile()) + Vector2(4, 0), "the world spawn")
 	assert_false(w.spawn_points.has(w.character.name))
+
+
+func test_equipment_window_opens_centered_and_drags() -> void:
+	var hud := w.hud
+	assert_false(hud._equip.visible)
+	hud.toggle_equipment()
+	assert_true(hud.open, "the inventory opens too")
+	assert_true(hud._equip.visible)
+	var view := hud._view_size()
+	var center := hud._equip.position + hud._equip.size * 0.5
+	assert_almost_eq(center.x, view.x * 0.5, 2.0, "opens in the middle")
+	# Drag by the title bar.
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(30, 8)
+	hud._equipment_input(hud._equip, press)
+	var move := InputEventMouseMotion.new()
+	move.position = Vector2(30 - 50, 8 + 20)
+	var before := hud._equip.position
+	hud._equipment_input(hud._equip, move)
+	assert_eq(hud._equip.position, before + Vector2(-50, 20))
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	hud._equipment_input(hud._equip, release)
+	# Remembered when reopened; closing the inventory closes it.
+	hud.set_open(false)
+	assert_false(hud._equip.visible)
+	hud.toggle_equipment()
+	assert_eq(hud._equip.position, before + Vector2(-50, 20), "keeps its spot")
+	hud.toggle_equipment()
+	assert_false(hud.equipping)
+	assert_true(hud.open, "closing equipment keeps the inventory open")

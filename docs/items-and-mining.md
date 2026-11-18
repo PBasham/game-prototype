@@ -15,8 +15,9 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **Left click** | Use the held item on the **front** layer: swing, mine, chop, place a block, plant. Hold to repeat. |
 | **Right click** | On something you can interact with (stations, chests, doors, pickups on the grass): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
 | **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest pickup) |
-| **I** or **Tab** | Open / close the inventory (with equipment and spells) |
+| **I** or **Tab** | Open / close the inventory (with spells) |
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
+| **P** | Equipment window (armor, accessories, book, conduit, stats); see [combat.md](combat.md) |
 | **R** (tap) | Take the spellbook out (like Starbound's matter manipulator), with the last spell you used; tap again to go back to your hotbar slot |
 | **R** (hold) | Spell wheel: move the mouse toward a spell, let go to cast with it |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
@@ -31,12 +32,15 @@ the panel lays itself out from it.
 - Left click: pick up a stack, put it down, merge or swap.
 - Right click: take half, or put one down from the stack on the mouse.
 - Shift + left click: move a stack between the hotbar and the rest.
-- Ctrl + right click: equip a book or conduit (swaps with the equipped one). On an
-  equipment slot (or shift + click it): back into the inventory.
+- Ctrl + right click: equip armor, an accessory, a book or a conduit (swaps with the
+  equipped one). On an equipment slot (or shift + click it): back into the inventory.
 - Click the world with a stack on the mouse: throw it. Closing the panel puts it back.
 - Hover a slot for its tooltip.
-- To the right: the **Book** and **Conduit** equipment slots. Below: the **Spellbook**
+- To the right: the **Craft (K)** and **Equip (P)** buttons. Below: the **Spellbook**
   slots and **Spells you know** (see Magic).
+- **Equipment window (P):** armor, accessories, Book and Conduit slots, and your stats.
+  Opens in the middle of the screen (the inventory opens with it); drag its title bar
+  to move it. It keeps that spot until you quit. Closing the inventory closes it.
 
 While the mouse is over the hotbar or panel, you're carrying a stack, or the spell wheel
 is open, clicks don't use items.
