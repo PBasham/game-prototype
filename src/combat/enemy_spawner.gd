@@ -16,12 +16,22 @@ extends Node
 ## Spawn this many tiles to the side of the player (off screen, inside the loaded area).
 @export var min_distance_tiles := 44.0
 @export var max_distance_tiles := 60.0
-## Enemies farther than this (tiles) are removed.
+## Enemies farther than this (tiles) for despawn_seconds in a row are removed.
 @export var despawn_tiles := 90.0
+@export var despawn_seconds := 6.0
+## While you're moving sideways faster than ahead_speed_tiles (tiles/s), this share of
+## spawns appear ahead of you instead of either side (so travelling isn't empty).
+@export_range(0.0, 1.0) var ahead_bias := 0.8
+@export var ahead_speed_tiles := 6.0
 ## No spawning at all (dev console `peaceful`).
 @export var peaceful := false
 
 var world: World
+## Natural spawns this session, and spawn rolls that found no spot (for the console).
+var spawned_total := 0
+var failed_total := 0
+## Seconds the spawner has been allowed to spawn (not peaceful, below the cap).
+var active_seconds := 0.0
 
 
 func _process(delta: float) -> void:
@@ -33,8 +43,14 @@ func _process(delta: float) -> void:
 	var table := table_here()
 	if table == null:
 		return
-	if randf() < spawn_chance(table, delta):
-		try_spawn(table)
+	var chance := spawn_chance(table, delta)
+	if chance > 0.0:
+		active_seconds += delta
+	if randf() < chance:
+		if try_spawn(table):
+			spawned_total += 1
+		else:
+			failed_total += 1
 
 
 func is_night() -> bool:
@@ -103,8 +119,12 @@ func try_spawn(table: SpawnTable) -> Enemy:
 func find_spot(data: EnemyData) -> Vector2:
 	var p := world.player
 	var feet := world.world_to_tile(p.global_position)
+	var moving := absf(p.velocity.x) > ahead_speed_tiles * 8.0
+	var ahead := 1 if p.velocity.x > 0.0 else -1
 	for attempt in 6:
 		var side := 1 if randf() < 0.5 else -1
+		if moving:
+			side = ahead if randf() < ahead_bias else -ahead
 		var x := feet.x + side * randi_range(int(min_distance_tiles), int(max_distance_tiles))
 		# From well above, find the first solid ground with air above it.
 		for y in range(feet.y - 40, feet.y + 40):
@@ -123,10 +143,16 @@ func find_spot(data: EnemyData) -> Vector2:
 	return Vector2.INF
 
 
+## Enemies that stay beyond despawn_tiles for despawn_seconds are removed (no loot).
 func _despawn_far() -> void:
 	var p := world.player
+	var delta := get_process_delta_time()
 	for e in world.enemies():
 		var dx := absf(e._wrapped_dx(p.global_position.x))
 		var dy := absf(e.global_position.y - p.global_position.y)
 		if dx > despawn_tiles * 8.0 or dy > despawn_tiles * 8.0:
-			e.queue_free()
+			e.far_for += delta
+			if e.far_for >= despawn_seconds:
+				e.queue_free()
+		else:
+			e.far_for = 0.0

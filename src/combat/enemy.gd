@@ -13,6 +13,8 @@ const TILE := 8.0
 ## hurts instead).
 const LAYER := 4
 
+## Seconds this enemy has been beyond the spawner's despawn distance.
+var far_for := 0.0
 var data: EnemyData
 var world: World
 var health := 1.0

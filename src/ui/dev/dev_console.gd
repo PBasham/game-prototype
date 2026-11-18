@@ -250,6 +250,7 @@ func _register() -> void:
 		_print("%s, %s: %d of %d enemies, %.0f%% chance per second (about every %.1f s)%s." % [
 			t.display_name, "night" if night else "day", world.enemy_count(), t.cap(night), chance * 100.0,
 			1.0 / chance if chance > 0.0 else INF, ", peaceful" if world.spawner.peaceful else ""])
+		_print("  This session: %d spawned, %d found no spot." % [world.spawner.spawned_total, world.spawner.failed_total])
 		var total := 0.0
 		for e in t.entries:
 			if e.allowed(night, world):

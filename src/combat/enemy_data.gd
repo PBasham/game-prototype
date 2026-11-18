@@ -36,7 +36,7 @@ enum AI { SLIME }
 @export var hop_wait_min := 0.8
 @export var hop_wait_max := 2.2
 ## Within this many tiles it hops toward you (otherwise it wanders).
-@export var aggro_tiles := 30.0
+@export var aggro_tiles := 64.0
 ## Gravity in tiles/s².
 @export var gravity := 110.0
 

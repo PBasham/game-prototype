@@ -59,6 +59,10 @@ Newest first. Each entry: what was decided, why, and what it affects.
   and layer spawn tables with weighted enemies (rarer = smaller weight). Forest surface:
   one every 12 s by day, 6 s at night on average, caps 4 / 7, catch-up when few are
   around. Off screen, never indoors, despawn when far.
+- **Spawning while travelling (Patrick's playtest):** spawns favor the side you're moving
+  toward, enemies get 6 s grace before despawning, and slimes notice you from 64 tiles
+  (beyond the spawn distance) so they come to you.
+- **More sticks:** bare grass gets pickups too (Patrick saw none in a new world).
 - **Second enemy:** Blue Slime, rare (about 11%), tougher, and only after the first Green
   Slime is slain in the world. Slimes are fine (many games use them).
 - **Spawn conditions:** per entry, all must be met. First kind: kills of an enemy in this

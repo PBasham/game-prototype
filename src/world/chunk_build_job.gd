@@ -128,8 +128,8 @@ func _decor() -> void:
 		var wx := posmod(coord.x * SIZE + lx, world_width)
 		var tree := generator.tree_at(wx)
 		var flower := generator.flower_at(wx)
-		if tree < 0 and flower < 0:
-			continue
+		# Bare grass tops are reported too (tree and flower -1): sticks, rocks and flint
+		# can lie there (PlantLayer.pickup_chance).
 		for ly in SIZE:
 			if block(lx, ly) == grass_id and block(lx, ly - 1) == WorldData.AIR:
 				decor.append_array([lx, ly, tree, flower])

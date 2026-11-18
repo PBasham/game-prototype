@@ -22,11 +22,14 @@ For testing, the console has `devkit` (the old starting kit plus all four spells
 
 ### Pickups on the grass (`Plants` node, `src/world/plant_layer.gd`)
 
-They're seeded with the flowers: some flower spots become pickups instead.
+They're seeded on the grass: some flower spots become pickups instead, and bare grass
+tiles get one now and then (`pickup_chance`). Areas you haven't changed are re-seeded
+when a world loads, so new settings show up there.
 
 | Export | Default | What it does |
 | --- | --- | --- |
 | `pickup_share` | 0.4 | Share of flower spots that are a pickup instead |
+| `pickup_chance` | 0.06 | Chance a bare grass tile (no tree or flower) has a pickup: about one every 16 tiles of surface |
 | `flint_share` | 0.2 | Of those, the share that's flint (the rest is split between sticks and rocks) |
 | `sticks_min`, `sticks_max` | 1, 3 | Sticks a felled tree drops |
 

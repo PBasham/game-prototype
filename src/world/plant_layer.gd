@@ -46,6 +46,9 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 @export_group("Things on the grass")
 ## Share of the generator's flower spots that are sticks, rocks or flint instead.
 @export_range(0.0, 1.0) var pickup_share := 0.4
+## Chance a bare grass tile (no tree or flower) has a stick, rock or flint on it. 0.06 is
+## about one every 16 tiles of surface.
+@export_range(0.0, 1.0) var pickup_chance := 0.06
 ## Of those, how many are flint (the rest split between sticks and rocks).
 @export_range(0.0, 1.0) var flint_share := 0.2
 ## Sticks a felled tree drops (random in this range).
@@ -247,6 +250,10 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array) -> void:
 			if spots[i + 2] >= 0:
 				var p := _add(ground, Kind.TREE, spots[i + 2], false)
 				p.health = tree_health
+			elif spots[i + 3] < 0:
+				# Bare grass: now and then something to pick up.
+				if _hash(ground, 47) < pickup_chance:
+					_add(ground, Kind.PICKUP, _pickup_variant(ground), false)
 			elif _hash(ground, 31) < bush_share:
 				var young := _hash(ground, 37) >= bush_grown_share
 				var bush := _add(ground, Kind.BUSH, BUSH_YOUNG if young else BUSH_GROWN, false)
@@ -254,9 +261,7 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array) -> void:
 					bush.health = _days(randf_range(bush_grow_min_days, bush_grow_max_days))
 					_young.append(ground)
 			elif _hash(ground, 11) < pickup_share:
-				var h := _hash(ground, 23)
-				var variant := 2 if h < flint_share else (0 if h < flint_share + (1.0 - flint_share) * 0.5 else 1)
-				_add(ground, Kind.PICKUP, variant, false)
+				_add(ground, Kind.PICKUP, _pickup_variant(ground), false)
 			else:
 				_add(ground, Kind.FLOWER, spots[i + 3], false)
 	_shown[c] = wc
@@ -283,6 +288,12 @@ func reset_unchanged() -> void:
 			_seeded.erase(wc)
 			for g: Vector2i in (_by_chunk.get(wc, []) as Array).duplicate():
 				_remove(g)
+
+
+## Which pickup lies on a tile: flint (flint_share), else a stick or a rock half and half.
+func _pickup_variant(ground: Vector2i) -> int:
+	var h := _hash(ground, 23)
+	return 2 if h < flint_share else (0 if h < flint_share + (1.0 - flint_share) * 0.5 else 1)
 
 
 ## A steady 0..1 number per tile (so a spot is always the same kind of pickup).
@@ -617,6 +628,8 @@ func _make_node(g: Vector2i, p: Plant, shown_chunk: Vector2i) -> void:
 	var lift := 3 if p.kind == Kind.TREE else 1
 	s.position = Vector2(-floorf(s.texture.get_width() / 2.0), lift - s.texture.get_height())
 	node.add_child(s)
+	if p.kind == Kind.PICKUP:
+		node.z_index = 2  # in front of the grass blades, so sticks don't hide in them
 	add_child(node)
 	p.node = node
 

@@ -12,8 +12,9 @@ extends Node2D
 
 ## Emitted when the set of loaded chunks changes (lighting listens).
 signal chunks_changed
-## A chunk's nodes were created. `decor` = natural plant spots from the generator's
-## decoration rules (flat quads: x, y, tree, flower; chunk-local ground tiles). The
+## A chunk's nodes were created. `decor` = every grass top with open air above, with
+## the generator's decoration for it (flat quads: x, y, tree, flower; chunk-local
+## ground tiles; tree and flower are -1 for bare grass). The
 ## PlantLayer seeds plants from these the first time a chunk is shown.
 signal chunk_shown(coord: Vector2i, decor: PackedInt32Array)
 signal chunk_hidden(coord: Vector2i)

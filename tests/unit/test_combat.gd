@@ -316,3 +316,26 @@ func test_spell_index_lists_spells_and_puts_them_in_the_book() -> void:
 	assert_eq(hud.cursor_count, 0)
 	hud.set_open(false)
 	assert_false(hud._spells.visible)
+
+
+func test_spawns_ahead_when_moving_and_despawn_waits() -> void:
+	var p := w.player
+	var sp := w.spawner
+	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
+	assert_gt(slime.aggro_tiles, sp.max_distance_tiles, "slimes notice you from where they spawn")
+	p.velocity.x = -20.0 * World.TILE  # running left
+	var left := 0
+	for i in 40:
+		var spot := sp.find_spot(slime)
+		if spot != Vector2.INF and spot.x < p.global_position.x:
+			left += 1
+	assert_gt(left, 26, "mostly ahead (about 80%)")
+	p.velocity.x = 0.0
+	# Far away: kept for despawn_seconds, then removed.
+	var e := w.request_spawn_enemy(slime, p.global_position + Vector2(100 * World.TILE, -40))
+	await wait_physics_frames(2)
+	sp._despawn_far()
+	assert_false(e.is_queued_for_deletion(), "not straight away")
+	e.far_for = sp.despawn_seconds
+	sp._despawn_far()
+	assert_true(e.is_queued_for_deletion(), "after a while")
