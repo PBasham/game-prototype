@@ -35,16 +35,19 @@ stays full.
   eat one: +10 hunger (`food_value`), +2 health (`heal_value`). You can't eat while
   both are full.
 - **Berry bushes** grow on the grass like flowers. Right click (or E near) a ripe one
-  to pick 2 to 4 berries; it grows them back in 3 to 5 minutes. Breaking the ground
+  to pick 1 to 3 berries; it grows them back in 72 to 120 minutes. Breaking the ground
   under a ripe bush drops its berries. Exports on the `Plants` node:
 
 | Export | Default | What it does |
 | --- | --- | --- |
 | `bush_share` | 0.06 | Share of flower spots that are a berry bush |
-| `berries_min`, `berries_max` | 2, 4 | Berries per picking |
-| `regrow_min_seconds`, `regrow_max_seconds` | 180, 300 | Time until a picked bush is ripe again |
+| `berries_min`, `berries_max` | 1, 3 | Berries per picking |
+| `regrow_min_seconds`, `regrow_max_seconds` | 4320, 7200 | Time until a picked bush is ripe again (72 to 120 minutes) |
 | `bush_grown_share` | 0.7 | Share of the world's bushes that start full grown; the rest are young |
-| `bush_grow_min_seconds`, `bush_grow_max_seconds` | 300, 600 | Time for a young bush to grow full size |
+| `bush_grow_min_seconds`, `bush_grow_max_seconds` | 4320, 7200 | Time for a young bush to grow full size |
+
+Wild bushes are slow and stingy on purpose: farming (later) should be the better way
+to get food. With a day clock these become about 3 to 5 in-game days.
 
 Young bushes are small and have no berries; once full grown (bigger) they bear berries.
 Art: `assets/decor/berry_bush.png` / `berry_bush_bare.png` (full grown, 24x19) and

@@ -55,16 +55,18 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 ## Share of flower spots that are a berry bush instead.
 @export_range(0.0, 1.0) var bush_share := 0.06
 ## Berries picked from a ripe bush (right click or E).
-@export var berries_min := 2
-@export var berries_max := 4
+@export var berries_min := 1
+@export var berries_max := 3
 ## Share of bushes the world starts with full grown (the rest are young).
 @export_range(0.0, 1.0) var bush_grown_share := 0.7
 ## Seconds for a young bush to grow full size (with berries). Young bushes have none.
-@export var bush_grow_min_seconds := 300.0
-@export var bush_grow_max_seconds := 600.0
-## Seconds until a picked bush has berries again.
-@export var regrow_min_seconds := 180.0
-@export var regrow_max_seconds := 300.0
+@export var bush_grow_min_seconds := 4320.0
+@export var bush_grow_max_seconds := 7200.0
+## Seconds until a picked bush has berries again (72 to 120 minutes: about 3 to 5
+## in-game days once there's a day clock). Wild bushes are slow and stingy on purpose;
+## farming will be the better way to get food.
+@export var regrow_min_seconds := 4320.0
+@export var regrow_max_seconds := 7200.0
 @export_group("Flowers and grass")
 ## Chance that cutting a flower drops grass seeds.
 @export_range(0.0, 1.0) var grass_seed_chance := 0.35

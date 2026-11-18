@@ -11,8 +11,10 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - Dying: respawn at the world spawn after 3 s, full bars. Items go into a magic bag
   (Valheim tombstone idea, Terraria tombstone physics), saved with the world.
 - World options: Hunger on / off, On death: magic bag / keep items.
-- Doors open Starbound style: separate closed and open images, same 1x8 footprint; open
-  shows the frame and the door edge on along its hinge side.
+- Doors are Starbound style: separate closed and open images, same 1x8 footprint;
+  closed shows the door edge on, open shows its face.
+- Wild berry bushes are slow and stingy (1 to 3 berries, 72 to 120 minutes to regrow,
+  same to grow up) so farming is worth it later.
 - Berry bushes have a young (small, no berries) and a full grown (bigger, berries)
   stage; young ones grow up. Planned: crops, and transplanting bushes with special
   tools.

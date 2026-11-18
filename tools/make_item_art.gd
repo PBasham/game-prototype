@@ -354,8 +354,10 @@ func _phase5_art() -> void:
 	for key: String in objs:
 		var img: Image = objs[key]
 		img.save_png(ProjectSettings.globalize_path("res://assets/objects/%s.png" % key))
+		if key == "door":
+			img = _door_open()  # the icon shows the door's face, not its edge
 		# Icon: the object (first frame) scaled into 16x16.
-		var w := img.get_width()
+		var w := img.get_width() if key != "door" else 8
 		var frame := img.get_region(Rect2i(0, 0, w, img.get_height()))
 		var icon := _canvas()
 		var scale := minf(14.0 / frame.get_width(), 14.0 / frame.get_height())
@@ -546,65 +548,67 @@ func _chest() -> Image:
 	return img
 
 
-## Door 1x8 tiles (8x64), closed: vertical planks with three rails, iron hinges on the
-## left and a brass handle on the right.
+## Doors, Starbound style: the wall runs across the screen, so a closed door is seen
+## edge on (a narrow slab in its frame), and an open door has swung toward you and
+## shows its face.
+
+## Door frame: lintel on top and a sill at the bottom (both images share it).
+func _door_frame(img: Image, x0: int) -> void:
+	for x in range(x0, x0 + 8):
+		img.set_pixel(x, 0, Color("6e5030"))
+		img.set_pixel(x, 1, Color("8a6a40"))
+		img.set_pixel(x, 2, Color("6e5030"))
+		img.set_pixel(x, 62, Color("8a6a40"))
+		img.set_pixel(x, 63, Color("6e5030"))
+
+
+## Closed, 8x64 (1x8 tiles): a 4 px slab of planks seen edge on, with a handle nub.
 func _door() -> Image:
 	var img := Image.create_empty(8, 64, false, Image.FORMAT_RGBA8)
-	for y in 64:
-		for x in 8:
-			img.set_pixel(x, y, _door_pixel(x, y, 1.0))
+	_door_frame(img, 0)
+	for y in range(3, 62):
+		for x in range(2, 6):
+			var c := Color("8c6a42")
+			if x == 2:
+				c = Color("6e5030")
+			elif x == 5:
+				c = Color("5e4022")
+			elif (y * 7 + x * 3) % 13 == 0:
+				c = Color("7a5a36")
+			for rail: int in [5, 32, 59]:
+				if y >= rail - 1 and y <= rail and x > 2 and x < 5:
+					c = Color("a8845a")
+			img.set_pixel(x, y, c)
+	img.fill_rect(Rect2i(6, 32, 1, 3), Color("b08a3a"))  # handle, both sides
+	img.fill_rect(Rect2i(1, 32, 1, 3), Color("b08a3a"))
 	return img
 
 
-## One pixel of the closed door at (x, y); `light` darkens the swung open panel.
+## One pixel of a door face (planks, three rails, a handle on the right).
 func _door_pixel(x: int, y: int, light: float) -> Color:
-	var c := Color("9a7448") if (x / 2) % 2 == 0 else Color("8c6a42")
+	var c := Color("a88252") if (x / 2) % 2 == 0 else Color("9a7448")
 	if (x * 13 + y * 7) % 19 == 0:
 		c = c.darkened(0.08)  # grain
 	if x == 0 or x == 7:
-		c = Color("6e5030")  # frame
-	for rail: int in [3, 31, 59]:
+		c = Color("7a5a36")  # edges
+	for rail: int in [6, 32, 57]:
 		if y >= rail - 1 and y <= rail + 1:
-			c = Color("a8845a") if y < rail + 1 else Color("7a5a36")
-	if y == 0 or y == 63:
-		c = Color("6e5030")
-	if (y >= 8 and y <= 10 or y >= 52 and y <= 54) and x <= 3:
-		c = Color("5a5a5e") if y != 8 and y != 52 else Color("7a7a7e")  # hinges
-	if x >= 5 and x <= 6 and y >= 33 and y <= 35:
-		c = Color("e8c860") if y == 33 else Color("b08a3a")  # handle
+			c = Color("b8946a") if y < rail + 1 else Color("8a6a40")
+	if x >= 5 and x <= 6 and y >= 34 and y <= 36:
+		c = Color("e8c860") if y == 34 else Color("b08a3a")  # handle
 	return c.darkened(1.0 - light)
 
 
-## Open door, 2 frames of 8x64 (1x8 tiles, same footprint as closed), Starbound style:
-## a door frame (lintel on top, a thin post on the latch side) and the door swung open
-## toward you, seen edge on against the hinge side: a narrow slab with its hinges and
-## the handle sticking out. Frame 0 hinges on the left, frame 1 on the right.
+## Open, 2 frames of 8x64: the door face on in its frame (frame 0 handle right,
+## frame 1 handle left).
 func _door_open() -> Image:
 	var img := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
-	var frame := Image.create_empty(8, 64, false, Image.FORMAT_RGBA8)
-	for y in 64:
-		# The door, edge on: 3 px of planks along the hinge side.
-		for x in range(0, 3):
-			var c := Color("6e5030") if x == 0 else (Color("9a7448") if x == 1 else Color("7a5a36"))
-			for rail: int in [3, 31, 59]:
-				if y >= rail - 1 and y <= rail + 1:
-					c = Color("a8845a") if x < 2 else Color("8c6a42")
-			frame.set_pixel(x, y, c)
-		# The thin post on the latch side.
-		frame.set_pixel(7, y, Color("6e5030"))
-	# Lintel across the top and a sill at the bottom.
-	for x in 8:
-		frame.set_pixel(x, 0, Color("6e5030"))
-		frame.set_pixel(x, 1, Color("8a6a40"))
-		frame.set_pixel(x, 63, Color("6e5030"))
-	# Hinges and the handle.
-	for y: int in [9, 10, 53, 54]:
-		frame.set_pixel(0, y, Color("5a5a5e"))
-	frame.fill_rect(Rect2i(3, 32, 2, 3), Color("b08a3a"))
-	frame.set_pixel(4, 32, Color("e8c860"))
-	img.blit_rect(frame, Rect2i(0, 0, 8, 64), Vector2i.ZERO)
-	frame.flip_x()
-	img.blit_rect(frame, Rect2i(0, 0, 8, 64), Vector2i(8, 0))
+	for f in 2:
+		_door_frame(img, f * 8)
+		for y in range(3, 62):
+			for x in 8:
+				var src := x if f == 0 else 7 - x
+				img.set_pixel(f * 8 + x, y, _door_pixel(src, y, 1.0))
 	return img
 
 
