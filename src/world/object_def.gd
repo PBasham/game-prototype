@@ -39,6 +39,12 @@ enum Style {
 @export var blocks_movement := false
 ## Right click / E swaps it for this object (a door opening or closing).
 @export var toggles_to: StringName = &""
+## Used instead of toggles_to when the player is on the right (a door then swings open
+## to the left, away from them). Empty = always toggles_to.
+@export var toggles_to_left: StringName = &""
+## Column of the footprint the object turns around when it toggles (a door's hinge):
+## the toggled object is placed so its hinge column lands on the same tile.
+@export var hinge_offset := 0
 ## Storage slots (chests). It can only be picked up when empty.
 @export var container_slots := 0
 ## Internal: the filler that marks the tiles furniture covers besides its anchor.

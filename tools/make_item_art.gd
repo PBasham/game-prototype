@@ -345,11 +345,12 @@ func _phase5_art() -> void:
 		"workbench": _workbench(), "furnace": _furnace(), "copper_anvil": _anvil(),
 		"chest": _chest(), "door": _door(),
 	}
+	_door_open().save_png(ProjectSettings.globalize_path("res://assets/objects/door_open.png"))
 	for key: String in objs:
 		var img: Image = objs[key]
 		img.save_png(ProjectSettings.globalize_path("res://assets/objects/%s.png" % key))
 		# Icon: the object (first frame) scaled into 16x16.
-		var w := img.get_width() if key != "door" else 8
+		var w := img.get_width()
 		var frame := img.get_region(Rect2i(0, 0, w, img.get_height()))
 		var icon := _canvas()
 		var scale := minf(14.0 / frame.get_width(), 14.0 / frame.get_height())
@@ -540,35 +541,100 @@ func _chest() -> Image:
 	return img
 
 
-## Door 1x8 tiles: frame 0 closed (8x64), frame 1 open (a thin edge against the frame).
+## Door 1x8 tiles (8x64), closed: vertical planks with three rails, iron hinges on the
+## left and a brass handle on the right.
 func _door() -> Image:
-	var img := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
-	_fill(img, Rect2i(0, 0, 8, 64), Color("8a6a40"))
-	for y in range(0, 64, 8):
-		_fill(img, Rect2i(0, y, 8, 1), Color("6e5030"))
-	_fill(img, Rect2i(0, 0, 1, 64), Color("5e4022"))
-	_fill(img, Rect2i(7, 0, 1, 64), Color("5e4022"))
-	_fill(img, Rect2i(5, 30, 2, 3), Color("e8c860"))  # handle
-	# Open: just the edge of the door on the hinge side.
-	_fill(img, Rect2i(8, 0, 2, 64), Color("8a6a40"))
-	_fill(img, Rect2i(8, 0, 1, 64), Color("5e4022"))
+	var img := Image.create_empty(8, 64, false, Image.FORMAT_RGBA8)
+	for y in 64:
+		for x in 8:
+			img.set_pixel(x, y, _door_pixel(x, y, 1.0))
 	return img
 
 
-## Things lying on the grass, 8x6, bottom-aligned.
+## One pixel of the closed door at (x, y); `light` darkens the swung open panel.
+func _door_pixel(x: int, y: int, light: float) -> Color:
+	var c := Color("9a7448") if (x / 2) % 2 == 0 else Color("8c6a42")
+	if (x * 13 + y * 7) % 19 == 0:
+		c = c.darkened(0.08)  # grain
+	if x == 0 or x == 7:
+		c = Color("6e5030")  # frame
+	for rail: int in [3, 31, 59]:
+		if y >= rail - 1 and y <= rail + 1:
+			c = Color("a8845a") if y < rail + 1 else Color("7a5a36")
+	if y == 0 or y == 63:
+		c = Color("6e5030")
+	if (y >= 8 and y <= 10 or y >= 52 and y <= 54) and x <= 3:
+		c = Color("5a5a5e") if y != 8 and y != 52 else Color("7a7a7e")  # hinges
+	if x >= 5 and x <= 6 and y >= 33 and y <= 35:
+		c = Color("e8c860") if y == 33 else Color("b08a3a")  # handle
+	return c.darkened(1.0 - light)
+
+
+## Open door, 2 frames of 16x64 (2x8 tiles): frame 0 swung to the right of the hinge,
+## frame 1 mirrored (swung left). The panel is drawn in perspective: shorter at its far
+## edge and in shade.
+func _door_open() -> Image:
+	var img := Image.create_empty(32, 64, false, Image.FORMAT_RGBA8)
+	var frame := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
+	# The hinge side: the frame post the door hangs on.
+	for y in 64:
+		frame.set_pixel(0, y, Color("6e5030"))
+		frame.set_pixel(1, y, Color("8a6a40"))
+	# The panel from x 2 to 12, its top and bottom slanting in by 4 px at the far edge.
+	var near := 2
+	var far := 12
+	for x in range(near, far + 1):
+		var k := float(x - near) / float(far - near)
+		var top := roundi(k * 4.0)
+		var bottom := 63 - roundi(k * 4.0)
+		var src_x := clampi(roundi(k * 7.0), 0, 7)
+		for y in range(top, bottom + 1):
+			var v := float(y - top) / float(bottom - top)
+			frame.set_pixel(x, y, _door_pixel(src_x, roundi(v * 63.0), 0.82 - k * 0.12))
+	# The door's edge (its thickness) at the far side.
+	for y in range(4, 60):
+		frame.set_pixel(far + 1, y, Color("6e5030"))
+	img.blit_rect(frame, Rect2i(0, 0, 16, 64), Vector2i.ZERO)
+	frame.flip_x()
+	img.blit_rect(frame, Rect2i(0, 0, 16, 64), Vector2i(16, 0))
+	return img
+
+
+## Things lying on the grass, bottom-aligned, sized like the thing itself: a stick
+## 12x5, a rock 9x7, a flint shard 7x6.
 func _pickup(kind: String) -> Image:
-	var img := Image.create_empty(8, 6, false, Image.FORMAT_RGBA8)
 	match kind:
 		"stick":
-			for x in range(0, 8):
-				img.set_pixel(x, 4 - x / 4, Color("8a6a44"))
-				img.set_pixel(x, 5 - x / 4, Color("5e4630"))
-			img.set_pixel(5, 2, Color("8a6a44"))
-		"rock", "flint":
-			var dark := Color("8a8a86") if kind == "rock" else Color("4a4a52")
-			var light := Color("b4b4ae") if kind == "rock" else Color("8a8a9a")
-			for y in range(2, 6):
-				for x in range(1, 7):
-					if not ((x == 1 or x == 6) and y == 2):
-						img.set_pixel(x, y, light if y < 4 and x < 5 else dark)
-	return img
+			var img := Image.create_empty(12, 5, false, Image.FORMAT_RGBA8)
+			for x in 12:
+				var y := 3 - x / 5
+				img.set_pixel(x, y, Color("9a7a50"))
+				img.set_pixel(x, y + 1, Color("5e4630"))
+			img.set_pixel(7, 1, Color("9a7a50"))  # a twig
+			img.set_pixel(8, 0, Color("9a7a50"))
+			return img
+		"rock":
+			var img := Image.create_empty(9, 7, false, Image.FORMAT_RGBA8)
+			for y in 7:
+				for x in 9:
+					var d := Vector2((x - 4.0) / 4.5, (y - 6.0) / 6.0).length()
+					if d < 1.0:
+						var c := Color("8a8a86")
+						if y < 3 and x < 6:
+							c = Color("b4b4ae")
+						elif y >= 5 or x >= 7:
+							c = Color("6a6a66")
+						img.set_pixel(x, y, c)
+			return img
+	# Flint: a sharp dark shard.
+	var shard := Image.create_empty(7, 6, false, Image.FORMAT_RGBA8)
+	var rows := [[3, 4], [2, 4], [2, 5], [1, 5], [1, 6], [0, 6]]
+	for y in 6:
+		for x in range(rows[y][0], rows[y][1] + 1):
+			var c := Color("4a4a56")
+			if x == rows[y][0] or y < 2:
+				c = Color("8a8aa0")  # glinting edge
+			elif y == 5:
+				c = Color("34343c")
+			shard.set_pixel(x, y, c)
+	return shard

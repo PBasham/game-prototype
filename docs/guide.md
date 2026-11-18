@@ -297,8 +297,12 @@ same look through `UiSkin.theme()`.
 godot --headless --path . --script res://tools/make_ui_art.gd
 ```
 
-In game, the HUD (`src/ui/hud/hud.gd`) has the inventory panel top left and separate
-windows on the right (crafting, chests); their gap from the screen edge is the `Hud`
+In game, the HUD (`src/ui/hud/hud.gd`) has the inventory panel top left, the
+**health, mana and hunger** panel bottom left (pickup notes stack above it), and
+separate windows on the right (crafting, chests). Health and hunger are shown but not
+used yet (`max_health`, `max_hunger` on the Player); damage, healing, eating and
+hunger come with their own design briefs. Mana shows "inf" with infinite mana. The
+windows gap from the screen edge is the `Hud`
 exports `window_right` and `window_top`.
 
 ## Content as data

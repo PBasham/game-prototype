@@ -99,8 +99,9 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | objects/workbench.png | 40x32 (5x4 tiles), top at hip height |
 | objects/furnace.png | 32x40 (4x5 tiles), glows orange in game |
 | objects/copper_anvil.png, objects/chest.png | 24x24 (3x3 tiles); the anvil sits on a stump |
-| objects/door.png | 16x64: 2 frames of 8x64 (1x8 tiles): closed, open |
-| decor/pickup_{stick,rock,flint}.png | 8x6, lying on the grass, bottom-centered |
+| objects/door.png | 8x64 (1x8 tiles), closed: planks, three rails, hinges on the left, handle on the right |
+| objects/door_open.png | 32x64: 2 frames of 16x64 (2x8 tiles): swung open to the right (hinge column on the left), and the mirror |
+| decor/pickup_{stick,rock,flint}.png | lying on the grass, bottom-centered: stick 12x5, rock 9x7, flint 7x6 |
 | fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |
 
 Replace any of these with real art under the same name; if the size changes, check the
@@ -119,6 +120,7 @@ from each edge that doesn't stretch); change it in `UiSkin.MARGINS` if real art 
 | ui/button.png, button_hot.png, button_pressed.png, button_disabled.png | 24x16 | 5 | Wood plank buttons |
 | ui/row_hot.png | 12x12 | 3 | Highlighted list row |
 | ui/field.png | 16x16 | 4 | Text field and slider track |
+| ui/icon_health.png, icon_mana.png, icon_hunger.png | 8x8 | | Status panel icons (heart, mana drop, food) |
 
 ## Backdrop: `backdrop/*.png`
 

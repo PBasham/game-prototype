@@ -81,6 +81,12 @@ var _craft_scroll := 0
 var _inv: Pane
 var _craft: Pane
 var _chest: Pane
+var _status: Pane
+const STATUS_SIZE := Vector2(140, 44)
+const STATUS_BARS: Array[Array] = [
+	["icon_health", "d83a3a"], ["icon_mana", "3a7ae0"], ["icon_hunger", "d8942a"],
+]
+var _status_icons: Array[Texture2D] = []
 var _wheel: Wheel
 var _name_label: Label
 var _tooltip: PanelContainer
@@ -117,6 +123,11 @@ func _ready() -> void:
 	_craft = _pane(_draw_crafting, _crafting_input)
 	_craft.size = CRAFT_SIZE
 	_chest = _pane(_draw_chest, _chest_input)
+	_status = _pane(_draw_status, func(_p: Pane, _e: InputEvent) -> void: pass)
+	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_status.size = STATUS_SIZE
+	for b: Array in STATUS_BARS:
+		_status_icons.append(load(UiSkin.DIR + String(b[0]) + ".png") as Texture2D)
 	_wheel = Wheel.new()
 	_wheel.hud = self
 	_wheel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -161,6 +172,7 @@ func _pane(draw_fn: Callable, input_fn: Callable) -> Pane:
 
 func _redraw() -> void:
 	_inv.queue_redraw()
+	_status.queue_redraw()
 	_craft.queue_redraw()
 	_chest.queue_redraw()
 
@@ -289,9 +301,10 @@ func _layout() -> void:
 		var bottom := _spells_origin().y + _rows(_known().size()) * STEP - GAP + PAD
 		_inv.size = Vector2(_equip_origin().x + EQUIP_W + PAD, bottom)
 	else:
-		_inv.size = Vector2(PAD * 2 + 10 * STEP - GAP, PAD + SLOT + 4 + 3 + 4)
+		_inv.size = Vector2(PAD * 2 + 10 * STEP - GAP, PAD * 2 + SLOT)
 	_name_label.position = MARGIN + Vector2(2, _inv.size.y + 2)
 	var view := _view_size()
+	_status.position = Vector2(MARGIN.x, view.y - STATUS_SIZE.y - MARGIN.y)
 	_craft.visible = open and crafting
 	_craft.position = Vector2(view.x - CRAFT_SIZE.x - window_right, window_top)
 	_chest.visible = open and chest != World.NO_TILE
@@ -405,8 +418,6 @@ func _draw_inventory(g: Control) -> void:
 		var br := _craft_button_rect()
 		var state := UiSkin.Btn.PRESSED if crafting else (UiSkin.Btn.HOT if hover[0] == Area.CRAFT_BUTTON else UiSkin.Btn.NORMAL)
 		UiSkin.button(g, br, "Craft (K)", state)
-	else:
-		_draw_mana(g)
 	_draw_cursor_stack(g)
 
 
@@ -481,16 +492,28 @@ func _draw_magic(g: Control, font: Font, hover: Array) -> void:
 			g.draw_texture_rect(spell.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false)
 
 
-## Mana bar under the hotbar.
-func _draw_mana(g: Control) -> void:
+## Health, mana and hunger, bottom left: an icon, a bar and the numbers.
+func _draw_status(g: Control) -> void:
 	var p := world.player
-	var w := 10 * STEP - GAP
-	var r := Rect2(_grid_origin() + Vector2(0, SLOT + 3), Vector2(w, 4))
-	g.draw_rect(r, Color("120b07"))
-	var k := 1.0 if p.infinite_mana else clampf(p.mana / maxf(p.max_mana, 1.0), 0.0, 1.0)
-	var fill := Color("5aa0ff") if not p.infinite_mana else Color("b07aff")
-	g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2((w - 2) * k, 2)), fill)
-	g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2((w - 2) * k, 1)), fill.lightened(0.3))
+	var font := ThemeDB.fallback_font
+	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
+	var values := [
+		[p.health, p.max_health, false], [p.mana, p.max_mana, p.infinite_mana], [p.hunger, p.max_hunger, false],
+	]
+	for i in STATUS_BARS.size():
+		var y := 6.0 + i * 11.0
+		if _status_icons[i]:
+			g.draw_texture(_status_icons[i], Vector2(7, y))
+		var r := Rect2(18, y + 1, 82, 6)
+		g.draw_rect(r, Color("120b07"))
+		var v: Array = values[i]
+		var k := 1.0 if v[2] else clampf(float(v[0]) / maxf(float(v[1]), 1.0), 0.0, 1.0)
+		var fill := Color(STATUS_BARS[i][1]) if not v[2] else Color("b07aff")
+		var w := (r.size.x - 2) * k
+		g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(w, 4)), fill)
+		g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(w, 1)), fill.lightened(0.35))
+		var text := "inf" if v[2] else "%d" % roundi(float(v[0]))
+		g.draw_string(font, Vector2(104, y + 7), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
 
 
 func _draw_count(g: Control, font: Font, r: Rect2, n: int) -> void:
@@ -1284,4 +1307,5 @@ func _update_notes(delta: float) -> void:
 
 
 func _place_notes() -> void:
-	_notes.position.y = 344 - _notes.get_child_count() * 12
+	# Above the health, mana and hunger panel.
+	_notes.position.y = _view_size().y - STATUS_SIZE.y - MARGIN.y - 14 - _notes.get_child_count() * 12

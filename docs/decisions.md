@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Phase 6, house review
+
+- Health, mana and hunger bars bottom left (mana moved from under the hotbar). Health
+  and hunger are display only until their briefs (combat, food).
+- Doors open to 2x8 with the panel swung away from the player (Terraria style), or the
+  other way when that side is blocked. New closed door art.
+- Drops are drawn by item size (by kind, or `drop_size`); grass pickups are bigger and
+  sized like the thing.
+- The anvil stays 3x3.
+
 ## 2026-11-17: Phase 6, characters and UI
 
 - Character select and creation moved up (was Phase 7). Menu: Play, character page,

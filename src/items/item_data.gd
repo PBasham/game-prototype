@@ -22,6 +22,9 @@ const SPELL_PREFIX := "spell:"
 @export var max_stack := 999
 ## How it looks and animates in hand. Null = held like a small block.
 @export var held: HeldItemLook
+## Size (px) the item is drawn when it lies in the world as a drop. 0 = by kind: small
+## things (materials, seeds) 10, blocks and books 11, tools and weapons 13, furniture 14.
+@export var drop_size := 0
 
 @export_group("Mining")
 ## Damage to blocks per hit (swinging tools), or per second (beam).
@@ -125,3 +128,17 @@ func validate() -> PackedStringArray:
 	if max_stack < 1:
 		problems.append("%s: max_stack < 1" % id)
 	return problems
+
+
+## Size (px) of the item as a drop in the world (see drop_size).
+func drop_pixels() -> float:
+	if drop_size > 0:
+		return float(drop_size)
+	match kind:
+		Kind.MATERIAL, Kind.SEED:
+			return 10.0
+		Kind.TOOL, Kind.WEAPON:
+			return 13.0
+		Kind.FURNITURE:
+			return 14.0
+	return 11.0

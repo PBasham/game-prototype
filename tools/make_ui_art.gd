@@ -33,8 +33,55 @@ func _init() -> void:
 	_save(_button(Color("4a3e34"), Color("5a4e44"), Color("3a3028")), "button_disabled")
 	_save(_row(LEATHER_LIGHT), "row_hot")
 	_save(_field(), "field")
+	_save(_icon(HEART, {"r": Color("d83a3a"), "l": Color("ff8a7a"), "d": Color("8a1a1a")}), "icon_health")
+	_save(_icon(DROP, {"r": Color("3a7ae0"), "l": Color("9ac8ff"), "d": Color("1a3a8a")}), "icon_mana")
+	_save(_icon(FOOD, {"r": Color("c8803a"), "l": Color("f0b070"), "d": Color("7a4a1a"), "b": Color("e8e0d0")}), "icon_hunger")
 	print("make_ui_art: wrote %s" % OUT)
 	quit()
+
+
+## 8x8 status icons: r = main color, l = light, d = dark, b = bone.
+const HEART := [
+	".rr..rr.",
+	"rllrrrrd",
+	"rlrrrrrd",
+	"rrrrrrrd",
+	".rrrrrd.",
+	"..rrrd..",
+	"...rd...",
+	"........",
+]
+const DROP := [
+	"...l....",
+	"...rr...",
+	"..rlrr..",
+	".rlrrrr.",
+	".rlrrrd.",
+	".rrrrrd.",
+	"..rrdd..",
+	"........",
+]
+const FOOD := [
+	"...rrr..",
+	"..rllrr.",
+	"..rlrrrd",
+	"..rrrrrd",
+	"...rrdd.",
+	"..bb....",
+	".bbb....",
+	"bb.b....",
+]
+
+
+func _icon(rows: Array, colors: Dictionary) -> Image:
+	var img := Image.create_empty(8, 8, false, Image.FORMAT_RGBA8)
+	for y in 8:
+		var row: String = rows[y]
+		for x in 8:
+			var k := row[x]
+			if colors.has(k):
+				img.set_pixel(x, y, colors[k])
+	return img
 
 
 func _save(img: Image, file_name: String) -> void:

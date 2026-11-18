@@ -30,6 +30,9 @@ They're seeded with the flowers: some flower spots become pickups instead.
 | `flint_share` | 0.2 | Of those, the share that's flint (the rest is split between sticks and rocks) |
 | `sticks_min`, `sticks_max` | 1, 3 | Sticks a felled tree drops |
 
+Their sprites are sized like the thing (stick 12x5, rock 9x7, flint 7x6 px), from
+`tools/make_item_art.gd`.
+
 ## Crafting window
 
 A separate window on the right side of the screen (the inventory opens with it, top
@@ -95,6 +98,8 @@ can't mine the floor under furniture.
 | `needs_floor` | Must stand on blocks or platforms |
 | `blocks_movement` | Solid to the player (closed doors) |
 | `toggles_to` | Right click swaps to this object (door to open door and back) |
+| `toggles_to_left` | Used instead of `toggles_to` when the player is on the right, so a door swings away from you. If that side is blocked, it uses the other one. |
+| `hinge_offset` | The footprint column the object turns around: the toggled object keeps this column on the same tile |
 | `container_slots` | Makes it a chest with this many slots |
 | `station`, `station_tier` | Makes it a crafting station |
 | `upgrade_to`, `upgrade_cost` | Upgrade in place (see below) |
@@ -105,7 +110,7 @@ can't mine the floor under furniture.
 | Furnace | 4x5 | Station `furnace`, gives orange light (radius 6) |
 | Copper Anvil | 3x3 | Station `anvil`, on a stump |
 | Chest | 3x3 | 40 slots |
-| Door | 1x8 | Right click opens and closes. Won't close on you. |
+| Door | 1x8 | Right click opens and closes. Opens to 2x8 (`door_open`, `door_open_left`): the panel swings away from you, or the other way if that side is blocked. Won't close on you. |
 
 - **Chests:** right click opens the chest in its own window on the right (the inventory
   opens too). Click to move items like the inventory; Shift+click moves a whole stack
@@ -129,7 +134,7 @@ can't mine the floor under furniture.
 | `mana_regen` | 15 | Mana per second refilled |
 | `mana_regen_delay` | 1.0 | Seconds after spending before the refill starts |
 
-The mana bar sits under the hotbar. Costs are on each spell (`mana_cost` per cast,
+The mana bar is in the health, mana and hunger panel, bottom left. Costs are on each spell (`mana_cost` per cast,
 `mana_per_second` while a beam or concentration is on):
 
 | Spell | Cost |

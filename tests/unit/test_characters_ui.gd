@@ -143,3 +143,34 @@ func test_chest_window_take_and_deposit() -> void:
 		w.hud._move_stack(store, i, inv)
 	assert_eq(inv.count_of(&"stone"), 30, "take all")
 	assert_true(store.is_all_empty())
+
+
+func test_doors_swing_away_from_the_player() -> void:
+	await _world()
+	var right := _floor_spot(6)
+	assert_true(w.request_place_object(right, w.objects.index_of(&"door")))
+	assert_true(w.request_toggle_object(right + Vector2i(0, -3)))
+	assert_eq(w.object_at(right).id, &"door_open", "player on the left: swings right")
+	assert_eq(w.object_anchor(right + Vector2i(1, -2)), w.wrap_tile(right), "two tiles wide")
+	assert_true(w.request_toggle_object(right + Vector2i(1, -2)))
+	assert_eq(w.object_at(right).id, &"door", "closes on its hinge")
+	assert_eq(w.data.get_object(right.x + 1, right.y), WorldData.AIR, "the panel's tiles are freed")
+	var left := _floor_spot(-6)
+	assert_true(w.request_place_object(left, w.objects.index_of(&"door")))
+	assert_true(w.request_toggle_object(left))
+	assert_eq(w.object_at(left + Vector2i.LEFT).id, &"door_open_left", "player on the right: swings left")
+	assert_true(w.request_toggle_object(left + Vector2i.LEFT))
+	assert_eq(w.object_at(left).id, &"door")
+	# A wall on the far side: it swings the other way instead.
+	for y in 8:
+		w.request_set_block(left + Vector2i(-1, -y), w.blocks.index_of(&"dirt"))
+	assert_true(w.request_toggle_object(left))
+	assert_eq(w.object_at(left).id, &"door_open", "blocked on the left, opens right")
+
+
+func test_drops_are_sized_by_item() -> void:
+	var stick := ItemData.find(&"stick")
+	var axe := ItemData.find(&"stone_axe")
+	var bench := ItemData.find(&"workbench")
+	assert_lt(stick.drop_pixels(), axe.drop_pixels())
+	assert_lt(axe.drop_pixels(), bench.drop_pixels())

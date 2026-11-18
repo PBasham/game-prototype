@@ -486,18 +486,53 @@ func request_toggle_object(tile: Vector2i) -> bool:
 	var def := object_at(a) if a != NO_TILE else null
 	if not Game.is_authority() or def == null or def.toggles_to == &"":
 		return false
-	var to := objects.index_of(def.toggles_to)
-	var to_def := objects.def(to) as ObjectDef if to > 0 else null
-	if to_def == null:
-		return false
-	if to_def.blocks_movement and player:
-		var rect := Rect2(Vector2(a.x * TILE, (a.y - def.height_tiles + 1) * TILE),
+	# A door swings away from the player: open to the left when they're on its right.
+	var choices: Array[StringName] = [def.toggles_to]
+	if def.toggles_to_left != &"":
+		var hinge_x := (a.x + def.hinge_offset + 0.5) * TILE
+		var on_right := false
+		if player:
+			var px := player.global_position.x
+			px -= roundf((px - hinge_x) / (data.width * TILE)) * data.width * TILE
+			on_right = px > hinge_x
+		if on_right:
+			choices.push_front(def.toggles_to_left)
+		else:
+			choices.append(def.toggles_to_left)
+	var old_tiles := footprint(a, def)
+	for choice in choices:
+		var to := objects.index_of(choice)
+		var to_def := objects.def(to) as ObjectDef if to > 0 else null
+		if to_def == null:
+			continue
+		var to_anchor := a + Vector2i(def.hinge_offset - to_def.hinge_offset, 0)
+		if _can_toggle_into(to_anchor, to_def, old_tiles):
+			for t in old_tiles:
+				request_set_object(t, WorldData.AIR)
+			var filler := objects.index_of(&"filler")
+			for t in footprint(to_anchor, to_def):
+				request_set_object(t, filler)
+			request_set_object(to_anchor, to)
+			return true
+	return false
+
+
+## Whether a toggled object fits: new tiles are free (the old footprint doesn't count),
+## and something solid doesn't close on the player.
+func _can_toggle_into(anchor: Vector2i, def: ObjectDef, old_tiles: Array[Vector2i]) -> bool:
+	for t in footprint(anchor, def):
+		if t in old_tiles:
+			continue
+		if not data.in_bounds_y(t.y) or is_solid(t) or data.get_object(t.x, t.y) > 0:
+			return false
+	if def.blocks_movement and player:
+		var rect := Rect2(Vector2(anchor.x * TILE, (anchor.y - def.height_tiles + 1) * TILE),
 			Vector2(def.width_tiles * TILE, def.height_tiles * TILE))
 		var body := player.body_rect()
 		body.position.x -= roundf((body.position.x - rect.position.x) / (data.width * TILE)) * data.width * TILE
 		if rect.intersects(body):
 			return false  # standing in the doorway
-	return request_set_object(a, to)
+	return true
 
 
 ## The container (chest) at a tile, or null.

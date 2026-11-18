@@ -67,6 +67,10 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 
 @export_group("Mana")
 @export var max_mana := 100.0
+## Health and hunger: shown on the HUD (bottom left), not used by anything yet. Taking
+## damage, healing, eating and getting hungry come with their own design briefs.
+@export var max_health := 100.0
+@export var max_hunger := 100.0
 ## Mana per second refilled...
 @export var mana_regen := 15.0
 ## ...starting this many seconds after the last spell use.
@@ -154,6 +158,8 @@ var mana := 100.0
 ## Dev console `mana`: spells cost nothing.
 var infinite_mana := false
 var _since_spell := 99.0
+var health := 100.0
+var hunger := 100.0
 ## Optional: (back: bool) -> bool. False when using the held item now would do nothing
 ## (a block with nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
 var use_check: Callable
@@ -207,6 +213,9 @@ static func jump_values(height_tiles: float, apex_time: float) -> Vector2:
 
 func _ready() -> void:
 	floor_snap_length = max_step_down_tiles * TILE + 2.0
+	health = max_health
+	hunger = max_hunger
+	mana = max_mana
 	_doll.setup(DollRig.load_from(SHEET), load(PALETTE) as CharacterPalette)
 	_doll.look = look if look else load(DEFAULT_LOOK) as CharacterLook
 

@@ -9,6 +9,8 @@ const TILE := float(World.TILE)
 ## Tiles: the drop flies to the player inside this distance (from the player's body,
 ## not a single point, so drops at your feet count).
 @export var magnet_tiles := 3.0
+## Multiplies every item's drop size (ItemData.drop_size or its kind's default).
+@export var drop_scale := 1.0
 ## Tiles: picked up when this close to the body.
 @export var pickup_tiles := 0.6
 ## Tiles/s: fastest it flies toward the player.
@@ -38,6 +40,8 @@ var _age := 0.0
 var _bob := 0.0
 var _magnetized := false
 var _sprite: Sprite2D
+## Drawn size in px (from the item's drop_pixels()).
+var _size := 10.0
 
 
 func setup(w: World, id: StringName, n: int, vel: Vector2, thrown: bool) -> void:
@@ -53,8 +57,9 @@ func _ready() -> void:
 	var item := ItemData.find(item_id)
 	_sprite = Sprite2D.new()
 	_sprite.texture = item.icon if item else null
-	_sprite.scale = Vector2(0.5, 0.5)  # 16 px icons drawn 8 px (one tile)
-	_sprite.position = Vector2(0, -4)
+	_size = (item.drop_pixels() if item else 10.0) * drop_scale
+	_sprite.scale = Vector2.ONE * (_size / 16.0)  # icons are 16 px
+	_sprite.position = Vector2(0, -_size * 0.5)
 	add_child(_sprite)
 	z_index = 2
 
@@ -109,7 +114,7 @@ func _physics_process(delta: float) -> void:
 		next.y = global_position.y
 	global_position = next
 	_bob += delta * 3.0
-	_sprite.position.y = -4.0 - (absf(sin(_bob)) * 1.0 if _on_ground() else 0.0)
+	_sprite.position.y = -_size * 0.5 - (absf(sin(_bob)) * 1.0 if _on_ground() else 0.0)
 
 
 func _on_ground() -> bool:

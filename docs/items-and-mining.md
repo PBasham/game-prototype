@@ -278,6 +278,10 @@ where the ring appears), `ring_alpha`, `swing_cut_tiles`.
 Thrown stacks (Q, or clicking the world with a stack) fly at `throw_speed` (8 tiles/s,
 on the Player) and stop as soon as they land.
 
+A drop is drawn at the item's size: `drop_size` on the item (px), or by kind when 0:
+materials and seeds 10, blocks and the rest 11, tools and weapons 13, furniture 14.
+`drop_scale` on ItemDrop multiplies all of them.
+
 Picking items up shows one note per item that adds up ("+12 Dirt") while more keep
 arriving (`note_seconds` on `Hud`, 1.6).
 

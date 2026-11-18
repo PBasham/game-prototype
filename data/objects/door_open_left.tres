@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/door_open.png" id="1_ayipm"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_j7vlf"]
+
+[resource]
+script = ExtResource("2_j7vlf")
+frames = ExtResource("1_ayipm")
+style = 2
+height_tiles = 8
+width_tiles = 2
+frame = 1
+needs_floor = true
+toggles_to = &"door"
+hinge_offset = 1
+health = 1.0
+drop_item = &"door"
+id = &"door_open_left"
+display_name = "Door (open)"
