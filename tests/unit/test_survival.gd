@@ -80,7 +80,7 @@ func test_berry_bushes_pick_and_regrow() -> void:
 	var feet := w.world_to_tile(w.player.global_position)
 	var ground := Vector2i(feet.x + 4, feet.y)
 	w.data.set_block(ground.x, ground.y, w.blocks.index_of(&"grass"))
-	w.plants._add(w.wrap_tile(ground), PlantLayer.Kind.BUSH, 0)
+	w.plants._add(w.wrap_tile(ground), PlantLayer.Kind.BUSH, PlantLayer.BUSH_GROWN)
 	assert_true(w.plants.is_ripe(ground))
 	var inv := w.character.inventory
 	var before := inv.count_of(&"berries")
@@ -91,6 +91,20 @@ func test_berry_bushes_pick_and_regrow() -> void:
 	assert_false(w.plants.request_pick_berries(ground, w.player), "nothing left")
 	w.plants._regrow(w.plants.regrow_max_seconds + 1.0)
 	assert_true(w.plants.is_ripe(ground), "grew back")
+
+
+func test_young_bushes_grow_up() -> void:
+	var feet := w.world_to_tile(w.player.global_position)
+	var ground := w.wrap_tile(Vector2i(feet.x + 6, feet.y))
+	w.data.set_block(ground.x, ground.y, w.blocks.index_of(&"grass"))
+	var bush := w.plants._add(ground, PlantLayer.Kind.BUSH, PlantLayer.BUSH_YOUNG)
+	bush.health = 10.0
+	w.plants._young.append(ground)
+	var before := w.character.inventory.count_of(&"berries")
+	assert_true(w.plants.request_pick_berries(ground, w.player))
+	assert_lte(w.character.inventory.count_of(&"berries") - before, w.plants.berries_max / 2, "young: fewer berries")
+	w.plants._grow_bushes(11.0)
+	assert_eq(w.plants.plant_at(ground).variant, PlantLayer.BUSH_GROWN, "grew up")
 
 
 func test_dying_drops_a_magic_bag_and_respawns() -> void:

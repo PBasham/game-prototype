@@ -110,7 +110,7 @@ can't mine the floor under furniture.
 | Furnace | 4x5 | Station `furnace`, gives orange light (radius 6) |
 | Copper Anvil | 3x3 | Station `anvil`, on a stump |
 | Chest | 3x3 | 40 slots |
-| Door | 1x8 | Right click opens and closes. Opens to 2x8 (`door_open`, `door_open_left`), Terraria style: the frame post stays in the doorway and the door stands flat in the next tile, on the side away from you (or the other side if that one is blocked). Won't close on you. |
+| Door | 1x8 | Right click opens and closes. Opens to 2x8 (`door_open`, `door_open_left`), Terraria style: two images, `door.png` (closed) and `door_open.png` (open). Open, the doorway shows only the door's edge and the door stands flat in the next tile, hinged to it, on the side away from you (or the other side if that one is blocked). Won't close on you. |
 
 - **Chests:** right click opens the chest in its own window on the right (the inventory
   opens too). Click to move items like the inventory; Shift+click moves a whole stack

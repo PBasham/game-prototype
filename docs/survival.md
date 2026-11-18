@@ -43,8 +43,13 @@ stays full.
 | `bush_share` | 0.06 | Share of flower spots that are a berry bush |
 | `berries_min`, `berries_max` | 2, 4 | Berries per picking |
 | `regrow_min_seconds`, `regrow_max_seconds` | 180, 300 | Time until a picked bush is ripe again |
+| `bush_grown_share` | 0.7 | Share of the world's bushes that start full grown; the rest are young |
+| `bush_grow_min_seconds`, `bush_grow_max_seconds` | 300, 600 | Time for a young bush to grow full size |
 
-Art: `assets/decor/berry_bush.png` (ripe) and `berry_bush_bare.png`, 14x12.
+Young bushes are small and give half the berries; full grown bushes are bigger. Art:
+`assets/decor/berry_bush.png` / `berry_bush_bare.png` (full grown, 24x19) and
+`berry_bush_young.png` / `berry_bush_young_bare.png` (14x12). Later: crops, and moving
+bushes with special tools (a brief first).
 
 ## Dying and the magic bag
 
@@ -75,5 +80,5 @@ left. A character saved while dead comes back full.
 ## Dev console
 
 `god` (no damage), `hurt <n>`, `kill`, `heal` (full health and hunger), `hunger <n>`,
-`mana` (infinite mana), `bush` (a ripe berry bush on the grass under the cursor),
-`grow` (also makes picked bushes ripe).
+`mana` (infinite mana), `bush` / `bush young` (a ripe berry bush on the grass under the cursor), `grow` (also
+makes picked bushes ripe and young bushes full grown).

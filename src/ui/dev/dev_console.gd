@@ -157,12 +157,17 @@ func _register() -> void:
 		_list(_all_spells(), " ".join(a)))
 	_add("learn", "learn <spell>", "Learn a spell (it also goes in a free book slot).", _learn)
 	_add("forget", "forget <spell>", "Forget a spell.", _forget)
-	_add("bush", "bush", "Grow a ripe berry bush on the grass under the cursor.", func(_a: PackedStringArray) -> void:
+	_add("bush", "bush [young]", "Grow a ripe berry bush (full grown, or young) on the grass under the cursor.", func(a: PackedStringArray) -> void:
 		var t := world.world_to_tile(world.item_user.cursor())
 		for g: Vector2i in [t, t + Vector2i.DOWN, t + Vector2i(0, 2)]:
 			if world.data.get_block(g.x, g.y) == world.blocks.index_of(&"grass") and world.data.get_block(g.x, g.y - 1) == WorldData.AIR \
 					and world.plants.plant_at(g) == null:
-				world.plants._add(world.wrap_tile(g), PlantLayer.Kind.BUSH, 0)
+				var young := a.size() > 0 and a[0] == "young"
+				var bush := world.plants._add(world.wrap_tile(g), PlantLayer.Kind.BUSH,
+					PlantLayer.BUSH_YOUNG if young else PlantLayer.BUSH_GROWN)
+				if young:
+					bush.health = world.plants.bush_grow_min_seconds
+					world.plants._young.append(world.wrap_tile(g))
 				_print("A berry bush at %d, %d." % [g.x, g.y])
 				return
 		_print("Needs open grass under the cursor."))

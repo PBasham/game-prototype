@@ -338,8 +338,10 @@ func _phase5_art() -> void:
 	_save(_rock(Color("4a4a52"), Color("8a8a9a")), "flint", true)
 	_save(_bar(), "copper_bar", true)
 	_save(_berries(), "berries", true)
-	_bush(true).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush.png"))
-	_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_bare.png"))
+	_bush(true).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_young.png"))
+	_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_young_bare.png"))
+	_big_bush(true).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush.png"))
+	_big_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_bare.png"))
 	_magic_bag().save_png(ProjectSettings.globalize_path("res://assets/objects/magic_bag.png"))
 	_save(_hand_hammer(), "hand_hammer", true)
 	_save(_stone_tool(false), "stone_pickaxe", false)
@@ -574,20 +576,28 @@ func _door_pixel(x: int, y: int, light: float) -> Color:
 	return c.darkened(1.0 - light)
 
 
-## Open door, 2 frames of 16x64 (2x8 tiles), Terraria style: the doorway keeps its
-## frame post (with the hinges), and the door panel stands flat in the next tile, a
-## little shaded. Frame 0 swings right of the hinge, frame 1 is the mirror.
+## Open door, 2 frames of 16x64 (2x8 tiles), Terraria style, one connected piece: in
+## the doorway only the door's edge shows (its thickness, against the far side of the
+## doorway), and the door itself stands flat in the next tile, hinged to that edge, a
+## little shaded. The doorway is left open. Frame 0 opens to the right, frame 1 is the
+## mirror.
 func _door_open() -> Image:
 	var img := Image.create_empty(32, 64, false, Image.FORMAT_RGBA8)
 	var frame := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
 	for y in 64:
-		frame.set_pixel(0, y, Color("6e5030"))
-		frame.set_pixel(1, y, Color("8a6a40"))
-		if y >= 8 and y <= 10 or y >= 52 and y <= 54:
-			frame.set_pixel(1, y, Color("5a5a5e"))
-			frame.set_pixel(2, y, Color("5a5a5e"))
+		# The door's edge, seen end on: 3 px of wood at the doorway's right side.
+		for x in range(5, 8):
+			var c := Color("7a5a36") if x == 5 else Color("8c6a42")
+			if y == 0 or y == 63:
+				c = Color("6e5030")
+			frame.set_pixel(x, y, c)
+		# The door, face on, hinge side (x 0 of the closed art) against the edge.
 		for x in 8:
-			frame.set_pixel(8 + x, y, _door_pixel(x, y, 0.85))
+			frame.set_pixel(8 + x, y, _door_pixel(x, y, 0.9))
+		# Hinge straps reach across the edge onto the door.
+		if y >= 8 and y <= 10 or y >= 52 and y <= 54:
+			for x in range(5, 11):
+				frame.set_pixel(x, y, Color("7a7a7e") if y == 8 or y == 52 else Color("5a5a5e"))
 	img.blit_rect(frame, Rect2i(0, 0, 16, 64), Vector2i.ZERO)
 	frame.flip_x()
 	img.blit_rect(frame, Rect2i(0, 0, 16, 64), Vector2i(16, 0))
@@ -686,4 +696,39 @@ func _magic_bag() -> Image:
 	img.fill_rect(Rect2i(3, 3, 6, 1), Color("e8c860"))  # gold tie
 	for p: Vector2i in [Vector2i(4, 6), Vector2i(7, 7), Vector2i(5, 9)]:
 		img.set_pixel(p.x, p.y, Color("9ae8ff"))  # glowing runes
+	return img
+
+
+## Full grown berry bush 24x19, bottom-aligned: three leafy clumps, berries when ripe.
+func _big_bush(ripe: bool) -> Image:
+	var img := Image.create_empty(24, 19, false, Image.FORMAT_RGBA8)
+	var clumps: Array[Vector3] = [Vector3(7, 12, 7.0), Vector3(16, 12, 7.5), Vector3(11.5, 7, 7.0)]
+	for y in 19:
+		for x in 24:
+			var inside := false
+			var top := false
+			for c in clumps:
+				var d := Vector2(x - c.x, (y - c.y) * 1.15).length()
+				if d < c.z:
+					inside = true
+					top = top or (y < c.y - c.z * 0.35 and x < c.x + 1)
+			if y >= 18 and (x < 4 or x > 19):
+				inside = false
+			if not inside:
+				continue
+			var col := Color("3a7a34") if (x * 3 + y * 5) % 4 != 0 else Color("2e6a2c")
+			if top:
+				col = Color("5a9a44")
+			elif y > 15:
+				col = Color("2a5a28")
+			img.set_pixel(x, y, col)
+	img.fill_rect(Rect2i(11, 16, 2, 3), Color("5e4630"))  # stem
+	if ripe:
+		for p: Vector2i in [Vector2i(4, 9), Vector2i(8, 6), Vector2i(12, 3), Vector2i(15, 7), Vector2i(19, 10),
+				Vector2i(6, 13), Vector2i(10, 11), Vector2i(14, 13), Vector2i(17, 15), Vector2i(3, 14),
+				Vector2i(20, 13), Vector2i(9, 2)]:
+			img.set_pixel(p.x, p.y, Color("e0303f"))
+			img.set_pixel(p.x + 1, p.y, Color("d02a3a"))
+			img.set_pixel(p.x, p.y + 1, Color("8a1a28"))
+			img.set_pixel(p.x + 1, p.y + 1, Color("a01e2e"))
 	return img
