@@ -15,7 +15,7 @@ func after_all() -> void:
 
 
 func test_new_character_knows_mining_and_has_a_shortcut() -> void:
-	var c := CharacterData.create(NAME)
+	var c := CharacterData.create_dev(NAME)
 	assert_true(c.knows(&"mining_spell"))
 	assert_true(c.in_book(&"mining_spell"))
 	assert_eq(c.inventory.ids[2], &"spell:mining_spell", "hotbar shortcut in slot 3")
@@ -27,7 +27,7 @@ func test_new_character_knows_mining_and_has_a_shortcut() -> void:
 
 
 func test_spells_must_be_in_the_book() -> void:
-	var c := CharacterData.create(NAME)
+	var c := CharacterData.create_dev(NAME)
 	var spell := ItemData.find(&"spell:mining_spell") as SpellData
 	c.put_in_book(0, &"")
 	assert_ne(c.cast_problem(spell), "", "not in the book")
@@ -35,7 +35,7 @@ func test_spells_must_be_in_the_book() -> void:
 
 
 func test_books_change_slots_and_power() -> void:
-	var c := CharacterData.create(NAME)
+	var c := CharacterData.create_dev(NAME)
 	assert_eq(c.spell_power(), 1.0)
 	c.equip(CharacterData.SLOT_BOOK, &"dev_grimoire")
 	assert_eq(c.book_slot_count(), 8)
@@ -49,23 +49,23 @@ func test_books_change_slots_and_power() -> void:
 
 
 func test_conduit_requirements_and_bonuses() -> void:
-	var c := CharacterData.create(NAME)
+	var c := CharacterData.create_dev(NAME)
 	DevMagic.add_to(c)
 	var wide := ItemData.find(&"spell:dev_wide_beam") as SpellData
-	c.put_in_book(1, &"dev_wide_beam")
+	assert_false(c.put_in_book(1, &"dev_wide_beam"), "tier 2: too strong for the Basic Spellbook")
+	c.equip(CharacterData.SLOT_BOOK, &"dev_grimoire")
+	assert_true(c.put_in_book(5, &"dev_wide_beam"), "the Dev Grimoire holds tier 3")
 	assert_string_contains(c.cast_problem(wide), "focus")
 	assert_true(CharacterData.fits(CharacterData.SLOT_CONDUIT, ItemData.find(&"dev_focus")))
 	assert_false(CharacterData.fits(CharacterData.SLOT_BOOK, ItemData.find(&"dev_focus")))
 	c.equip(CharacterData.SLOT_CONDUIT, &"dev_focus")
 	assert_eq(c.cast_problem(wide), "")
-	assert_almost_eq(c.spell_power(), 1.25, 0.001)
+	assert_almost_eq(c.spell_power(), 1.5 * 1.25, 0.001)
 	assert_eq(c.spell_reach_bonus(), 4.0)
 
 
 func test_magic_saves_without_dev_things() -> void:
-	var c := CharacterData.create(NAME)
-	DevMagic.add_to(c)
-	c.put_in_book(1, &"dev_wide_beam")
+	var c := CharacterData.create_dev(NAME)
 	c.equip(CharacterData.SLOT_CONDUIT, &"dev_focus")
 	c.put_in_book(3, &"mining_spell")
 	assert_eq(c.save(), OK)

@@ -3,9 +3,9 @@ extends RefCounted
 ## Debug builds only: placeholder magic to test books, conduits, spell requirements,
 ## the spell wheel and tomes. Runtime items and spells, never saved, not content.
 ##
-##   Dev Grimoire     book, 8 slots, spell power x1.5
+##   Dev Grimoire     book, 8 slots, spell power x1.5, holds spells up to tier 3
 ##   Dev Focus        conduit of type "focus", spell power x1.25, +4 reach
-##   Dev Wide Beam    spell: a wider, weaker beam that needs a "focus" conduit
+##   Dev Wide Beam    spell (tier 2): a wider, weaker beam that needs a "focus" conduit
 ##   Dev Tome         tome of Dev Wide Beam (no book needed, still needs the focus)
 ##
 ## Put in the third inventory row; Dev Wide Beam is added to the known spells.
@@ -34,6 +34,7 @@ static func _register() -> void:
 	var book := _item(&"dev_grimoire", "Dev Grimoire (dev)", "8 spell slots, spell power x1.5.", ItemData.Kind.BOOK)
 	book.spell_slots = 8
 	book.spell_power = 1.5
+	book.max_spell_tier = 3
 	book.icon = _book_texture(Color("2a5a8a"), Color("f2d27a"))
 	book.held = _look(&"dev_grimoire", book.icon)
 	ItemData.register_runtime(book)
@@ -57,6 +58,7 @@ static func _register() -> void:
 	wide.mining_area_max = 5
 	wide.reach_tiles = 10.0
 	wide.requires_conduit = &"focus"
+	wide.tier = 2  # the Basic Spellbook can't hold it: the Dev Grimoire can
 	wide.icon = _crystal(Color("ff9a5a"))
 	ItemData.register_runtime(wide)
 

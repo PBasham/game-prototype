@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_3hpad")
+mana_per_second = 4.0
 kind = 4
 icon = ExtResource("1_h8opb")
 max_stack = 1

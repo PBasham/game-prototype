@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/furnace.png" id="1_valkc"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_d7oiq"]
+
+[resource]
+script = ExtResource("2_d7oiq")
+frames = ExtResource("1_valkc")
+style = 2
+height_tiles = 3
+width_tiles = 3
+needs_floor = true
+station = &"furnace"
+light_color = Color(1, 0.6, 0.3, 1)
+light_radius = 6.0
+health = 1.0
+drop_item = &"furnace"
+id = &"furnace"
+display_name = "Furnace"

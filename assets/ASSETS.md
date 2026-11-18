@@ -94,6 +94,13 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | items/icons/torch.png, items/held/torch.png | torch item |
 | objects/rope.png | 32x8: 4 frames of 8x8: single, top, middle, bottom |
 | objects/torch.png | 32x16: 4 frames of 8x16 (2 tiles tall): standing, on a block to the left, to the right, on a back wall |
+| items/{icons,held}/{stick,rock,flint,copper_bar,hand_hammer,stone_pickaxe,stone_axe}.png | Phase 5 materials and stone tools |
+| items/{icons,held}/{workbench,furnace,copper_anvil,chest,door}.png | furniture items |
+| objects/workbench.png | 24x16 (3x2 tiles) |
+| objects/furnace.png | 24x24 (3x3 tiles), glows orange in game |
+| objects/copper_anvil.png, objects/chest.png | 16x16 (2x2 tiles) |
+| objects/door.png | 16x64: 2 frames of 8x64 (1x8 tiles): closed, open |
+| decor/pickup_{stick,rock,flint}.png | 8x6, lying on the grass, bottom-centered |
 | fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |
 
 Replace any of these with real art under the same name; if the size changes, check the

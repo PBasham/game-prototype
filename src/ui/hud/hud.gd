@@ -5,7 +5,11 @@ extends CanvasLayer
 ## spell wheel), the stack held on the mouse,
 ## tooltips, and pickup notes. Placeholder look until real UI art exists.
 ##
-## Inventory panel: 4 rows of 10, the top row is the hotbar.
+## Inventory panel: 4 rows of 10, the top row is the hotbar. On the right, the crafting
+## list: hand crafting, or the recipes of the station you opened (right click or E on a
+## Workbench, Furnace, Anvil). Click a recipe to craft one, Shift + click for 10; the
+## mouse wheel scrolls a long list. A chest you open shows its 40 slots under your
+## inventory (Shift + click moves a stack across). The mana bar is under the hotbar.
 ##   Left click: pick up a stack / put it down / swap / merge.
 ##   Right click: pick up half, or put one down from the stack on the mouse.
 ##   Shift + left click: move a stack between the hotbar and the rest.
@@ -31,7 +35,10 @@ const DIM := Color("a8a090")
 const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
-enum Area { NONE, INVENTORY, EQUIPMENT, BOOK, SPELLS }
+enum Area { NONE, INVENTORY, EQUIPMENT, BOOK, SPELLS, CHEST, RECIPE, UPGRADE }
+## Crafting list: row height and width.
+const ROW := 22
+const CRAFT_W := 252
 const EQUIP_SLOTS: Array[StringName] = [CharacterData.SLOT_BOOK, CharacterData.SLOT_CONDUIT]
 
 ## Radius (UI px) of the spell wheel.
@@ -53,6 +60,12 @@ var wheel_center := Vector2.ZERO
 var wheel_choice: StringName = &""
 var _r_down := false
 var _r_held := 0.0
+## The crafting station (anchor tile) or chest the panel was opened from; NO_TILE = none
+## (the panel shows hand crafting).
+var station := World.NO_TILE
+var chest := World.NO_TILE
+## First crafting row shown (mouse wheel over the list scrolls).
+var _craft_scroll := 0
 
 var _grid: Grid
 var _wheel: Wheel
@@ -119,6 +132,8 @@ func _ready() -> void:
 	_notes.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_notes)
 	EventBus.item_picked_up.connect(_on_picked_up)
+	world.station_opened.connect(_on_station_opened)
+	world.container_opened.connect(_on_container_opened)
 	world.character.inventory.changed.connect(_grid.queue_redraw)
 	world.character.magic_changed.connect(_layout)
 	world.player.selection_changed.connect(func(_s: int) -> void: _grid.queue_redraw())
@@ -150,6 +165,9 @@ func _process(delta: float) -> void:
 	var over := _grid.get_global_rect().has_point(_grid.get_global_mouse_position())
 	p.input_blocked = over or cursor_count > 0 or paused or wheel_open
 	_update_tooltip(over)
+	if (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
+		set_open(false)  # walked away from the station or chest
+	_grid.queue_redraw()  # mana bar, recipe counts
 	var item := p.held_item
 	_name_label.text = item.display_name if item else ""
 	if p.concentration:
@@ -160,6 +178,10 @@ func _process(delta: float) -> void:
 
 func set_open(value: bool) -> void:
 	open = value
+	if not open:
+		station = World.NO_TILE
+		chest = World.NO_TILE
+	_craft_scroll = 0
 	if not open and cursor_count > 0:
 		if _cursor_is_spell():
 			_clear_cursor()  # a spell being placed just goes back
@@ -172,15 +194,68 @@ func set_open(value: bool) -> void:
 	_layout()
 
 
+func _on_station_opened(anchor: Vector2i) -> void:
+	set_open(true)
+	station = anchor
+	_layout()
+
+
+func _on_container_opened(anchor: Vector2i) -> void:
+	set_open(true)
+	chest = anchor
+	_layout()
+
+
+func _in_reach_of(anchor: Vector2i) -> bool:
+	var p := world.player
+	var at := world.tile_to_world(anchor) + Vector2(World.TILE, 0)
+	at.x += roundf((p.global_position.x - at.x) / (world.data.width * World.TILE)) * world.data.width * World.TILE
+	return at.distance_to(p.chest()) <= (world.interact_tiles + 4.0) * World.TILE \
+		and world.object_anchor(anchor) == anchor
+
+
 # --- layout ------------------------------------------------------------------------------
 
 func _layout() -> void:
 	if open:
-		_grid.size = Vector2(_equip_origin().x + SLOT + 110, _spells_origin().y + _rows(_known().size()) * (SLOT + GAP))
+		var bottom := _spells_origin().y + _rows(_known().size()) * (SLOT + GAP)
+		if chest != World.NO_TILE:
+			bottom = _book_origin().y + 4 * (SLOT + GAP) + 4
+		bottom = maxf(bottom, _craft_origin().y + 6 * ROW + 16)
+		_grid.size = Vector2(_craft_origin().x + CRAFT_W, bottom)
 	else:
-		_grid.size = Vector2(10 * (SLOT + GAP) - GAP, SLOT)
-	_name_label.position = MARGIN + Vector2(0, (_grid.size.y if open else SLOT) + 2)
+		_grid.size = Vector2(10 * (SLOT + GAP) - GAP, SLOT + 6)
+	_name_label.position = MARGIN + Vector2(0, (_grid.size.y if open else SLOT + 6) + 2)
 	_grid.queue_redraw()
+
+
+func _craft_origin() -> Vector2:
+	return Vector2(_equip_origin().x + SLOT + 104, 12)
+
+
+## The recipes the list shows: the open station's, or hand crafting.
+func recipes() -> Array[RecipeData]:
+	var def := world.object_at(station) if station != World.NO_TILE else null
+	if def and def.station != &"":
+		return Crafting.recipes_for(def.station, def.station_tier)
+	return Crafting.recipes_for(&"")
+
+
+func _rows_shown() -> int:
+	return int((_grid.size.y - _craft_origin().y - (ROW if _upgrade_shown() else 0)) / ROW)
+
+
+func _recipe_rect(i: int) -> Rect2:
+	return Rect2(_craft_origin() + Vector2(0, (i - _craft_scroll) * ROW), Vector2(CRAFT_W - 4, ROW - 2))
+
+
+func _upgrade_shown() -> bool:
+	var def := world.object_at(station) if station != World.NO_TILE else null
+	return def != null and def.upgrade_to != &""
+
+
+func _upgrade_rect() -> Rect2:
+	return Rect2(_craft_origin() + Vector2(0, _rows_shown() * ROW), Vector2(CRAFT_W - 4, ROW - 2))
 
 
 func _rows(n: int) -> int:
@@ -223,6 +298,17 @@ func hit(local: Vector2) -> Array:
 	for i in EQUIP_SLOTS.size():
 		if _equip_cell(i).has_point(local):
 			return [Area.EQUIPMENT, i]
+	var list := recipes()
+	for i in range(_craft_scroll, mini(list.size(), _craft_scroll + _rows_shown())):
+		if _recipe_rect(i).has_point(local):
+			return [Area.RECIPE, i]
+	if _upgrade_shown() and _upgrade_rect().has_point(local):
+		return [Area.UPGRADE, 0]
+	if chest != World.NO_TILE:
+		for i in Inventory.SIZE:
+			if _cell(_book_origin(), i).has_point(local):
+				return [Area.CHEST, i]
+		return [Area.NONE, -1]
 	for i in world.character.book_slot_count():
 		if _cell(_book_origin(), i).has_point(local):
 			return [Area.BOOK, i]
@@ -257,7 +343,13 @@ func draw_grid(g: Control) -> void:
 		if i < Inventory.HOTBAR:
 			g.draw_string(font, r.position + Vector2(2, 7), str((i + 1) % 10), HORIZONTAL_ALIGNMENT_LEFT, -1, 6, DIM)
 	if open:
-		_draw_magic(g, font)
+		if chest != World.NO_TILE:
+			_draw_chest(g, font)
+		else:
+			_draw_magic(g, font)
+		_draw_crafting(g, font)
+	else:
+		_draw_mana(g)
 	if cursor_count > 0:
 		var item := ItemData.find(cursor_id)
 		var m := g.get_local_mouse_position()
@@ -325,6 +417,90 @@ func _draw_magic(g: Control, font: Font) -> void:
 			g.draw_texture_rect(spell.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false)
 
 
+## Mana bar under the hotbar.
+func _draw_mana(g: Control) -> void:
+	var p := world.player
+	var w := 10 * (SLOT + GAP) - GAP
+	var r := Rect2(0, SLOT + 2, w, 3)
+	g.draw_rect(r, Color(0, 0, 0, 0.55))
+	var k := 1.0 if p.infinite_mana else clampf(p.mana / maxf(p.max_mana, 1.0), 0.0, 1.0)
+	g.draw_rect(Rect2(r.position, Vector2(w * k, 3)), Color("5aa0ff") if not p.infinite_mana else Color("b07aff"))
+
+
+func _draw_chest(g: Control, font: Font) -> void:
+	var store := world.container_at(chest)
+	var def := world.object_at(chest)
+	g.draw_string(font, _book_origin() + Vector2(0, -3), def.display_name if def else "Chest",
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
+	if store == null:
+		return
+	for i in Inventory.SIZE:
+		var r := _cell(_book_origin(), i)
+		g.draw_rect(r, BG)
+		g.draw_rect(r, EDGE, false, 1.0)
+		var item := store.item(i)
+		if item:
+			_draw_item(g, font, r, item, store.counts[i])
+
+
+func _draw_crafting(g: Control, font: Font) -> void:
+	var inv := world.character.inventory
+	var def := world.object_at(station) if station != World.NO_TILE else null
+	var title := "Crafting by hand"
+	if def and def.station != &"":
+		title = "%s (tier %d)" % [def.display_name, def.station_tier]
+	g.draw_string(font, _craft_origin() + Vector2(0, -3), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
+	var list := recipes()
+	if list.is_empty():
+		g.draw_string(font, _craft_origin() + Vector2(4, 12), "Nothing to craft here yet", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
+	var hover := hit(g.get_local_mouse_position())
+	for i in range(_craft_scroll, mini(list.size(), _craft_scroll + _rows_shown())):
+		var r := list[i]
+		var rect := _recipe_rect(i)
+		var times := Crafting.times_craftable(inv, r)
+		var hot: bool = hover[0] == Area.RECIPE and hover[1] == i
+		g.draw_rect(rect, BG_HOT if hot else BG_PANEL)
+		var out := ItemData.find(r.output)
+		var a := 1.0 if times > 0 else 0.4
+		if out and out.icon:
+			g.draw_texture_rect(out.icon, Rect2(rect.position + Vector2(2, 2), Vector2(16, 16)), false, Color(1, 1, 1, a))
+		var label_text := (out.display_name if out else String(r.output)) + (" x%d" % r.output_count if r.output_count > 1 else "")
+		g.draw_string(font, rect.position + Vector2(21, 9), label_text, HORIZONTAL_ALIGNMENT_LEFT, 110, 7, Color(TEXT, a))
+		# Inputs: icon and count, red when short.
+		var x := 21.0
+		for k: StringName in r.inputs:
+			var it := ItemData.find(k)
+			if it and it.icon:
+				g.draw_texture_rect(it.icon, Rect2(rect.position + Vector2(x, 10), Vector2(9, 9)), false, Color(1, 1, 1, a))
+			var short := inv.count_of(k) < r.inputs[k]
+			g.draw_string(font, rect.position + Vector2(x + 10, 18), str(r.inputs[k]), HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
+				Color("ff8a7a") if short else Color(DIM, a))
+			x += 28.0
+		for q in r.requires:
+			var it := ItemData.find(q)
+			if it and it.icon:
+				var has := inv.count_of(q) > 0
+				g.draw_texture_rect(it.icon, Rect2(rect.position + Vector2(x, 10), Vector2(9, 9)), false,
+					Color(1, 1, 1, a) if has else Color(1, 0.5, 0.45, 0.8))
+				g.draw_string(font, rect.position + Vector2(x + 10, 18), "keep", HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
+					Color(DIM, a) if has else Color("ff8a7a"))
+				x += 34.0
+		if times > 0:
+			g.draw_string(font, rect.position + Vector2(CRAFT_W - 30, 9), "x%d" % times, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, DIM)
+	if list.size() > _rows_shown():
+		g.draw_string(font, _craft_origin() + Vector2(CRAFT_W - 70, -3), "wheel: more", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, DIM)
+	if _upgrade_shown():
+		var ur := _upgrade_rect()
+		var ok := _can_upgrade()
+		g.draw_rect(ur, BG_HOT if ok else BG_PANEL)
+		var next := world.objects.def(world.objects.index_of(def.upgrade_to)) as ObjectDef
+		var text := "Upgrade to %s:" % (next.display_name if next else String(def.upgrade_to))
+		for k: StringName in def.upgrade_cost:
+			text += " %d %s" % [def.upgrade_cost[k], Crafting._name(k)]
+		g.draw_string(font, ur.position + Vector2(4, 13), text, HORIZONTAL_ALIGNMENT_LEFT, CRAFT_W - 8, 7,
+			Color(TEXT, 1.0 if ok else 0.45))
+
+
 func _draw_count(g: Control, font: Font, r: Rect2, n: int) -> void:
 	var text := str(n)
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
@@ -338,6 +514,12 @@ func _draw_count(g: Control, font: Font, r: Rect2, n: int) -> void:
 func grid_input(event: InputEvent) -> void:
 	var mb := event as InputEventMouseButton
 	if mb == null or not mb.pressed:
+		return
+	if open and mb.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] \
+			and mb.position.x >= _craft_origin().x:
+		var most := maxi(recipes().size() - _rows_shown(), 0)
+		_craft_scroll = clampi(_craft_scroll + (1 if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1), 0, most)
+		_grid.accept_event()
 		return
 	var h := hit(mb.position)
 	if h[0] == Area.NONE:
@@ -354,7 +536,10 @@ func grid_input(event: InputEvent) -> void:
 			elif right and mb.ctrl_pressed:
 				quick_equip(slot)
 			elif left and mb.shift_pressed:
-				_quick_move(slot)
+				if chest != World.NO_TILE:
+					_move_stack(world.character.inventory, slot, world.container_at(chest))
+				else:
+					_quick_move(slot)
 			elif left:
 				click_slot(slot)
 			elif right:
@@ -372,12 +557,75 @@ func grid_input(event: InputEvent) -> void:
 		Area.SPELLS:
 			if left:
 				click_known_spell(h[1])
+		Area.CHEST:
+			var store := world.container_at(chest)
+			if store:
+				if left and mb.shift_pressed:
+					_move_stack(store, h[1], world.character.inventory)
+				elif left:
+					click_slot(h[1], store)
+				elif right:
+					right_click_slot(h[1], store)
+		Area.RECIPE:
+			if left:
+				craft(recipes()[h[1]], 10 if mb.shift_pressed else 1)
+		Area.UPGRADE:
+			if left:
+				upgrade_station()
 	_grid.queue_redraw()
 
 
-## Left click with the panel open: pick up, put down, merge or swap.
-func click_slot(slot: int) -> void:
-	var inv := world.character.inventory
+## Crafts a recipe up to `times` times from the inventory; extra output drops at your
+## feet.
+func craft(r: RecipeData, times: int) -> int:
+	var result := Crafting.craft(world.character.inventory, r, times)
+	if int(result[1]) > 0:
+		world.request_spawn_drop(r.output, int(result[1]), world.player.chest(), Vector2.ZERO, true)
+	if int(result[0]) > 0:
+		EventBus.item_picked_up.emit(r.output, int(result[0]) * r.output_count)
+	return int(result[0])
+
+
+func _can_upgrade() -> bool:
+	var def := world.object_at(station) if station != World.NO_TILE else null
+	if def == null or def.upgrade_to == &"":
+		return false
+	for k: StringName in def.upgrade_cost:
+		if world.character.inventory.count_of(k) < def.upgrade_cost[k]:
+			return false
+	return true
+
+
+## Upgrades the open station in place to its next tier (same footprint expected).
+func upgrade_station() -> bool:
+	if not _can_upgrade():
+		return false
+	var def := world.object_at(station)
+	var next := world.objects.index_of(def.upgrade_to)
+	if next <= 0:
+		return false
+	for k: StringName in def.upgrade_cost:
+		world.character.inventory.remove(k, def.upgrade_cost[k])
+	world.request_set_object(station, next)
+	return true
+
+
+## Shift + click with a chest open: the whole stack to the other side.
+func _move_stack(from: Inventory, slot: int, to: Inventory) -> void:
+	if to == null or from.is_empty(slot) or String(from.ids[slot]).begins_with(ItemData.SPELL_PREFIX):
+		return
+	var id := from.ids[slot]
+	var left := to.add(id, from.counts[slot])
+	from.set_slot(slot, id if left > 0 else &"", left)
+
+
+## Left click with the panel open: pick up, put down, merge or swap. `inv` = a chest
+## (null = your inventory).
+func click_slot(slot: int, inv: Inventory = null) -> void:
+	if inv == null:
+		inv = world.character.inventory
+	elif _cursor_is_spell():
+		return  # spell shortcuts don't go in chests
 	if cursor_count == 0:
 		if not inv.is_empty(slot):
 			cursor_id = inv.ids[slot]
@@ -405,8 +653,11 @@ func click_slot(slot: int) -> void:
 
 
 ## Right click: take half (empty mouse) or put one down.
-func right_click_slot(slot: int) -> void:
-	var inv := world.character.inventory
+func right_click_slot(slot: int, inv: Inventory = null) -> void:
+	if inv == null:
+		inv = world.character.inventory
+	elif _cursor_is_spell():
+		return
 	if cursor_count == 0:
 		if inv.is_empty(slot):
 			return
@@ -470,8 +721,10 @@ func quick_unequip(eq: StringName) -> void:
 func click_book_slot(i: int) -> void:
 	var c := world.character
 	if _cursor_is_spell():
-		c.put_in_book(i, _cursor_spell())
-		_clear_cursor()
+		if c.put_in_book(i, _cursor_spell()):
+			_clear_cursor()
+		else:
+			EventBus.debug_message.emit("Too powerful for this spellbook (needs a book for higher tiers)")
 	elif cursor_count == 0:
 		var loadout := c.book_loadout()
 		if loadout[i] != &"":
@@ -635,6 +888,19 @@ func _update_tooltip(over: bool) -> void:
 				item = ItemData.find(ItemData.spell_key(s)) if s != &"" else null
 			Area.SPELLS:
 				item = ItemData.find(ItemData.spell_key(_known()[h[1]]))
+			Area.CHEST:
+				var store := world.container_at(chest)
+				item = store.item(h[1]) if store else null
+			Area.RECIPE:
+				var r: RecipeData = recipes()[h[1]]
+				var out := ItemData.find(r.output)
+				var miss := Crafting.missing(c.inventory, r)
+				_tooltip.visible = true
+				_tooltip_text.text = (tooltip_for(out, c) if out else String(r.output)) + \
+					("\nClick: craft 1, Shift + click: 10" if miss.is_empty() else "\nNeed: " + ", ".join(miss))
+				_tooltip.reset_size()
+				_tooltip.position = _grid.get_global_mouse_position() + Vector2(10, 8)
+				return
 	_tooltip.visible = item != null
 	if item == null:
 		return

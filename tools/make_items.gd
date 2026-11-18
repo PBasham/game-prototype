@@ -1,6 +1,7 @@
 extends SceneTree
-## Writes the default items (data/items/*.tres) and spells (data/spells/*.tres) from the
-## tables below.
+## Writes the default items (data/items), spells (data/spells), tile objects
+## (data/objects: furniture) and recipes (data/recipes) from the tables below.
+## --only takes a comma-separated list of ids.
 ##
 ##   godot --headless --path . --script res://tools/make_items.gd
 ##   godot --headless --path . --script res://tools/make_items.gd -- --force
@@ -11,35 +12,45 @@ extends SceneTree
 
 const DIR := "res://data/items"
 const SPELL_DIR := "res://data/spells"
+const OBJECT_DIR := "res://data/objects"
+const RECIPE_DIR := "res://data/recipes"
 
 var _force := false
 
 
 func _init() -> void:
 	_force = OS.get_cmdline_user_args().has("--force")
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DIR))
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SPELL_DIR))
 	var written := 0
-	var all: Array[ItemData] = _items()
-	all.append_array(_spells())
-	for item: ItemData in all:
-		if not _selected(item):
+	var all: Array = []
+	for item in _items():
+		all.append([item, DIR])
+	for spell in _spells():
+		all.append([spell, SPELL_DIR])
+	for obj in _objects():
+		all.append([obj, OBJECT_DIR])
+	for recipe in _recipes():
+		all.append([recipe, RECIPE_DIR])
+	for e: Array in all:
+		var res: GameData = e[0]
+		var dir: String = e[1]
+		if not _selected(res.id):
 			continue
-		var path := "%s/%s.tres" % [SPELL_DIR if item.is_spell() else DIR, item.id]
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
+		var path := "%s/%s.tres" % [dir, res.id]
 		if FileAccess.file_exists(path) and not _force:
 			print("make_items: %s exists, kept (use --force to overwrite)" % path)
 			continue
-		ResourceSaver.save(item, path)
+		ResourceSaver.save(res, path)
 		written += 1
 		print("make_items: wrote %s" % path)
 	print("make_items: %d written" % written)
 	quit()
 
 
-func _selected(item: ItemData) -> bool:
+func _selected(res_id: StringName) -> bool:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--only="):
-			return String(item.id) == a.trim_prefix("--only=")
+			return String(res_id) in a.trim_prefix("--only=").split(",")
 	return true
 
 
@@ -68,8 +79,27 @@ func _items() -> Array[ItemData]:
 	torch.held.grip = Vector2(3, 6)
 	out.append(torch)
 	# Materials and seeds.
-	var wood := _small(&"wood", "Wood", "From trees. Crafted into planks (crafting comes later).")
+	var wood := _small(&"wood", "Wood", "From trees. Craft into planks or torches.")
 	out.append(wood)
+	out.append(_small(&"stick", "Stick", "Lies on the grass; trees drop some too. For tools and torches."))
+	out.append(_small(&"rock", "Rock", "Lies on the grass. A Workbench breaks stone into rocks."))
+	out.append(_small(&"flint", "Flint", "A sharp stone for the first tools. Found on the grass, sometimes in stone."))
+	out.append(_small(&"copper_bar", "Copper Bar", "Smelted from copper ore in a Furnace."))
+	var hammer := _small(&"hand_hammer", "Hand Hammer", "Needed in your inventory to build a Workbench and to break stone into rocks.")
+	hammer.max_stack = 1
+	out.append(hammer)
+	# Furniture (crafting stations, storage, doors).
+	for f: Array in [[&"workbench", "Workbench", "A crafting station: furniture, tools and the next stations."],
+			[&"furnace", "Furnace", "A crafting station: smelts ore into bars."],
+			[&"copper_anvil", "Copper Anvil", "A crafting station: copper tools."],
+			[&"chest", "Chest", "Stores 40 stacks. Right click or E to open."],
+			[&"door", "Door", "Right click or E to open and close."]]:
+		var furn := _small(f[0], f[1], f[2])
+		furn.kind = ItemData.Kind.FURNITURE
+		furn.places_object = f[0]
+		furn.place_area_max = 1
+		furn.max_stack = 99
+		out.append(furn)
 	var acorn := _small(&"tree_seed", "Tree Seed", "Plant on grass to grow a tree.")
 	acorn.kind = ItemData.Kind.SEED
 	acorn.plants = &"tree"
@@ -88,11 +118,21 @@ func _items() -> Array[ItemData]:
 	var axe := _tool(&"copper_axe", "Copper Axe", "Chops trees.", &"tool")
 	axe.axe_damage = 25.0
 	out.append(axe)
+	var stone_pick := _tool(&"stone_pickaxe", "Stone Pickaxe", "A flint pickaxe. Mines one block per swing.", &"tool")
+	stone_pick.mining_damage = 15.0
+	stone_pick.mining_area = 1
+	stone_pick.reach_tiles = 7.0
+	out.append(stone_pick)
+	var stone_axe := _tool(&"stone_axe", "Stone Axe", "A flint axe. Chops trees, slowly.", &"tool")
+	stone_axe.axe_damage = 15.0
+	stone_axe.reach_tiles = 7.0
+	out.append(stone_axe)
 	# The spellbook used when the book slot is empty. Not found in the world.
 	var book := _base(&"basic_spellbook", "Basic Spellbook", "Holds 4 spells. Used when no other book is equipped.")
 	book.kind = ItemData.Kind.BOOK
 	book.max_stack = 1
 	book.spell_slots = 4
+	book.max_spell_tier = 1
 	book.held = _look(&"basic_spellbook", &"spell_book", Vector2(5, 9))
 	out.append(book)
 	return out
@@ -112,18 +152,20 @@ func _spells() -> Array[ItemData]:
 	mining.mining_area = 2
 	mining.mining_area_max = 3
 	mining.reach_tiles = 12.0
+	mining.mana_per_second = 4.0
 	out.append(mining)
 
 	var chop := _spell(&"chopping_spell", "Chopping Spell", "Hold to chop a tree with a beam. A bit slower than the copper axe.")
 	chop.beam = true
 	chop.axe_damage = 55.0  # per second (the copper axe is 25 per 0.35 s swing, about 71/s)
 	chop.reach_tiles = 12.0
+	chop.mana_per_second = 3.0
 	out.append(chop)
 
 	var fly := _spell(&"fly", "Fly", "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up.")
 	fly.cast = SpellData.Cast.TOGGLE
 	fly.effect = &"fly"
-	fly.mana_per_second = 2.0  # not used until mana exists
+	fly.mana_per_second = 10.0
 	out.append(fly)
 
 	var spark := _spell(&"spark", "Spark", "A small bolt toward the cursor. Hold to keep casting.")
@@ -132,8 +174,87 @@ func _spells() -> Array[ItemData]:
 	spark.projectile_speed = 40.0
 	spark.projectile_range = 20.0
 	spark.impact_at = 0.35
-	spark.mana_cost = 1.0  # not used until mana exists
+	spark.mana_cost = 2.0
 	out.append(spark)
+	return out
+
+
+## Furniture tile objects. The anchor is the bottom-left tile.
+func _objects() -> Array[ObjectDef]:
+	var out: Array[ObjectDef] = []
+	var filler := ObjectDef.new()
+	filler.id = &"filler"
+	filler.display_name = "(furniture filler)"
+	filler.filler = true
+	filler.style = ObjectDef.Style.FURNITURE
+	out.append(filler)
+	# [id, name, w, h, station, frames file]
+	for f: Array in [[&"workbench", "Workbench", 3, 2, &"workbench"], [&"furnace", "Furnace", 3, 3, &"furnace"],
+			[&"copper_anvil", "Copper Anvil", 2, 2, &"anvil"], [&"chest", "Chest", 2, 2, &""],
+			[&"door", "Door", 1, 8, &""]]:
+		var o := ObjectDef.new()
+		o.id = f[0]
+		o.display_name = f[1]
+		o.style = ObjectDef.Style.FURNITURE
+		o.width_tiles = f[2]
+		o.height_tiles = f[3]
+		o.station = f[4]
+		o.needs_floor = true
+		o.health = 1.0
+		o.drop_item = f[0]
+		o.frames = load("res://assets/objects/%s.png" % f[0]) as Texture2D
+		out.append(o)
+	out[2].light_radius = 6.0  # the furnace glows
+	out[2].light_color = Color(1.0, 0.6, 0.3)
+	out[4].container_slots = Inventory.SIZE
+	out[5].blocks_movement = true
+	out[5].toggles_to = &"door_open"
+	var open := out[5].duplicate() as ObjectDef
+	open.id = &"door_open"
+	open.display_name = "Door (open)"
+	open.blocks_movement = false
+	open.frame = 1
+	open.toggles_to = &"door"
+	out.append(open)
+	return out
+
+
+## Recipes: [id, station, {inputs}, output, count, requires]. Station &"" = by hand.
+func _recipes() -> Array[RecipeData]:
+	var out: Array[RecipeData] = []
+	var table: Array = [
+		# By hand.
+		[&"hand_hammer", &"", {&"rock": 1, &"stick": 1}, &"hand_hammer", 1, []],
+		[&"stone_pickaxe", &"", {&"flint": 3, &"stick": 2}, &"stone_pickaxe", 1, []],
+		[&"stone_axe", &"", {&"flint": 3, &"stick": 2}, &"stone_axe", 1, []],
+		[&"wood_planks", &"", {&"wood": 1}, &"wood_planks", 2, []],
+		[&"wood_platform", &"", {&"wood_planks": 1}, &"wood_platform", 2, []],
+		[&"torch", &"", {&"stick": 1, &"wood": 1}, &"torch", 3, []],
+		[&"workbench", &"", {&"wood_planks": 10}, &"workbench", 1, [&"hand_hammer"]],
+		# Workbench.
+		[&"rocks_from_stone", &"workbench", {&"stone": 1}, &"rock", 3, [&"hand_hammer"]],
+		[&"chest", &"workbench", {&"wood_planks": 8, &"copper_bar": 2}, &"chest", 1, []],
+		[&"door", &"workbench", {&"wood_planks": 6}, &"door", 1, []],
+		[&"furnace", &"workbench", {&"stone": 20, &"wood": 4, &"torch": 3}, &"furnace", 1, []],
+		[&"copper_anvil", &"workbench", {&"copper_bar": 6}, &"copper_anvil", 1, []],
+		# Furnace.
+		[&"copper_bar", &"furnace", {&"copper_ore": 3}, &"copper_bar", 1, []],
+		# Anvil.
+		[&"copper_pickaxe", &"anvil", {&"copper_bar": 10, &"stick": 3}, &"copper_pickaxe", 1, []],
+		[&"copper_axe", &"anvil", {&"copper_bar": 8, &"stick": 3}, &"copper_axe", 1, []],
+	]
+	for e: Array in table:
+		var r := RecipeData.new()
+		r.id = e[0]
+		r.station = e[1]
+		for k: StringName in (e[2] as Dictionary):
+			r.inputs[k] = e[2][k]
+		r.output = e[3]
+		r.output_count = e[4]
+		for q: StringName in e[5]:
+			r.requires.append(q)
+		r.display_name = String(e[3]).capitalize()
+		out.append(r)
 	return out
 
 

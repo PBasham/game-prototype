@@ -1,5 +1,7 @@
 # Items, inventory, mining, placing, magic and plants
 
+Crafting, stations, furniture, chests, doors and mana: [crafting.md](crafting.md).
+
 Everything Phase 4 added: what it does, where it lives, and every number you can tweak.
 Live tweaking works like everywhere else: run the game, Scene panel **Remote**, select
 the node (`ItemUser`, `Plants`, `Hud`, a drop under `Drops`) and edit it in the
@@ -11,8 +13,8 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | --- | --- |
 | **1 to 0**, mouse wheel | Pick a hotbar slot |
 | **Left click** | Use the held item on the **front** layer: swing, mine, chop, place a block, plant. Hold to repeat. |
-| **Right click** | On something you can interact with (doors, chests later): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
-| **E** | Interact with the nearest thing in reach (nothing interactable exists yet) |
+| **Right click** | On something you can interact with (stations, chests, doors, pickups on the grass): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
+| **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest pickup) |
 | **I** or **Tab** | Open / close the inventory (with equipment and spells) |
 | **R** (tap) | Take the spellbook out (like Starbound's matter manipulator), with the last spell you used; tap again to go back to your hotbar slot |
 | **R** (hold) | Spell wheel: move the mouse toward a spell, let go to cast with it |
@@ -149,7 +151,8 @@ How a spell works is its `cast`:
 | PROJECTILE | Fires a bolt at the cursor that hurts the first thing it hits and fizzles on solid blocks | `damage`, `projectile_speed`, `projectile_range`, `projectile_color` |
 | TOGGLE | A concentration spell: a click turns its `effect` on or off. Only one at a time; the HUD shows "Concentrating: ..." | `effect` (&"fly") |
 
-Every spell also has `mana_cost` and `mana_per_second`, unused until mana exists.
+Every spell also has `mana_cost` (per cast) and `mana_per_second` (beams and
+concentration), and a `tier`. Mana, costs and tiers: [crafting.md](crafting.md#mana-on-the-player-srcplayerplayergd).
 
 | Spell | Cast | Notes |
 | --- | --- | --- |
@@ -161,10 +164,9 @@ Every spell also has `mana_cost` and `mana_per_second`, unused until mana exists
 Damageable things are nodes in the `damageable` group with `hit_rect()` and
 `take_damage(amount, from)`; enemies will use the same.
 
-- **Spells you know** are kept on the character. A new character knows the Mining
-  Spell, Chopping Spell, Fly and Spark, all in the Basic Spellbook's 4 slots. Older
-  characters learn any starting spell they're missing when they load. (How you learn
-  more comes with crafting and loot.)
+- **Spells you know** are kept on the character. A new character knows none (console
+  `devkit` teaches the four and fills the book). How you learn spells in the real game
+  comes later.
 - **The spellbook is part of the character**, not a hotbar item: the **Book** slot in
   the inventory panel. Empty = the Basic Spellbook (4 slots). Other books can have more
   slots and `spell_power`. Your loadout stays when you swap books; a smaller book just
@@ -194,28 +196,29 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
   setting, so building feels the same as the mining spell.
 - **Strength:** damage = spell's `mining_damage` x book (or tome) `spell_power` x
   conduit `spell_power`. Reach = spell's `reach_tiles` + conduit `spell_reach_bonus`.
-- No mana yet.
+- **Mana:** 100, refills after a short pause. See [crafting.md](crafting.md).
 
 Debug builds add test magic (runtime only, never saved, not real content) in the third
 inventory row: **Dev Grimoire** (8 slots, x1.5), **Dev Focus** (a "focus" conduit,
 x1.25, +4 reach), **Dev Tome**, and the spell **Dev Wide Beam** (wider, needs the focus).
 Try: put Dev Wide Beam in your book, see it red on the wheel, equip Dev Focus, cast it.
 
-## Starting kit and the character file
+## Starting state, dev kit and the character file
 
 A character is saved separately from worlds: `user://characters/default.gpchar` (name
 and inventory). Until character select exists (Phase 7) there's one automatic
-character. The first time you start a world it's made with the starting kit:
+character. A new character starts with **nothing**: no items, no spells (see
+[crafting.md](crafting.md) for how to get going).
 
-pickaxe, axe, a Mining Spell shortcut (slot 3), 99 planks, 30 platforms, 30 rope, 20
-torches, 5 tree seeds, 10 grass seeds, 50 dirt. It knows the Mining Spell, already in the book.
+Console `devkit` gives the old starting kit: copper pickaxe and axe, a Mining Spell
+shortcut, 99 planks, 30 platforms, 30 rope, 20 torches, 5 tree seeds, 10 grass seeds,
+50 dirt, and teaches Mining, Chopping, Fly and Spark (put in the book). It's
+`DEV_KIT` / `DEV_SPELLS` in `src/items/character_data.gd`. Scripted runs (DevCli) start
+with it. In debug builds it also adds the placeholder weapons and test magic, which
+are never saved.
 
-To change the kit: `STARTING_KIT` in `src/items/character_data.gd`. To get a fresh
-character, delete `default.gpchar` (in the folder Project > Open User Data Folder
-opens). The character saves with the world (autosave, Save, Save & Quit).
-
-Debug builds also put the placeholder weapons (dev sword, bow, book...) in the second
-inventory row. They're for testing animations, not content, and are never saved.
+To get a fresh character, delete `default.gpchar` (in the folder Project > Open User
+Data Folder opens). The character saves with the world (autosave, Save, Save & Quit).
 
 ## Mining
 

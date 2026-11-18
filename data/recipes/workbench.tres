@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_cjdqg"]
+
+[resource]
+script = ExtResource("1_cjdqg")
+inputs = Dictionary[StringName, int]({
+&"wood_planks": 10
+})
+requires = Array[StringName]([&"hand_hammer"])
+output = &"workbench"
+id = &"workbench"
+display_name = "Workbench"

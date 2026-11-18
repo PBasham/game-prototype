@@ -38,6 +38,7 @@ func _init() -> void:
 	_spell_icon("chopping_spell", Color("7ac85a")).save_png(ProjectSettings.globalize_path("%s/chopping_spell.png" % ICONS))
 	_spell_icon("fly", Color("cfe8ff")).save_png(ProjectSettings.globalize_path("%s/fly.png" % ICONS))
 	_spell_icon("spark", Color("ffe066")).save_png(ProjectSettings.globalize_path("%s/spark.png" % ICONS))
+	_phase5_art()
 	_sapling().save_png(ProjectSettings.globalize_path("res://assets/decor/sapling.png"))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/fx"))
 	_cracks().save_png(ProjectSettings.globalize_path("res://assets/fx/cracks.png"))
@@ -325,4 +326,194 @@ func _spell_icon(kind: String, c: Color) -> Image:
 					Vector2i(7, 9), Vector2i(8, 9), Vector2i(9, 9), Vector2i(6, 6), Vector2i(10, 10), Vector2i(10, 6), Vector2i(6, 10)]:
 				img.set_pixelv(p, g)
 			img.set_pixel(8, 8, Color.WHITE)
+	return img
+
+
+
+# --- Phase 5: early tools, materials, furniture, ground pickups --------------------
+
+func _phase5_art() -> void:
+	_save(_stick(), "stick", true)
+	_save(_rock(Color("8a8a86"), Color("b4b4ae")), "rock", true)
+	_save(_rock(Color("4a4a52"), Color("8a8a9a")), "flint", true)
+	_save(_bar(), "copper_bar", true)
+	_save(_hand_hammer(), "hand_hammer", true)
+	_save(_stone_tool(false), "stone_pickaxe", false)
+	_save(_stone_tool(true), "stone_axe", false)
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/objects"))
+	var objs := {
+		"workbench": _workbench(), "furnace": _furnace(), "copper_anvil": _anvil(),
+		"chest": _chest(), "door": _door(),
+	}
+	for key: String in objs:
+		var img: Image = objs[key]
+		img.save_png(ProjectSettings.globalize_path("res://assets/objects/%s.png" % key))
+		# Icon: the object (first frame) scaled into 16x16.
+		var w := img.get_width() if key != "door" else 8
+		var frame := img.get_region(Rect2i(0, 0, w, img.get_height()))
+		var icon := _canvas()
+		var scale := minf(14.0 / frame.get_width(), 14.0 / frame.get_height())
+		var fw := maxi(1, roundi(frame.get_width() * scale))
+		var fh := maxi(1, roundi(frame.get_height() * scale))
+		frame.resize(fw, fh, Image.INTERPOLATE_NEAREST)
+		icon.blit_rect(frame, Rect2i(0, 0, fw, fh), Vector2i((16 - fw) / 2, (16 - fh) / 2))
+		icon.save_png(ProjectSettings.globalize_path("%s/%s.png" % [ICONS, key]))
+		var held := frame.duplicate() as Image
+		held.resize(maxi(1, fw / 2 + 1), maxi(1, fh / 2 + 1), Image.INTERPOLATE_NEAREST)
+		held.save_png(ProjectSettings.globalize_path("%s/%s.png" % [HELD, key]))
+	for kind: String in ["stick", "rock", "flint"]:
+		_pickup(kind).save_png(ProjectSettings.globalize_path("res://assets/decor/pickup_%s.png" % kind))
+
+
+func _stick() -> Image:
+	var img := _canvas()
+	_line(img, Vector2i(3, 13), Vector2i(12, 3), Color("8a6a44"), Color("5e4630"))
+	img.set_pixel(7, 7, Color("6e5236"))
+	img.set_pixel(8, 9, Color("8a6a44"))
+	img.set_pixel(9, 10, Color("8a6a44"))
+	return img
+
+
+func _rock(dark: Color, light: Color) -> Image:
+	var img := _canvas()
+	for y in 16:
+		for x in 16:
+			var d := Vector2((x - 8.0) / 5.5, (y - 9.5) / 4.0).length()
+			if d < 1.0:
+				img.set_pixel(x, y, light if (x + y) < 15 and d < 0.7 else dark)
+	return img
+
+
+func _bar() -> Image:
+	var img := _canvas()
+	for y in range(6, 11):
+		for x in range(2 + (10 - y) / 2, 14 - (y - 6) / 2):
+			img.set_pixel(x, y, Color("e0904c") if y < 8 else Color("b86a32"))
+	return img
+
+
+func _hand_hammer() -> Image:
+	var img := _canvas()
+	_line(img, Vector2i(4, 13), Vector2i(10, 7), Color("8a6a44"), Color("5e4630"))
+	for y in range(3, 8):
+		for x in range(9, 14):
+			if (x - 11) * (x - 11) + (y - 5) * (y - 5) <= 5:
+				img.set_pixel(x, y, Color("9a9a94") if y < 5 else Color("6e6e6a"))
+	img.set_pixel(10, 7, Color("c8b080"))  # binding
+	return img
+
+
+## Stone pickaxe / axe: a flint head lashed to a stick (tool layout like the copper ones).
+func _stone_tool(axe: bool) -> Image:
+	var img := _canvas()
+	_line(img, Vector2i(1, 14), Vector2i(11, 4), Color("8a6a44"), Color("5e4630"))
+	var head := Color("5a5a64")
+	var edge := Color("9a9aaa")
+	if axe:
+		for y in range(1, 7):
+			for x in range(10, 15):
+				if x - 10 + absi(y - 3) < 4:
+					img.set_pixel(x, y, head)
+		for y in range(2, 6):
+			img.set_pixel(14, y, edge)
+	else:
+		for p: Vector2i in [Vector2i(6, 2), Vector2i(7, 2), Vector2i(8, 2), Vector2i(9, 2), Vector2i(10, 3), Vector2i(11, 3),
+				Vector2i(12, 4), Vector2i(13, 5), Vector2i(13, 6), Vector2i(5, 3)]:
+			img.set_pixelv(p, head)
+		img.set_pixel(13, 7, edge)
+		img.set_pixel(5, 4, edge)
+	img.set_pixel(10, 5, Color("c8b080"))  # lashing
+	img.set_pixel(11, 4, Color("c8b080"))
+	return img
+
+
+func _fill(img: Image, r: Rect2i, c: Color) -> void:
+	img.fill_rect(r, c)
+
+
+## Workbench 3x2 tiles (24x16): a plank top on two legs, a saw and a hammer on it.
+func _workbench() -> Image:
+	var img := Image.create_empty(24, 16, false, Image.FORMAT_RGBA8)
+	_fill(img, Rect2i(0, 6, 24, 3), Color("a07a4a"))
+	_fill(img, Rect2i(0, 8, 24, 1), Color("6e5030"))
+	_fill(img, Rect2i(2, 9, 3, 7), Color("7a5a36"))
+	_fill(img, Rect2i(19, 9, 3, 7), Color("7a5a36"))
+	_fill(img, Rect2i(5, 12, 14, 1), Color("6e5030"))
+	_fill(img, Rect2i(4, 3, 7, 2), Color("b4b4ae"))  # saw blade
+	_fill(img, Rect2i(10, 3, 2, 3), Color("7a5a36"))
+	_fill(img, Rect2i(15, 2, 4, 2), Color("8a8a86"))  # hammer head
+	_fill(img, Rect2i(16, 4, 1, 2), Color("7a5a36"))
+	return img
+
+
+## Furnace 3x3 tiles (24x24): a stone dome with a glowing mouth.
+func _furnace() -> Image:
+	var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
+	for y in 24:
+		for x in 24:
+			var d := Vector2((x - 11.5) / 11.5, (y - 23.0) / 22.0).length()
+			if d < 1.0:
+				var c := Color("7a7a76") if (x / 4 + y / 3) % 2 == 0 else Color("6a6a66")
+				img.set_pixel(x, y, c)
+	_fill(img, Rect2i(7, 14, 10, 9), Color("2a1a14"))
+	_fill(img, Rect2i(8, 17, 8, 6), Color("e8601c"))
+	_fill(img, Rect2i(9, 19, 6, 4), Color("ffc94a"))
+	_fill(img, Rect2i(10, 2, 4, 3), Color("4a4a48"))  # chimney
+	return img
+
+
+## Copper anvil 2x2 tiles (16x16).
+func _anvil() -> Image:
+	var img := Image.create_empty(16, 16, false, Image.FORMAT_RGBA8)
+	_fill(img, Rect2i(1, 6, 14, 3), Color("c87a3e"))
+	_fill(img, Rect2i(0, 6, 3, 2), Color("c87a3e"))
+	_fill(img, Rect2i(1, 6, 14, 1), Color("eaa868"))
+	_fill(img, Rect2i(5, 9, 6, 3), Color("a8602c"))
+	_fill(img, Rect2i(3, 12, 10, 4), Color("8a4e24"))
+	return img
+
+
+## Chest 2x2 tiles (16x16).
+func _chest() -> Image:
+	var img := Image.create_empty(16, 16, false, Image.FORMAT_RGBA8)
+	_fill(img, Rect2i(1, 4, 14, 12), Color("8a5a30"))
+	_fill(img, Rect2i(1, 4, 14, 4), Color("a06a38"))
+	_fill(img, Rect2i(1, 8, 14, 1), Color("4a3018"))
+	for x: int in [1, 14]:
+		_fill(img, Rect2i(x, 4, 1, 12), Color("b4b4ae"))  # metal corners
+	_fill(img, Rect2i(7, 7, 2, 3), Color("e8c860"))  # latch
+	return img
+
+
+## Door 1x8 tiles: frame 0 closed (8x64), frame 1 open (a thin edge against the frame).
+func _door() -> Image:
+	var img := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
+	_fill(img, Rect2i(0, 0, 8, 64), Color("8a6a40"))
+	for y in range(0, 64, 8):
+		_fill(img, Rect2i(0, y, 8, 1), Color("6e5030"))
+	_fill(img, Rect2i(0, 0, 1, 64), Color("5e4022"))
+	_fill(img, Rect2i(7, 0, 1, 64), Color("5e4022"))
+	_fill(img, Rect2i(5, 30, 2, 3), Color("e8c860"))  # handle
+	# Open: just the edge of the door on the hinge side.
+	_fill(img, Rect2i(8, 0, 2, 64), Color("8a6a40"))
+	_fill(img, Rect2i(8, 0, 1, 64), Color("5e4022"))
+	return img
+
+
+## Things lying on the grass, 8x6, bottom-aligned.
+func _pickup(kind: String) -> Image:
+	var img := Image.create_empty(8, 6, false, Image.FORMAT_RGBA8)
+	match kind:
+		"stick":
+			for x in range(0, 8):
+				img.set_pixel(x, 4 - x / 4, Color("8a6a44"))
+				img.set_pixel(x, 5 - x / 4, Color("5e4630"))
+			img.set_pixel(5, 2, Color("8a6a44"))
+		"rock", "flint":
+			var dark := Color("8a8a86") if kind == "rock" else Color("4a4a52")
+			var light := Color("b4b4ae") if kind == "rock" else Color("8a8a9a")
+			for y in range(2, 6):
+				for x in range(1, 7):
+					if not ((x == 1 or x == 6) and y == 2):
+						img.set_pixel(x, y, light if y < 4 and x < 5 else dark)
 	return img

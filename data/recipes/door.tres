@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_nfsvt"]
+
+[resource]
+script = ExtResource("1_nfsvt")
+station = &"workbench"
+inputs = Dictionary[StringName, int]({
+&"wood_planks": 6
+})
+output = &"door"
+id = &"door"
+display_name = "Door"

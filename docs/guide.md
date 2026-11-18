@@ -4,7 +4,8 @@ A tour of every feature in the game so far: what it does, where the code is, and
 you can tweak. For the rules the code follows (data-driven content, host-authoritative,
 threading) see [architecture.md](architecture.md). World generation has its own deep
 dive: [world-generation.md](world-generation.md); items, mining, placing, magic and plants are
-in [items-and-mining.md](items-and-mining.md).
+in [items-and-mining.md](items-and-mining.md); crafting, stations, furniture and mana in
+[crafting.md](crafting.md).
 
 **Tweaking in general:** almost every number is an `@export` on a node or a setting in a
 `.tres` file. Two ways to change them:
@@ -21,7 +22,7 @@ in [items-and-mining.md](items-and-mining.md).
 1. [Starting the game: menu, worlds, saves](#starting-the-game-menu-worlds-saves)
 2. [Player movement](#player-movement)
 3. [Player animation](#player-animation), [holding items](#holding-items), and
-   [items, mining and placing](items-and-mining.md)
+   [items, mining and placing](items-and-mining.md), [crafting](crafting.md)
 4. [The world: tiles, chunks, wrap](#the-world-tiles-chunks-wrap)
 5. [Terrain look](#terrain-look)
 6. [Lighting](#lighting)
@@ -226,7 +227,7 @@ Debug builds only (running from the editor counts).
 | **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
-| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `ready <spell>`, `fly`, `clear`, `kit`, `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch or rope at the cursor), `dummy` / `dummy clear` (a training dummy for damage spells), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
+| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `dummy` / `dummy clear` (a training dummy for damage spells), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |
 

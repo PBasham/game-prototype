@@ -10,8 +10,12 @@ extends Node2D
 signal block_changed(tile: Vector2i, old_id: int, new_id: int)
 ## A background wall changed. Tile coords are wrapped.
 signal wall_changed(tile: Vector2i, old_id: int, new_id: int)
-## A tile object (rope, torch) changed. Tile coords are wrapped.
+## A tile object (rope, torch, furniture) changed. Tile coords are wrapped.
 signal object_changed(tile: Vector2i, old_id: int, new_id: int)
+## The player used a crafting station (anchor tile, wrapped).
+signal station_opened(anchor: Vector2i)
+## The player opened a container (a chest; anchor tile, wrapped).
+signal container_opened(anchor: Vector2i)
 
 ## Tile size in pixels. The Scholar is about 3 tiles wide and 8 tall.
 const TILE := 8
@@ -34,7 +38,7 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 ## Seconds after the last hit before a damaged block heals back to full.
 @export var block_heal_seconds := 5.0
 ## E interacts with things this close (tiles).
-@export var interact_tiles := 4.0
+@export var interact_tiles := 6.0
 
 var info: WorldInfo
 var data: WorldData
@@ -57,12 +61,17 @@ var _drops: Node2D
 ## Spell projectiles, damage numbers, dev dummies.
 var effects: Node2D
 var _cracks: CrackOverlay
+## Storage of placed containers (chests): wrapped anchor tile -> its items. Saved with
+## the world (meta "containers").
+var containers: Dictionary[Vector2i, Inventory] = {}
 ## Damaged tiles: (x, y, layer 0 = block / 1 = wall) -> [damage, seconds until healed].
 var _damage: Dictionary[Vector3i, Array] = {}
 ## Debug builds only (B toggles it); null otherwise.
 var brush: DebugBrush
 ## Debug builds only (` toggles it); null otherwise.
 var console: DevConsole
+## "No tile" for anchor lookups.
+const NO_TILE := Vector2i(-2147483647, -2147483647)
 var _pause_menu: PauseMenu
 var _autosave_left := 0.0
 
@@ -104,14 +113,14 @@ func _ready() -> void:
 	plants.setup(self)
 	if not info.temporary and not info.path.is_empty():
 		plants.from_dict(WorldSave.read_extra(info.path, WorldSave.META_PLANTS))
+		_containers_from_dict(WorldSave.read_extra(info.path, WorldSave.META_CONTAINERS))
 
 	character = Game.character
 	if character == null:
-		character = CharacterData.create(CharacterData.DEFAULT_NAME)
+		# Running the world scene directly (tests, F6 in the editor): a throwaway
+		# character with the dev kit.
+		character = CharacterData.create_dev(CharacterData.DEFAULT_NAME)
 		character.temporary = true
-	if OS.is_debug_build():
-		DevHeldItems.add_to(character.inventory)
-		DevMagic.add_to(character)
 	player = PLAYER_SCENE.instantiate() as Player
 	player.world = self
 	player.character = character
@@ -262,7 +271,7 @@ func save() -> Error:
 	for c in modified:
 		coords.append(c.coord)
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
-		{WorldSave.META_PLANTS: plants.to_dict(coords)}, objects)
+		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_CONTAINERS: _containers_to_dict()}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
@@ -355,6 +364,8 @@ func is_solid(tile: Vector2i) -> bool:
 ## Whether an object can go in a tile: no object there yet, no solid block, and
 ## something to hold it (see ObjectDef.needs_support).
 func can_place_object(tile: Vector2i, def: ObjectDef) -> bool:
+	if def != null and def.style == ObjectDef.Style.FURNITURE:
+		return _can_place_furniture(tile, def)
 	if def == null or not data.in_bounds_y(tile.y) or data.get_object(tile.x, tile.y) > 0 or is_solid(tile):
 		return false
 	if not _room_above(tile, def):
@@ -368,6 +379,143 @@ func can_place_object(tile: Vector2i, def: ObjectDef) -> bool:
 		if data.get_block(tile.x + d.x, tile.y + d.y) != WorldData.AIR or data.get_object(tile.x + d.x, tile.y + d.y) > 0:
 			return true
 	return false
+
+
+# --- furniture (multi-tile objects) ----------------------------------------------
+
+## The tiles a piece of furniture covers, from its anchor (bottom-left).
+static func footprint(anchor: Vector2i, def: ObjectDef) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for dy in def.height_tiles:
+		for dx in def.width_tiles:
+			out.append(anchor + Vector2i(dx, -dy))
+	return out
+
+
+## The anchor of the object at a tile (the tile itself for single-tile objects; for
+## furniture, its bottom-left tile). NONE when there's no object.
+func object_anchor(tile: Vector2i) -> Vector2i:
+	tile = wrap_tile(tile)
+	var id := data.get_object(tile.x, tile.y)
+	if id <= 0:
+		return NO_TILE
+	if not (objects.def(id) as ObjectDef).filler:
+		return tile
+	for dy in 8:
+		for dx in 4:
+			var a := wrap_tile(tile + Vector2i(-dx, dy))
+			var aid := data.get_object(a.x, a.y)
+			var def := objects.def(aid) as ObjectDef if aid > 0 else null
+			if def and not def.filler and def.style == ObjectDef.Style.FURNITURE \
+					and dx < def.width_tiles and dy < def.height_tiles:
+				return a
+	return NO_TILE
+
+
+## The object at a tile, looking through furniture fillers to the furniture itself.
+func object_def_at(tile: Vector2i) -> ObjectDef:
+	var a := object_anchor(tile)
+	return object_at(a) if a != NO_TILE else null
+
+
+func _can_place_furniture(anchor: Vector2i, def: ObjectDef) -> bool:
+	for t in footprint(anchor, def):
+		if not data.in_bounds_y(t.y) or is_solid(t) or data.get_object(t.x, t.y) > 0:
+			return false
+		if plants and plants.blocks_placement(t + Vector2i(0, 1)):
+			return false
+	if def.needs_floor:
+		for dx in def.width_tiles:
+			var below := anchor + Vector2i(dx, 1)
+			var b := data.get_block(below.x, below.y)
+			if not (is_solid(below) or (b > 0 and blocks.collision(b) == TileDef.Collision.PLATFORM)):
+				return false
+	return true
+
+
+## Places an object with its anchor at `anchor`: furniture fills its footprint. Returns
+## true if placed.
+func request_place_object(anchor: Vector2i, id: int) -> bool:
+	if not Game.is_authority() or id <= 0 or id >= objects.size():
+		return false
+	var def := objects.def(id) as ObjectDef
+	if not can_place_object(anchor, def):
+		return false
+	if def.style != ObjectDef.Style.FURNITURE:
+		return request_set_object(anchor, id)
+	var filler := objects.index_of(&"filler")
+	for t in footprint(anchor, def):
+		request_set_object(t, filler)
+	request_set_object(anchor, id)
+	if def.container_slots > 0:
+		containers[wrap_tile(anchor)] = Inventory.new()
+	return true
+
+
+## Removes the object at a tile (the whole piece of furniture) and drops its item.
+## A container with something in it stays (returns false).
+func request_remove_object(tile: Vector2i) -> bool:
+	if not Game.is_authority():
+		return false
+	var a := object_anchor(tile)
+	if a == NO_TILE:
+		return false
+	var def := object_at(a)
+	if def == null:
+		return false
+	var store: Inventory = containers.get(a)
+	if store and not store.is_all_empty():
+		EventBus.debug_message.emit("Empty the %s first" % def.display_name.to_lower())
+		return false
+	if def.style == ObjectDef.Style.FURNITURE:
+		for t in footprint(a, def):
+			request_set_object(t, WorldData.AIR)
+	else:
+		request_set_object(a, WorldData.AIR)
+	containers.erase(a)
+	_drop_for(def, a)
+	return true
+
+
+## Right click / E on a door: open or close it (not while standing in its doorway).
+func request_toggle_object(tile: Vector2i) -> bool:
+	var a := object_anchor(tile)
+	var def := object_at(a) if a != NO_TILE else null
+	if not Game.is_authority() or def == null or def.toggles_to == &"":
+		return false
+	var to := objects.index_of(def.toggles_to)
+	var to_def := objects.def(to) as ObjectDef if to > 0 else null
+	if to_def == null:
+		return false
+	if to_def.blocks_movement and player:
+		var rect := Rect2(Vector2(a.x * TILE, (a.y - def.height_tiles + 1) * TILE),
+			Vector2(def.width_tiles * TILE, def.height_tiles * TILE))
+		var body := player.body_rect()
+		body.position.x -= roundf((body.position.x - rect.position.x) / (data.width * TILE)) * data.width * TILE
+		if rect.intersects(body):
+			return false  # standing in the doorway
+	return request_set_object(a, to)
+
+
+## The container (chest) at a tile, or null.
+func container_at(tile: Vector2i) -> Inventory:
+	var a := object_anchor(tile)
+	return containers.get(a) if a != NO_TILE else null
+
+
+func _containers_to_dict() -> Dictionary:
+	var out := {}
+	for a: Vector2i in containers:
+		out["%d,%d" % [a.x, a.y]] = containers[a].to_dict()
+	return out
+
+
+func _containers_from_dict(d: Dictionary) -> void:
+	for key: String in d:
+		var parts := key.split(",")
+		var inv := Inventory.new()
+		inv.from_dict(d[key])
+		containers[Vector2i(int(parts[0]), int(parts[1]))] = inv
 
 
 ## Tall objects (a 2-tile torch) need the tiles above them free of solid blocks.
@@ -390,13 +538,14 @@ func _check_supports(tile: Vector2i) -> void:
 	for d: Vector2i in [Vector2i.ZERO, Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 		var t := wrap_tile(tile + d)
 		var def := object_at(t)
-		if def and ((def.needs_support and not _supported(t)) or is_solid(t) or not _room_above(t, def)):
+		if def == null or def.style == ObjectDef.Style.FURNITURE:
+			continue  # furniture protects its floor instead (is_protected)
+		if (def.needs_support and not _supported(t)) or is_solid(t) or not _room_above(t, def):
 			_break_object(t, def)
 
 
-func _break_object(tile: Vector2i, def: ObjectDef) -> void:
-	if request_set_object(tile, WorldData.AIR):
-		_drop_for(def, tile)
+func _break_object(tile: Vector2i, _def: ObjectDef) -> void:
+	request_remove_object(tile)
 
 
 ## Places or removes (AIR) a tile object. Returns true if it changed.
@@ -452,8 +601,7 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	# Front-layer mining takes a tile object first when there's no solid block there
 	# (rope on a platform, a torch). Objects break in one hit.
 	if not wall and data.get_object(tile.x, tile.y) > 0 and not is_solid(tile):
-		_break_object(tile, object_at(tile))
-		return true
+		return request_remove_object(tile)
 	if id <= 0 or tile.y >= data.height - 1:
 		return false
 	var def := (walls if wall else blocks).def(id)
@@ -485,12 +633,17 @@ func _drop_for(def: TileDef, tile: Vector2i) -> void:
 	if player:
 		pos.x += roundf((player.global_position.x - pos.x) / (data.width * TILE)) * data.width * TILE
 	request_spawn_drop(drop, def.drop_count, pos, Vector2(randf_range(-2.0, 2.0), -4.0) * TILE)
+	if def.bonus_drop_item != &"" and randf() < def.bonus_drop_chance:
+		request_spawn_drop(def.bonus_drop_item, 1, pos, Vector2(randf_range(-2.0, 2.0), -5.0) * TILE)
 
 
 ## True when something depends on this block (a tree stands on it; chests later), so
 ## it can't be mined.
 func is_protected(tile: Vector2i) -> bool:
-	return plants != null and plants.supports(tile)
+	if plants != null and plants.supports(tile):
+		return true
+	var above := object_def_at(tile + Vector2i.UP)
+	return above != null and above.needs_floor
 
 
 ## 0..1: how damaged a block (or with `wall`, a background wall) is, for the cracks.
@@ -518,11 +671,19 @@ func _heal_blocks(delta: float) -> void:
 			_damage.erase(key)
 
 
-## Right click: interacts with whatever interactable is under `point` (doors, chests,
-## later). Interactables are nodes in the "interactable" group with
-## `interact_rect() -> Rect2` (world space) and `interact(player)`. Returns true if one
-## was used.
+## Right click: interacts with what's under `point`: furniture (open a door, a chest, a
+## crafting station), something lying on the grass (pick it up), or an interactable
+## node (group "interactable", with interact_rect() and interact(player)). Must be
+## within interact_tiles of the player. Returns true if something was used.
 func try_interact_at(point: Vector2, who: Player) -> bool:
+	if who and point.distance_to(who.chest()) > (interact_tiles + 2.0) * TILE:
+		return false
+	var tile := world_to_tile(point)
+	var a := object_anchor(tile)
+	if a != NO_TILE and _interact_object(a):
+		return true
+	if plants and plants.request_pick_up(tile, who):
+		return true
 	for node in get_tree().get_nodes_in_group(&"interactable"):
 		if node.has_method(&"interact_rect") and (node.call(&"interact_rect") as Rect2).has_point(point):
 			node.call(&"interact", who)
@@ -530,20 +691,59 @@ func try_interact_at(point: Vector2, who: Player) -> bool:
 	return false
 
 
-## E: interacts with the nearest interactable within interact_tiles of the player.
+## E: interacts with the nearest usable furniture (or pickup, or interactable node)
+## within interact_tiles of the player.
 func try_interact_near(who: Player) -> bool:
-	var best: Node = null
+	var center := who.chest()
+	var ct := world_to_tile(center)
+	var best := NO_TILE
 	var best_d := interact_tiles * TILE
+	var r := ceili(interact_tiles) + 1
+	for dy in range(-r, r + 5):
+		for dx in range(-r, r + 1):
+			var a := object_anchor(ct + Vector2i(dx, dy))
+			var def := object_at(a) if a != NO_TILE else null
+			if def == null or not _usable(def):
+				continue
+			var mid := Vector2((ct.x + dx + 0.5) * TILE, (ct.y + dy + 0.5) * TILE)
+			var d := mid.distance_to(center)
+			if d < best_d:
+				best = a
+				best_d = d
+	if best != NO_TILE:
+		return _interact_object(best)
+	var pick := plants.nearest_pickup(world_to_tile(who.global_position), ceili(interact_tiles)) if plants else NO_TILE
+	if pick != NO_TILE:
+		return plants.request_pick_up(pick + Vector2i.UP, who)
+	var best_node: Node = null
+	var node_d := interact_tiles * TILE
 	for node in get_tree().get_nodes_in_group(&"interactable"):
 		if not node.has_method(&"interact_rect"):
 			continue
-		var d := (node.call(&"interact_rect") as Rect2).get_center().distance_to(who.chest())
-		if d < best_d:
-			best = node
-			best_d = d
-	if best:
-		best.call(&"interact", who)
-	return best != null
+		var d := (node.call(&"interact_rect") as Rect2).get_center().distance_to(center)
+		if d < node_d:
+			best_node = node
+			node_d = d
+	if best_node:
+		best_node.call(&"interact", who)
+	return best_node != null
+
+
+static func _usable(def: ObjectDef) -> bool:
+	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &""
+
+
+func _interact_object(anchor: Vector2i) -> bool:
+	var def := object_at(anchor)
+	if def == null or not _usable(def):
+		return false
+	if def.toggles_to != &"":
+		request_toggle_object(anchor)
+	elif def.container_slots > 0:
+		container_opened.emit(wrap_tile(anchor))
+	else:
+		station_opened.emit(wrap_tile(anchor))
+	return true
 
 
 ## Sets a background wall. Returns true if it changed.

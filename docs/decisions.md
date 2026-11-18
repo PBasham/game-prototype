@@ -2,6 +2,26 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Phase 5, crafting
+
+- Crafting is Starbound / Minecraft style: each station has its own recipe list; hand
+  recipes show when no station is open. Recipes are data (`data/recipes`).
+- Stations: Workbench, Furnace, Copper Anvil. Stations can be upgraded in place to
+  higher tiers (framework only, nothing upgrades yet). Alchemy and enchanting stations
+  come later with briefs.
+- Early game: sticks, rocks and flint lie on the grass; trees drop sticks; stone
+  sometimes drops flint. A Hand Hammer (kept, not used up) is needed for the Workbench
+  and for breaking stone into rocks. Stone pickaxe and axe. Bare hands break nothing.
+- New characters start with nothing (lost memory). `devkit` gives the old kit.
+- Mana: 100, regen 15/s after 1 s. Fly 10/s, Mining 4/s, Chopping 3/s, Spark 2.
+  Console `mana` for infinite.
+- Spell tiers vs book `max_spell_tier`.
+- Furniture: multi-tile objects (chest 40 slots, doors 1x8 that open and close).
+  Doors may be resized if the character size changes.
+- Later, magic progression phase (brief first): spell tiers vs books, runes that lower
+  mana costs, combo spells with toggles (like Terraria wrenches), gem upgrade trees per
+  spell. Possibly dedicated pickaxe and axe slots.
+
 ## 2026-11-17: Phase 4 closing fixes
 
 - Torches are 2 tiles tall. Materials don't swing when clicked. Thrown items stop when

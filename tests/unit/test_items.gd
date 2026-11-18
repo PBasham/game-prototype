@@ -20,8 +20,8 @@ func test_every_item_is_valid_and_findable() -> void:
 		assert_eq(ItemData.find(item.id), item)
 		if item.held:
 			assert_not_null(item.held.item_type(), "%s has an item type" % item.id)
-	for e: Array in CharacterData.STARTING_KIT:
-		assert_not_null(ItemData.find(e[0]), "starting kit item %s exists" % e[0])
+	for e: Array in CharacterData.DEV_KIT:
+		assert_not_null(ItemData.find(e[0]), "dev kit item %s exists" % e[0])
 
 
 func test_tiles_drop_items_that_exist() -> void:
@@ -55,10 +55,9 @@ func test_inventory_full() -> void:
 
 
 func test_character_save_and_load() -> void:
-	var c := CharacterData.create(CHAR_PATH_NAME)
-	assert_eq(c.inventory.ids[0], &"copper_pickaxe", "starting kit")
+	var c := CharacterData.create_dev(CHAR_PATH_NAME)
+	assert_eq(c.inventory.ids[0], &"copper_pickaxe", "dev kit")
 	c.inventory.set_slot(30, &"stone", 77)
-	DevHeldItems.add_to(c.inventory)
 	assert_true(ItemData.is_runtime(c.inventory.ids[DevHeldItems.FIRST_SLOT]), "dev items in row 2")
 	assert_eq(c.save(), OK)
 	var back := CharacterData.load_file(SaveManager.character_path(CHAR_PATH_NAME))
@@ -67,3 +66,9 @@ func test_character_save_and_load() -> void:
 	assert_eq(back.inventory.counts[30], 77)
 	assert_true(back.inventory.is_empty(DevHeldItems.FIRST_SLOT), "dev items aren't saved")
 	assert_eq(back.inventory.count_of(&"wood_planks"), c.inventory.count_of(&"wood_planks"))
+
+
+func test_new_characters_start_with_nothing() -> void:
+	var c := CharacterData.create("nobody")
+	assert_true(c.inventory.is_all_empty(), "no items")
+	assert_eq(c.known_spells.size(), 0, "no spells (they lost their memory)")

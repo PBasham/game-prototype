@@ -19,6 +19,8 @@ extends ItemData
 enum Cast { TOOL, PROJECTILE, TOGGLE }
 
 @export var cast := Cast.TOOL
+## How powerful the spell is. The equipped book's max_spell_tier must be at least this.
+@export var tier := 1
 ## Needs an equipped conduit of this type (empty = any or none).
 @export var requires_conduit: StringName = &""
 

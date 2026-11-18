@@ -38,8 +38,8 @@ Docs:
 | 1 to 0, mouse wheel | Pick a hotbar slot |
 | Left click | Use the held item on the front layer: mine, chop, place, swing, cast; punch with empty hands |
 | Right click | Interact with what's under the cursor; otherwise the back layer (place background walls, mine them) |
-| E | Interact with the nearest thing |
-| I or Tab | Inventory, equipment (book, conduit) and spells |
+| E | Interact with the nearest thing (station, chest, door, pickup) |
+| I or Tab | Inventory, equipment (book, conduit), spells and crafting |
 | R | Tap: spellbook out / away. Hold: spell wheel |
 | Ctrl + mouse wheel | Mining / placing area |
 | Q | Throw the selected stack |

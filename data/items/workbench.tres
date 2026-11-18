@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_e0vec"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_l22sk"]
+[ext_resource type="Texture2D" path="res://assets/items/held/workbench.png" id="3_5mfct"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/workbench.png" id="4_q174i"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_4dp3v"]
+
+[sub_resource type="Resource" id="Resource_707fl"]
+script = ExtResource("2_l22sk")
+id = &"workbench"
+texture = ExtResource("3_5mfct")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_4dp3v")
+kind = 10
+icon = ExtResource("4_q174i")
+max_stack = 99
+held = SubResource("Resource_707fl")
+impact_at = 0.2
+places_object = &"workbench"
+place_area_max = 1
+id = &"workbench"
+display_name = "Workbench"
+description = "A crafting station: furniture, tools and the next stations."

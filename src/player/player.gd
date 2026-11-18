@@ -61,6 +61,14 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 ## Empty hands punch (data/item_types/unarmed.tres: jab, cross, uppercut) on click.
 @export var unarmed_attacks := true
 
+@export_group("Mana")
+@export var max_mana := 100.0
+## Mana per second refilled...
+@export var mana_regen := 15.0
+## ...starting this many seconds after the last spell use.
+@export var mana_regen_delay := 1.0
+@export_group("")
+
 @export_group("Flying (the Fly spell)")
 ## Tiles per second.
 @export var fly_speed := 22.0
@@ -138,6 +146,10 @@ var input_blocked := false
 var typing := false
 ## The concentration spell that's on (Fly), or null. Only one at a time.
 var concentration: SpellData
+var mana := 100.0
+## Dev console `mana`: spells cost nothing.
+var infinite_mana := false
+var _since_spell := 99.0
 ## Optional: (back: bool) -> bool. False when using the held item now would do nothing
 ## (a block with nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
 var use_check: Callable
@@ -385,6 +397,7 @@ func _physics_process(delta: float) -> void:
 		if _drop_timer <= 0.0:
 			set_collision_mask_value(2, true)
 
+	_update_mana(delta)
 	if is_flying():
 		_fly(input_x, input_y, delta)
 	elif _climbing:
@@ -525,6 +538,39 @@ func _ledge_assist() -> void:
 				global_position += lift
 				velocity.y = 0.0
 				return
+
+
+## Spends mana if there's enough (always true with infinite mana). Using mana pauses
+## the refill for mana_regen_delay.
+func spend_mana(amount: float) -> bool:
+	if amount <= 0.0 or infinite_mana:
+		return true
+	if mana < amount:
+		return false
+	mana -= amount
+	_since_spell = 0.0
+	return true
+
+
+func has_mana(amount: float) -> bool:
+	return infinite_mana or mana >= amount
+
+
+func _update_mana(delta: float) -> void:
+	# A concentration spell drains while it's on; it ends when mana runs out.
+	if concentration and concentration.mana_per_second > 0.0:
+		if not spend_mana(concentration.mana_per_second * delta):
+			toggle_concentration(concentration)
+			EventBus.debug_message.emit("Out of mana")
+	_since_spell += delta
+	if _since_spell >= mana_regen_delay:
+		mana = minf(mana + mana_regen * delta, max_mana)
+
+
+## Stops the current use (a beam that ran out of mana).
+func stop_using() -> void:
+	if _attack != null:
+		_end_attack(true)
 
 
 ## Turns a concentration spell on, or off if it's the one already on. Turning one on

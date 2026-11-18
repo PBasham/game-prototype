@@ -3,7 +3,11 @@ extends RefCounted
 ## A character, saved separately from worlds: user://characters/<name>.gpchar.
 ## Holds the inventory, the equipment (spellbook and conduit slots), the spells the
 ## character knows and the spells put into the book. Until character select exists
-## (Phase 7) there is one automatic character, "default", made with the starting kit.
+## (Phase 7) there is one automatic character, "default".
+##
+## A new character starts with nothing: no items, no spells (they lost their memory).
+## The dev kit (console `devkit`; also tests and scripted runs) gives tools, blocks,
+## all spells and the dev test items.
 ##
 ## File: SaveHeader (kind "character"), then one store_var Dictionary.
 
@@ -17,15 +21,15 @@ const DEFAULT_BOOK := &"basic_spellbook"
 const SLOT_BOOK := &"book"
 const SLOT_CONDUIT := &"conduit"
 
-## [item id, count] given to a new character. Hotbar order. "spell:<id>" is a hotbar
-## shortcut to a spell.
-const STARTING_KIT: Array = [
+## [item id, count] in the dev kit. Hotbar order. "spell:<id>" is a hotbar shortcut
+## to a spell.
+const DEV_KIT: Array = [
 	[&"copper_pickaxe", 1], [&"copper_axe", 1], [&"spell:mining_spell", 1], [&"wood_planks", 99],
 	[&"wood_platform", 30], [&"rope", 30], [&"torch", 20], [&"tree_seed", 5], [&"grass_seeds", 10],
 	[&"dirt", 50],
 ]
-## Known and put in the book (in order) for a new character.
-const STARTING_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark"]
+## Spells the dev kit teaches and puts in the book (in order).
+const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark"]
 
 var name := DEFAULT_NAME
 var inventory := Inventory.new()
@@ -40,15 +44,34 @@ var book_spells: Array[StringName] = []
 var temporary := false
 
 
+## A new character: empty inventory, no spells.
 static func create(char_name: String) -> CharacterData:
 	var c := CharacterData.new()
 	c.name = char_name
-	for e: Array in STARTING_KIT:
-		c.inventory.add(e[0], e[1])
-	for s in STARTING_SPELLS:
-		c.learn_spell(s)
-		c.put_in_book(c.book_spells.size(), s)
 	return c
+
+
+## A character with the dev kit (tests, scripted runs).
+static func create_dev(char_name: String) -> CharacterData:
+	var c := create(char_name)
+	c.give_dev_kit()
+	return c
+
+
+## The dev kit: tools, blocks, torches, all spells (in the book), and in debug builds
+## the dev test items.
+func give_dev_kit() -> void:
+	for e: Array in DEV_KIT:
+		inventory.add(e[0], e[1])
+	for s in DEV_SPELLS:
+		learn_spell(s)
+		if not in_book(s):
+			var free := book_loadout().find(&"")
+			if free >= 0:
+				put_in_book(free, s)
+	if OS.is_debug_build():
+		DevHeldItems.add_to(inventory)
+		DevMagic.add_to(self)
 
 
 # --- magic -----------------------------------------------------------------------------
@@ -91,9 +114,13 @@ func learn_spell(spell_id: StringName) -> void:
 
 
 ## Puts a spell into a book slot (moving it if it's in another slot). &"" clears it.
-func put_in_book(slot: int, spell_id: StringName) -> void:
+## Refused (false) when the spell's tier is above what the equipped book can hold.
+func put_in_book(slot: int, spell_id: StringName) -> bool:
 	if slot < 0:
-		return
+		return false
+	var spell := ItemData.find(ItemData.spell_key(spell_id)) as SpellData if spell_id != &"" else null
+	if spell and spell.tier > max_spell_tier():
+		return false
 	if spell_id != &"":
 		var at := book_spells.find(spell_id)
 		if at >= 0:
@@ -102,6 +129,13 @@ func put_in_book(slot: int, spell_id: StringName) -> void:
 		book_spells.append(&"")
 	book_spells[slot] = spell_id
 	magic_changed.emit()
+	return true
+
+
+## The highest spell tier the equipped book can hold.
+func max_spell_tier() -> int:
+	var b := book()
+	return b.max_spell_tier if b else 1
 
 
 ## Equips an item (or &"" to empty the slot). Returns the item id that was there.
@@ -130,6 +164,8 @@ func cast_problem(spell: SpellData, from_tome: bool = false) -> String:
 		return "Unknown spell"
 	if not from_tome and not in_book(spell.id):
 		return "Not in your spellbook"
+	if not from_tome and spell.tier > max_spell_tier():
+		return "Too powerful for your spellbook (tier %d)" % spell.tier
 	if spell.requires_conduit != &"":
 		var c := conduit()
 		if c == null or c.conduit_type != spell.requires_conduit:
@@ -188,13 +224,6 @@ static func load_file(path: String) -> CharacterData:
 			c.known_spells.append(StringName(s))
 	for s: String in d.get("book_spells", []):
 		c.book_spells.append(StringName(s) if c.knows(StringName(s)) else &"")
-	# Starting spells added since the character was made (saved before they existed).
-	for s in STARTING_SPELLS:
-		if not c.knows(s):
-			c.learn_spell(s)
-			var free := c.book_loadout().find(&"")
-			if free >= 0:
-				c.put_in_book(free, s)
 	return c
 
 

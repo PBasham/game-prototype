@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_225uy"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_bmb6w"]
+[ext_resource type="Texture2D" path="res://assets/items/held/chest.png" id="3_c2hx1"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/chest.png" id="4_2653h"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_kk438"]
+
+[sub_resource type="Resource" id="Resource_56nxj"]
+script = ExtResource("2_bmb6w")
+id = &"chest"
+texture = ExtResource("3_c2hx1")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_kk438")
+kind = 10
+icon = ExtResource("4_2653h")
+max_stack = 99
+held = SubResource("Resource_56nxj")
+impact_at = 0.2
+places_object = &"chest"
+place_area_max = 1
+id = &"chest"
+display_name = "Chest"
+description = "Stores 40 stacks. Right click or E to open."

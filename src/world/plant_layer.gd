@@ -14,7 +14,10 @@ const TILE := World.TILE
 const SIZE := ChunkData.SIZE
 const NONE := Vector2i(0, -1000000)
 
-enum Kind { TREE, SAPLING, FLOWER }
+enum Kind { TREE, SAPLING, FLOWER, PICKUP }
+
+## Things lying on the grass (Kind.PICKUP variants), the item each gives.
+const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 
 @export_group("Trees")
 ## Damage a tree takes before it falls. A copper axe does 25 per hit.
@@ -37,6 +40,14 @@ enum Kind { TREE, SAPLING, FLOWER }
 ## is running).
 @export var grow_min_seconds := 60.0
 @export var grow_max_seconds := 150.0
+@export_group("Things on the grass")
+## Share of the generator's flower spots that are sticks, rocks or flint instead.
+@export_range(0.0, 1.0) var pickup_share := 0.4
+## Of those, how many are flint (the rest split between sticks and rocks).
+@export_range(0.0, 1.0) var flint_share := 0.2
+## Sticks a felled tree drops (random in this range).
+@export var sticks_min := 1
+@export var sticks_max := 3
 @export_group("Flowers and grass")
 ## Chance that cutting a flower drops grass seeds.
 @export_range(0.0, 1.0) var grass_seed_chance := 0.35
@@ -70,6 +81,7 @@ var _dirt_id := -1
 var _trees: Array[Texture2D] = []
 var _flowers: Array[Texture2D] = []
 var _sapling_tex: Texture2D
+var _pickup_tex: Array[Texture2D] = []
 
 
 func setup(w: World) -> void:
@@ -83,6 +95,8 @@ func setup(w: World) -> void:
 	for i in 5:
 		_flowers.append(load("res://assets/decor/flower_%d.png" % i) as Texture2D)
 	_sapling_tex = load("res://assets/decor/sapling.png") as Texture2D
+	for kind: StringName in PICKUP_ITEMS:
+		_pickup_tex.append(load("res://assets/decor/pickup_%s.png" % kind) as Texture2D)
 	world.renderer.chunk_shown.connect(_on_chunk_shown)
 	world.renderer.chunk_hidden.connect(_on_chunk_hidden)
 	world.block_changed.connect(_on_block_changed)
@@ -207,6 +221,10 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array) -> void:
 			if spots[i + 2] >= 0:
 				var p := _add(ground, Kind.TREE, spots[i + 2], false)
 				p.health = tree_health
+			elif _hash(ground, 11) < pickup_share:
+				var h := _hash(ground, 23)
+				var variant := 2 if h < flint_share else (0 if h < flint_share + (1.0 - flint_share) * 0.5 else 1)
+				_add(ground, Kind.PICKUP, variant, false)
 			else:
 				_add(ground, Kind.FLOWER, spots[i + 3], false)
 	_shown[c] = wc
@@ -233,6 +251,44 @@ func reset_unchanged() -> void:
 			_seeded.erase(wc)
 			for g: Vector2i in (_by_chunk.get(wc, []) as Array).duplicate():
 				_remove(g)
+
+
+## A steady 0..1 number per tile (so a spot is always the same kind of pickup).
+static func _hash(t: Vector2i, salt: int) -> float:
+	var h := (t.x * 73856093) ^ (t.y * 19349663) ^ (salt * 83492791)
+	h = (h ^ (h >> 13)) * 1274126177
+	return float(h & 0xffff) / 65535.0
+
+
+## Right click on something lying on the grass (`tile` = where it lies): it goes into
+## the inventory. Returns true if there was something.
+func request_pick_up(tile: Vector2i, who: Player) -> bool:
+	if not Game.is_authority():
+		return false
+	var g := world.wrap_tile(tile + Vector2i.DOWN)
+	var p: Plant = _plants.get(g)
+	if p == null or p.kind != Kind.PICKUP or who == null or who.character == null:
+		return false
+	var item_id := PICKUP_ITEMS[p.variant % PICKUP_ITEMS.size()]
+	if who.character.inventory.add(item_id, 1) > 0:
+		return false  # no room
+	EventBus.item_picked_up.emit(item_id, 1)
+	_remove(g)
+	return true
+
+
+## The ground tile of the nearest pickup within `r` tiles of `feet`, or NONE.
+func nearest_pickup(feet: Vector2i, r: int) -> Vector2i:
+	var best := NONE
+	var best_d := INF
+	for dy in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			var g := world.wrap_tile(feet + Vector2i(dx, dy))
+			var p: Plant = _plants.get(g)
+			if p and p.kind == Kind.PICKUP and Vector2(dx, dy).length() < best_d:
+				best = feet + Vector2i(dx, dy)
+				best_d = Vector2(dx, dy).length()
+	return best
 
 
 # --- per frame -----------------------------------------------------------------------
@@ -367,6 +423,8 @@ func _break(g: Vector2i, p: Plant) -> void:
 		Kind.FLOWER:
 			if randf() < grass_seed_chance:
 				world.request_spawn_drop(&"grass_seeds", 1, pos, _pop())
+		Kind.PICKUP:
+			world.request_spawn_drop(PICKUP_ITEMS[p.variant % PICKUP_ITEMS.size()], 1, pos, _pop())
 	_remove(g)
 
 
@@ -393,6 +451,9 @@ func _drop_tree(base: Vector2, dir: float) -> void:
 		var along := (i + 0.5) / wood * length * (dir if dir != 0.0 else 0.0)
 		var pos := base + Vector2(along, 0.0 if dir != 0.0 else float(-i * TILE))
 		world.request_spawn_drop(&"wood", 1, pos, _pop())
+	var sticks := randi_range(sticks_min, sticks_max)
+	if sticks > 0:
+		world.request_spawn_drop(&"stick", sticks, base + Vector2(-dir * TILE, -TILE), _pop())
 	var seeds := 1 + (1 if randf() < extra_seed_chance else 0)
 	world.request_spawn_drop(&"tree_seed", seeds, base + Vector2(dir * length * 0.6, 0), _pop())
 
@@ -433,6 +494,8 @@ func _texture(p: Plant) -> Texture2D:
 			return _trees[p.variant % _trees.size()]
 		Kind.SAPLING:
 			return _sapling_tex
+		Kind.PICKUP:
+			return _pickup_tex[p.variant % _pickup_tex.size()]
 	return _flowers[p.variant % _flowers.size()]
 
 

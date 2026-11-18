@@ -69,6 +69,31 @@ func room_for(item_id: StringName) -> int:
 	return room
 
 
+func is_all_empty() -> bool:
+	for i in SIZE:
+		if not is_empty(i):
+			return false
+	return true
+
+
+## Takes `count` of an item from wherever it is (the last slots first, so the hotbar is
+## used last). Returns how many were taken.
+func remove(item_id: StringName, count: int) -> int:
+	var taken := 0
+	for i in range(SIZE - 1, -1, -1):
+		if taken >= count:
+			break
+		if ids[i] == item_id:
+			var n := mini(count - taken, counts[i])
+			counts[i] -= n
+			taken += n
+			if counts[i] <= 0:
+				clear(i)
+	if taken > 0:
+		changed.emit()
+	return taken
+
+
 func count_of(item_id: StringName) -> int:
 	var total := 0
 	for i in SIZE:

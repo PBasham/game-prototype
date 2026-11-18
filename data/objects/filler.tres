@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="1_yevkr"]
+
+[resource]
+script = ExtResource("1_yevkr")
+style = 2
+filler = true
+id = &"filler"
+display_name = "(furniture filler)"

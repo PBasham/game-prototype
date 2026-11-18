@@ -78,6 +78,11 @@ func _process(delta: float) -> void:
 		update_target(cursor(), true)
 		if valid.is_empty():
 			update_target(cursor(), false)
+	# Spell beams drain mana while they run, and stop when it's gone.
+	if _item and _item.beam and _item.is_spell() and p.is_using() and not p.input_blocked:
+		if not p.spend_mana((_item as SpellData).mana_per_second * delta):
+			p.stop_using()
+			EventBus.debug_message.emit("Out of mana")
 	if _item and _item.beam and mode == Mode.CHOP and p.is_using() and not p.input_blocked and tree != PlantLayer.NONE:
 		world.plants.request_hit_tree(tree, chop_damage() * delta, p.global_position.x)
 	if _item and _item.beam and mode == Mode.MINE and p.is_using() and not p.input_blocked:
@@ -154,6 +159,10 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 	if _item.is_spell() and p.character:
 		var from_tome := p.held_item != null and p.held_item.tome_spell != &""
 		problem = p.character.cast_problem(_item as SpellData, from_tome)
+		var sp := _item as SpellData
+		var turning_off := sp.cast == SpellData.Cast.TOGGLE and p.concentration == sp
+		if problem == "" and not turning_off and not p.has_mana(maxf(sp.mana_cost, minf(sp.mana_per_second * 0.1, 1.0))):
+			problem = "Not enough mana"
 	var size := area_size(_item)
 	var c := at / TILE
 	rect = Rect2i(Vector2i(floori(c.x - size / 2.0 + 0.5), floori(c.y - size / 2.0 + 0.5)), Vector2i(size, size))
@@ -183,9 +192,18 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 			_place_targets()
 		Mode.PLACE_OBJECT:
 			var def := world.objects.def(world.objects.index_of(_item.places_object)) as ObjectDef
-			for t in _tiles():
-				if _in_reach(t) and world.can_place_object(t, def) and not world.plants.blocks_placement(t):
-					valid.append(t)
+			if def and def.style == ObjectDef.Style.FURNITURE:
+				# Furniture: the cursor is on its bottom row, centered.
+				var anchor := Vector2i(floori(c.x) - (def.width_tiles - 1) / 2, floori(c.y))
+				rect = Rect2i(anchor + Vector2i(0, -def.height_tiles + 1), Vector2i(def.width_tiles, def.height_tiles))
+				var body := world.player.body_rect()
+				var blocked := def.blocks_movement and body.intersects(Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE)))
+				if _in_reach(anchor) and world.can_place_object(anchor, def) and not blocked:
+					valid.append(anchor)
+			else:
+				for t in _tiles():
+					if _in_reach(t) and world.can_place_object(t, def) and not world.plants.blocks_placement(t):
+						valid.append(t)
 			_limit_to_stack()
 		Mode.CAST, Mode.TOGGLE:
 			rect = Rect2i(Vector2i(floori(c.x), floori(c.y)), Vector2i.ONE)
@@ -330,7 +348,8 @@ func _place_targets() -> void:
 			if world.data.get_wall(t.x, t.y) == WorldData.AIR:
 				open.append(t)
 		elif world.data.get_block(t.x, t.y) == WorldData.AIR and not world.plants.blocks_placement(t) \
-				and not body.intersects(Rect2(Vector2(t * TILE), Vector2(TILE, TILE))):
+				and not body.intersects(Rect2(Vector2(t * TILE), Vector2(TILE, TILE))) \
+				and not _furniture_at(t):
 			open.append(t)
 	if _item.free_place:
 		valid = open
@@ -365,6 +384,11 @@ func _anchored(t: Vector2i, walls: bool) -> bool:
 	return false
 
 
+func _furniture_at(t: Vector2i) -> bool:
+	var def := world.object_def_at(t)
+	return def != null and def.style == ObjectDef.Style.FURNITURE
+
+
 ## Can't place more than the selected stack holds.
 func _limit_to_stack() -> void:
 	var p := world.player
@@ -391,12 +415,13 @@ func _on_impact(item: ItemData) -> void:
 		Mode.PLACE_OBJECT:
 			var id := world.objects.index_of(item.places_object)
 			for t in valid:
-				if inv.counts[p.selected] > 0 and world.request_set_object(t, id):
+				if inv.counts[p.selected] > 0 and world.request_place_object(t, id):
 					inv.take(p.selected, 1)
 		Mode.CAST:
 			var spell := item as SpellData
-			var from := p.casting_hand_position()
-			world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
+			if p.spend_mana(spell.mana_cost):
+				var from := p.casting_hand_position()
+				world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
 		Mode.PLACE_BLOCK:
 			var id := world.blocks.index_of(item.places_block)
 			for t in valid:
@@ -455,7 +480,15 @@ func _draw() -> void:
 		var ghost_tex := _item.icon
 		if mode == Mode.PLANT_GRASS:
 			ghost_tex = (ItemData.find(&"dirt").icon if ItemData.find(&"dirt") else null)
-		for t in valid:
+		var furn := world.objects.def(world.objects.index_of(_item.places_object)) as ObjectDef \
+			if mode == Mode.PLACE_OBJECT else null
+		if furn and furn.style == ObjectDef.Style.FURNITURE and furn.frames:
+			# Furniture ghost: the object itself over its footprint.
+			var w := furn.width_tiles * TILE
+			var h := furn.height_tiles * TILE
+			draw_texture_rect_region(furn.frames, Rect2(Vector2(rect.position * TILE), Vector2(w, h)),
+				Rect2(furn.frame * w, 0, w, h), Color(1, 1, 1, ghost_alpha if not valid.is_empty() else 0.25))
+		for t in valid if not (furn and furn.style == ObjectDef.Style.FURNITURE) else []:
 			var r := Rect2(Vector2(t * TILE), Vector2(TILE, TILE))
 			if mode == Mode.PLANT_GRASS:
 				draw_rect(r, Color(0.35, 0.75, 0.25, ghost_alpha))

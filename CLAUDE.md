@@ -3,7 +3,8 @@
 Godot 4.7.2 (GDScript) 2D sandbox. Read docs/architecture.md before changing core systems.
 docs/guide.md explains every feature; docs/world-generation.md covers generation;
 docs/character-art.md covers the paper doll; docs/items-and-mining.md covers items,
-the inventory, layers, mining, placing, magic and plants. Keep them up to date when behavior or
+the inventory, layers, mining, placing, magic and plants; docs/crafting.md covers
+crafting, stations, furniture, chests, doors, pickups and mana. Keep them up to date when behavior or
 tunables change: Patrick tweaks things by hand from these docs.
 
 ## Collaboration rules
@@ -16,7 +17,8 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Never use en dashes in docs, comments or messages.
 - Patrick supplies real art and audio; use placeholders and record them in assets/ASSETS.md.
 - No dark outlines on terrain, trees or decorations; transitions use texture.
-- Don't invent biomes, ores or content. Current scope: surface forest, copper only.
+- Don't invent biomes, ores or content. Current scope: surface forest, copper only
+  (plus the Phase 5 stone age items: sticks, rocks, flint, stone tools).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.
@@ -34,7 +36,8 @@ tunables change: Patrick tweaks things by hand from these docs.
   asking Patrick for frames; he draws real poses later.
 - Item types (hold + attack animations as curves): `data/item_types/`, defaults from
   `tools/make_item_types.gd` (never `--force` over Patrick's edits without asking).
-- Items: `data/items/`, spells: `data/spells/`, defaults from `tools/make_items.gd` (same `--force` rule);
+- Items: `data/items/`, spells: `data/spells/`, objects: `data/objects/`, recipes: `data/recipes/`,
+  defaults from `tools/make_items.gd` (same `--force` rule; `--only=a,b`);
   placeholder icons, held sprites, sapling and cracks from `tools/make_item_art.gd`.
 - Scripted runs can aim with `--aim=DX:DY` (offset from the chest) for mining shots.
 - Terrain, trees, backdrop: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game` (style V5 = "t5")

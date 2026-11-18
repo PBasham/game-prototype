@@ -92,9 +92,9 @@ func wants_world() -> bool:
 	return _any_args and not _menu and scene_override == ""
 
 
-## Scripted runs play a throwaway character with the starting kit (never saved).
+## Scripted runs play a throwaway character with the dev kit (never saved).
 func character() -> CharacterData:
-	var c := CharacterData.create(CharacterData.DEFAULT_NAME)
+	var c := CharacterData.create_dev(CharacterData.DEFAULT_NAME)
 	c.temporary = true
 	return c
 

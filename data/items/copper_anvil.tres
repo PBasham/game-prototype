@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_eecpd"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_76m6q"]
+[ext_resource type="Texture2D" path="res://assets/items/held/copper_anvil.png" id="3_op71j"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/copper_anvil.png" id="4_5nxfw"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_6rtns"]
+
+[sub_resource type="Resource" id="Resource_tnfl4"]
+script = ExtResource("2_76m6q")
+id = &"copper_anvil"
+texture = ExtResource("3_op71j")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_6rtns")
+kind = 10
+icon = ExtResource("4_5nxfw")
+max_stack = 99
+held = SubResource("Resource_tnfl4")
+impact_at = 0.2
+places_object = &"copper_anvil"
+place_area_max = 1
+id = &"copper_anvil"
+display_name = "Copper Anvil"
+description = "A crafting station: copper tools."

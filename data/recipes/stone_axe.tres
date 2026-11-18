@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_7enip"]
+
+[resource]
+script = ExtResource("1_7enip")
+inputs = Dictionary[StringName, int]({
+&"flint": 3,
+&"stick": 2
+})
+output = &"stone_axe"
+id = &"stone_axe"
+display_name = "Stone Axe"

@@ -163,10 +163,13 @@ func _register() -> void:
 			world.character.inventory.clear(i)
 		world.character.inventory.changed.emit()
 		_print("Inventory emptied."))
-	_add("kit", "kit", "Give the starting kit again.", func(_a: PackedStringArray) -> void:
-		for e: Array in CharacterData.STARTING_KIT:
-			world.character.inventory.add(e[0], e[1])
-		_print("Starting kit given."))
+	_add("devkit", "devkit", "Tools, blocks, torches, all spells and the dev test items.", func(_a: PackedStringArray) -> void:
+		world.character.give_dev_kit()
+		_print("Dev kit given."))
+	_add("mana", "mana", "Toggle infinite mana.", func(_a: PackedStringArray) -> void:
+		world.player.infinite_mana = not world.player.infinite_mana
+		world.player.mana = world.player.max_mana
+		_print("Infinite mana %s." % ("on" if world.player.infinite_mana else "off")))
 	_add("tp", "tp <x> <y> | tp spawn", "Teleport to a tile (feet), or the world's spawn.", _tp)
 	_add("pos", "pos", "Your tile position.", func(_a: PackedStringArray) -> void:
 		var t := world.wrap_tile(world.world_to_tile(world.player.global_position))
@@ -180,7 +183,9 @@ func _register() -> void:
 	_add("fillwall", "fillwall <wall|air> <w> <h>", "Fill a box with a background wall at the cursor.", func(a: PackedStringArray) -> void:
 		_fill(a, true))
 	_add("dig", "dig <w> <h>", "Clear a box of blocks (keeps walls) centered on the cursor.", _dig)
-	_add("place", "place <object>", "Place a tile object (torch, rope) at the cursor, no item needed.", _place)
+	_add("place", "place <object>", "Place a tile object (torch, rope, workbench, chest...) at the cursor, no item needed.", _place)
+	_add("use", "use", "Use what's at the cursor (like a right click: open a station, chest or door).", func(_a: PackedStringArray) -> void:
+		_print("Used." if world.try_interact_at(world.item_user.cursor(), world.player) else "Nothing to use there (or too far)."))
 	_add("dummy", "dummy | dummy clear", "Spawn a training dummy at the cursor (to test damage spells).", _dummy)
 	_add("ready", "ready <spell>", "Take the spellbook out with this spell.", func(a: PackedStringArray) -> void:
 		var spell := find_spell(" ".join(a))
@@ -304,17 +309,20 @@ func _place(a: PackedStringArray) -> void:
 		_print("No object called '%s'. Objects: %s" % [" ".join(a), ", ".join(_object_ids())])
 		return
 	var t := world.world_to_tile(world.item_user.cursor())
-	if world.is_solid(t):
-		_print("There's a solid block there.")
+	var def := world.objects.def(id) as ObjectDef
+	if def.style == ObjectDef.Style.FURNITURE:
+		t.x -= (def.width_tiles - 1) / 2  # the cursor is its bottom middle
+	if not world.request_place_object(t, id):
+		_print("Can't place %s there (needs room%s)." % [def.display_name, " and a floor" if def.needs_floor else ""])
 		return
-	world.request_set_object(t, id)
 	_print("Placed %s at %d, %d." % [world.objects.id_of(id), t.x, t.y])
 
 
 func _object_ids() -> PackedStringArray:
 	var out := PackedStringArray()
 	for i in range(1, world.objects.size()):
-		out.append(String(world.objects.id_of(i)))
+		if not (world.objects.def(i) as ObjectDef).filler:
+			out.append(String(world.objects.id_of(i)))
 	return out
 
 

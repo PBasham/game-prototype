@@ -7,7 +7,7 @@
 script = ExtResource("2_eqpxw")
 cast = 2
 effect = &"fly"
-mana_per_second = 2.0
+mana_per_second = 10.0
 kind = 4
 icon = ExtResource("1_afklv")
 max_stack = 1

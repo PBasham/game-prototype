@@ -20,6 +20,8 @@ const META_WALLS := "walls"
 const META_OBJECTS := "objects"
 ## Extra world state saved in meta (plants).
 const META_PLANTS := "plants"
+## Chest contents.
+const META_CONTAINERS := "containers"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

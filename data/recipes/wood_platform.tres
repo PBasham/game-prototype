@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_qqm62"]
+
+[resource]
+script = ExtResource("1_qqm62")
+inputs = Dictionary[StringName, int]({
+&"wood_planks": 1
+})
+output = &"wood_platform"
+output_count = 2
+id = &"wood_platform"
+display_name = "Wood Platform"

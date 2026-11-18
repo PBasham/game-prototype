@@ -11,7 +11,7 @@ extends GameData
 ## "spell:<spell id>".
 
 ## New kinds go at the end (saved .tres files store the number).
-enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME }
+enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE }
 
 const SPELL_PREFIX := "spell:"
 
@@ -60,6 +60,8 @@ const SPELL_PREFIX := "spell:"
 @export_group("Magic")
 ## Spellbooks: how many spells the book holds.
 @export var spell_slots := 0
+## Spellbooks: the highest spell tier the book can hold.
+@export var max_spell_tier := 1
 ## Spellbooks: the book is your building tool too (like Starbound's matter manipulator).
 ## Placing blocks, walls and grass seeds reaches this far (tiles)...
 @export var build_reach_tiles := 12.0

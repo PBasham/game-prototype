@@ -7,7 +7,7 @@
 script = ExtResource("2_id6pj")
 cast = 1
 damage = 8.0
-mana_cost = 1.0
+mana_cost = 2.0
 kind = 4
 icon = ExtResource("1_snh8o")
 max_stack = 1

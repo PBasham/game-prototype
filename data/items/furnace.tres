@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_nc2rs"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_jtqot"]
+[ext_resource type="Texture2D" path="res://assets/items/held/furnace.png" id="3_20qgi"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/furnace.png" id="4_hpi8m"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_i8qrh"]
+
+[sub_resource type="Resource" id="Resource_x5h7e"]
+script = ExtResource("2_jtqot")
+id = &"furnace"
+texture = ExtResource("3_20qgi")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_i8qrh")
+kind = 10
+icon = ExtResource("4_hpi8m")
+max_stack = 99
+held = SubResource("Resource_x5h7e")
+impact_at = 0.2
+places_object = &"furnace"
+place_area_max = 1
+id = &"furnace"
+display_name = "Furnace"
+description = "A crafting station: smelts ore into bars."
