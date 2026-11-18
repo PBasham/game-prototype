@@ -60,6 +60,7 @@ func hit_rect() -> Rect2:
 
 
 func take_damage(amount: float, from: Node) -> void:
+	EventBus.sound_requested.emit(&"enemy_hit", global_position)
 	if health <= 0.0:
 		return
 	amount = maxf(1.0, amount - data.defense * 0.5)
@@ -93,6 +94,7 @@ func kill() -> void:
 
 func _die() -> void:
 	world.record_kill(data.id)
+	EventBus.sound_requested.emit(&"enemy_die", global_position)
 	var drops := LootDrop.roll(data.loot)
 	for item_id: StringName in drops:
 		world.request_spawn_drop(item_id, drops[item_id], global_position + Vector2(0, -data.size.y * 0.5),
@@ -135,6 +137,7 @@ func _slime(delta: float) -> void:
 			dir = signf(dx) if dx != 0.0 else dir
 	var launch := sqrt(2.0 * data.gravity * TILE * data.hop_tiles * TILE)
 	velocity = Vector2(dir * data.hop_speed * TILE, -launch)
+	EventBus.sound_requested.emit(&"slime_hop", global_position)
 	_wait = randf_range(data.hop_wait_min, data.hop_wait_max)
 
 

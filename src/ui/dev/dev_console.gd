@@ -157,6 +157,27 @@ func _register() -> void:
 		_list(_all_spells(), " ".join(a)))
 	_add("learn", "learn <spell>", "Learn a spell (it also goes in a free book slot).", _learn)
 	_add("forget", "forget <spell>", "Forget a spell.", _forget)
+	_add("cast", "cast <spell>", "Cast a spell at the cursor now (no book, mana or cooldown needed).", func(a: PackedStringArray) -> void:
+		var spell := find_spell(" ".join(a))
+		if spell == null:
+			return
+		var p := world.player
+		match spell.cast:
+			SpellData.Cast.TOGGLE:
+				p.toggle_concentration(spell)
+			SpellData.Cast.TOOL:
+				_print("%s is a held beam: ready it and hold the button." % spell.display_name)
+				return
+			SpellData.Cast.CHARGED:
+				var from := p.casting_hand_position()
+				var bolt := world.request_spawn_projectile(spell, from, (world.item_user.cursor() - from).normalized(),
+					world.item_user._spell_power(), p)
+				if bolt:
+					bolt.size = 1.8
+			_:
+				if not world.item_user.cast(spell):
+					return
+		_print("Cast %s." % spell.display_name))
 	_add("spellopt", "spellopt [option] [on|off]", "Spell control options (also in Settings).", func(a: PackedStringArray) -> void:
 		var opts: Dictionary = Settings.DEFAULTS["spells"]
 		if a.is_empty():

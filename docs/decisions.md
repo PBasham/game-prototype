@@ -16,6 +16,12 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Reagents:** any spell can use up items per cast.
 - **Later:** an option (an empowerment) to recast a buff automatically when it runs out
   or gets used.
+- **One spell per new type, approved:** Arcane Bolt (charged), Healing Circle (zone),
+  Spark Ward (ward), Familiar (summon), Conjure Platform (conjure), Arcane Edge (imbue),
+  Barrier (reactive), Chain Spark (chain), Recall (ritual), Seek Ore (sense). All tier 1,
+  learned from scrolls.
+- **Placeholder sounds:** synthesized, through one `Sounds` autoload fed by
+  `EventBus.sound_requested`; Patrick's real files replace them by name.
 
 ## 2026-11-18: Phase 7, combat, equipment, beds (not playtested yet)
 

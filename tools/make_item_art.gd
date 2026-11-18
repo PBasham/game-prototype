@@ -368,6 +368,66 @@ func _spell_icon(kind: String, c: Color) -> Image:
 				img.set_pixel(8, y, Color.WHITE)
 			for p: Vector2i in [Vector2i(6, 6), Vector2i(7, 7), Vector2i(9, 7), Vector2i(10, 6)]:
 				img.set_pixelv(p, Color.WHITE)
+		"arcane_bolt":  # a big bolt with a tail
+			for i in 5:
+				img.set_pixel(3 + i, 12 - i, Color(g, 0.4 + i * 0.1))
+			_disc(img, Vector2(10.5, 5.5), 3.2, g)
+			_disc(img, Vector2(10.5, 5.5), 1.5, Color.WHITE)
+		"healing_circle":  # a ring with a plus
+			_ring(img, Vector2(8, 8), 6.0, g)
+			for i in range(5, 11):
+				img.set_pixel(i, 8, Color.WHITE)
+				img.set_pixel(8, i, Color.WHITE)
+		"spark_ward":  # a rune diamond on a line
+			_line(img, Vector2i(2, 13), Vector2i(13, 13), g.darkened(0.3))
+			_line(img, Vector2i(8, 3), Vector2i(13, 8), g)
+			_line(img, Vector2i(13, 8), Vector2i(8, 12), g)
+			_line(img, Vector2i(8, 12), Vector2i(3, 8), g)
+			_line(img, Vector2i(3, 8), Vector2i(8, 3), g)
+			img.set_pixel(8, 8, Color.WHITE)
+		"familiar":  # a small spirit with eyes
+			_disc(img, Vector2(8, 8), 5.0, g)
+			img.set_pixel(7, 7, Color("1a1033"))
+			img.set_pixel(10, 7, Color("1a1033"))
+			for i in 3:
+				img.set_pixel(3 - i + 1, 11 + i / 2, Color(g, 0.6))
+		"conjure_platform":  # a glowing plank with sparkles
+			for x in range(2, 14):
+				img.set_pixel(x, 10, g)
+				img.set_pixel(x, 11, g.darkened(0.3))
+			for p: Vector2i in [Vector2i(4, 6), Vector2i(8, 4), Vector2i(12, 7)]:
+				img.set_pixelv(p, Color.WHITE)
+		"arcane_edge":  # a sword with a glow
+			_line(img, Vector2i(4, 12), Vector2i(12, 4), Color.WHITE)
+			_line(img, Vector2i(5, 12), Vector2i(12, 5), g)
+			_line(img, Vector2i(3, 10), Vector2i(6, 13), Color("8a5a2b"))
+		"barrier":  # a shield outline
+			_line(img, Vector2i(3, 3), Vector2i(12, 3), g)
+			_line(img, Vector2i(3, 3), Vector2i(3, 9), g)
+			_line(img, Vector2i(12, 3), Vector2i(12, 9), g)
+			_line(img, Vector2i(3, 9), Vector2i(7, 13), g)
+			_line(img, Vector2i(12, 9), Vector2i(8, 13), g)
+			img.set_pixel(7, 7, Color.WHITE)
+		"chain_spark":  # a zigzag through three dots
+			_line(img, Vector2i(2, 4), Vector2i(7, 9), g)
+			_line(img, Vector2i(7, 9), Vector2i(10, 5), g)
+			_line(img, Vector2i(10, 5), Vector2i(14, 12), g)
+			for p: Vector2i in [Vector2i(2, 4), Vector2i(10, 5), Vector2i(14, 12)]:
+				img.set_pixelv(p, Color.WHITE)
+		"recall":  # a ring around a house roof
+			_ring(img, Vector2(8, 8), 6.5, Color(g, 0.7))
+			_line(img, Vector2i(4, 9), Vector2i(8, 5), g)
+			_line(img, Vector2i(8, 5), Vector2i(12, 9), g)
+			_line(img, Vector2i(5, 9), Vector2i(5, 12), g)
+			_line(img, Vector2i(11, 9), Vector2i(11, 12), g)
+		"seek_ore":  # an eye over an ore chunk
+			for p: Vector2i in [Vector2i(9, 10), Vector2i(10, 11), Vector2i(11, 10), Vector2i(10, 12), Vector2i(12, 12), Vector2i(8, 12)]:
+				img.set_pixelv(p, g)
+			_line(img, Vector2i(2, 6), Vector2i(7, 3), Color.WHITE)
+			_line(img, Vector2i(7, 3), Vector2i(12, 6), Color.WHITE)
+			_line(img, Vector2i(2, 6), Vector2i(7, 8), Color.WHITE)
+			_line(img, Vector2i(7, 8), Vector2i(12, 6), Color.WHITE)
+			img.set_pixel(7, 5, g)
 		"wisp":  # a small light with a trailing tail
 			for i in 6:
 				img.set_pixel(4 + i, 11 - i / 2, Color(g, 0.3 + i * 0.1))
@@ -392,7 +452,10 @@ func _spell_icon(kind: String, c: Color) -> Image:
 func _new_spell_icons() -> void:
 	var colors := {"levitate": Color("b8d8ff"), "hyper_drill": Color("ff7a4a"), "air_push": Color("d8f0ff"),
 		"blink": Color("c89aff"), "light_orb": Color("ffe8a8"), "mend": Color("8ae88a"), "wisp": Color("bfe6ff"),
-		"gel_cushion": Color("8cf06e")}
+		"gel_cushion": Color("8cf06e"), "arcane_bolt": Color("c080ff"), "healing_circle": Color("80ff99"),
+		"spark_ward": Color("ffd966"), "familiar": Color("99d9ff"), "conjure_platform": Color("b399ff"),
+		"arcane_edge": Color("cc80ff"), "barrier": Color("99d9ff"), "chain_spark": Color("b3e6ff"),
+		"recall": Color("f2cc80"), "seek_ore": Color("ff9a4d")}
 	for id: String in colors:
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [ICONS, id])
 		if FileAccess.file_exists(path):
@@ -1010,7 +1073,8 @@ func _bed() -> Image:
 # --- Spell scrolls ------------------------------------------------------------------
 
 const SCROLL_SPELLS: Array[String] = ["mining_spell", "chopping_spell", "fly", "spark", "levitate", "hyper_drill",
-	"air_push", "blink", "light_orb", "wisp", "mend", "gel_cushion"]
+	"air_push", "blink", "light_orb", "wisp", "mend", "gel_cushion", "arcane_bolt", "healing_circle", "spark_ward",
+	"familiar", "conjure_platform", "arcane_edge", "barrier", "chain_spark", "recall", "seek_ore"]
 
 
 ## Paper, the Blank Scroll, a scroll per spell (the spell's icon on parchment) and the
@@ -1092,3 +1156,18 @@ func _weaving_table() -> Image:
 	_fill(img, Rect2i(28, 6, 10, 3), Color("e8dcb8"))  # a scroll
 	_line(img, Vector2i(40, 8), Vector2i(44, 1), Color("f4f0ea"))  # quill
 	return img
+
+
+func _disc(img: Image, c: Vector2, r: float, col: Color) -> void:
+	for y in 16:
+		for x in 16:
+			if Vector2(x + 0.5, y + 0.5).distance_to(c) <= r:
+				img.set_pixel(x, y, col)
+
+
+func _ring(img: Image, c: Vector2, r: float, col: Color) -> void:
+	for y in 16:
+		for x in 16:
+			var d := Vector2(x + 0.5, y + 0.5).distance_to(c)
+			if absf(d - r) <= 0.6:
+				img.set_pixel(x, y, col)

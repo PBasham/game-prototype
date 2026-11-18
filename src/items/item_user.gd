@@ -18,7 +18,8 @@ extends Node2D
 ## the beam from the casting hand, and a range ring that fades in as the cursor nears
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
-enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT, LEARN }
+enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT, LEARN,
+	CHARGE }
 
 const TILE := World.TILE
 
@@ -69,6 +70,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_area_shown = maxf(_area_shown - delta, 0.0)
+	_update_charge(delta)
 	var p := world.player
 	# While using, the layer of that use; otherwise preview the back layer while right
 	# click is held.
@@ -163,7 +165,8 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 		problem = p.character.cast_problem(_item as SpellData, from_tome)
 		var sp := _item as SpellData
 		var turning_off := sp.cast == SpellData.Cast.TOGGLE and p.concentration == sp
-		if problem == "" and not turning_off and not p.has_mana(maxf(sp.mana_cost, minf(sp.mana_per_second * 0.1, 1.0))):
+		var need := sp.mana_cost * (sp.charge_min_mana if sp.cast == SpellData.Cast.CHARGED else 1.0)
+		if problem == "" and not turning_off and not p.has_mana(maxf(need, minf(sp.mana_per_second * 0.1, 1.0))):
 			problem = "Not enough mana"
 	var size := area_size(_item)
 	var c := at / TILE
@@ -255,6 +258,8 @@ func can_use(on_back: bool = false) -> bool:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				read_scroll()
 			return false
+		Mode.CHARGE:
+			return false  # charged in _update_charge, no swing
 		Mode.NONE:
 			# Empty hands punch and weapons swing; materials, books and the like have no
 			# use, so the arm just keeps holding them.
@@ -281,6 +286,8 @@ func melee_hit(item: ItemData) -> int:
 	var p := world.player
 	var area := melee_rect(item)
 	var amount := item.melee_damage * (1.0 + p.stat(&"melee_damage"))
+	if p.has_buff(&"arcane_edge"):
+		amount *= p.buff_spells[&"arcane_edge"].melee_mult
 	var hit := 0
 	for node in get_tree().get_nodes_in_group(&"damageable"):
 		if node == p or not is_instance_valid(node):
@@ -312,6 +319,7 @@ func read_scroll() -> bool:
 		return false
 	p.character.learn_spell(item.teaches_spell)
 	EventBus.debug_message.emit("You learned %s" % spell.display_name)
+	EventBus.sound_requested.emit(&"learn_spell", Vector2.INF)
 	return true
 
 
@@ -329,6 +337,7 @@ func eat_held() -> bool:
 		return false
 	p.eat(item.food_value, item.heal_value)
 	EventBus.debug_message.emit("Ate %s" % item.display_name)
+	EventBus.sound_requested.emit(&"eat", world.player.chest())
 	return true
 
 
@@ -374,8 +383,11 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.NONE
 	if item is SpellData:
 		match (item as SpellData).cast:
+			SpellData.Cast.CHARGED:
+				return Mode.CHARGE
 			SpellData.Cast.PROJECTILE, SpellData.Cast.GUST, SpellData.Cast.BLINK, SpellData.Cast.LIGHT, \
-					SpellData.Cast.BUFF:
+					SpellData.Cast.BUFF, SpellData.Cast.ZONE, SpellData.Cast.WARD, SpellData.Cast.SUMMON, \
+					SpellData.Cast.CONJURE, SpellData.Cast.CHAIN, SpellData.Cast.RITUAL, SpellData.Cast.SENSE:
 				return Mode.CAST
 			SpellData.Cast.TOGGLE:
 				return Mode.TOGGLE
@@ -493,6 +505,7 @@ func _on_impact(item: ItemData) -> void:
 	update_target(cursor(), p.use_back)
 	var inv := p.character.inventory
 	if item.melee_damage > 0.0:
+		EventBus.sound_requested.emit(&"swing", p.chest())
 		melee_hit(item)
 	match mode:
 		Mode.MINE:
@@ -513,10 +526,15 @@ func _on_impact(item: ItemData) -> void:
 		Mode.CAST:
 			var spell := item as SpellData
 			# Mana is checked before the reagents are used up, so a failed cast costs nothing.
+			# A ritual pays when it completes.
+			var pays := spell.cast != SpellData.Cast.RITUAL
 			if cooldown_left(spell) <= 0.0 and p.has_mana(spell.mana_cost) and p.character.take_reagents(spell):
-				p.spend_mana(spell.mana_cost)
+				if pays:
+					p.spend_mana(spell.mana_cost)
 				_ready_at[spell.id] = _now() + spell.cooldown
-				cast(spell)
+				if not cast(spell) and pays:
+					p.mana += spell.mana_cost  # it fizzled (no room, no target): refund
+					_ready_at.erase(spell.id)
 		Mode.PLACE_BLOCK:
 			var id := world.blocks.index_of(item.places_block)
 			for t in valid:
@@ -540,10 +558,12 @@ func _on_impact(item: ItemData) -> void:
 		_cut_flowers_in_swing()
 
 
-## Casts a non-toggle spell now (mana and cooldown already handled).
-func cast(spell: SpellData) -> void:
+## Casts a non-toggle spell now (mana and cooldown already handled). False if it
+## fizzled (no room, no target), with the reason shown.
+func cast(spell: SpellData) -> bool:
 	var p := world.player
 	var from := p.casting_hand_position()
+	EventBus.sound_requested.emit(StringName("cast_" + SpellData.Cast.keys()[spell.cast].to_lower()), from)
 	match spell.cast:
 		SpellData.Cast.PROJECTILE:
 			world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
@@ -561,6 +581,110 @@ func cast(spell: SpellData) -> void:
 		SpellData.Cast.BUFF:
 			p.add_buff(spell)
 			SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, p.chest(), Vector2.ZERO, spell.projectile_color)
+		SpellData.Cast.ZONE, SpellData.Cast.WARD, SpellData.Cast.SUMMON, SpellData.Cast.CONJURE, SpellData.Cast.SENSE:
+			if world.request_spell_effect(spell, cursor(), _spell_power()) == null:
+				EventBus.debug_message.emit(world.spell_problem if world.spell_problem != "" else "It fizzles")
+				return false
+		SpellData.Cast.CHAIN:
+			if chain(spell, from) == 0:
+				EventBus.debug_message.emit("No target in reach")
+				return false
+		SpellData.Cast.RITUAL:
+			return p.start_ritual(spell)
+	return true
+
+
+## Seconds a CHARGED spell has been charging (-1 = not charging).
+var charge := -1.0
+
+
+## Arcane Bolt: press and hold to charge, let go to fire. The bolt's damage, size and
+## mana grow with the charge. Holding past a full charge keeps it full.
+func _update_charge(delta: float) -> void:
+	var p := world.player
+	if mode != Mode.CHARGE or p == null or p.dead or p.stowed:
+		charge = -1.0
+		return
+	var spell := _item as SpellData
+	if Input.is_action_pressed("use_primary") and not p.input_blocked:
+		if charge < 0.0:
+			if not Input.is_action_just_pressed("use_primary") or problem != "" or cooldown_left(spell) > 0.0:
+				return
+			charge = 0.0
+			EventBus.sound_requested.emit(&"bolt_charge", p.casting_hand_position())
+		charge = minf(charge + delta, spell.charge_seconds)
+		queue_redraw()
+	elif charge >= 0.0:
+		release_charge()
+
+
+## Fires a charging bolt now. Returns the bolt, or null (not enough mana: it fizzles).
+func release_charge() -> SpellProjectile:
+	var p := world.player
+	var spell := _item as SpellData
+	var k := clampf(charge / maxf(spell.charge_seconds, 0.01), 0.0, 1.0)
+	charge = -1.0
+	queue_redraw()
+	if spell == null:
+		return null
+	var cost := spell.mana_cost * lerpf(spell.charge_min_mana, 1.0, k)
+	if not p.spend_mana(cost):
+		EventBus.debug_message.emit("Not enough mana")
+		return null
+	_ready_at[spell.id] = _now() + spell.cooldown
+	var from := p.casting_hand_position()
+	var bolt := world.request_spawn_projectile(spell, from, (cursor() - from).normalized(),
+		_spell_power() * lerpf(spell.charge_min_damage, 1.0, k), p)
+	if bolt:
+		bolt.size = lerpf(0.6, 1.8, k)
+	EventBus.sound_requested.emit(&"bolt_fire", from)
+	return bolt
+
+
+## Chain Spark: hits the enemy nearest the cursor within reach, then jumps to the nearest
+## one not yet hit within `chain_tiles`, up to `chain_jumps` times, each `chain_falloff`
+## weaker. Returns how many were hit.
+func chain(spell: SpellData, from: Vector2) -> int:
+	var p := world.player
+	var targets: Array[Node] = []
+	for n in get_tree().get_nodes_in_group(&"damageable"):
+		if n != p and is_instance_valid(n) and not n.is_queued_for_deletion():
+			targets.append(n)
+	var reach := spell.reach_tiles * TILE
+	var first: Node = null
+	var best := INF
+	for n in targets:
+		var c: Vector2 = (n.call(&"hit_rect") as Rect2).get_center()
+		if c.distance_to(p.chest()) <= reach and c.distance_to(cursor()) < best:
+			best = c.distance_to(cursor())
+			first = n
+	if first == null:
+		return 0
+	var path := PackedVector2Array([from])
+	var hit: Array[Node] = []
+	var current := first
+	var amount := spell.damage * _spell_power()
+	while current:
+		var at: Vector2 = (current.call(&"hit_rect") as Rect2).get_center()
+		path.append(at)
+		hit.append(current)
+		current.call(&"take_damage", amount, p)
+		if hit.size() > spell.chain_jumps:
+			break
+		amount *= 1.0 - spell.chain_falloff
+		var next: Node = null
+		var nd := spell.chain_tiles * TILE
+		for n in targets:
+			if n in hit or not is_instance_valid(n):
+				continue
+			var d := (n.call(&"hit_rect") as Rect2).get_center().distance_to(at)
+			if d <= nd:
+				nd = d
+				next = n
+		current = next
+	var fx := SpellEffect.spawn(world.effects, SpellEffect.Kind.ZAP, Vector2.ZERO, Vector2.ZERO, spell.projectile_color)
+	fx.points = path
+	return hit.size()
 
 
 ## Air Push: everything damageable in the cone is hurt and shoved away; in the air the
@@ -617,7 +741,15 @@ func _draw() -> void:
 		return
 	var p := world.player
 	var aim := cursor()
-	if mode in [Mode.CAST, Mode.TOGGLE]:
+	if mode == Mode.CHARGE and charge >= 0.0:
+		# The bolt growing in the casting hand, with a ring that closes when it's full.
+		var spell := _item as SpellData
+		var k := clampf(charge / maxf(spell.charge_seconds, 0.01), 0.0, 1.0)
+		var at := p.casting_hand_position()
+		draw_circle(at, lerpf(1.5, 5.0, k), Color(spell.projectile_color, 0.5))
+		draw_circle(at, lerpf(0.8, 2.2, k), Color(1, 1, 1, 0.9))
+		draw_arc(at, lerpf(12.0, 6.0, k), 0.0, TAU * k, 24, Color(spell.projectile_color, 0.8), 1.0)
+	if mode in [Mode.CAST, Mode.TOGGLE, Mode.CHARGE]:
 		# No target box: just say why it can't be cast, if it can't.
 		if problem != "":
 			draw_string(ThemeDB.fallback_font, aim + Vector2(6, -4), problem, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, invalid_color)

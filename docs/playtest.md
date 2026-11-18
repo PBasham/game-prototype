@@ -76,6 +76,19 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Paper, Blank Scroll (needs Slime), Spell Weaving Table at the Workbench.
 - [ ] Scroll recipes at the table; left click a scroll to learn its spell.
 
+## Phase 8: spell types and sound (branch phase-08-spell-types, on top of Phase 7)
+
+`cast <spell>` in the console casts any spell at the cursor for free.
+
+- [ ] Gel Cushion: needs 5 Slime; saves one bad fall (squish), else 2 minutes.
+- [ ] Arcane Bolt: tap vs full charge.
+- [ ] Healing Circle heals inside only; Spark Ward zaps the first slime on it.
+- [ ] Familiar shoots slimes; Conjure Platform holds you, Down + Jump drops through, fades.
+- [ ] Arcane Edge: sword hits harder; Barrier pops when you get low.
+- [ ] Chain Spark jumps between slimes; Recall: stand still 3 s, moving cancels.
+- [ ] Seek Ore underground at night.
+- [ ] Sounds: anything too loud, annoying or missing?
+
 ## Known
 
 - One test failed once in about 13 full runs and never again; possibly a timing

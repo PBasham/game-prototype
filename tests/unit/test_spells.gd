@@ -299,3 +299,182 @@ func test_buffs_run_out() -> void:
 	p.buffs[&"gel_cushion"] = 0.2
 	await wait_seconds(0.4)
 	assert_false(p.has_buff(&"gel_cushion"), "timed out")
+
+
+func _slime_at(offset: Vector2) -> Enemy:
+	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
+	return w.request_spawn_enemy(slime, w.player.global_position + offset)
+
+
+func test_arcane_bolt_grows_with_charge() -> void:
+	var u := w.item_user
+	var p := w.player
+	w.character.put_in_book(3, &"arcane_bolt")
+	p.ready_spell(&"arcane_bolt")
+	await wait_seconds(0.2)  # a few idle frames (several physics steps can run first)
+	assert_eq(u.mode, ItemUser.Mode.CHARGE)
+	p.mana = 100.0
+	u.charge = 0.0
+	var tap := u.release_charge()
+	assert_not_null(tap)
+	assert_almost_eq(tap.size, 0.6, 0.01)
+	assert_almost_eq(p.mana, 100.0 - 15.0 * 0.27, 0.1, "a tap is cheap")
+	u._ready_at.clear()
+	u.charge = 1.5
+	var full := u.release_charge()
+	assert_almost_eq(full.size, 1.8, 0.01, "full charge: big bolt")
+	assert_gt(full.power, tap.power * 4.0, "and five times the damage")
+
+
+func test_healing_circle_heals_inside() -> void:
+	var p := w.player
+	p.health = 40.0
+	var z := w.request_spell_effect(_spell(&"healing_circle"), p.chest(), 1.0) as SpellZone
+	assert_not_null(z)
+	await wait_seconds(1.0)
+	assert_gt(p.health, 43.0, "about 4 a second")
+	z.global_position += Vector2(200, 0)
+	var h := p.health
+	await wait_seconds(0.5)
+	assert_almost_eq(p.health, h, 0.6, "not outside it (only regen)")
+
+
+func test_spark_ward_zaps_the_first_enemy() -> void:
+	var p := w.player
+	var ward := w.request_spell_effect(_spell(&"spark_ward"), p.chest() + Vector2(6 * World.TILE, 0), 1.0) as SpellWard
+	assert_not_null(ward, "found ground under the cursor")
+	var e := _slime_at(Vector2(6 * World.TILE, -30))
+	e.data = e.data.duplicate()
+	e.data.max_health = 100.0
+	e.health = 100.0
+	await wait_seconds(1.2)
+	assert_almost_eq(e.health, 80.0, 0.1, "zapped for 20")
+	assert_false(is_instance_valid(ward) and not ward.is_queued_for_deletion(), "spent")
+	for i in 4:
+		w.request_spell_effect(_spell(&"spark_ward"), p.chest() + Vector2(-(i + 3) * 3 * World.TILE, 0), 1.0)
+	await wait_physics_frames(1)
+	assert_eq(get_tree().get_nodes_in_group(&"spell_wards").filter(func(n: Node) -> bool: return not n.is_queued_for_deletion()).size(), 3, "3 at most")
+
+
+func test_familiar_shoots_enemies() -> void:
+	var fam := w.request_spell_effect(_spell(&"familiar"), Vector2.ZERO, 1.0) as Familiar
+	assert_not_null(fam)
+	var e := _slime_at(Vector2(8 * World.TILE * w.player.facing, -10))
+	await wait_seconds(2.0)
+	assert_lt(e.health, e.data.max_health, "shot")
+
+
+func test_conjured_platform_holds_you_then_fades() -> void:
+	var p := w.player
+	var at := p.global_position + Vector2(0, -12 * World.TILE)
+	var plat := w.request_spell_effect(_spell(&"conjure_platform"), at, 1.0) as ConjuredPlatform
+	assert_not_null(plat)
+	assert_eq(w.collision_at(at), TileDef.Collision.PLATFORM)
+	p.global_position = at + Vector2(0, -4 * World.TILE)
+	p.reset_physics_interpolation()
+	await wait_seconds(0.8)
+	assert_true(p.is_on_floor(), "standing on it")
+	assert_almost_eq(p.global_position.y, float(w.world_to_tile(at).y * World.TILE), 2.0)
+	assert_null(w.request_spell_effect(_spell(&"conjure_platform"), at, 1.0), "no room where one already is")
+	plat.time_left = 0.01
+	await wait_physics_frames(3)
+	assert_ne(w.collision_at(at), TileDef.Collision.PLATFORM, "gone")
+
+
+func test_arcane_edge_boosts_melee() -> void:
+	var p := w.player
+	var sword := ItemData.find(&"copper_sword")
+	var e := _slime_at(Vector2(2 * World.TILE * p.facing, 0))
+	e.data = e.data.duplicate()
+	e.data.max_health = 1000.0
+	e.health = 1000.0
+	await wait_physics_frames(2)
+	w.item_user.cursor_override = e.hit_rect().get_center()
+	w.item_user.melee_hit(sword)
+	var plain := 1000.0 - e.health
+	p.add_buff(_spell(&"arcane_edge"))
+	var before := e.health
+	w.item_user.melee_hit(sword)
+	assert_almost_eq(before - e.health, plain * 1.5, 0.1, "+50%")
+	w.item_user.cursor_override = Vector2.INF
+
+
+func test_barrier_pops_a_shield() -> void:
+	var p := w.player
+	p.invincible = false
+	p.health = 100.0
+	p.add_buff(_spell(&"barrier"))
+	p.reset_hurt_cooldown()
+	p.take_damage(50.0, &"enemy")
+	assert_almost_eq(p.health, 50.0, 1.0, "still above a quarter: no pop")
+	assert_true(p.has_buff(&"barrier"))
+	p.reset_hurt_cooldown()
+	p.take_damage(40.0, &"fall")
+	assert_false(p.has_buff(&"barrier"), "popped")
+	assert_almost_eq(p.health, 40.0, 0.1, "the shield soaked 30 of the 40")
+	assert_eq(p.shield, 0.0, "used up")
+	p.reset_hurt_cooldown()
+	p.take_damage(10.0, &"fall")
+	assert_almost_eq(p.health, 30.0, 0.1, "then damage goes through")
+	# A fresh barrier: a small shield left over lasts until its time runs out.
+	p.health = 100.0
+	p.add_buff(_spell(&"barrier"))
+	p.reset_hurt_cooldown()
+	p.take_damage(80.0, &"fall")
+	assert_almost_eq(p.health, 50.0, 0.1, "30 soaked, 50 through")
+
+
+func test_chain_spark_jumps() -> void:
+	var p := w.player
+	var a := _slime_at(Vector2(5 * World.TILE * p.facing, -20))
+	var b := _slime_at(Vector2(9 * World.TILE * p.facing, -20))
+	var c := _slime_at(Vector2(13 * World.TILE * p.facing, -20))
+	var far := _slime_at(Vector2(40 * World.TILE * p.facing, -20))
+	await wait_physics_frames(1)
+	w.item_user.cursor_override = a.global_position
+	var n := w.item_user.chain(_spell(&"chain_spark"), p.chest())
+	assert_eq(n, 3, "hit three, not the far one")
+	assert_eq(far.health, far.data.max_health)
+	assert_gt(a.data.max_health - a.health, b.data.max_health - b.health, "weaker each jump")
+	w.item_user.cursor_override = Vector2.INF
+
+
+func test_recall_ritual() -> void:
+	var p := w.player
+	var home := w.respawn_position()
+	p.global_position += Vector2(30 * World.TILE, -20)
+	p.reset_physics_interpolation()
+	await wait_seconds(1.0)
+	var recall := _spell(&"recall")
+	p.mana = 100.0
+	assert_true(p.start_ritual(recall))
+	Input.action_press("move_right")
+	await wait_physics_frames(3)
+	Input.action_release("move_right")
+	assert_null(p.ritual, "moving breaks it")
+	assert_eq(p.mana, 100.0, "no mana spent")
+	await wait_seconds(0.5)
+	assert_true(p.start_ritual(recall))
+	await wait_seconds(3.4)
+	assert_null(p.ritual)
+	assert_lt(p.global_position.distance_to(home), 3 * World.TILE, "home")
+	assert_almost_eq(p.mana, 60.0, 2.0, "paid at the end")
+
+
+func test_seek_ore_finds_copper() -> void:
+	var p := w.player
+	var copper := w.blocks.index_of(&"copper_ore")
+	var t := w.world_to_tile(p.chest()) + Vector2i(10, 6)
+	w.data.set_block(t.x, t.y, copper)
+	var sense := w.request_spell_effect(_spell(&"seek_ore"), p.chest(), 1.0) as OreSense
+	assert_not_null(sense)
+	assert_true(t in sense.found or w.wrap_tile(t) in sense.found, "the ore we put there")
+
+
+func test_sounds_play_and_throttle() -> void:
+	assert_not_null(Sounds.stream_for(&"enemy_hit"), "placeholder exists")
+	assert_null(Sounds.stream_for(&"no_such_sound"), "missing is silent")
+	Sounds._last.clear()
+	assert_true(Sounds.play(&"enemy_hit", w.player.chest()))
+	assert_false(Sounds.play(&"enemy_hit", w.player.chest()), "not twice in a row")
+	assert_true(Sounds.play(&"craft"))

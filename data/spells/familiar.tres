@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/familiar.png" id="1_yk4h7"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_s80tw"]
+
+[resource]
+script = ExtResource("2_s80tw")
+cast = 10
+cooldown = 1.0
+damage = 5.0
+projectile_speed = 35.0
+projectile_range = 18.0
+projectile_color = Color(0.6, 0.85, 1, 1)
+duration = 60.0
+mana_cost = 30.0
+kind = 4
+icon = ExtResource("1_yk4h7")
+max_stack = 1
+impact_at = 0.3
+id = &"familiar"
+display_name = "Familiar"
+description = "A little spirit follows you for a minute and shoots at enemies nearby."

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_hkni2"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_dy0st"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_conjure_platform.png" id="3_uakom"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_conjure_platform.png" id="4_vqaoa"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_m7i71"]
+
+[sub_resource type="Resource" id="Resource_c7bis"]
+script = ExtResource("2_dy0st")
+id = &"scroll_conjure_platform"
+texture = ExtResource("3_uakom")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_m7i71")
+kind = 14
+icon = ExtResource("4_vqaoa")
+max_stack = 20
+held = SubResource("Resource_c7bis")
+impact_at = 0.2
+teaches_spell = &"conjure_platform"
+id = &"scroll_conjure_platform"
+display_name = "Scroll: Conjure Platform"
+description = "Left click to learn Conjure Platform. The scroll is used up."

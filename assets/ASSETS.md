@@ -171,3 +171,32 @@ Also `items/icons/wisp.png` (spell). Placeholders.
 `items/icons/gel_cushion.png` (spell), `scroll_gel_cushion.png`. The Gel Cushion splat is
 drawn in code (`SpellEffect.Kind.SPLAT`). **Sound wanted:** `gel_cushion_used` (a squish
 when it saves you), played through `EventBus.sound_requested` once audio exists.
+
+## Phase 8 spell icons and scrolls
+
+`items/icons/` arcane_bolt, healing_circle, spark_ward, familiar, conjure_platform,
+arcane_edge, barrier, chain_spark, recall, seek_ore (16x16) and a `scroll_<spell>` for each.
+Effects (zone, ward rune, familiar, platform, ore outlines, lightning, ritual ring, shield
+bubble) are drawn in code in `src/combat/`.
+
+## Sounds: `sounds/*.wav` (placeholders from tools/make_sounds.gd)
+
+Synthesized blips, sweeps and noise. Replace any with a real file of the same name (.wav
+or .ogg); the generator never overwrites without `--force`.
+
+| Sound | When |
+|---|---|
+| cast_projectile, cast_gust, cast_blink, cast_light, cast_buff, cast_zone, cast_ward, cast_summon, cast_conjure, cast_chain, cast_ritual, cast_sense | A spell of that type is cast |
+| bolt_charge, bolt_fire | Arcane Bolt starts charging, fires |
+| toggle_on, toggle_off | A concentration spell turns on or off |
+| gel_cushion_used | Gel Cushion saves you from a fall |
+| ward_trigger, familiar_shot, platform_fade | A ward goes off, the familiar shoots, a conjured platform fades |
+| shield_pop, shield_block | Barrier pops, its shield soaks a whole hit |
+| buff_end | A buff runs out |
+| ritual_start, ritual_done | A ritual begins, completes |
+| learn_spell | You learn a spell from a scroll |
+| player_hurt | You take damage |
+| enemy_hit, enemy_die, slime_hop | An enemy is hit, dies, a slime hops (slime_land is made but not used yet) |
+| swing | A melee weapon swings |
+| mine_hit, block_break, block_place | Mining a tile, a block breaking, a block placed |
+| item_pickup, craft, eat, door | Picking something up, crafting, eating, a door opening or closing |

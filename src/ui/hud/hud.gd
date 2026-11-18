@@ -1108,6 +1108,7 @@ func craft(r: RecipeData, times: int) -> int:
 		world.request_spawn_drop(r.output, int(result[1]), world.player.chest(), Vector2.ZERO, true)
 	if int(result[0]) > 0:
 		EventBus.item_picked_up.emit(r.output, int(result[0]) * r.output_count)
+		EventBus.sound_requested.emit(&"craft", Vector2.INF)
 	return int(result[0])
 
 

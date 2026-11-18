@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/conjure_platform.png" id="1_fttrv"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_m00r8"]
+
+[resource]
+script = ExtResource("2_m00r8")
+cast = 11
+cooldown = 0.5
+projectile_color = Color(0.7, 0.6, 1, 1)
+duration = 30.0
+mana_cost = 10.0
+kind = 4
+icon = ExtResource("1_fttrv")
+max_stack = 1
+impact_at = 0.3
+id = &"conjure_platform"
+display_name = "Conjure Platform"
+description = "A glowing platform, 6 blocks wide, at the cursor for 30 seconds. Down + Jump drops through."

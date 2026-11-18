@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_eas6j"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_1kis4"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_familiar.png" id="3_a7jnp"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_familiar.png" id="4_5d8vs"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_e8prc"]
+
+[sub_resource type="Resource" id="Resource_pq5q5"]
+script = ExtResource("2_1kis4")
+id = &"scroll_familiar"
+texture = ExtResource("3_a7jnp")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_e8prc")
+kind = 14
+icon = ExtResource("4_5d8vs")
+max_stack = 20
+held = SubResource("Resource_pq5q5")
+impact_at = 0.2
+teaches_spell = &"familiar"
+id = &"scroll_familiar"
+display_name = "Scroll: Familiar"
+description = "Left click to learn Familiar. The scroll is used up."

@@ -74,6 +74,8 @@ var _enemies: Node2D
 var spawner: EnemySpawner
 ## Bed respawn points: character name -> bed anchor tile.
 var spawn_points: Dictionary[String, Vector2i] = {}
+## Conjured platforms by the tiles they cover (they count as platform tiles there).
+var conjured: Dictionary[Vector2i, Node] = {}
 ## Enemies slain in this world, by enemy id (saved). Spawn conditions read these.
 var kills: Dictionary[StringName, int] = {}
 ## Spell projectiles, damage numbers, dev dummies.
@@ -481,6 +483,71 @@ func summon_light_orb(spell: SpellData) -> LightOrb:
 	return orb
 
 
+## Casts the world-placed spells (zone, ward, familiar, conjured platform, ore sense) at
+## `at` (the cursor). Returns the new node, or null with a reason in `problem`.
+var spell_problem := ""
+
+
+func request_spell_effect(spell: SpellData, at: Vector2, power: float) -> Node:
+	spell_problem = ""
+	if not Game.is_authority():
+		return null
+	match spell.cast:
+		SpellData.Cast.ZONE:
+			var z := SpellZone.new()
+			effects.add_child(z)
+			z.setup(self, spell, at, power)
+			return z
+		SpellData.Cast.WARD:
+			var ground := _ground_under(at, 12)
+			if ground == Vector2.INF:
+				spell_problem = "No ground there"
+				return null
+			var wards := get_tree().get_nodes_in_group(&"spell_wards").filter(
+				func(n: Node) -> bool: return not n.is_queued_for_deletion())
+			while wards.size() >= maxi(spell.max_active, 1):
+				wards.pop_front().queue_free()
+			var wd := SpellWard.new()
+			effects.add_child(wd)
+			wd.setup(self, spell, ground, power)
+			return wd
+		SpellData.Cast.SUMMON:
+			for f in get_tree().get_nodes_in_group(&"familiars"):
+				f.queue_free()
+			var fam := Familiar.new()
+			effects.add_child(fam)
+			fam.setup(self, spell, power)
+			return fam
+		SpellData.Cast.CONJURE:
+			var t := world_to_tile(at)
+			var left := t - Vector2i(spell.conjure_tiles / 2, 0)
+			for i in spell.conjure_tiles:
+				var c := left + Vector2i(i, 0)
+				if is_solid(c) or conjured.has(wrap_tile(c)):
+					spell_problem = "No room there"
+					return null
+			var plat := ConjuredPlatform.new()
+			effects.add_child(plat)
+			plat.setup(self, spell, left, spell.conjure_tiles)
+			return plat
+		SpellData.Cast.SENSE:
+			var sense := OreSense.new()
+			effects.add_child(sense)
+			sense.setup(self, spell, player.chest() if player else at)
+			return sense
+	return null
+
+
+## The top of the first solid tile at or below `at` (within `max_tiles`), or INF.
+func _ground_under(at: Vector2, max_tiles: int) -> Vector2:
+	var t := world_to_tile(at)
+	for i in max_tiles:
+		var c := t + Vector2i(0, i)
+		if is_solid(c):
+			return Vector2(at.x, c.y * TILE)
+	return Vector2.INF
+
+
 ## Moving light sources (Light Orb): [tile, radius, color] for the light map.
 func dynamic_lights() -> Array[Array]:
 	var out: Array[Array] = []
@@ -616,6 +683,8 @@ func block_at(p: Vector2) -> int:
 
 
 func collision_at(p: Vector2) -> int:
+	if not conjured.is_empty() and conjured.has(wrap_tile(world_to_tile(p))):
+		return TileDef.Collision.PLATFORM
 	return blocks.collision(block_at(p))
 
 
@@ -785,6 +854,7 @@ func request_toggle_object(tile: Vector2i) -> bool:
 			for t in footprint(to_anchor, to_def):
 				request_set_object(t, filler)
 			request_set_object(to_anchor, to)
+			EventBus.sound_requested.emit(&"door", tile_to_world(a))
 			return true
 	return false
 
@@ -922,6 +992,10 @@ func request_set_block(tile: Vector2i, id: int) -> bool:
 	data.set_block(tile.x, tile.y, id)
 	renderer.refresh_tile(tile)
 	block_changed.emit(wrap_tile(tile), old, id)
+	if old != WorldData.AIR and id == WorldData.AIR:
+		EventBus.sound_requested.emit(&"block_break", tile_to_world(tile))
+	elif old == WorldData.AIR and id != WorldData.AIR:
+		EventBus.sound_requested.emit(&"block_place", tile_to_world(tile))
 	return true
 
 
@@ -941,6 +1015,7 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	if not Game.is_authority():
 		return false
 	tile = wrap_tile(tile)
+	EventBus.sound_requested.emit(&"mine_hit", tile_to_world(tile))
 	var id := data.get_wall(tile.x, tile.y) if wall else data.get_block(tile.x, tile.y)
 	# Front-layer mining takes a tile object first when there's no solid block there
 	# (rope on a platform, a torch). Objects break in one hit.

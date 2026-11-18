@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_ouxoh"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_s6ar1"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_arcane_edge.png" id="3_uhqrc"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_arcane_edge.png" id="4_a7apl"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_1b6xq"]
+
+[sub_resource type="Resource" id="Resource_uvbtb"]
+script = ExtResource("2_s6ar1")
+id = &"scroll_arcane_edge"
+texture = ExtResource("3_uhqrc")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_1b6xq")
+kind = 14
+icon = ExtResource("4_a7apl")
+max_stack = 20
+held = SubResource("Resource_uvbtb")
+impact_at = 0.2
+teaches_spell = &"arcane_edge"
+id = &"scroll_arcane_edge"
+display_name = "Scroll: Arcane Edge"
+description = "Left click to learn Arcane Edge. The scroll is used up."

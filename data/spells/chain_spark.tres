@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/chain_spark.png" id="1_1r3r5"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_h0kkp"]
+
+[resource]
+script = ExtResource("2_h0kkp")
+cast = 12
+cooldown = 0.6
+damage = 10.0
+projectile_color = Color(0.7, 0.9, 1, 1)
+mana_cost = 12.0
+kind = 4
+icon = ExtResource("1_1r3r5")
+max_stack = 1
+reach_tiles = 12.0
+impact_at = 0.3
+id = &"chain_spark"
+display_name = "Chain Spark"
+description = "Lightning hits the enemy nearest the cursor, then jumps to up to 3 more nearby, weaker each jump."

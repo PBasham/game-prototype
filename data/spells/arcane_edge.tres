@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/arcane_edge.png" id="1_06w8l"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_e0v06"]
+
+[resource]
+script = ExtResource("2_e0v06")
+cast = 6
+cooldown = 0.5
+projectile_color = Color(0.8, 0.5, 1, 1)
+effect = &"arcane_edge"
+duration = 60.0
+mana_cost = 20.0
+kind = 4
+icon = ExtResource("1_06w8l")
+max_stack = 1
+impact_at = 0.3
+id = &"arcane_edge"
+display_name = "Arcane Edge"
+description = "Your melee weapons hit 50% harder for a minute."

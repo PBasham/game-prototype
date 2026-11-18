@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_uanhp"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_yckel"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_spark_ward.png" id="3_ghg1d"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_spark_ward.png" id="4_movf4"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_0nqih"]
+
+[sub_resource type="Resource" id="Resource_d7jfb"]
+script = ExtResource("2_yckel")
+id = &"scroll_spark_ward"
+texture = ExtResource("3_ghg1d")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_0nqih")
+kind = 14
+icon = ExtResource("4_movf4")
+max_stack = 20
+held = SubResource("Resource_d7jfb")
+impact_at = 0.2
+teaches_spell = &"spark_ward"
+id = &"scroll_spark_ward"
+display_name = "Scroll: Spark Ward"
+description = "Left click to learn Spark Ward. The scroll is used up."

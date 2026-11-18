@@ -20,6 +20,8 @@ signal fall_damage_taken(amount: int)
 signal buff_started(spell: SpellData)
 ## A buff ended: ran out, or `used` (Gel Cushion saving you from a fall).
 signal buff_ended(effect: StringName, used: bool)
+## A ritual finished (`completed`) or was cancelled.
+signal ritual_finished(spell: SpellData, completed: bool)
 ## Health went down (any cause: falls, starving...).
 signal hurt(amount: int, cause: StringName)
 ## Health reached 0. The World respawns the player.
@@ -257,6 +259,15 @@ var _quick_button: StringName = &""
 ## that gave it. Not saved: they end when you leave the world.
 var buffs: Dictionary[StringName, float] = {}
 var buff_spells: Dictionary[StringName, SpellData] = {}
+## Barrier's shield: damage it can still soak (0 = none). Shown as the
+## &"barrier_shield" buff and a bubble.
+var shield := 0.0
+var _shield_fx: SpellEffect
+## A ritual being performed (stand still until it's done), or null.
+var ritual: SpellData
+var ritual_left := 0.0
+var _ritual_from := Vector2.ZERO
+var _ritual_fx: SpellEffect
 ## Set when R was used for a quick cast, so letting go of R does nothing else.
 var r_combo_used := false
 ## Seconds in the air since leaving the ground (for double jump).
@@ -647,6 +658,7 @@ func has_mana(amount: float) -> bool:
 
 func _update_mana(delta: float) -> void:
 	_tick_buffs(delta)
+	_update_ritual(delta)
 	# A concentration spell drains while it's on; it ends when mana runs out.
 	if concentration and concentration.effect == &"mend":
 		heal(concentration.heal_per_second * spell_power() * delta)
@@ -670,12 +682,30 @@ func take_damage(amount: float, cause: StringName = &"", knock_from: Variant = n
 	if cause == &"enemy":
 		# Defense takes off half its value (at least 1 damage gets through).
 		amount = maxf(1.0, amount - defense * 0.5)
+	cancel_ritual("Interrupted")
+	# Barrier pops when this hit would take you under its threshold; the shield soaks
+	# damage first.
+	if has_buff(&"barrier") and health - amount < max_health * buff_spells[&"barrier"].trigger_health:
+		_pop_barrier()
+	if shield > 0.0:
+		var soak := minf(shield, amount)
+		shield -= soak
+		amount -= soak
+		if shield <= 0.0:
+			end_buff(&"barrier_shield", true)
+		if amount <= 0.0:
+			_since_hurt = 0.0
+			if world and world.effects:
+				FloatingText.spawn(world.effects, global_position + Vector2(0, -70), "blocked", Color("9fd8ff"))
+			EventBus.sound_requested.emit(&"shield_block", global_position)
+			return
 	if knock_from is Vector2 and knock > 0.0:
 		var dir := signf(global_position.x - (knock_from as Vector2).x)
 		velocity = Vector2((dir if dir != 0.0 else 1.0) * knock * TILE, -knock * 0.6 * TILE)
 	health = maxf(health - amount, 0.0)
 	_since_hurt = 0.0
 	hurt.emit(roundi(amount), cause)
+	EventBus.sound_requested.emit(&"player_hurt", global_position)
 	if world and world.effects:
 		FloatingText.spawn(world.effects, global_position + Vector2(randf_range(-4, 4), -70), str(roundi(amount)),
 			Color("ff6a5a"))
@@ -781,6 +811,7 @@ func stop_using() -> void:
 ## ends the previous one.
 func toggle_concentration(spell: SpellData) -> void:
 	concentration = null if concentration == spell else spell
+	EventBus.sound_requested.emit(&"toggle_on" if concentration else &"toggle_off", global_position)
 	if character and concentration and concentration.effect in [&"fly", &"levitate"]:
 		character.movement_spell = concentration.id
 	if not is_flying() and not is_levitating():
@@ -1367,7 +1398,92 @@ func end_buff(effect: StringName, used: bool = false) -> void:
 		return
 	buffs.erase(effect)
 	buff_spells.erase(effect)
+	if effect == &"barrier_shield":
+		shield = 0.0
+		if is_instance_valid(_shield_fx):
+			_shield_fx.queue_free()
 	buff_ended.emit(effect, used)
+	if not used:
+		EventBus.sound_requested.emit(&"buff_end", global_position)
+
+
+## Barrier goes off: the barrier buff ends and a shield takes its place.
+func _pop_barrier() -> void:
+	var spell: SpellData = buff_spells[&"barrier"]
+	end_buff(&"barrier", true)
+	shield = spell.shield_amount
+	buffs[&"barrier_shield"] = spell.shield_seconds
+	buff_spells[&"barrier_shield"] = spell
+	if world and world.effects:
+		_shield_fx = SpellEffect.spawn(world.effects, SpellEffect.Kind.SHIELD, global_position, Vector2.ZERO,
+			spell.projectile_color)
+		_shield_fx.lifetime = spell.shield_seconds
+		_shield_fx.follow = self
+	EventBus.sound_requested.emit(&"shield_pop", global_position)
+
+
+# --- rituals ------------------------------------------------------------------------
+
+## Starts a ritual: stand still for its `ritual_seconds`. False if one is going already.
+func start_ritual(spell: SpellData) -> bool:
+	if ritual:
+		return false
+	ritual = spell
+	ritual_left = spell.ritual_seconds
+	_ritual_from = global_position
+	if world and world.effects:
+		_ritual_fx = SpellEffect.spawn(world.effects, SpellEffect.Kind.RITUAL, global_position, Vector2.ZERO,
+			spell.projectile_color)
+		_ritual_fx.lifetime = spell.ritual_seconds
+		_ritual_fx.follow = self
+	EventBus.sound_requested.emit(&"ritual_start", global_position)
+	return true
+
+
+func cancel_ritual(reason: String) -> void:
+	if ritual == null:
+		return
+	var spell := ritual
+	ritual = null
+	if is_instance_valid(_ritual_fx):
+		_ritual_fx.queue_free()
+	EventBus.debug_message.emit("%s: %s" % [spell.display_name, reason])
+	ritual_finished.emit(spell, false)
+
+
+func _update_ritual(delta: float) -> void:
+	if ritual == null:
+		return
+	var moving := _axis("move_left", "move_right") != 0.0 or _held("jump") \
+		or global_position.distance_to(_ritual_from) > 3.0
+	if moving:
+		cancel_ritual("You moved")
+		return
+	ritual_left -= delta
+	if ritual_left <= 0.0:
+		_complete_ritual()
+
+
+func _complete_ritual() -> void:
+	var spell := ritual
+	ritual = null
+	if is_instance_valid(_ritual_fx):
+		_ritual_fx.queue_free()
+	if not spend_mana(spell.mana_cost):
+		EventBus.debug_message.emit("%s: not enough mana" % spell.display_name)
+		ritual_finished.emit(spell, false)
+		return
+	match spell.effect:
+		&"recall":
+			if world:
+				SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, chest(), Vector2.ZERO, spell.projectile_color)
+				global_position = world.respawn_position()
+				velocity = Vector2.ZERO
+				reset_fall()
+				reset_physics_interpolation()
+				SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, chest(), Vector2.ZERO, spell.projectile_color)
+	EventBus.sound_requested.emit(&"ritual_done", global_position)
+	ritual_finished.emit(spell, true)
 
 
 func _tick_buffs(delta: float) -> void:

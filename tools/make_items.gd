@@ -314,6 +314,125 @@ func _spells() -> Array[ItemData]:
 	gel.projectile_color = Color(0.55, 1.0, 0.45)
 	out.append(gel)
 
+	# Phase 8: one spell per new type (numbers are first guesses).
+	var bolt := _spell(&"arcane_bolt", "Arcane Bolt", "Hold to charge, let go to fire. A full charge (1.5 s) hits five times harder than a tap, for more mana.")
+	bolt.cast = SpellData.Cast.CHARGED
+	bolt.damage = 30.0
+	bolt.mana_cost = 15.0
+	bolt.charge_seconds = 1.5
+	bolt.charge_min_damage = 0.2
+	bolt.charge_min_mana = 0.27
+	bolt.projectile_speed = 45.0
+	bolt.projectile_range = 26.0
+	bolt.cooldown = 0.2
+	bolt.projectile_color = Color(0.75, 0.5, 1.0)
+	out.append(bolt)
+
+	var circle := _spell(&"healing_circle", "Healing Circle", "A circle of light at the cursor for 10 seconds. Standing in it heals you.")
+	circle.cast = SpellData.Cast.ZONE
+	circle.zone_tiles = 5.0
+	circle.duration = 10.0
+	circle.heal_per_second = 4.0
+	circle.mana_cost = 25.0
+	circle.cooldown = 2.0
+	circle.impact_at = 0.3
+	circle.projectile_color = Color(0.5, 1.0, 0.6)
+	out.append(circle)
+
+	var ward := _spell(&"spark_ward", "Spark Ward", "A rune on the ground under the cursor. The first enemy to touch it is zapped and thrown back. Up to 3; lasts 2 minutes.")
+	ward.cast = SpellData.Cast.WARD
+	ward.damage = 20.0
+	ward.knockback = 20.0
+	ward.duration = 120.0
+	ward.max_active = 3
+	ward.mana_cost = 15.0
+	ward.cooldown = 0.5
+	ward.impact_at = 0.3
+	ward.projectile_color = Color(1.0, 0.85, 0.4)
+	out.append(ward)
+
+	var fam := _spell(&"familiar", "Familiar", "A little spirit follows you for a minute and shoots at enemies nearby.")
+	fam.cast = SpellData.Cast.SUMMON
+	fam.damage = 5.0
+	fam.duration = 60.0
+	fam.summon_interval = 1.0
+	fam.summon_tiles = 15.0
+	fam.projectile_speed = 35.0
+	fam.projectile_range = 18.0
+	fam.mana_cost = 30.0
+	fam.cooldown = 1.0
+	fam.impact_at = 0.3
+	fam.projectile_color = Color(0.6, 0.85, 1.0)
+	out.append(fam)
+
+	var plat := _spell(&"conjure_platform", "Conjure Platform", "A glowing platform, 6 blocks wide, at the cursor for 30 seconds. Down + Jump drops through.")
+	plat.cast = SpellData.Cast.CONJURE
+	plat.conjure_tiles = 6
+	plat.duration = 30.0
+	plat.mana_cost = 10.0
+	plat.cooldown = 0.5
+	plat.impact_at = 0.3
+	plat.projectile_color = Color(0.7, 0.6, 1.0)
+	out.append(plat)
+
+	var edge := _spell(&"arcane_edge", "Arcane Edge", "Your melee weapons hit 50% harder for a minute.")
+	edge.cast = SpellData.Cast.BUFF
+	edge.effect = &"arcane_edge"
+	edge.duration = 60.0
+	edge.melee_mult = 1.5
+	edge.mana_cost = 20.0
+	edge.cooldown = 0.5
+	edge.impact_at = 0.3
+	edge.projectile_color = Color(0.8, 0.5, 1.0)
+	out.append(edge)
+
+	var barrier := _spell(&"barrier", "Barrier", "Waits up to 5 minutes. When a hit would take you under a quarter of your health, a shield pops up and soaks the next 30 damage (10 seconds).")
+	barrier.cast = SpellData.Cast.BUFF
+	barrier.effect = &"barrier"
+	barrier.duration = 300.0
+	barrier.trigger_health = 0.25
+	barrier.shield_amount = 30.0
+	barrier.shield_seconds = 10.0
+	barrier.mana_cost = 30.0
+	barrier.cooldown = 1.0
+	barrier.impact_at = 0.3
+	barrier.projectile_color = Color(0.6, 0.85, 1.0)
+	out.append(barrier)
+
+	var chain := _spell(&"chain_spark", "Chain Spark", "Lightning hits the enemy nearest the cursor, then jumps to up to 3 more nearby, weaker each jump.")
+	chain.cast = SpellData.Cast.CHAIN
+	chain.damage = 10.0
+	chain.reach_tiles = 12.0
+	chain.chain_jumps = 3
+	chain.chain_tiles = 6.0
+	chain.chain_falloff = 0.2
+	chain.mana_cost = 12.0
+	chain.cooldown = 0.6
+	chain.impact_at = 0.3
+	chain.projectile_color = Color(0.7, 0.9, 1.0)
+	out.append(chain)
+
+	var recall := _spell(&"recall", "Recall", "Ritual: stand still for 3 seconds and you're sent back to your bed (or the world spawn). Moving or getting hurt breaks it. Mana is spent when it finishes.")
+	recall.cast = SpellData.Cast.RITUAL
+	recall.effect = &"recall"
+	recall.ritual_seconds = 3.0
+	recall.mana_cost = 40.0
+	recall.cooldown = 3.0
+	recall.impact_at = 0.3
+	recall.projectile_color = Color(0.95, 0.8, 0.5)
+	out.append(recall)
+
+	var seek := _spell(&"seek_ore", "Seek Ore", "Copper ore within 30 blocks glows through everything for 15 seconds.")
+	seek.cast = SpellData.Cast.SENSE
+	seek.sense_block = &"copper_ore"
+	seek.sense_tiles = 30.0
+	seek.duration = 15.0
+	seek.mana_cost = 15.0
+	seek.cooldown = 2.0
+	seek.impact_at = 0.3
+	seek.projectile_color = Color(1.0, 0.6, 0.3)
+	out.append(seek)
+
 	var mend := _spell(&"mend", "Mend", "Concentration. Slowly heals you while it's on.")
 	mend.cast = SpellData.Cast.TOGGLE
 	mend.effect = &"mend"

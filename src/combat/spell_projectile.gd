@@ -14,6 +14,8 @@ var world: World
 var spell: SpellData
 var direction := Vector2.RIGHT
 var power := 1.0
+## Drawn and hits this much bigger (a charged Arcane Bolt).
+var size := 1.0
 var source: Node
 var _travelled := 0.0
 var _trail: PackedVector2Array = []
@@ -41,7 +43,7 @@ func _physics_process(delta: float) -> void:
 			_fizzle()
 			return
 		for node in get_tree().get_nodes_in_group(&"damageable"):
-			if node != source and (node.call(&"hit_rect") as Rect2).has_point(global_position):
+			if node != source and (node.call(&"hit_rect") as Rect2).grow(maxf(size - 1.0, 0.0) * 2.5).has_point(global_position):
 				node.call(&"take_damage", spell.damage * power, source)
 				_fizzle()
 				return
@@ -62,10 +64,10 @@ func _draw() -> void:
 	var c := spell.projectile_color
 	if _dying > 0.0:
 		var k := _dying / 0.15
-		draw_circle(Vector2.ZERO, 3.0 * (1.5 - k), Color(c, 0.6 * k))
+		draw_circle(Vector2.ZERO, 3.0 * size * (1.5 - k), Color(c, 0.6 * k))
 		return
 	for i in _trail.size():
 		var a := float(i + 1) / _trail.size()
-		draw_circle(to_local(_trail[i]), 0.6 + a, Color(c, 0.35 * a))
-	draw_circle(Vector2.ZERO, 2.5, Color(c, 0.35))
-	draw_circle(Vector2.ZERO, 1.2, Color(1, 1, 1, 0.95))
+		draw_circle(to_local(_trail[i]), (0.6 + a) * size, Color(c, 0.35 * a))
+	draw_circle(Vector2.ZERO, 2.5 * size, Color(c, 0.35))
+	draw_circle(Vector2.ZERO, 1.2 * size, Color(1, 1, 1, 0.95))

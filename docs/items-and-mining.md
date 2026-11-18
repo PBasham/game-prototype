@@ -172,7 +172,15 @@ How a spell works is its `cast`:
 | TOGGLE | A concentration spell: a click turns its `effect` on or off. Only one at a time; the HUD shows "Concentrating: ..." | `effect` (&"fly", &"levitate", &"mend"), `move_speed`, `boost_speed_mult`, `boost_mana_mult`, `hover_tiles`, `heal_per_second` |
 | GUST | A push in a cone toward the cursor: shoves and hurts what's in it; in the air it pushes you back | `damage`, `gust_tiles`, `gust_angle`, `gust_push`, `gust_recoil` |
 | BLINK | Teleports you toward the cursor to the farthest spot you fit | `blink_tiles` |
-| BUFF | A timed effect on you (`effect`, `duration` seconds), shown as an icon with the time left above the health panel (hover for details; it blinks in its last 10 s). Casting again refreshes it. Buffs end when you leave the world | `effect`, `duration` |
+| BUFF | A timed effect on you (`effect`, `duration` seconds), shown as an icon with the time left above the health panel (hover for details; it blinks in its last 10 s). Casting again refreshes it. Buffs end when you leave the world. Effects: `gel_cushion`, `arcane_edge`, `barrier` | `effect`, `duration`, `melee_mult`, `trigger_health`, `shield_amount`, `shield_seconds` |
+| CHARGED | Hold to charge, let go to fire a bolt; damage, size and mana grow with the charge. A ring around the hand closes as it charges | `charge_seconds`, `charge_min_damage`, `charge_min_mana`, `damage`, `mana_cost`, projectile fields |
+| ZONE | A circle at the cursor for `duration`; heals you while you stand in it | `zone_tiles`, `heal_per_second` |
+| WARD | A rune on the ground under the cursor (within 12 tiles down); the first enemy to touch it takes `damage` and `knockback`. Up to `max_active`, the oldest goes | `damage`, `knockback`, `duration`, `max_active` |
+| SUMMON | A familiar that follows you and shoots the nearest enemy in range. One at a time | `damage`, `summon_interval`, `summon_tiles`, `duration`, projectile fields |
+| CONJURE | A temporary platform at the cursor (only in open air). Works like a platform tile (Down + Jump drops through), drops nothing, blinks in its last 3 s | `conjure_tiles`, `duration` |
+| CHAIN | Hits the damageable thing nearest the cursor within `reach_tiles` of you, then jumps | `damage`, `chain_jumps`, `chain_tiles`, `chain_falloff` |
+| RITUAL | Stand still for `ritual_seconds` (moving or getting hurt cancels it); mana is paid when it completes. Effect `recall`: back to your bed or the world spawn | `ritual_seconds`, `effect` |
+| SENSE | Outlines every `sense_block` tile within `sense_tiles` of you, above the darkness, for `duration` (a snapshot when cast) | `sense_block`, `sense_tiles`, `duration` |
 | LIGHT | A floating light: follows you (one at a time; casting again refreshes it), or with `light_placed` you steer it with the cursor while the button is held and it stays where you let go | `light_radius`, `light_color`, `duration`, `light_placed`, `light_max` |
 
 Every spell also has `mana_cost` (per cast) and `mana_per_second` (beams and
@@ -194,6 +202,16 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Light Orb | LIGHT | A warm light (radius 10) floating by your head for 3 minutes, fading at the end. Not concentration, so it works while you fly. 10 mana. |
 | Wisp | LIGHT (placed) | Hold to steer a cool light with the cursor (within 24 tiles of you), let go to leave it there. Radius 9, 5 minutes, up to 3 at once (the oldest goes). 12 mana, 0.5 s cooldown. |
 | Gel Cushion | BUFF | The next fall that would hurt does no damage, then the buff is gone ("*squish*" and a green splat at your feet). Otherwise it lasts 2 minutes. 10 mana + **5 Slime** per cast. Scroll: Blank Scroll + 20 Slime. A sound hook fires when it saves you (`EventBus.sound_requested`, id `gel_cushion_used`). |
+| Arcane Bolt | CHARGED | Up to 1.5 s: a tap does 6 damage for 4 mana, a full charge 30 for 15, and the bolt grows. 45 tiles/s, 26 tiles. |
+| Healing Circle | ZONE | 5 tile radius at the cursor, 10 s, heals 4/s (times spell power) while you're inside. 25 mana, 2 s cooldown. |
+| Spark Ward | WARD | A rune for 2 minutes; the first enemy on it takes 20 and knockback 20. Up to 3. 15 mana. |
+| Familiar | SUMMON | Follows you for 60 s, shoots the nearest enemy within 15 tiles every second for 5. One at a time. 30 mana. |
+| Conjure Platform | CONJURE | 6 tiles wide at the cursor for 30 s. 10 mana. |
+| Arcane Edge | BUFF | Melee damage x1.5 for 60 s. 20 mana. |
+| Barrier | BUFF (reactive) | Waits up to 5 minutes. When a hit would leave you under 25% health it pops: a shield soaks the next 30 damage for 10 s (a bubble, "blocked" when it soaks a whole hit). 30 mana. |
+| Chain Spark | CHAIN | 10 damage to the target nearest the cursor within 12 tiles, then up to 3 jumps of 6 tiles, 20% weaker each. 12 mana. |
+| Recall | RITUAL | 3 s standing still, then home (your bed, else the world spawn). 40 mana at the end. |
+| Seek Ore | SENSE | Copper ore within 30 tiles glows through everything for 15 s. 15 mana. |
 | Mend | TOGGLE | Heals 3 health per second (times spell power) while on. 6 mana/s. |
 
 Damageable things are nodes in the `damageable` group with `hit_rect()` and

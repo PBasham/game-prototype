@@ -51,7 +51,9 @@ const DEV_KIT_EXTRA: Array = [
 ]
 ## Spells the dev kit teaches and puts in the book (in order).
 const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark", &"levitate",
-	&"hyper_drill", &"air_push", &"blink", &"light_orb", &"wisp", &"mend", &"gel_cushion"]
+	&"hyper_drill", &"air_push", &"blink", &"light_orb", &"wisp", &"mend", &"gel_cushion",
+	&"arcane_bolt", &"healing_circle", &"spark_ward", &"familiar", &"conjure_platform", &"arcane_edge", &"barrier",
+	&"chain_spark", &"recall", &"seek_ore"]
 
 ## The movement spell the movement key (F) and double jump use: the last of Fly or
 ## Levitate you turned on (empty = Fly if known, else Levitate).

@@ -245,7 +245,7 @@ Debug builds only (running from the editor counts).
 | **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
-| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `book <slot> <spell>`, `spellopt [option] [on|off]` (spell control options), `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `god`, `hurt <n>`, `kill`, `heal`, `hunger <n>`, `bush` (see survival.md), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `cursor <dx> <dy>` / `cursor off` (pin the cursor to a tile offset from your feet, for scripted building in `--console` runs), `color <group> <hex|reset>` (recolor your character, saved), `dummy` / `dummy clear` (a training dummy for damage spells), `summon <enemy> [n]` (at the cursor), `peaceful` (toggle enemy spawns), `butcher` (kill all enemies, with loot), `spawns` (spawn table, rate and cap here), `kills` (enemies slain in this world), see combat.md, `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
+| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `book <slot> <spell>`, `spellopt [option] [on|off]` (spell control options), `cast <spell>` (cast at the cursor, free), `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `god`, `hurt <n>`, `kill`, `heal`, `hunger <n>`, `bush` (see survival.md), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `cursor <dx> <dy>` / `cursor off` (pin the cursor to a tile offset from your feet, for scripted building in `--console` runs), `color <group> <hex|reset>` (recolor your character, saved), `dummy` / `dummy clear` (a training dummy for damage spells), `summon <enemy> [n]` (at the cursor), `peaceful` (toggle enemy spawns), `butcher` (kill all enemies, with loot), `spawns` (spawn table, rate and cap here), `kills` (enemies slain in this world), see combat.md, `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |
 
@@ -330,3 +330,14 @@ line: `godot --headless --path . -s addons/gut/gut_cmdln.gd`. CI runs them on ev
 push. Generation tests (`test_forest_generator.gd`) are a safety net when tuning: if a
 tweak breaks a rule (spawn not flat, caves under spawn, copper at the surface), they
 fail.
+
+
+## Sound
+
+`Sounds` (autoload, `src/core/sounds.gd`) plays sound effects that anything asks for with
+`EventBus.sound_requested.emit(id, world_position)` (Vector2.INF = not positional). The
+file is `assets/sounds/<id>.wav` or `.ogg`; a missing file is silent. Placeholders are
+synthesized by `tools/make_sounds.gd` (keeps existing files unless `--force`; `--only=`).
+Exports: `min_gap` (0.07 s before the same sound plays again), `max_voices` (14),
+`max_distance` (720 px), `pitch_jitter` (0.06). Volume: Settings "audio" `master_volume`
+and `sfx_volume` (0.8). The list of sounds is in assets/ASSETS.md.

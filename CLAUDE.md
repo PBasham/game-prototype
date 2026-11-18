@@ -22,7 +22,7 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Don't invent biomes, ores or content. Current scope: surface forest, copper only
   (plus the Phase 5 stone age items: sticks, rocks, flint, stone tools; Phase 7: green
   and blue slime, slime, wooden and copper swords, copper armor, bed, paper, blank and spell
-  scrolls, the Spell Weaving Table, and the spells in data/spells).
+  scrolls, the Spell Weaving Table, and the spells in data/spells; placeholder sounds).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.
@@ -45,6 +45,8 @@ tunables change: Patrick tweaks things by hand from these docs.
   placeholder icons, held sprites, sapling and cracks from `tools/make_item_art.gd`.
 - Armor overlays on the paper doll: placeholders from `tools/make_armor_art.gd`
   (`assets/armor/`, listed in each armor item's `wear`).
+- Sounds: placeholders from `tools/make_sounds.gd` (`assets/sounds/<id>.wav`, kept unless
+  `--force`). Play one with `EventBus.sound_requested.emit(id, position)`.
 - UI look: `UiSkin` (src/ui/ui_skin.gd) with nine-slice art in `assets/ui/` from
   `tools/make_ui_art.gd`. Draw every new window, slot and button with it.
 - Screenshots of menus: `-- --menu=characters` (or `new_character`, `worlds`, `new_world`); add

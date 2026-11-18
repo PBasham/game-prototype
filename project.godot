@@ -25,6 +25,7 @@ SaveManager="*res://src/core/save_manager.gd"
 Game="*res://src/core/game.gd"
 DebugOverlay="*res://src/ui/debug/debug_overlay.gd"
 DevCli="*res://src/core/dev_cli.gd"
+Sounds="*res://src/core/sounds.gd"
 
 [debug]
 

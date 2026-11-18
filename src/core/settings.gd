@@ -17,6 +17,8 @@ const DEFAULTS := {
 	},
 	"audio": {
 		"master_volume": 1.0,
+		## Sound effects (Sounds autoload), 0 to 1.
+		"sfx_volume": 0.8,
 	},
 	"debug": {
 		"show_overlay": true,

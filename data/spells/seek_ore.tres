@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/seek_ore.png" id="1_xkael"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_o0f2e"]
+
+[resource]
+script = ExtResource("2_o0f2e")
+cast = 14
+cooldown = 2.0
+projectile_color = Color(1, 0.6, 0.3, 1)
+duration = 15.0
+mana_cost = 15.0
+kind = 4
+icon = ExtResource("1_xkael")
+max_stack = 1
+impact_at = 0.3
+id = &"seek_ore"
+display_name = "Seek Ore"
+description = "Copper ore within 30 blocks glows through everything for 15 seconds."

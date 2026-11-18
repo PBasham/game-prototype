@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/spark_ward.png" id="1_wriar"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_ivjka"]
+
+[resource]
+script = ExtResource("2_ivjka")
+cast = 9
+cooldown = 0.5
+damage = 20.0
+projectile_color = Color(1, 0.85, 0.4, 1)
+duration = 120.0
+mana_cost = 15.0
+kind = 4
+icon = ExtResource("1_wriar")
+max_stack = 1
+impact_at = 0.3
+knockback = 20.0
+id = &"spark_ward"
+display_name = "Spark Ward"
+description = "A rune on the ground under the cursor. The first enemy to touch it is zapped and thrown back. Up to 3; lasts 2 minutes."

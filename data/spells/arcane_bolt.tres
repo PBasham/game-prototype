@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/arcane_bolt.png" id="1_o8ljt"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_ey756"]
+
+[resource]
+script = ExtResource("2_ey756")
+cast = 7
+cooldown = 0.2
+damage = 30.0
+projectile_speed = 45.0
+projectile_range = 26.0
+projectile_color = Color(0.75, 0.5, 1, 1)
+mana_cost = 15.0
+kind = 4
+icon = ExtResource("1_o8ljt")
+max_stack = 1
+id = &"arcane_bolt"
+display_name = "Arcane Bolt"
+description = "Hold to charge, let go to fire. A full charge (1.5 s) hits five times harder than a tap, for more mana."
