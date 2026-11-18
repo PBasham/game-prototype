@@ -10,6 +10,9 @@ cooldown = 0.5
 projectile_color = Color(0.7, 0.6, 1, 1)
 duration = 30.0
 mana_cost = 10.0
+learn_cost = Dictionary[StringName, int]({
+&"copper_bar": 4
+})
 kind = 4
 icon = ExtResource("1_fttrv")
 max_stack = 1

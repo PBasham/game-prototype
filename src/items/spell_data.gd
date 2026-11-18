@@ -149,6 +149,8 @@ enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT, BUFF, CHARGED, ZONE, W
 ## Items used up by each cast (item id to count), e.g. Gel Cushion: 5 Slime. It can't be
 ## cast without them.
 @export var reagents: Dictionary[StringName, int] = {}
+## Learning it from a scroll (right click, at a Spell Weaving Table) also uses these.
+@export var learn_cost: Dictionary[StringName, int] = {}
 @export_group("")
 
 

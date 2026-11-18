@@ -9,6 +9,9 @@ cast = 4
 cooldown = 1.0
 projectile_color = Color(0.78, 0.6, 1, 1)
 mana_cost = 15.0
+learn_cost = Dictionary[StringName, int]({
+&"copper_bar": 4
+})
 kind = 4
 icon = ExtResource("1_3coyf")
 max_stack = 1

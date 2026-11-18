@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_sup6x"]
+
+[resource]
+script = ExtResource("1_sup6x")
+station = &"spell_weaving"
+inputs = Dictionary[StringName, int]({
+&"blank_scroll": 1,
+&"copper_bar": 1
+})
+requires_book_spell = &"levitate"
+output = &"scroll_levitate"
+id = &"copy_scroll_levitate"
+display_name = "Copy: Levitate"

@@ -220,15 +220,17 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
 - **Spells you know** are kept on the character. A new character knows none. You learn
   one from its **scroll** (made at the Spell Weaving Table, crafting.md).
 - **Scrolls are one use.** Hold one:
-  - **Left click: cast the spell once, free:** no mana, reagents, cooldown, book or tier
-    needed (a tier 3 spell works before you have a tier 3 book). Concentration spells
+  - **Left click: cast the spell once, free:** no mana, reagents, book or tier
+    needed; it does share the spell's cooldown with casting it from the book (a tier 3 spell works before you have a tier 3 book). Concentration spells
     run free for 60 s (`Player.scroll_concentration_seconds`) and held beams can be used
     for 15 s (`scroll_beam_seconds`), both shown as a buff that ends the spell (a beam
     not in your book is put away). A charged bolt fires at full charge; a ritual still
     needs you to stand still. If the spell can't go off (no room, no target), the
     scroll isn't used. A scroll item's `scroll_seconds` overrides the time.
-  - **Right click: learn it** (it joins your known spells; put it in your book to cast
-    it normally). If you already know it, nothing is used.
+  - **Right click, at a Spell Weaving Table: learn it** (it joins your known spells; put
+    it in your book to cast it normally). Learning also uses the spell's `learn_cost`:
+    copper bars by tier (4, 10, 20), or 20 Slime for Gel Cushion. If you already know it,
+    or you're short, nothing is used.
   - The tooltip and a hint by the cursor spell both out. Console `devkit` teaches them all and fills the
   book's free slots; `book <slot> <spell>` puts one in a slot. How you learn spells in the real game
   comes later.

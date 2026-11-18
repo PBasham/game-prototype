@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_tmxc2"]
+
+[resource]
+script = ExtResource("1_tmxc2")
+station = &"spell_weaving"
+inputs = Dictionary[StringName, int]({
+&"blank_scroll": 1,
+&"slime": 10
+})
+requires_book_spell = &"gel_cushion"
+output = &"scroll_gel_cushion"
+id = &"copy_scroll_gel_cushion"
+display_name = "Copy: Gel Cushion"

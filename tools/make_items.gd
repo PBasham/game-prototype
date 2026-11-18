@@ -439,6 +439,11 @@ func _spells() -> Array[ItemData]:
 	mend.heal_per_second = 3.0
 	mend.mana_per_second = 6.0
 	out.append(mend)
+	# Learning from a scroll (at a Spell Weaving Table) costs extra: copper bars by tier, or
+	# the spell's own material.
+	for sp in out:
+		var spell := sp as SpellData
+		spell.learn_cost.assign(LEARN_COSTS.get(spell.id, {&"copper_bar": LEARN_BARS[clampi(spell.tier, 1, 3) - 1]}))
 	return out
 
 
@@ -598,13 +603,19 @@ func _recipes() -> Array[RecipeData]:
 		[&"blank_scroll", &"workbench", {&"paper": 3, &"slime": 1}, &"blank_scroll", 1, []],
 		[&"spell_weaving_table", &"workbench", {&"wood_planks": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
 	]
-	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by tier.
+	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by
+	# tier (until scrolls come from loot). And a cheaper copy of any spell in your book.
 	for sp in _spells():
 		var spell := sp as SpellData
 		var cost: Dictionary = SCROLL_COSTS.get(spell.id,
 			{&"blank_scroll": 1, &"copper_bar": SCROLL_BARS[clampi(spell.tier, 1, 3) - 1]})
 		table.append([StringName("scroll_" + String(spell.id)), &"spell_weaving", cost,
 			StringName("scroll_" + String(spell.id)), 1, []])
+		var copy_cost := {}
+		for k: StringName in cost:
+			copy_cost[k] = cost[k] if k == &"blank_scroll" else ceili(cost[k] / 2.0)
+		table.append([StringName("copy_scroll_" + String(spell.id)), &"spell_weaving", copy_cost,
+			StringName("scroll_" + String(spell.id)), 1, [], spell.id])
 	for e: Array in table:
 		var r := RecipeData.new()
 		r.id = e[0]
@@ -616,12 +627,19 @@ func _recipes() -> Array[RecipeData]:
 		for q: StringName in e[5]:
 			r.requires.append(q)
 		r.display_name = String(e[3]).capitalize()
+		if e.size() > 6:
+			r.requires_book_spell = e[6]
+			var sp := ItemData.find(ItemData.spell_key(e[6]))
+			r.display_name = "Copy: %s" % (sp.display_name if sp else String(e[6]).capitalize())
 		out.append(r)
 	return out
 
 
 ## Copper bars a spell scroll costs, by tier (1, 2, 3).
 const SCROLL_BARS: Array[int] = [2, 5, 10]
+## Copper bars learning a spell from its scroll costs, by tier; and exceptions.
+const LEARN_BARS: Array[int] = [4, 10, 20]
+const LEARN_COSTS := {&"gel_cushion": {&"slime": 20}}
 ## Scrolls that cost something else instead.
 const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20}}
 

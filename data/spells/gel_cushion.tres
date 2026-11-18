@@ -14,6 +14,9 @@ mana_cost = 10.0
 reagents = Dictionary[StringName, int]({
 &"slime": 5
 })
+learn_cost = Dictionary[StringName, int]({
+&"slime": 20
+})
 kind = 4
 icon = ExtResource("1_fncmb")
 max_stack = 1

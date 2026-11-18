@@ -789,8 +789,8 @@ func _draw_chest(g: Control) -> void:
 func recipes() -> Array[RecipeData]:
 	var def := world.object_at(station) if station != World.NO_TILE else null
 	if def and def.station != &"":
-		return Crafting.recipes_for(def.station, def.station_tier)
-	return Crafting.recipes_for(&"")
+		return Crafting.recipes_for(def.station, def.station_tier, world.character)
+	return Crafting.recipes_for(&"", 1, world.character)
 
 
 func _station_def() -> ObjectDef:
@@ -886,6 +886,8 @@ func _draw_crafting(g: Control) -> void:
 		var out := ItemData.find(r.output)
 		_draw_icon(g, out.icon if out else null, rect.position + Vector2(3, 1), a)
 		var label_text := (out.display_name if out else String(r.output)) + (" x%d" % r.output_count if r.output_count > 1 else "")
+		if r.requires_book_spell != &"":
+			label_text = r.display_name + " (from your book)"
 		g.draw_string(font, rect.position + Vector2(22, 12), label_text, HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 46, 7,
 			Color(UiSkin.TEXT, a))
 		if times > 0:
@@ -1514,7 +1516,12 @@ static func scroll_lines(item: ItemData, c: CharacterData) -> PackedStringArray:
 	if c and c.knows(spell.id):
 		out.append("Right click: you already know %s." % spell.display_name)
 	else:
-		out.append("Right click: learn %s (it joins your known spells)." % spell.display_name)
+		var cost := PackedStringArray()
+		for id: StringName in spell.learn_cost:
+			var it := ItemData.find(id)
+			cost.append("%d %s" % [spell.learn_cost[id], it.display_name if it else String(id)])
+		out.append("Right click at a Spell Weaving Table: learn %s (it joins your known spells)%s." % [
+			spell.display_name, (", uses " + ", ".join(cost)) if not cost.is_empty() else ""])
 	out.append("One use: the scroll is used up either way.")
 	out.append(spell.display_name + ": " + spell.description)
 	return out

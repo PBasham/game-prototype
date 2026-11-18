@@ -321,6 +321,8 @@ func cast_scroll() -> bool:
 	var spell := ItemData.find(ItemData.spell_key(item.teaches_spell)) as SpellData
 	if spell == null:
 		return false
+	if cooldown_left(spell) > 0.0:
+		return false  # shares the spell's cooldown with casting it from the book
 	var slot := p.selected
 	var ok := true
 	match spell.cast:
@@ -346,11 +348,25 @@ func cast_scroll() -> bool:
 			ok = cast(spell)
 	if ok:
 		p.character.inventory.take(slot, 1)
+		_ready_at[spell.id] = _now() + spell.cooldown
 	return ok
 
 
-## Reads the held spell scroll (right click): learns its spell and uses up the scroll.
-## Returns true if a spell was learned.
+## Why the player can't learn a spell from a scroll right now ("" = they can): it needs a
+## Spell Weaving Table nearby and the spell's learn_cost.
+func learn_problem(spell: SpellData) -> String:
+	var p := world.player
+	if not world.station_near(&"spell_weaving", p.chest()):
+		return "Learn it at a Spell Weaving Table"
+	for id: StringName in spell.learn_cost:
+		if p.character.inventory.count_of(id) < spell.learn_cost[id]:
+			var it := ItemData.find(id)
+			return "Learning %s needs %d %s" % [spell.display_name, spell.learn_cost[id], it.display_name if it else String(id)]
+	return ""
+
+
+## Reads the held spell scroll (right click, at a Spell Weaving Table): learns its spell,
+## using up the scroll and the spell's learn_cost. Returns true if a spell was learned.
 func read_scroll() -> bool:
 	var p := world.player
 	var item := p.held_item
@@ -362,7 +378,14 @@ func read_scroll() -> bool:
 	if p.character.knows(item.teaches_spell):
 		EventBus.debug_message.emit("You already know %s" % spell.display_name)
 		return false
-	if p.character.inventory.take(p.selected, 1) <= 0:
+	var problem_text := learn_problem(spell as SpellData)
+	if problem_text != "":
+		EventBus.debug_message.emit(problem_text)
+		return false
+	var slot := p.selected
+	for id: StringName in (spell as SpellData).learn_cost:
+		p.character.inventory.remove(id, (spell as SpellData).learn_cost[id])
+	if p.character.inventory.take(slot, 1) <= 0:
 		return false
 	p.character.learn_spell(item.teaches_spell)
 	EventBus.debug_message.emit("You learned %s" % spell.display_name)
@@ -804,7 +827,7 @@ func _draw() -> void:
 		draw_string_outline(font, aim + Vector2(8, 4), "Left: cast once (free)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2,
 			Color(0, 0, 0, 0.7))
 		draw_string(font, aim + Vector2(8, 4), "Left: cast once (free)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, valid_color)
-		var right := "Right: learn" if not known else "Already known"
+		var right := "Right: learn (at a Spell Weaving Table)" if not known else "Already known"
 		draw_string_outline(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.7))
 		draw_string(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
 			valid_color if not known else Color(valid_color, 0.5))

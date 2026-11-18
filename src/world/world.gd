@@ -460,6 +460,25 @@ func sleep_until_morning() -> void:
 @export var sleep_enemy_tiles := 20.0
 
 
+## Whether a station of a kind (&"spell_weaving") is within `tiles` of a point (its
+## middle; tile objects only).
+func station_near(kind: StringName, at: Vector2, tiles: float = -1.0) -> bool:
+	var r := (interact_tiles + 4.0) if tiles < 0.0 else tiles
+	var c := world_to_tile(at)
+	var n := ceili(r) + 6
+	for y in range(c.y - n, c.y + n + 1):
+		for x in range(c.x - n, c.x + n + 1):
+			var t := wrap_tile(Vector2i(x, y))
+			if not data.in_bounds_y(t.y):
+				continue
+			var def := object_at(t)
+			if def and def.station == kind and object_anchor(t) == t:
+				var mid := tile_to_world(Vector2i(x, y)) + Vector2(def.width_tiles * TILE * 0.5, 0)
+				if mid.distance_to(at) <= (r + def.width_tiles * 0.5) * TILE:
+					return true
+	return false
+
+
 ## Light Orb: one orb follows the player; casting again replaces it (fresh timer).
 ## Wisp (light_placed): a new one each cast, steered while the button is held; past
 ## light_max of them, the oldest goes.

@@ -146,9 +146,12 @@ Not playtested yet.
 | 20 Wood Planks + 5 Copper Bars + 4 Paper | Workbench | Spell Weaving Table (6x3, station `spell_weaving`) |
 | 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table | Scroll: <spell>, one recipe per spell |
 | 1 Blank Scroll + 20 Slime | Spell Weaving Table | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
+| 1 Blank Scroll + half the bars (1 / 3 / 5; Gel Cushion 10 Slime) | Spell Weaving Table | **Copy: <spell>**, the same scroll, cheaper. Shown only while that spell is in your book (`RecipeData.requires_book_spell`) |
 
 A scroll (`ItemData.teaches_spell`, kind SCROLL) is one use: left click casts its spell
-once for free, right click learns it (items-and-mining.md, Magic).
+once for free, right click at a Spell Weaving Table learns it for the spell's
+`learn_cost` (items-and-mining.md, Magic). The plain scroll recipes stay until scrolls
+come from loot; copies from your book are the cheap way to stock up.
 The bar costs per tier are `SCROLL_BARS` in tools/make_items.gd. The table becomes the
 Create and Empower table in the Magic progression phase.
 

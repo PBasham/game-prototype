@@ -5,15 +5,21 @@ extends RefCounted
 
 
 ## The recipes made at a station kind (&"" = by hand), up to a station tier, in a
-## stable order (by name).
-static func recipes_for(station: StringName, tier: int = 1) -> Array[RecipeData]:
+## stable order (by name). With a character, "Copy: <spell>" recipes show only for spells
+## in their book; without one they're left out.
+static func recipes_for(station: StringName, tier: int = 1, c: CharacterData = null) -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	for d in Registry.get_all(&"recipes"):
 		var r := d as RecipeData
-		if r and r.station == station and r.station_tier <= tier:
+		if r and r.station == station and r.station_tier <= tier and allowed(r, c):
 			out.append(r)
 	out.sort_custom(func(a: RecipeData, b: RecipeData) -> bool: return a.display_name < b.display_name)
 	return out
+
+
+## Whether a character may use a recipe (a copy recipe needs its spell in their book).
+static func allowed(r: RecipeData, c: CharacterData) -> bool:
+	return r.requires_book_spell == &"" or (c != null and c.in_book(r.requires_book_spell))
 
 
 ## How many times the recipe can be made from what's in the inventory (0 = can't).

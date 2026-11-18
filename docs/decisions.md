@@ -23,6 +23,20 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Scrolls, one use:** left click casts the spell once free (no mana, reagents, book or
   tier; concentration 60 s, held beams 15 s, bolts at full charge), right click learns
   it. Fizzled casts keep the scroll.
+- **Scroll economy (built now):** learning a scroll costs extra (at a Spell Weaving Table,
+  bars by tier); copying a spell that's in your book is about half the scroll price;
+  scroll casts share the spell's cooldown. Plain scroll recipes stay until a loot pool.
+- **Scroll economy (for Magic progression, decided):**
+  - Found scrolls are plain (base spell, no modifiers).
+  - Copying from your book comes in two kinds: an **empowered copy** carrying your book's
+    modifiers for that spell, which can only be cast, never learned; or a **base copy**
+    (plain, learnable). Modifiers can never be learned from anyone's scroll.
+  - Copy cost grows with the spell and its modifiers, from cheap to complex materials.
+  - Scrolls with different modifiers don't stack; identical ones do (items will need
+    per-stack data for this).
+  - Sharing copies with friends is part of the point (multiplayer).
+  - Spell sources vary per spell: craftable from the start, needs a higher tier table,
+    found only, or drop only.
 - **Tomes (for Magic progression):** reusable, still cost mana, work apart from the book,
   and have their own modifiers you can enchant (e.g. extra damage). Some spells only
   found in chests in hard places. Work in progress.

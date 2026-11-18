@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_jciue"]
+
+[resource]
+script = ExtResource("1_jciue")
+station = &"spell_weaving"
+inputs = Dictionary[StringName, int]({
+&"blank_scroll": 1,
+&"copper_bar": 1
+})
+requires_book_spell = &"spark_ward"
+output = &"scroll_spark_ward"
+id = &"copy_scroll_spark_ward"
+display_name = "Copy: Spark Ward"
