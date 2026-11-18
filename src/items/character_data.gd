@@ -2,8 +2,9 @@ class_name CharacterData
 extends RefCounted
 ## A character, saved separately from worlds: user://characters/<name>.gpchar.
 ## Holds the inventory, the equipment (spellbook and conduit slots), the spells the
-## character knows and the spells put into the book. Until character select exists
-## (Phase 7) there is one automatic character, "default".
+## character knows and the spells put into the book, and its look (colors, hairstyle).
+## The main menu's character select lists every saved character; any character can
+## play any world.
 ##
 ## A new character starts with nothing: no items, no spells (they lost their memory).
 ## The dev kit (console `devkit`; also tests and scripted runs) gives tools, blocks,
@@ -20,6 +21,9 @@ const DEFAULT_BOOK := &"basic_spellbook"
 ## Equipment slots and the item kind each accepts.
 const SLOT_BOOK := &"book"
 const SLOT_CONDUIT := &"conduit"
+## Hairstyles are the .png files in this folder (Patrick draws more later).
+const HAIR_DIR := "res://assets/sprites/hair"
+const DEFAULT_HAIR := &"short"
 
 ## [item id, count] in the dev kit. Hotbar order. "spell:<id>" is a hotbar shortcut
 ## to a spell.
@@ -33,6 +37,11 @@ const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly
 
 var name := DEFAULT_NAME
 var inventory := Inventory.new()
+## Appearance: palette group (skin, hair, tunic, trim, pants, leather) -> the color its
+## middle shade becomes. Missing groups keep the art's colors.
+var colors: Dictionary[StringName, Color] = {}
+## Hairstyle: a file name in HAIR_DIR (without .png), &"" = bald.
+var hairstyle: StringName = DEFAULT_HAIR
 ## Equipment slot -> item id (empty = nothing).
 var equipment: Dictionary[StringName, StringName] = {SLOT_BOOK: &"", SLOT_CONDUIT: &""}
 ## Spells learned (data/spells ids).
@@ -72,6 +81,33 @@ func give_dev_kit() -> void:
 	if OS.is_debug_build():
 		DevHeldItems.add_to(inventory)
 		DevMagic.add_to(self)
+
+
+# --- looks -----------------------------------------------------------------------------
+
+## The look for the paper doll (colors and hairstyle).
+func make_look() -> CharacterLook:
+	var look := CharacterLook.new()
+	look.colors = colors.duplicate()
+	look.hair = hair_texture(hairstyle)
+	return look
+
+
+static func hair_texture(style: StringName) -> Texture2D:
+	if style == &"":
+		return null
+	var path := HAIR_DIR.path_join(String(style) + ".png")
+	return load(path) as Texture2D if ResourceLoader.exists(path) else null
+
+
+## Hairstyle ids, sorted ("short", ...).
+static func hairstyles() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for f in ResourceLoader.list_directory(HAIR_DIR):
+		if f.ends_with(".png"):
+			out.append(StringName(f.get_basename()))
+	out.sort()
+	return out
 
 
 # --- magic -----------------------------------------------------------------------------
@@ -188,7 +224,26 @@ func spell_reach_bonus() -> float:
 
 # --- files -----------------------------------------------------------------------------
 
-## Loads the character, or makes a new one with the starting kit if there's no save.
+## Every saved character, sorted by name.
+static func list_saved() -> Array[CharacterData]:
+	var out: Array[CharacterData] = []
+	for file_name in SaveManager.list_characters():
+		var c := load_file(SaveManager.character_path(file_name))
+		if c:
+			out.append(c)
+	out.sort_custom(func(a: CharacterData, b: CharacterData) -> bool: return a.name.naturalnocasecmp_to(b.name) < 0)
+	return out
+
+
+static func exists(char_name: String) -> bool:
+	return FileAccess.file_exists(SaveManager.character_path(char_name))
+
+
+static func delete(char_name: String) -> Error:
+	return DirAccess.remove_absolute(SaveManager.character_path(char_name))
+
+
+## Loads the character, or makes a new one if there's no save.
 static func load_or_create(char_name: String) -> CharacterData:
 	var loaded := load_file(SaveManager.character_path(char_name))
 	if loaded:
@@ -224,6 +279,11 @@ static func load_file(path: String) -> CharacterData:
 			c.known_spells.append(StringName(s))
 	for s: String in d.get("book_spells", []):
 		c.book_spells.append(StringName(s) if c.knows(StringName(s)) else &"")
+	var look: Dictionary = d.get("look", {})
+	var cols: Dictionary = look.get("colors", {})
+	for group: String in cols:
+		c.colors[StringName(group)] = Color.html(String(cols[group]))
+	c.hairstyle = StringName(look.get("hair", String(DEFAULT_HAIR)))
 	return c
 
 
@@ -254,5 +314,9 @@ func to_dict() -> Dictionary:
 	var book_list: Array[String] = []
 	for s in book_spells:
 		book_list.append("" if s == &"" or ItemData.is_runtime(ItemData.spell_key(s)) else String(s))
+	var cols := {}
+	for group: StringName in colors:
+		cols[String(group)] = colors[group].to_html(false)
 	return {"name": name, "inventory": inventory.to_dict(), "equipment": eq,
-		"known_spells": known, "book_spells": book_list}
+		"known_spells": known, "book_spells": book_list,
+		"look": {"colors": cols, "hair": String(hairstyle)}}

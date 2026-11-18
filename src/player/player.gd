@@ -31,7 +31,11 @@ const PALETTE := "res://assets/sprites/scholar_palette.tres"
 const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 
 ## Colors and hairstyle. Null uses assets/sprites/scholar_look.tres.
-@export var look: CharacterLook
+@export var look: CharacterLook:
+	set(v):
+		look = v
+		if _doll:
+			_doll.look = v if v else load(DEFAULT_LOOK) as CharacterLook
 
 @export_group("Animation")
 ## Seconds the first Jump frame (takeoff) shows after a jump starts.

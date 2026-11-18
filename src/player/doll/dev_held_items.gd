@@ -22,9 +22,9 @@ static func add_to(inv: Inventory) -> void:
 	for item in items():
 		if inv.count_of(item.id) > 0:
 			continue
-		while slot < Inventory.SIZE and not inv.is_empty(slot):
+		while slot < inv.size and not inv.is_empty(slot):
 			slot += 1
-		if slot >= Inventory.SIZE:
+		if slot >= inv.size:
 			return
 		inv.set_slot(slot, item.id, 1)
 

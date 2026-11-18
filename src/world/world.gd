@@ -71,6 +71,8 @@ var brush: DebugBrush
 ## Debug builds only (` toggles it); null otherwise.
 var console: DevConsole
 ## "No tile" for anchor lookups.
+## Largest furniture footprint (tiles) object_anchor() searches.
+const MAX_FURNITURE := Vector2i(8, 8)
 const NO_TILE := Vector2i(-2147483647, -2147483647)
 var _pause_menu: PauseMenu
 var _autosave_left := 0.0
@@ -124,6 +126,7 @@ func _ready() -> void:
 	player = PLAYER_SCENE.instantiate() as Player
 	player.world = self
 	player.character = character
+	player.look = character.make_look()
 	var spawn := generator.spawn_tile()
 	if DevCli.spawn_x >= 0:
 		spawn = Vector2i(DevCli.spawn_x, generator.surface_at(DevCli.spawn_x))
@@ -401,8 +404,8 @@ func object_anchor(tile: Vector2i) -> Vector2i:
 		return NO_TILE
 	if not (objects.def(id) as ObjectDef).filler:
 		return tile
-	for dy in 8:
-		for dx in 4:
+	for dy in MAX_FURNITURE.y:
+		for dx in MAX_FURNITURE.x:
 			var a := wrap_tile(tile + Vector2i(-dx, dy))
 			var aid := data.get_object(a.x, a.y)
 			var def := objects.def(aid) as ObjectDef if aid > 0 else null
@@ -448,7 +451,7 @@ func request_place_object(anchor: Vector2i, id: int) -> bool:
 		request_set_object(t, filler)
 	request_set_object(anchor, id)
 	if def.container_slots > 0:
-		containers[wrap_tile(anchor)] = Inventory.new()
+		containers[wrap_tile(anchor)] = Inventory.new(def.container_slots)
 	return true
 
 
@@ -513,9 +516,11 @@ func _containers_to_dict() -> Dictionary:
 func _containers_from_dict(d: Dictionary) -> void:
 	for key: String in d:
 		var parts := key.split(",")
-		var inv := Inventory.new()
+		var at := Vector2i(int(parts[0]), int(parts[1]))
+		var def := object_at(at)
+		var inv := Inventory.new(def.container_slots if def and def.container_slots > 0 else Inventory.DEFAULT_SIZE)
 		inv.from_dict(d[key])
-		containers[Vector2i(int(parts[0]), int(parts[1]))] = inv
+		containers[at] = inv
 
 
 ## Tall objects (a 2-tile torch) need the tiles above them free of solid blocks.

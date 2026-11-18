@@ -263,13 +263,22 @@ look says what each group becomes.
 - Colors not in any group are never changed. Keep each group's colors unique (don't use
   the same exact color for skin and boots).
 - **Doll Viewer: Colors** randomizes a look to check it.
+- **Players choose their colors** on the New Character page (main menu); the colors
+  and hairstyle are saved in the character file (`CharacterData.colors`, `hairstyle`)
+  and turned into a `CharacterLook` by `CharacterData.make_look()`. Console `color
+  <group> <hex>` recolors the character in game.
+- The swap shader (`palette_swap.gdshader`) multiplies by the node's modulate passed
+  from `vertex()`. (Until Phase 6 it multiplied by `COLOR`, which already holds the
+  texture, so the art showed darker than drawn and recolors came out murky.)
 
 ## Hair, helmets, armor
 
 - **Hair** is a sprite on the head: `CharacterLook.hair` (texture, facing right) placed
   at the head's top-left plus `hair_offset`. It moves with the head and takes the
   `hair` color group. The current one (`assets/sprites/hair/short.png`) is a
-  placeholder.
+  placeholder. Every .png in `assets/sprites/hair/` is a hairstyle choice on the New
+  Character page (file name = its name); draw them facing right, colored with the
+  hair group's colors so they recolor.
 - **Armor and clothing** use `PaperDoll.add_overlay(part, texture)`: a texture laid out
   like one row of the parts sheet (one 44x64 cell per frame), drawn right over that
   part and following its frames and code poses. For example, a chest piece is an

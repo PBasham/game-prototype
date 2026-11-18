@@ -16,13 +16,17 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **Right click** | On something you can interact with (stations, chests, doors, pickups on the grass): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
 | **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest pickup) |
 | **I** or **Tab** | Open / close the inventory (with equipment and spells) |
+| **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
 | **R** (tap) | Take the spellbook out (like Starbound's matter manipulator), with the last spell you used; tap again to go back to your hotbar slot |
 | **R** (hold) | Spell wheel: move the mouse toward a spell, let go to cast with it |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
 | **Q** | Throw the selected stack |
 | **H** | Put the held item away / take it out |
 
-Inventory panel (I): 4 rows of 10, the top row is the hotbar.
+Inventory panel (I): rows of 10, the top row is the hotbar. The number of slots is the
+character's inventory size (`Inventory.size`, 40 by default, saved with the character),
+so a smaller starting inventory or bags that add rows later only change that number;
+the panel lays itself out from it.
 
 - Left click: pick up a stack, put it down, merge or swap.
 - Right click: take half, or put one down from the stack on the mouse.
@@ -205,9 +209,10 @@ Try: put Dev Wide Beam in your book, see it red on the wheel, equip Dev Focus, c
 
 ## Starting state, dev kit and the character file
 
-A character is saved separately from worlds: `user://characters/default.gpchar` (name
-and inventory). Until character select exists (Phase 7) there's one automatic
-character. A new character starts with **nothing**: no items, no spells (see
+A character is saved separately from worlds: `user://characters/<name>.gpchar` (name,
+look, inventory, equipment, spells). You pick or make one on the main menu's character
+page (see [guide.md](guide.md#starting-the-game-menu-worlds-saves)); any character can
+play any world. A new character starts with **nothing**: no items, no spells (see
 [crafting.md](crafting.md) for how to get going).
 
 Console `devkit` gives the old starting kit: copper pickaxe and axe, a Mining Spell
@@ -217,8 +222,8 @@ shortcut, 99 planks, 30 platforms, 30 rope, 20 torches, 5 tree seeds, 10 grass s
 with it. In debug builds it also adds the placeholder weapons and test magic, which
 are never saved.
 
-To get a fresh character, delete `default.gpchar` (in the folder Project > Open User
-Data Folder opens). The character saves with the world (autosave, Save, Save & Quit).
+The character saves with the world (autosave, Save, Save & Quit). A character from
+before character select is called "default" and shows up in the list like any other.
 
 ## Mining
 

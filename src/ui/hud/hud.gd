@@ -1,45 +1,49 @@
 class_name Hud
 extends CanvasLayer
 ## The in-world HUD: the hotbar (top left), the inventory panel (I or Tab) with the
-## equipment and spell sections, the spellbook key (tap R: book out or away, hold R:
-## spell wheel), the stack held on the mouse,
-## tooltips, and pickup notes. Placeholder look until real UI art exists.
+## equipment and spell sections, the crafting window (K, or right click a station), the
+## chest window, the spellbook key (tap R: book out or away, hold R: spell wheel), the
+## stack held on the mouse, tooltips, and pickup notes. Drawn with UiSkin.
 ##
-## Inventory panel: 4 rows of 10, the top row is the hotbar. On the right, the crafting
-## list: hand crafting, or the recipes of the station you opened (right click or E on a
-## Workbench, Furnace, Anvil). Click a recipe to craft one, Shift + click for 10; the
-## mouse wheel scrolls a long list. A chest you open shows its 40 slots under your
-## inventory (Shift + click moves a stack across). The mana bar is under the hotbar.
+## Inventory panel: rows of 10 (the character's inventory size), the top row is the
+## hotbar.
 ##   Left click: pick up a stack / put it down / swap / merge.
 ##   Right click: pick up half, or put one down from the stack on the mouse.
-##   Shift + left click: move a stack between the hotbar and the rest.
+##   Shift + left click: move a stack between the hotbar and the rest (or into the open
+##   chest).
 ##   Ctrl + right click: equip a book or conduit (swapping with the equipped one); on an
 ##   equipment slot, put it back in the inventory.
-##   Click outside the panel with a stack on the mouse: throw it.
+##   Click outside the windows with a stack on the mouse: throw it.
 ## Equipment (right of the grid): Book and Conduit slots. An empty book slot means the
 ## Basic Spellbook.
 ## Spellbook (under the grid): the equipped book's slots. Spells (under that): every
 ## spell you know. Click a spell to pick it up, then click a book slot to put it in the
 ## book, or a hotbar slot to make a shortcut. Right click a book slot to empty it.
+##
+## Windows (crafting, chest) open on the right side of the screen, apart from the
+## inventory. Crafting: click a recipe in the list, then Craft, x10 or All.
 
 const SLOT := 20
 const GAP := 2
-const MARGIN := Vector2(6, 6)
-const BG := Color(0.07, 0.08, 0.1, 0.78)
-const BG_HOT := Color(0.12, 0.13, 0.16, 0.88)
-const BG_PANEL := Color(0.05, 0.06, 0.08, 0.6)
-const EDGE := Color(1, 1, 1, 0.12)
-const SELECTED := Color("f2d27a")
-const TEXT := Color("f2ead8")
-const DIM := Color("a8a090")
+const STEP := SLOT + GAP
+## Space inside a window frame.
+const PAD := 6
+const MARGIN := Vector2(4, 4)
+const TITLE_H := 14
 const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
-enum Area { NONE, INVENTORY, EQUIPMENT, BOOK, SPELLS, CHEST, RECIPE, UPGRADE }
-## Crafting list: row height and width.
-const ROW := 22
-const CRAFT_W := 252
+enum Area { NONE, INVENTORY, EQUIPMENT, BOOK, SPELLS, CRAFT_BUTTON, CHEST, CHEST_TAKE, CHEST_DEPOSIT,
+	RECIPE, CRAFT, CLOSE }
 const EQUIP_SLOTS: Array[StringName] = [CharacterData.SLOT_BOOK, CharacterData.SLOT_CONDUIT]
+const EQUIP_W := 60
+
+## Crafting window: size, list width, row height.
+const CRAFT_SIZE := Vector2(288, 214)
+const LIST_W := 134
+const ROW_H := 18
+## Craft buttons: how many each makes (0 = as many as you can).
+const CRAFT_AMOUNTS: Array[int] = [1, 10, 0]
 
 ## Radius (UI px) of the spell wheel.
 @export var wheel_radius := 44.0
@@ -48,9 +52,15 @@ const EQUIP_SLOTS: Array[StringName] = [CharacterData.SLOT_BOOK, CharacterData.S
 @export var wheel_hold_seconds := 0.2
 ## Seconds a pickup note stays after the last item of that kind arrived.
 @export var note_seconds := 1.6
+## Windows (crafting, chest): gap from the right edge of the screen and from the top.
+@export var window_right := 8.0
+@export var window_top := 40.0
 
 var world: World
+## The inventory panel is open.
 var open := false
+## The crafting window is open (hand crafting, or the station in `station`).
+var crafting := false
 ## Stack held on the mouse (inventory open). "spell:<id>" = a spell being placed.
 var cursor_id: StringName = &""
 var cursor_count := 0
@@ -60,14 +70,17 @@ var wheel_center := Vector2.ZERO
 var wheel_choice: StringName = &""
 var _r_down := false
 var _r_held := 0.0
-## The crafting station (anchor tile) or chest the panel was opened from; NO_TILE = none
-## (the panel shows hand crafting).
+## The crafting station (anchor tile) or chest that was opened; NO_TILE = none.
 var station := World.NO_TILE
 var chest := World.NO_TILE
+## Selected crafting entry (an index into recipes(); recipes().size() = the upgrade).
+var selected_recipe := 0
 ## First crafting row shown (mouse wheel over the list scrolls).
 var _craft_scroll := 0
 
-var _grid: Grid
+var _inv: Pane
+var _craft: Pane
+var _chest: Pane
 var _wheel: Wheel
 var _name_label: Label
 var _tooltip: PanelContainer
@@ -78,15 +91,16 @@ var _note_counts: Dictionary[StringName, int] = {}
 var _note_age: Dictionary[StringName, float] = {}
 
 
-## Draws the slots and handles clicks on them.
-class Grid extends Control:
-	var hud: Hud
+## A window: drawing and clicks go to the HUD.
+class Pane extends Control:
+	var draw_fn: Callable
+	var input_fn: Callable
 
 	func _draw() -> void:
-		hud.draw_grid(self)
+		draw_fn.call(self)
 
 	func _gui_input(event: InputEvent) -> void:
-		hud.grid_input(event)
+		input_fn.call(self, event)
 
 
 class Wheel extends Control:
@@ -98,11 +112,11 @@ class Wheel extends Control:
 
 func _ready() -> void:
 	layer = 20
-	_grid = Grid.new()
-	_grid.hud = self
-	_grid.position = MARGIN
-	_grid.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_grid)
+	_inv = _pane(_draw_inventory, _inventory_input)
+	_inv.position = MARGIN
+	_craft = _pane(_draw_crafting, _crafting_input)
+	_craft.size = CRAFT_SIZE
+	_chest = _pane(_draw_chest, _chest_input)
 	_wheel = Wheel.new()
 	_wheel.hud = self
 	_wheel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -111,19 +125,15 @@ func _ready() -> void:
 	add_child(_wheel)
 	_name_label = Label.new()
 	_name_label.add_theme_font_size_override("font_size", 8)
-	_name_label.add_theme_color_override("font_color", TEXT)
+	_name_label.add_theme_color_override("font_color", UiSkin.TEXT)
 	_name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
 	add_child(_name_label)
 	_tooltip = PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.05, 0.07, 0.92)
-	style.set_content_margin_all(4)
-	style.set_corner_radius_all(2)
-	_tooltip.add_theme_stylebox_override("panel", style)
+	_tooltip.add_theme_stylebox_override("panel", UiSkin.box("panel", 6.0))
 	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tooltip_text = Label.new()
 	_tooltip_text.add_theme_font_size_override("font_size", 8)
-	_tooltip_text.add_theme_color_override("font_color", TEXT)
+	_tooltip_text.add_theme_color_override("font_color", UiSkin.TEXT)
 	_tooltip.add_child(_tooltip_text)
 	_tooltip.visible = false
 	add_child(_tooltip)
@@ -134,10 +144,25 @@ func _ready() -> void:
 	EventBus.item_picked_up.connect(_on_picked_up)
 	world.station_opened.connect(_on_station_opened)
 	world.container_opened.connect(_on_container_opened)
-	world.character.inventory.changed.connect(_grid.queue_redraw)
+	world.character.inventory.changed.connect(_redraw)
 	world.character.magic_changed.connect(_layout)
-	world.player.selection_changed.connect(func(_s: int) -> void: _grid.queue_redraw())
+	world.player.selection_changed.connect(func(_s: int) -> void: _redraw())
 	_layout()
+
+
+func _pane(draw_fn: Callable, input_fn: Callable) -> Pane:
+	var p := Pane.new()
+	p.draw_fn = draw_fn
+	p.input_fn = input_fn
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(p)
+	return p
+
+
+func _redraw() -> void:
+	_inv.queue_redraw()
+	_craft.queue_redraw()
+	_chest.queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
@@ -160,102 +185,130 @@ func _process(delta: float) -> void:
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
 		set_open(not open)
+	if Input.is_action_just_pressed("crafting") and not paused:
+		toggle_crafting()
 	_update_wheel(paused)
 	var p := world.player
-	var over := _grid.get_global_rect().has_point(_grid.get_global_mouse_position())
-	p.input_blocked = over or cursor_count > 0 or paused or wheel_open
+	var over := _over_pane()
+	p.input_blocked = over != null or cursor_count > 0 or paused or wheel_open
 	_update_tooltip(over)
 	if (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
-		set_open(false)  # walked away from the station or chest
-	_grid.queue_redraw()  # mana bar, recipe counts
+		close_window()  # walked away from the station or chest
+	_redraw()  # mana bar, recipe counts, hover
 	var item := p.held_item
 	_name_label.text = item.display_name if item else ""
 	if p.concentration:
 		_name_label.text += ("\n" if _name_label.text != "" else "") + "Concentrating: %s" % p.concentration.display_name
-	if cursor_count > 0:
-		_grid.queue_redraw()
 
 
+## The window under the mouse, or null.
+func _over_pane() -> Pane:
+	for pane: Pane in [_craft, _chest, _inv]:
+		if pane.visible and pane.get_global_rect().has_point(pane.get_global_mouse_position()):
+			return pane
+	return null
+
+
+## Opens or closes the inventory. Closing also closes the crafting and chest windows.
 func set_open(value: bool) -> void:
 	open = value
 	if not open:
 		station = World.NO_TILE
 		chest = World.NO_TILE
+		crafting = false
+		if cursor_count > 0:
+			if _cursor_is_spell():
+				_clear_cursor()  # a spell being placed just goes back
+			else:
+				var left := world.character.inventory.add(cursor_id, cursor_count)
+				cursor_count = left
+				if left > 0:
+					_throw_cursor()
+				_clear_cursor()
+	_layout()
+
+
+## K: the hand crafting window (with the inventory), or closes the crafting window.
+func toggle_crafting() -> void:
+	if crafting:
+		close_window()
+		return
+	chest = World.NO_TILE
+	station = World.NO_TILE
+	_open_crafting()
+
+
+func _open_crafting() -> void:
+	open = true
+	crafting = true
+	selected_recipe = 0
 	_craft_scroll = 0
-	if not open and cursor_count > 0:
-		if _cursor_is_spell():
-			_clear_cursor()  # a spell being placed just goes back
-		else:
-			var left := world.character.inventory.add(cursor_id, cursor_count)
-			cursor_count = left
-			if left > 0:
-				_throw_cursor()
-			_clear_cursor()
+	_layout()
+
+
+## Closes the crafting or chest window, keeping the inventory open.
+func close_window() -> void:
+	crafting = false
+	station = World.NO_TILE
+	chest = World.NO_TILE
 	_layout()
 
 
 func _on_station_opened(anchor: Vector2i) -> void:
-	set_open(true)
+	chest = World.NO_TILE
 	station = anchor
-	_layout()
+	_open_crafting()
 
 
 func _on_container_opened(anchor: Vector2i) -> void:
-	set_open(true)
+	crafting = false
+	station = World.NO_TILE
+	open = true
 	chest = anchor
 	_layout()
 
 
 func _in_reach_of(anchor: Vector2i) -> bool:
 	var p := world.player
-	var at := world.tile_to_world(anchor) + Vector2(World.TILE, 0)
+	var def := world.object_at(anchor)
+	var w := def.width_tiles if def else 1
+	var at := world.tile_to_world(anchor) + Vector2(w * World.TILE * 0.5, 0)
 	at.x += roundf((p.global_position.x - at.x) / (world.data.width * World.TILE)) * world.data.width * World.TILE
-	return at.distance_to(p.chest()) <= (world.interact_tiles + 4.0) * World.TILE \
+	return at.distance_to(p.chest()) <= (world.interact_tiles + 4.0 + w * 0.5) * World.TILE \
 		and world.object_anchor(anchor) == anchor
 
 
 # --- layout ------------------------------------------------------------------------------
 
+func _inventory() -> Inventory:
+	return world.character.inventory
+
+
 func _layout() -> void:
 	if open:
-		var bottom := _spells_origin().y + _rows(_known().size()) * (SLOT + GAP)
-		if chest != World.NO_TILE:
-			bottom = _book_origin().y + 4 * (SLOT + GAP) + 4
-		bottom = maxf(bottom, _craft_origin().y + 6 * ROW + 16)
-		_grid.size = Vector2(_craft_origin().x + CRAFT_W, bottom)
+		var bottom := _spells_origin().y + _rows(_known().size()) * STEP - GAP + PAD
+		_inv.size = Vector2(_equip_origin().x + EQUIP_W + PAD, bottom)
 	else:
-		_grid.size = Vector2(10 * (SLOT + GAP) - GAP, SLOT + 6)
-	_name_label.position = MARGIN + Vector2(0, (_grid.size.y if open else SLOT + 6) + 2)
-	_grid.queue_redraw()
+		_inv.size = Vector2(PAD * 2 + 10 * STEP - GAP, PAD + SLOT + 4 + 3 + 4)
+	_name_label.position = MARGIN + Vector2(2, _inv.size.y + 2)
+	var view := _view_size()
+	_craft.visible = open and crafting
+	_craft.position = Vector2(view.x - CRAFT_SIZE.x - window_right, window_top)
+	_chest.visible = open and chest != World.NO_TILE
+	if _chest.visible:
+		var store := world.container_at(chest)
+		var n := store.size if store else 40
+		_chest.size = Vector2(PAD * 2 + 10 * STEP - GAP, 22 + _rows(n) * STEP - GAP + 6 + 16 + PAD)
+		_chest.position = Vector2(view.x - _chest.size.x - window_right, window_top)
+	_redraw()
 
 
-func _craft_origin() -> Vector2:
-	return Vector2(_equip_origin().x + SLOT + 104, 12)
+func _view_size() -> Vector2:
+	return get_viewport().get_visible_rect().size if is_inside_tree() else Vector2(640, 360)
 
 
-## The recipes the list shows: the open station's, or hand crafting.
-func recipes() -> Array[RecipeData]:
-	var def := world.object_at(station) if station != World.NO_TILE else null
-	if def and def.station != &"":
-		return Crafting.recipes_for(def.station, def.station_tier)
-	return Crafting.recipes_for(&"")
-
-
-func _rows_shown() -> int:
-	return int((_grid.size.y - _craft_origin().y - (ROW if _upgrade_shown() else 0)) / ROW)
-
-
-func _recipe_rect(i: int) -> Rect2:
-	return Rect2(_craft_origin() + Vector2(0, (i - _craft_scroll) * ROW), Vector2(CRAFT_W - 4, ROW - 2))
-
-
-func _upgrade_shown() -> bool:
-	var def := world.object_at(station) if station != World.NO_TILE else null
-	return def != null and def.upgrade_to != &""
-
-
-func _upgrade_rect() -> Rect2:
-	return Rect2(_craft_origin() + Vector2(0, _rows_shown() * ROW), Vector2(CRAFT_W - 4, ROW - 2))
+func _grid_origin() -> Vector2:
+	return Vector2(PAD, PAD)
 
 
 func _rows(n: int) -> int:
@@ -263,15 +316,23 @@ func _rows(n: int) -> int:
 
 
 func _equip_origin() -> Vector2:
-	return Vector2(10 * (SLOT + GAP) + 8, 0)
+	return _grid_origin() + Vector2(10 * STEP + 6, 0)
+
+
+func _equip_cell(i: int) -> Rect2:
+	return Rect2(_equip_origin() + Vector2(0, i * STEP), Vector2(SLOT, SLOT))
+
+
+func _craft_button_rect() -> Rect2:
+	return Rect2(_equip_origin() + Vector2(0, (_rows(_inventory().size) - 1) * STEP + 2), Vector2(EQUIP_W - 2, 16))
 
 
 func _book_origin() -> Vector2:
-	return Vector2(0, 4 * (SLOT + GAP) + 12)
+	return _grid_origin() + Vector2(0, _rows(_inventory().size) * STEP + 12)
 
 
 func _spells_origin() -> Vector2:
-	return _book_origin() + Vector2(0, _rows(world.character.book_slot_count()) * (SLOT + GAP) + 12)
+	return _book_origin() + Vector2(0, _rows(world.character.book_slot_count()) * STEP + 12)
 
 
 func _known() -> Array[StringName]:
@@ -280,35 +341,27 @@ func _known() -> Array[StringName]:
 
 ## Rect of slot `i` in a 10-wide block starting at `origin`.
 func _cell(origin: Vector2, i: int) -> Rect2:
-	return Rect2(origin + Vector2((i % 10) * (SLOT + GAP), (i / 10) * (SLOT + GAP)), Vector2(SLOT, SLOT))
+	return Rect2(origin + Vector2((i % 10) * STEP, (i / 10) * STEP), Vector2(SLOT, SLOT))
 
 
-func _equip_cell(i: int) -> Rect2:
-	return Rect2(_equip_origin() + Vector2(0, i * (SLOT + GAP + 4)), Vector2(SLOT, SLOT))
+func _close_rect(pane: Pane) -> Rect2:
+	return Rect2(pane.size.x - 19, 6, 12, 10)
 
 
-## [Area, index] under a point in the grid's space.
+## [Area, index] under a point in the inventory panel.
 func hit(local: Vector2) -> Array:
-	var rows := 4 if open else 1
-	for i in rows * 10:
-		if _cell(Vector2.ZERO, i).has_point(local):
+	var inv := _inventory()
+	var n := inv.size if open else Inventory.HOTBAR
+	for i in n:
+		if _cell(_grid_origin(), i).has_point(local):
 			return [Area.INVENTORY, i]
 	if not open:
 		return [Area.NONE, -1]
 	for i in EQUIP_SLOTS.size():
 		if _equip_cell(i).has_point(local):
 			return [Area.EQUIPMENT, i]
-	var list := recipes()
-	for i in range(_craft_scroll, mini(list.size(), _craft_scroll + _rows_shown())):
-		if _recipe_rect(i).has_point(local):
-			return [Area.RECIPE, i]
-	if _upgrade_shown() and _upgrade_rect().has_point(local):
-		return [Area.UPGRADE, 0]
-	if chest != World.NO_TILE:
-		for i in Inventory.SIZE:
-			if _cell(_book_origin(), i).has_point(local):
-				return [Area.CHEST, i]
-		return [Area.NONE, -1]
+	if _craft_button_rect().has_point(local):
+		return [Area.CRAFT_BUTTON, 0]
 	for i in world.character.book_slot_count():
 		if _cell(_book_origin(), i).has_point(local):
 			return [Area.BOOK, i]
@@ -318,100 +371,111 @@ func hit(local: Vector2) -> Array:
 	return [Area.NONE, -1]
 
 
-## Inventory slot under a point (or -1). Tests use this.
+## Inventory slot under a point in the inventory panel (or -1).
 func slot_at(local: Vector2) -> int:
 	var h := hit(local)
 	return h[1] if h[0] == Area.INVENTORY else -1
 
 
-# --- drawing -----------------------------------------------------------------------------
+# --- drawing: inventory ------------------------------------------------------------------
 
-func draw_grid(g: Control) -> void:
+func _draw_inventory(g: Control) -> void:
 	var c := world.character
 	var inv := c.inventory
 	var font := ThemeDB.fallback_font
-	var rows := 4 if open else 1
-	if open:
-		g.draw_rect(Rect2(Vector2(-4, -4), g.size + Vector2(8, 8)), Color(0.03, 0.04, 0.06, 0.82))
-	for i in rows * 10:
-		var r := _cell(Vector2.ZERO, i)
-		g.draw_rect(r, BG_HOT if i < Inventory.HOTBAR else BG)
-		g.draw_rect(r, SELECTED if i == world.player.selected else EDGE, false, 1.0)
+	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
+	var hover := hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
+	var n := inv.size if open else Inventory.HOTBAR
+	for i in n:
+		var r := _cell(_grid_origin(), i)
+		var look := UiSkin.SlotLook.NORMAL
+		if i == world.player.selected:
+			look = UiSkin.SlotLook.SELECTED
+		elif hover[0] == Area.INVENTORY and hover[1] == i:
+			look = UiSkin.SlotLook.HOT
+		UiSkin.slot(g, r, look)
 		var item := inv.item(i)
 		if item:
 			_draw_item(g, font, r, item, inv.counts[i])
 		if i < Inventory.HOTBAR:
-			g.draw_string(font, r.position + Vector2(2, 7), str((i + 1) % 10), HORIZONTAL_ALIGNMENT_LEFT, -1, 6, DIM)
+			g.draw_string(font, r.position + Vector2(3, 8), str((i + 1) % 10), HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
+				Color(UiSkin.DIM, 0.8))
 	if open:
-		if chest != World.NO_TILE:
-			_draw_chest(g, font)
-		else:
-			_draw_magic(g, font)
-		_draw_crafting(g, font)
+		_draw_magic(g, font, hover)
+		var br := _craft_button_rect()
+		var state := UiSkin.Btn.PRESSED if crafting else (UiSkin.Btn.HOT if hover[0] == Area.CRAFT_BUTTON else UiSkin.Btn.NORMAL)
+		UiSkin.button(g, br, "Craft (K)", state)
 	else:
 		_draw_mana(g)
-	if cursor_count > 0:
-		var item := ItemData.find(cursor_id)
-		var m := g.get_local_mouse_position()
-		if item and item.icon:
-			g.draw_texture_rect(item.icon, Rect2(m + Vector2(2, 2), Vector2(16, 16)), false)
-		if cursor_count > 1:
-			_draw_count(g, font, Rect2(m, Vector2(SLOT, SLOT)), cursor_count)
+	_draw_cursor_stack(g)
 
 
-func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int) -> void:
+## The stack on the mouse, drawn by whichever window the mouse is over (or the
+## inventory).
+func _draw_cursor_stack(g: Control) -> void:
+	if cursor_count <= 0:
+		return
+	var over := _over_pane()
+	if (over == null and g != _inv) or (over != null and over != g):
+		return
+	var item := ItemData.find(cursor_id)
+	var m := g.get_local_mouse_position()
+	if item and item.icon:
+		g.draw_texture_rect(item.icon, Rect2(m + Vector2(2, 2), Vector2(16, 16)), false)
+	if cursor_count > 1:
+		_draw_count(g, ThemeDB.fallback_font, Rect2(m, Vector2(SLOT, SLOT)), cursor_count)
+
+
+func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, alpha: float = 1.0) -> void:
 	if item.icon:
-		g.draw_texture_rect(item.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false)
+		g.draw_texture_rect(item.icon, Rect2(r.position + (r.size - Vector2(16, 16)) * 0.5, Vector2(16, 16)), false,
+			Color(1, 1, 1, alpha))
 	if item.is_spell():
 		# Spell shortcut: a small mark, and red when it can't be cast right now.
-		g.draw_rect(Rect2(r.position + Vector2(SLOT - 5, 1), Vector2(4, 4)), Color("7fd4ff"))
+		g.draw_rect(Rect2(r.position + Vector2(SLOT - 6, 2), Vector2(4, 4)), Color("7fd4ff"))
 		if world.character.cast_problem(item as SpellData) != "":
-			g.draw_rect(r.grow(-1), BAD)
+			g.draw_rect(r.grow(-2), BAD)
 	elif count > 1:
 		_draw_count(g, font, r, count)
 
 
-func _draw_magic(g: Control, font: Font) -> void:
+func _draw_magic(g: Control, font: Font, hover: Array) -> void:
 	var c := world.character
 	# Equipment.
 	var labels := ["Book", "Conduit"]
 	for i in EQUIP_SLOTS.size():
 		var r := _equip_cell(i)
-		g.draw_rect(r, BG_HOT)
-		g.draw_rect(r, EDGE, false, 1.0)
+		var hot: bool = hover[0] == Area.EQUIPMENT and hover[1] == i
+		UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hot else UiSkin.SlotLook.MAGIC)
 		var item := ItemData.find(c.equipment[EQUIP_SLOTS[i]]) if c.equipment[EQUIP_SLOTS[i]] != &"" else null
-		var text: String = labels[i]
 		if item:
 			_draw_item(g, font, r, item, 1)
-			text += ": " + item.display_name
 		elif i == 0:
 			var basic := c.book()
 			if basic and basic.icon:
-				g.draw_texture_rect(basic.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false, Color(1, 1, 1, 0.45))
-			text += ": Basic (empty slot)"
-		else:
-			text += ": none"
-		g.draw_string(font, r.position + Vector2(SLOT + 4, 13), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, TEXT)
+				g.draw_texture_rect(basic.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false, Color(1, 1, 1, 0.4))
+		g.draw_string(font, r.position + Vector2(SLOT + 4, 13), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
 	# The book's slots.
 	var book := c.book()
-	var title := "Spellbook: %s (%d slots)" % [book.display_name if book else "?", c.book_slot_count()]
-	g.draw_string(font, _book_origin() + Vector2(0, -3), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
+	var title := "%s  (%d slots)" % [book.display_name if book else "Spellbook", c.book_slot_count()]
+	g.draw_string(font, _book_origin() + Vector2(0, -3), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 	var loadout := c.book_loadout()
 	for i in loadout.size():
 		var r := _cell(_book_origin(), i)
-		g.draw_rect(r, BG_PANEL)
-		g.draw_rect(r, EDGE, false, 1.0)
+		var hot: bool = hover[0] == Area.BOOK and hover[1] == i
+		UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hot else UiSkin.SlotLook.MAGIC)
 		var spell := ItemData.find(ItemData.spell_key(loadout[i])) if loadout[i] != &"" else null
 		if spell:
 			_draw_item(g, font, r, spell, 1)
 	# Known spells.
-	g.draw_string(font, _spells_origin() + Vector2(0, -3), "Spells you know (click one, then a book or hotbar slot)",
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
 	var known := _known()
+	var hint := "Spells you know" + (" (click one, then a book or hotbar slot)" if not known.is_empty() else ": none yet")
+	g.draw_string(font, _spells_origin() + Vector2(0, -3), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 	for i in known.size():
 		var r := _cell(_spells_origin(), i)
-		g.draw_rect(r, BG_PANEL)
-		g.draw_rect(r, SELECTED if c.in_book(known[i]) else EDGE, false, 1.0)
+		var hot: bool = hover[0] == Area.SPELLS and hover[1] == i
+		var look := UiSkin.SlotLook.SELECTED if c.in_book(known[i]) else (UiSkin.SlotLook.HOT if hot else UiSkin.SlotLook.MAGIC)
+		UiSkin.slot(g, r, look)
 		var spell := ItemData.find(ItemData.spell_key(known[i]))
 		if spell and spell.icon:
 			g.draw_texture_rect(spell.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false)
@@ -420,111 +484,293 @@ func _draw_magic(g: Control, font: Font) -> void:
 ## Mana bar under the hotbar.
 func _draw_mana(g: Control) -> void:
 	var p := world.player
-	var w := 10 * (SLOT + GAP) - GAP
-	var r := Rect2(0, SLOT + 2, w, 3)
-	g.draw_rect(r, Color(0, 0, 0, 0.55))
+	var w := 10 * STEP - GAP
+	var r := Rect2(_grid_origin() + Vector2(0, SLOT + 3), Vector2(w, 4))
+	g.draw_rect(r, Color("120b07"))
 	var k := 1.0 if p.infinite_mana else clampf(p.mana / maxf(p.max_mana, 1.0), 0.0, 1.0)
-	g.draw_rect(Rect2(r.position, Vector2(w * k, 3)), Color("5aa0ff") if not p.infinite_mana else Color("b07aff"))
-
-
-func _draw_chest(g: Control, font: Font) -> void:
-	var store := world.container_at(chest)
-	var def := world.object_at(chest)
-	g.draw_string(font, _book_origin() + Vector2(0, -3), def.display_name if def else "Chest",
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
-	if store == null:
-		return
-	for i in Inventory.SIZE:
-		var r := _cell(_book_origin(), i)
-		g.draw_rect(r, BG)
-		g.draw_rect(r, EDGE, false, 1.0)
-		var item := store.item(i)
-		if item:
-			_draw_item(g, font, r, item, store.counts[i])
-
-
-func _draw_crafting(g: Control, font: Font) -> void:
-	var inv := world.character.inventory
-	var def := world.object_at(station) if station != World.NO_TILE else null
-	var title := "Crafting by hand"
-	if def and def.station != &"":
-		title = "%s (tier %d)" % [def.display_name, def.station_tier]
-	g.draw_string(font, _craft_origin() + Vector2(0, -3), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
-	var list := recipes()
-	if list.is_empty():
-		g.draw_string(font, _craft_origin() + Vector2(4, 12), "Nothing to craft here yet", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
-	var hover := hit(g.get_local_mouse_position())
-	for i in range(_craft_scroll, mini(list.size(), _craft_scroll + _rows_shown())):
-		var r := list[i]
-		var rect := _recipe_rect(i)
-		var times := Crafting.times_craftable(inv, r)
-		var hot: bool = hover[0] == Area.RECIPE and hover[1] == i
-		g.draw_rect(rect, BG_HOT if hot else BG_PANEL)
-		var out := ItemData.find(r.output)
-		var a := 1.0 if times > 0 else 0.4
-		if out and out.icon:
-			g.draw_texture_rect(out.icon, Rect2(rect.position + Vector2(2, 2), Vector2(16, 16)), false, Color(1, 1, 1, a))
-		var label_text := (out.display_name if out else String(r.output)) + (" x%d" % r.output_count if r.output_count > 1 else "")
-		g.draw_string(font, rect.position + Vector2(21, 9), label_text, HORIZONTAL_ALIGNMENT_LEFT, 110, 7, Color(TEXT, a))
-		# Inputs: icon and count, red when short.
-		var x := 21.0
-		for k: StringName in r.inputs:
-			var it := ItemData.find(k)
-			if it and it.icon:
-				g.draw_texture_rect(it.icon, Rect2(rect.position + Vector2(x, 10), Vector2(9, 9)), false, Color(1, 1, 1, a))
-			var short := inv.count_of(k) < r.inputs[k]
-			g.draw_string(font, rect.position + Vector2(x + 10, 18), str(r.inputs[k]), HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
-				Color("ff8a7a") if short else Color(DIM, a))
-			x += 28.0
-		for q in r.requires:
-			var it := ItemData.find(q)
-			if it and it.icon:
-				var has := inv.count_of(q) > 0
-				g.draw_texture_rect(it.icon, Rect2(rect.position + Vector2(x, 10), Vector2(9, 9)), false,
-					Color(1, 1, 1, a) if has else Color(1, 0.5, 0.45, 0.8))
-				g.draw_string(font, rect.position + Vector2(x + 10, 18), "keep", HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
-					Color(DIM, a) if has else Color("ff8a7a"))
-				x += 34.0
-		if times > 0:
-			g.draw_string(font, rect.position + Vector2(CRAFT_W - 30, 9), "x%d" % times, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, DIM)
-	if list.size() > _rows_shown():
-		g.draw_string(font, _craft_origin() + Vector2(CRAFT_W - 70, -3), "wheel: more", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, DIM)
-	if _upgrade_shown():
-		var ur := _upgrade_rect()
-		var ok := _can_upgrade()
-		g.draw_rect(ur, BG_HOT if ok else BG_PANEL)
-		var next := world.objects.def(world.objects.index_of(def.upgrade_to)) as ObjectDef
-		var text := "Upgrade to %s:" % (next.display_name if next else String(def.upgrade_to))
-		for k: StringName in def.upgrade_cost:
-			text += " %d %s" % [def.upgrade_cost[k], Crafting._name(k)]
-		g.draw_string(font, ur.position + Vector2(4, 13), text, HORIZONTAL_ALIGNMENT_LEFT, CRAFT_W - 8, 7,
-			Color(TEXT, 1.0 if ok else 0.45))
+	var fill := Color("5aa0ff") if not p.infinite_mana else Color("b07aff")
+	g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2((w - 2) * k, 2)), fill)
+	g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2((w - 2) * k, 1)), fill.lightened(0.3))
 
 
 func _draw_count(g: Control, font: Font, r: Rect2, n: int) -> void:
 	var text := str(n)
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
-	var at := r.position + Vector2(SLOT - w - 1, SLOT - 2)
+	var at := r.position + Vector2(SLOT - w - 2, SLOT - 3)
 	g.draw_string(font, at + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0, 0, 0, 0.8))
-	g.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, TEXT)
+	g.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
+
+
+func _close_button(g: Control, hover: bool) -> void:
+	var r := _close_rect(g as Pane)
+	UiSkin.button(g, r, "x", UiSkin.Btn.HOT if hover else UiSkin.Btn.NORMAL)
+
+
+# --- drawing: chest ----------------------------------------------------------------------
+
+func _chest_hit(local: Vector2) -> Array:
+	if _close_rect(_chest).has_point(local):
+		return [Area.CLOSE, 0]
+	var store := world.container_at(chest)
+	if store:
+		for i in store.size:
+			if _cell(Vector2(PAD, 22), i).has_point(local):
+				return [Area.CHEST, i]
+	var b := _chest_buttons()
+	if b[0].has_point(local):
+		return [Area.CHEST_TAKE, 0]
+	if b[1].has_point(local):
+		return [Area.CHEST_DEPOSIT, 0]
+	return [Area.NONE, -1]
+
+
+func _chest_buttons() -> Array[Rect2]:
+	var y := _chest.size.y - PAD - 16
+	return [Rect2(PAD, y, 60, 16), Rect2(PAD + 64, y, 70, 16)]
+
+
+func _draw_chest(g: Control) -> void:
+	var store := world.container_at(chest)
+	var def := world.object_at(chest)
+	var font := ThemeDB.fallback_font
+	var hover := _chest_hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
+	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
+	UiSkin.title(g, Rect2(4, 4, g.size.x - 24, TITLE_H), def.display_name if def else "Chest",
+		"%d slots" % store.size if store else "")
+	_close_button(g, hover[0] == Area.CLOSE)
+	if store:
+		for i in store.size:
+			var r := _cell(Vector2(PAD, 22), i)
+			UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hover[0] == Area.CHEST and hover[1] == i else UiSkin.SlotLook.NORMAL)
+			var item := store.item(i)
+			if item:
+				_draw_item(g, font, r, item, store.counts[i])
+	var b := _chest_buttons()
+	UiSkin.button(g, b[0], "Take all", UiSkin.Btn.HOT if hover[0] == Area.CHEST_TAKE else UiSkin.Btn.NORMAL)
+	UiSkin.button(g, b[1], "Deposit all", UiSkin.Btn.HOT if hover[0] == Area.CHEST_DEPOSIT else UiSkin.Btn.NORMAL)
+	g.draw_string(font, Vector2(b[1].end.x + 6, b[1].position.y + 11), "Shift + click: move a stack",
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.DIM)
+	_draw_cursor_stack(g)
+
+
+# --- drawing: crafting -------------------------------------------------------------------
+
+## The recipes the window shows: the open station's, or hand crafting.
+func recipes() -> Array[RecipeData]:
+	var def := world.object_at(station) if station != World.NO_TILE else null
+	if def and def.station != &"":
+		return Crafting.recipes_for(def.station, def.station_tier)
+	return Crafting.recipes_for(&"")
+
+
+func _station_def() -> ObjectDef:
+	return world.object_at(station) if station != World.NO_TILE else null
+
+
+func _upgrade_shown() -> bool:
+	var def := _station_def()
+	return def != null and def.upgrade_to != &""
+
+
+## List entries: the recipes, plus the upgrade (when the station has one).
+func _entry_count() -> int:
+	return recipes().size() + (1 if _upgrade_shown() else 0)
+
+
+func _list_rect() -> Rect2:
+	return Rect2(PAD, 22, LIST_W, CRAFT_SIZE.y - 22 - PAD)
+
+
+func _rows_shown() -> int:
+	return int(_list_rect().size.y / ROW_H)
+
+
+func _row_rect(i: int) -> Rect2:
+	var l := _list_rect()
+	return Rect2(l.position + Vector2(0, (i - _craft_scroll) * ROW_H), Vector2(LIST_W - 5, ROW_H - 1))
+
+
+func _detail_rect() -> Rect2:
+	var x := PAD + LIST_W + 6
+	return Rect2(x, 22, CRAFT_SIZE.x - x - PAD, CRAFT_SIZE.y - 22 - PAD)
+
+
+func _craft_button_rects() -> Array[Rect2]:
+	var d := _detail_rect()
+	var out: Array[Rect2] = []
+	if selected_recipe >= recipes().size():
+		out.append(Rect2(d.position.x, d.end.y - 16, d.size.x, 16))  # Upgrade
+		return out
+	var w := (d.size.x - 8) / 3.0
+	for i in 3:
+		out.append(Rect2(d.position.x + i * (w + 4), d.end.y - 16, w, 16))
+	return out
+
+
+func _craft_hit(local: Vector2) -> Array:
+	if _close_rect(_craft).has_point(local):
+		return [Area.CLOSE, 0]
+	for i in range(_craft_scroll, mini(_entry_count(), _craft_scroll + _rows_shown())):
+		if _row_rect(i).has_point(local):
+			return [Area.RECIPE, i]
+	var b := _craft_button_rects()
+	for i in b.size():
+		if b[i].has_point(local):
+			return [Area.CRAFT, i]
+	return [Area.NONE, -1]
+
+
+func _draw_crafting(g: Control) -> void:
+	var inv := _inventory()
+	var font := ThemeDB.fallback_font
+	var def := _station_def()
+	var hover := _craft_hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
+	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
+	var is_station := def != null and def.station != &""
+	UiSkin.title(g, Rect2(4, 4, g.size.x - 24, TITLE_H), def.display_name if is_station else "Crafting by hand",
+		"Tier %d" % def.station_tier if is_station else "")
+	_close_button(g, hover[0] == Area.CLOSE)
+	var list := recipes()
+	selected_recipe = clampi(selected_recipe, 0, maxi(_entry_count() - 1, 0))
+	# The list.
+	var lr := _list_rect()
+	g.draw_rect(lr, Color(0, 0, 0, 0.22))
+	if list.is_empty():
+		g.draw_string(font, lr.position + Vector2(4, 12), "Nothing to craft here yet", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
+	for i in range(_craft_scroll, mini(_entry_count(), _craft_scroll + _rows_shown())):
+		var rect := _row_rect(i)
+		var hot: bool = hover[0] == Area.RECIPE and hover[1] == i
+		if i == selected_recipe or hot:
+			UiSkin.row_highlight(g, rect)
+		if i == selected_recipe:
+			g.draw_rect(Rect2(rect.position, Vector2(2, rect.size.y)), UiSkin.GOLD)
+		if i >= list.size():
+			var next := _upgrade_def()
+			_draw_icon(g, _item_icon(def.upgrade_to), rect.position + Vector2(3, 1), 1.0 if _can_upgrade() else 0.45)
+			g.draw_string(font, rect.position + Vector2(22, 12), "Upgrade to %s" % (next.display_name if next else "?"),
+				HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 26, 7, UiSkin.GOLD)
+			continue
+		var r := list[i]
+		var times := Crafting.times_craftable(inv, r)
+		var a := 1.0 if times > 0 else 0.45
+		var out := ItemData.find(r.output)
+		_draw_icon(g, out.icon if out else null, rect.position + Vector2(3, 1), a)
+		var label_text := (out.display_name if out else String(r.output)) + (" x%d" % r.output_count if r.output_count > 1 else "")
+		g.draw_string(font, rect.position + Vector2(22, 12), label_text, HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 46, 7,
+			Color(UiSkin.TEXT, a))
+		if times > 0:
+			var t := str(times)
+			var tw := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
+			g.draw_string(font, Vector2(rect.end.x - tw - 3, rect.position.y + 12), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.GOOD)
+	# Scroll bar.
+	if _entry_count() > _rows_shown():
+		var track := Rect2(lr.end.x - 3, lr.position.y, 2, lr.size.y)
+		g.draw_rect(track, Color(0, 0, 0, 0.4))
+		var k := float(_rows_shown()) / _entry_count()
+		var top := float(_craft_scroll) / _entry_count()
+		g.draw_rect(Rect2(track.position + Vector2(0, track.size.y * top), Vector2(2, track.size.y * k)), UiSkin.GOLD)
+	# Details.
+	var d := _detail_rect()
+	if _entry_count() == 0:
+		return
+	if selected_recipe >= list.size():
+		_draw_upgrade_detail(g, font, d, def, hover)
+	else:
+		_draw_recipe_detail(g, font, d, list[selected_recipe], hover)
+	_draw_cursor_stack(g)
+
+
+func _item_icon(item_id: StringName) -> Texture2D:
+	var it := ItemData.find(item_id)
+	return it.icon if it else null
+
+
+func _draw_icon(g: Control, tex: Texture2D, at: Vector2, alpha: float = 1.0) -> void:
+	if tex:
+		g.draw_texture_rect(tex, Rect2(at, Vector2(16, 16)), false, Color(1, 1, 1, alpha))
+
+
+func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover: Array) -> void:
+	var inv := _inventory()
+	var out := ItemData.find(r.output)
+	var big := Rect2(d.position, Vector2(36, 36))
+	UiSkin.slot(g, big)
+	if out and out.icon:
+		g.draw_texture_rect(out.icon, Rect2(big.position + Vector2(2, 2), Vector2(32, 32)), false)
+	var name_text := out.display_name if out else String(r.output)
+	g.draw_string(font, d.position + Vector2(42, 12), name_text, HORIZONTAL_ALIGNMENT_LEFT, d.size.x - 42, 8, UiSkin.TEXT)
+	var sub := "Makes %d" % r.output_count
+	if out and out.description != "":
+		sub = out.description
+	g.draw_multiline_string(font, d.position + Vector2(42, 22), sub, HORIZONTAL_ALIGNMENT_LEFT, d.size.x - 42, 6, 2,
+		UiSkin.DIM)
+	var y := d.position.y + 48
+	g.draw_string(font, Vector2(d.position.x, y), "Needs", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
+	y += 4
+	for k: StringName in r.inputs:
+		y = _ingredient_row(g, font, d, y, k, "%d / %d" % [inv.count_of(k), r.inputs[k]], inv.count_of(k) >= r.inputs[k])
+	if not r.requires.is_empty():
+		y += 4
+		g.draw_string(font, Vector2(d.position.x, y + 8), "Tools (kept)", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
+		y += 12
+		for q in r.requires:
+			var has := inv.count_of(q) > 0
+			y = _ingredient_row(g, font, d, y, q, "have" if has else "missing", has)
+	var times := Crafting.times_craftable(inv, r)
+	var labels := ["Craft", "x10", "All (%d)" % times]
+	var b := _craft_button_rects()
+	for i in b.size():
+		var state := UiSkin.Btn.DISABLED if times <= 0 else (UiSkin.Btn.HOT if hover[0] == Area.CRAFT and hover[1] == i else UiSkin.Btn.NORMAL)
+		UiSkin.button(g, b[i], labels[i], state)
+
+
+## One "icon name  have / need" line; returns the next y.
+func _ingredient_row(g: Control, font: Font, d: Rect2, y: float, item_id: StringName, right: String, ok: bool) -> float:
+	var it := ItemData.find(item_id)
+	if it and it.icon:
+		g.draw_texture_rect(it.icon, Rect2(Vector2(d.position.x, y + 1), Vector2(12, 12)), false)
+	g.draw_string(font, Vector2(d.position.x + 15, y + 10), it.display_name if it else String(item_id),
+		HORIZONTAL_ALIGNMENT_LEFT, d.size.x - 60, 7, UiSkin.TEXT)
+	var w := font.get_string_size(right, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+	g.draw_string(font, Vector2(d.end.x - w, y + 10), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOOD if ok else UiSkin.BAD)
+	return y + 14
+
+
+func _upgrade_def() -> ObjectDef:
+	var def := _station_def()
+	if def == null or def.upgrade_to == &"":
+		return null
+	var i := world.objects.index_of(def.upgrade_to)
+	return world.objects.def(i) as ObjectDef if i > 0 else null
+
+
+func _draw_upgrade_detail(g: Control, font: Font, d: Rect2, def: ObjectDef, hover: Array) -> void:
+	var inv := _inventory()
+	var next := _upgrade_def()
+	g.draw_string(font, d.position + Vector2(0, 10), "Upgrade to %s" % (next.display_name if next else "?"),
+		HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 8, UiSkin.TEXT)
+	g.draw_string(font, d.position + Vector2(0, 22), "Replaces this station in place.", HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6,
+		UiSkin.DIM)
+	var y := d.position.y + 30
+	for k: StringName in def.upgrade_cost:
+		y = _ingredient_row(g, font, d, y, k, "%d / %d" % [inv.count_of(k), def.upgrade_cost[k]], inv.count_of(k) >= def.upgrade_cost[k])
+	var b := _craft_button_rects()
+	var ok := _can_upgrade()
+	UiSkin.button(g, b[0], "Upgrade", UiSkin.Btn.DISABLED if not ok else (UiSkin.Btn.HOT if hover[0] == Area.CRAFT else UiSkin.Btn.NORMAL))
 
 
 # --- clicks ------------------------------------------------------------------------------
 
-func grid_input(event: InputEvent) -> void:
+func _inventory_input(pane: Pane, event: InputEvent) -> void:
 	var mb := event as InputEventMouseButton
 	if mb == null or not mb.pressed:
 		return
-	if open and mb.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] \
-			and mb.position.x >= _craft_origin().x:
-		var most := maxi(recipes().size() - _rows_shown(), 0)
-		_craft_scroll = clampi(_craft_scroll + (1 if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1), 0, most)
-		_grid.accept_event()
-		return
 	var h := hit(mb.position)
 	if h[0] == Area.NONE:
+		if cursor_count > 0 and mb.button_index == MOUSE_BUTTON_LEFT:
+			pane.accept_event()  # don't throw a stack by clicking the panel's frame
 		return
-	_grid.accept_event()
+	pane.accept_event()
 	var left := mb.button_index == MOUSE_BUTTON_LEFT
 	var right := mb.button_index == MOUSE_BUTTON_RIGHT
 	match h[0]:
@@ -537,7 +783,7 @@ func grid_input(event: InputEvent) -> void:
 				quick_equip(slot)
 			elif left and mb.shift_pressed:
 				if chest != World.NO_TILE:
-					_move_stack(world.character.inventory, slot, world.container_at(chest))
+					_move_stack(_inventory(), slot, world.container_at(chest))
 				else:
 					_quick_move(slot)
 			elif left:
@@ -549,6 +795,9 @@ func grid_input(event: InputEvent) -> void:
 				quick_unequip(EQUIP_SLOTS[h[1]])
 			elif left:
 				click_equipment(EQUIP_SLOTS[h[1]])
+		Area.CRAFT_BUTTON:
+			if left:
+				toggle_crafting()
 		Area.BOOK:
 			if left:
 				click_book_slot(h[1])
@@ -557,27 +806,80 @@ func grid_input(event: InputEvent) -> void:
 		Area.SPELLS:
 			if left:
 				click_known_spell(h[1])
+	_redraw()
+
+
+func _chest_input(pane: Pane, event: InputEvent) -> void:
+	var mb := event as InputEventMouseButton
+	if mb == null or not mb.pressed:
+		return
+	pane.accept_event()
+	var h := _chest_hit(mb.position)
+	var store := world.container_at(chest)
+	var left := mb.button_index == MOUSE_BUTTON_LEFT
+	match h[0]:
+		Area.CLOSE:
+			if left:
+				close_window()
 		Area.CHEST:
-			var store := world.container_at(chest)
 			if store:
 				if left and mb.shift_pressed:
-					_move_stack(store, h[1], world.character.inventory)
+					_move_stack(store, h[1], _inventory())
 				elif left:
 					click_slot(h[1], store)
-				elif right:
+				elif mb.button_index == MOUSE_BUTTON_RIGHT:
 					right_click_slot(h[1], store)
+		Area.CHEST_TAKE:
+			if left and store:
+				for i in store.size:
+					_move_stack(store, i, _inventory())
+		Area.CHEST_DEPOSIT:
+			if left and store:
+				deposit_all(store)
+	_redraw()
+
+
+## Moves everything below the hotbar into a chest (topping up stacks it already has).
+func deposit_all(store: Inventory) -> void:
+	var inv := _inventory()
+	for i in range(Inventory.HOTBAR, inv.size):
+		_move_stack(inv, i, store)
+
+
+func _crafting_input(pane: Pane, event: InputEvent) -> void:
+	var mb := event as InputEventMouseButton
+	if mb == null or not mb.pressed:
+		return
+	pane.accept_event()
+	if mb.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		var most := maxi(_entry_count() - _rows_shown(), 0)
+		_craft_scroll = clampi(_craft_scroll + (1 if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1), 0, most)
+		return
+	if mb.button_index != MOUSE_BUTTON_LEFT:
+		return
+	var h := _craft_hit(mb.position)
+	match h[0]:
+		Area.CLOSE:
+			close_window()
 		Area.RECIPE:
-			if left:
-				craft(recipes()[h[1]], 10 if mb.shift_pressed else 1)
-		Area.UPGRADE:
-			if left:
+			selected_recipe = h[1]
+			if mb.double_click and selected_recipe < recipes().size():
+				craft(recipes()[selected_recipe], 1)
+		Area.CRAFT:
+			if selected_recipe >= recipes().size():
 				upgrade_station()
-	_grid.queue_redraw()
+			else:
+				var r := recipes()[selected_recipe]
+				var amount := CRAFT_AMOUNTS[h[1]]
+				craft(r, amount if amount > 0 else Crafting.times_craftable(_inventory(), r))
+	_redraw()
 
 
 ## Crafts a recipe up to `times` times from the inventory; extra output drops at your
 ## feet.
 func craft(r: RecipeData, times: int) -> int:
+	if times <= 0:
+		return 0
 	var result := Crafting.craft(world.character.inventory, r, times)
 	if int(result[1]) > 0:
 		world.request_spawn_drop(r.output, int(result[1]), world.player.chest(), Vector2.ZERO, true)
@@ -587,7 +889,7 @@ func craft(r: RecipeData, times: int) -> int:
 
 
 func _can_upgrade() -> bool:
-	var def := world.object_at(station) if station != World.NO_TILE else null
+	var def := _station_def()
 	if def == null or def.upgrade_to == &"":
 		return false
 	for k: StringName in def.upgrade_cost:
@@ -751,7 +1053,7 @@ func _quick_move(slot: int) -> void:
 	var id := inv.ids[slot]
 	var n := inv.counts[slot]
 	var lo := 0 if to_hotbar else Inventory.HOTBAR
-	var hi := Inventory.HOTBAR if to_hotbar else Inventory.SIZE
+	var hi := Inventory.HOTBAR if to_hotbar else inv.size
 	var cap := Inventory.max_stack(id)
 	for pass_i in 2:  # first top up matching stacks, then empty slots
 		for i in range(lo, hi):
@@ -787,7 +1089,7 @@ func _throw_cursor() -> void:
 func _clear_cursor() -> void:
 	cursor_id = &""
 	cursor_count = 0
-	_grid.queue_redraw()
+	_redraw()
 
 
 # --- spell wheel -------------------------------------------------------------------------
@@ -845,7 +1147,7 @@ func draw_wheel(w: Control) -> void:
 	var font := ThemeDB.fallback_font
 	w.draw_circle(wheel_center, wheel_radius + 14.0, Color(0.03, 0.04, 0.06, 0.55))
 	if spells.is_empty():
-		w.draw_string(font, wheel_center + Vector2(-40, 3), "No spells in your book", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, DIM)
+		w.draw_string(font, wheel_center + Vector2(-40, 3), "No spells in your book", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
 		return
 	for i in spells.size():
 		var a := -PI * 0.5 + TAU * i / spells.size()
@@ -853,8 +1155,7 @@ func draw_wheel(w: Control) -> void:
 		var spell := ItemData.find(ItemData.spell_key(spells[i])) as SpellData
 		var r := Rect2(at - Vector2(SLOT, SLOT) * 0.5, Vector2(SLOT, SLOT))
 		var chosen := spells[i] == wheel_choice
-		w.draw_rect(r, BG_HOT)
-		w.draw_rect(r, SELECTED if chosen else EDGE, false, 1.0)
+		UiSkin.slot(w, r, UiSkin.SlotLook.SELECTED if chosen else UiSkin.SlotLook.MAGIC)
 		if spell and spell.icon:
 			w.draw_texture_rect(spell.icon, r.grow(-2), false)
 		if spell and world.character.cast_problem(spell) != "":
@@ -867,16 +1168,23 @@ func draw_wheel(w: Control) -> void:
 		if why != "":
 			label += " (%s)" % why
 	var lw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
-	w.draw_string(font, wheel_center + Vector2(-lw * 0.5, wheel_radius + 26.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, TEXT)
+	w.draw_string(font, wheel_center + Vector2(-lw * 0.5, wheel_radius + 26.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
 
 
 # --- tooltips and notes ------------------------------------------------------------------
 
-func _update_tooltip(over: bool) -> void:
+func _update_tooltip(over: Pane) -> void:
 	var item: ItemData = null
+	var extra := ""
 	if over and cursor_count == 0:
-		var h := hit(_grid.get_local_mouse_position())
 		var c := world.character
+		var h: Array = [Area.NONE, -1]
+		if over == _inv:
+			h = hit(over.get_local_mouse_position())
+		elif over == _chest:
+			h = _chest_hit(over.get_local_mouse_position())
+		elif over == _craft:
+			h = _craft_hit(over.get_local_mouse_position())
 		match h[0]:
 			Area.INVENTORY:
 				item = c.inventory.item(h[1])
@@ -892,21 +1200,20 @@ func _update_tooltip(over: bool) -> void:
 				var store := world.container_at(chest)
 				item = store.item(h[1]) if store else null
 			Area.RECIPE:
-				var r: RecipeData = recipes()[h[1]]
-				var out := ItemData.find(r.output)
-				var miss := Crafting.missing(c.inventory, r)
-				_tooltip.visible = true
-				_tooltip_text.text = (tooltip_for(out, c) if out else String(r.output)) + \
-					("\nClick: craft 1, Shift + click: 10" if miss.is_empty() else "\nNeed: " + ", ".join(miss))
-				_tooltip.reset_size()
-				_tooltip.position = _grid.get_global_mouse_position() + Vector2(10, 8)
-				return
+				if h[1] < recipes().size():
+					var r: RecipeData = recipes()[h[1]]
+					item = ItemData.find(r.output)
+					extra = "\nDouble click: craft 1"
 	_tooltip.visible = item != null
 	if item == null:
 		return
-	_tooltip_text.text = tooltip_for(item, world.character)
+	_tooltip_text.text = tooltip_for(item, world.character) + extra
 	_tooltip.reset_size()
-	_tooltip.position = _grid.get_global_mouse_position() + Vector2(10, 8)
+	var at := over.get_global_mouse_position() + Vector2(10, 8)
+	var view := _view_size()
+	at.x = minf(at.x, view.x - _tooltip.size.x - 2)
+	at.y = minf(at.y, view.y - _tooltip.size.y - 2)
+	_tooltip.position = at
 
 
 static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
@@ -948,7 +1255,7 @@ func _on_picked_up(item_id: StringName, count: int) -> void:
 	if note == null or not is_instance_valid(note):
 		note = Label.new()
 		note.add_theme_font_size_override("font_size", 8)
-		note.add_theme_color_override("font_color", TEXT)
+		note.add_theme_color_override("font_color", UiSkin.TEXT)
 		note.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
 		_notes.add_child(note)
 		_note_labels[item_id] = note

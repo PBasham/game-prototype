@@ -189,8 +189,8 @@ func _objects() -> Array[ObjectDef]:
 	filler.style = ObjectDef.Style.FURNITURE
 	out.append(filler)
 	# [id, name, w, h, station, frames file]
-	for f: Array in [[&"workbench", "Workbench", 3, 2, &"workbench"], [&"furnace", "Furnace", 3, 3, &"furnace"],
-			[&"copper_anvil", "Copper Anvil", 2, 2, &"anvil"], [&"chest", "Chest", 2, 2, &""],
+	for f: Array in [[&"workbench", "Workbench", 5, 4, &"workbench"], [&"furnace", "Furnace", 4, 5, &"furnace"],
+			[&"copper_anvil", "Copper Anvil", 3, 3, &"anvil"], [&"chest", "Chest", 3, 3, &""],
 			[&"door", "Door", 1, 8, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
@@ -206,7 +206,7 @@ func _objects() -> Array[ObjectDef]:
 		out.append(o)
 	out[2].light_radius = 6.0  # the furnace glows
 	out[2].light_color = Color(1.0, 0.6, 0.3)
-	out[4].container_slots = Inventory.SIZE
+	out[4].container_slots = 40
 	out[5].blocks_movement = true
 	out[5].toggles_to = &"door_open"
 	var open := out[5].duplicate() as ObjectDef

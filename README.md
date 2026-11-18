@@ -21,8 +21,9 @@ Docs:
 ## Getting started
 
 1. Open Godot, choose **Import**, select this folder's `project.godot`.
-2. Press **F5** to run. The main menu opens: **New World**, **Load World**, and in
-   debug builds **Test Course** (movement test course) and **Doll Viewer**.
+2. Press **F5** to run. The main menu opens: **Play** (pick or make a character, then
+   pick or make a world), and in debug builds **Test Course** (movement test course)
+   and **Doll Viewer**.
 3. **F3** toggles the debug overlay (FPS, position, speed, chunks, last fall).
 
 ## Controls (current)
@@ -39,7 +40,8 @@ Docs:
 | Left click | Use the held item on the front layer: mine, chop, place, swing, cast; punch with empty hands |
 | Right click | Interact with what's under the cursor; otherwise the back layer (place background walls, mine them) |
 | E | Interact with the nearest thing (station, chest, door, pickup) |
-| I or Tab | Inventory, equipment (book, conduit), spells and crafting |
+| I or Tab | Inventory, equipment (book, conduit) and spells |
+| K | Crafting window (by hand; right click a station for its own list) |
 | R | Tap: spellbook out / away. Hold: spell wheel |
 | Ctrl + mouse wheel | Mining / placing area |
 | Q | Throw the selected stack |
@@ -107,6 +109,10 @@ tools/     editor-time scripts (placeholder generation, etc.)
   ```
   godot --headless --path . --script res://tools/make_item_art.gd
   godot --headless --path . --script res://tools/make_items.gd
+  ```
+- **UI art** (placeholders, see [docs/guide.md](docs/guide.md#ui-look)):
+  ```
+  godot --headless --path . --script res://tools/make_ui_art.gd
   ```
 
 ## Scripted runs and screenshots

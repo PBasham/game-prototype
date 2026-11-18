@@ -67,6 +67,8 @@ func _process(delta: float) -> void:
 		_playing_time += delta
 		if _playing_time > 2.0:
 			PerfStats.add("frame", int(delta * 1000000.0))
+	if DevCli.hide_overlay:
+		visible = false  # --overlay=off (DevCli is set up after this autoload)
 	if not visible:
 		return
 	_since_refresh += delta

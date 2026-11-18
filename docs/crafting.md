@@ -32,16 +32,18 @@ They're seeded with the flowers: some flower spots become pickups instead.
 
 ## Crafting window
 
-Open the inventory (I or Tab). The crafting column is to the right of the equipment
-column. With nothing open it shows **hand recipes**; right click a station in the
-world to see that station's list instead (it closes when you walk out of reach).
+A separate window on the right side of the screen (the inventory opens with it, top
+left). **K** (or the **Craft (K)** button in the inventory) opens **hand crafting**;
+right click (or E) a station to open that station's list instead. The window closes
+with its **x**, K, Esc, closing the inventory, or walking out of reach.
 
-- Each row: the output icon and name, then the inputs with counts (red when you're
-  short). A required tool shows **keep** (it isn't used up). "xN" on the right is how
-  many you can make right now.
-- **Click** a row to craft 1, **Shift+click** to craft 10 (or as many as you can).
-  Anything that doesn't fit in your inventory drops at your feet.
-- Mouse wheel scrolls the list. Hovering shows what's missing.
+- **Left:** the recipe list. Each row is the output icon and name; the green number is
+  how many you can make right now; rows you can't make are dimmed. Mouse wheel scrolls.
+- **Right:** the selected recipe: a big icon, the description, **Needs** (have / need,
+  green or red) and **Tools (kept)** (required, not used up).
+- **Craft** makes 1, **x10** makes up to 10, **All (N)** makes as many as you can.
+  Double click a row to make 1. Anything that doesn't fit in your inventory drops at
+  your feet.
 
 ### Recipes: `data/recipes/<id>.tres` (`RecipeData`, `src/items/recipe_data.gd`)
 
@@ -99,15 +101,20 @@ can't mine the floor under furniture.
 
 | Object | Size | Notes |
 | --- | --- | --- |
-| Workbench | 3x2 | Station `workbench` |
-| Furnace | 3x3 | Station `furnace`, gives orange light (radius 6) |
-| Copper Anvil | 2x2 | Station `anvil` |
-| Chest | 2x2 | 40 slots |
+| Workbench | 5x4 | Station `workbench`. Its top is at hip height (the Scholar is 8 tiles tall). |
+| Furnace | 4x5 | Station `furnace`, gives orange light (radius 6) |
+| Copper Anvil | 3x3 | Station `anvil`, on a stump |
+| Chest | 3x3 | 40 slots |
 | Door | 1x8 | Right click opens and closes. Won't close on you. |
 
-- **Chests:** right click opens the chest grid in place of the magic sections. Click
-  to move items like the inventory; Shift+click moves a whole stack between chest and
-  inventory. A chest with something in it can't be broken. Contents save with the world.
+- **Chests:** right click opens the chest in its own window on the right (the inventory
+  opens too). Click to move items like the inventory; Shift+click moves a whole stack
+  between chest and inventory. **Take all** empties the chest into your inventory;
+  **Deposit all** puts in everything below your hotbar. A chest with something in it
+  can't be broken. Contents save with the world. A chest's size is its
+  `container_slots`.
+- Furniture is at most 8x8 tiles (`World.MAX_FURNITURE`). Furniture placed before a
+  size change keeps its old filler tiles; mine it and place it again.
 - **Station tiers:** a station with `upgrade_to` shows an **Upgrade** row at the bottom
   of its list; it costs `upgrade_cost` and replaces the station in place with the next
   tier. Recipes with a higher `station_tier` only show at that tier. No station has an

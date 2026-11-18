@@ -1,22 +1,31 @@
 class_name Inventory
 extends RefCounted
-## A character's 40 item slots. Slots 0..9 are the hotbar (the top row of the panel).
+## Item slots: a character's inventory (40 by default, slots 0..9 are the hotbar, the
+## top row of the panel) or a chest. The size is set when it's made, so a smaller
+## starting inventory or bags that add rows only change the number.
 ## A slot is empty when its id is &"". Items are referenced by id (ItemData.find), so a
 ## save keeps working when an item's stats change.
 
 signal changed
 
-const SIZE := 40
+const DEFAULT_SIZE := 40
 const HOTBAR := 10
 
+## Number of slots.
+var size := DEFAULT_SIZE
 var ids: Array[StringName] = []
 var counts: PackedInt32Array = PackedInt32Array()
 
 
-func _init() -> void:
-	ids.resize(SIZE)
-	ids.fill(&"")
-	counts.resize(SIZE)
+func _init(slots: int = DEFAULT_SIZE) -> void:
+	resize(slots)
+
+
+## Changes the number of slots (items in removed slots are lost: move them first).
+func resize(slots: int) -> void:
+	size = maxi(slots, 1)
+	ids.resize(size)  # new slots are &"" (empty)
+	counts.resize(size)
 
 
 func is_empty(slot: int) -> bool:
@@ -38,14 +47,14 @@ func add(item_id: StringName, count: int) -> int:
 	if count <= 0 or item_id == &"":
 		return 0
 	var cap := max_stack(item_id)
-	for i in SIZE:
+	for i in size:
 		if count == 0:
 			break
 		if ids[i] == item_id and counts[i] < cap:
 			var n := mini(count, cap - counts[i])
 			counts[i] += n
 			count -= n
-	for i in SIZE:
+	for i in size:
 		if count == 0:
 			break
 		if is_empty(i):
@@ -61,7 +70,7 @@ func add(item_id: StringName, count: int) -> int:
 func room_for(item_id: StringName) -> int:
 	var cap := max_stack(item_id)
 	var room := 0
-	for i in SIZE:
+	for i in size:
 		if is_empty(i):
 			room += cap
 		elif ids[i] == item_id:
@@ -70,7 +79,7 @@ func room_for(item_id: StringName) -> int:
 
 
 func is_all_empty() -> bool:
-	for i in SIZE:
+	for i in size:
 		if not is_empty(i):
 			return false
 	return true
@@ -80,7 +89,7 @@ func is_all_empty() -> bool:
 ## used last). Returns how many were taken.
 func remove(item_id: StringName, count: int) -> int:
 	var taken := 0
-	for i in range(SIZE - 1, -1, -1):
+	for i in range(size - 1, -1, -1):
 		if taken >= count:
 			break
 		if ids[i] == item_id:
@@ -96,7 +105,7 @@ func remove(item_id: StringName, count: int) -> int:
 
 func count_of(item_id: StringName) -> int:
 	var total := 0
-	for i in SIZE:
+	for i in size:
 		if ids[i] == item_id:
 			total += counts[i]
 	return total
@@ -131,7 +140,7 @@ func clear(slot: int) -> void:
 
 func to_dict() -> Dictionary:
 	var slots: Array = []
-	for i in SIZE:
+	for i in size:
 		var keep := not is_empty(i) and not ItemData.is_runtime(ids[i])  # dev items aren't saved
 		slots.append([String(ids[i]), counts[i]] if keep else [])
 	return {"slots": slots}
@@ -140,7 +149,9 @@ func to_dict() -> Dictionary:
 ## Unknown item ids (removed content) are dropped with a warning.
 func from_dict(d: Dictionary) -> void:
 	var slots: Array = d.get("slots", [])
-	for i in SIZE:
+	if not slots.is_empty():
+		resize(slots.size())  # the saved size wins (bags may have grown it)
+	for i in size:
 		clear(i)
 		if i < slots.size() and (slots[i] as Array).size() == 2:
 			var item_id := StringName(slots[i][0])

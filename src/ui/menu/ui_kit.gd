@@ -1,10 +1,11 @@
 class_name UiKit
 extends RefCounted
-## Small helpers so every menu looks the same. Placeholder look until real UI art exists.
+## Small helpers so every menu looks the same. The look itself is UiSkin (its Theme is
+## set on the root window by the Game autoload).
 
-const PANEL := Color(0.08, 0.09, 0.1, 0.86)
-const TEXT := Color("f2ead8")
-const DIM := Color("a8a090")
+const TEXT := UiSkin.TEXT
+const DIM := UiSkin.DIM
+const GOLD := UiSkin.GOLD
 
 
 static func label(text: String, size: int = 10, color: Color = TEXT) -> Label:
@@ -29,13 +30,10 @@ static func button(text: String, on_press: Callable, width: float = 140.0) -> Bu
 static func panel(parent: Node, min_width: float = 180.0) -> VBoxContainer:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.theme = UiSkin.theme()
 	parent.add_child(center)
 	var p := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = PANEL
-	style.set_corner_radius_all(3)
-	style.set_content_margin_all(10)
-	p.add_theme_stylebox_override("panel", style)
+	p.add_theme_stylebox_override("panel", UiSkin.box("panel", 12.0))
 	p.custom_minimum_size = Vector2(min_width, 0)
 	center.add_child(p)
 	var box := VBoxContainer.new()

@@ -20,9 +20,9 @@ static func add_to(c: CharacterData) -> void:
 	for item_id: StringName in [&"dev_grimoire", &"dev_focus", &"dev_tome"]:
 		if inv.count_of(item_id) > 0 or c.equipment.values().has(item_id):
 			continue
-		while slot < Inventory.SIZE and not inv.is_empty(slot):
+		while slot < inv.size and not inv.is_empty(slot):
 			slot += 1
-		if slot >= Inventory.SIZE:
+		if slot >= inv.size:
 			break
 		inv.set_slot(slot, item_id, 1)
 	c.learn_spell(&"dev_wide_beam")

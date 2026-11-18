@@ -157,9 +157,10 @@ func _register() -> void:
 		_list(_all_spells(), " ".join(a)))
 	_add("learn", "learn <spell>", "Learn a spell (it also goes in a free book slot).", _learn)
 	_add("forget", "forget <spell>", "Forget a spell.", _forget)
+	_add("color", "color <group> <hex|reset>", "Recolor the character: skin, hair, tunic, trim, pants, leather (saved).", _color)
 	_add("equip", "equip <book or conduit>", "Equip a book or conduit (no item needed).", _equip)
 	_add("clear", "clear", "Empty the inventory.", func(_a: PackedStringArray) -> void:
-		for i in Inventory.SIZE:
+		for i in world.character.inventory.size:
 			world.character.inventory.clear(i)
 		world.character.inventory.changed.emit()
 		_print("Inventory emptied."))
@@ -256,6 +257,22 @@ func _forget(a: PackedStringArray) -> void:
 	c.known_spells.erase(spell.id)
 	c.magic_changed.emit()
 	_print("Forgot %s." % spell.display_name)
+
+
+func _color(a: PackedStringArray) -> void:
+	if a.size() < 2:
+		_print("Usage: color <skin|hair|tunic|trim|pants|leather> <hex like 3a7a3a, or reset>")
+		return
+	var c := world.character
+	if a[1] == "reset":
+		c.colors.erase(StringName(a[0]))
+	elif Color.html_is_valid(a[1]):
+		c.colors[StringName(a[0])] = Color.html(a[1])
+	else:
+		_print("Not a color: %s" % a[1])
+		return
+	world.player.look = c.make_look()
+	_print("%s is now %s." % [a[0], a[1]])
 
 
 func _equip(a: PackedStringArray) -> void:

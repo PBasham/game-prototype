@@ -21,6 +21,8 @@ extends Node
 ##   --scene=doll            open a dev scene instead of a world (doll = Doll Viewer)
 ##   --menu                  stay on the main menu (otherwise any of these arguments
 ##                           skips the menu and starts a temporary, unsaved world)
+##   --menu=PAGE             open a menu page: characters, new_character, worlds
+##   --overlay=off           hide the F3 debug overlay for this run (screenshots)
 
 var _frame := 0
 var _shots: Array[Array] = []
@@ -37,6 +39,10 @@ var _world_kind := "forest"
 var _seed_text := "1337"
 var _size_name := "small"
 var _menu := false
+## Menu page to open (--menu=PAGE), or "".
+var menu_page := ""
+## Hide the debug overlay (--overlay=off).
+var hide_overlay := false
 ## Dev scene to open instead of a world ("doll"), or "".
 var scene_override := ""
 var _any_args := false
@@ -50,7 +56,7 @@ func _ready() -> void:
 		if parts[0] == "perf":
 			_perf = true
 			continue
-		if parts[0] == "menu":
+		if parts[0] == "menu" and parts.size() == 1:
 			_menu = true
 			continue
 		if parts.size() < 2:
@@ -81,6 +87,11 @@ func _ready() -> void:
 				scene_override = parts[1]
 			"console":
 				_console.append([int(v[0]), ":".join(v.slice(1))])
+			"menu":
+				_menu = true
+				menu_page = parts[1]
+			"overlay":
+				hide_overlay = parts[1] == "off"
 			"aim":
 				_aim = Vector2(float(v[0]), float(v[1]))
 	set_physics_process(not (_shots.is_empty() and _holds.is_empty() and _quit_at < 0 and _log_every == 0

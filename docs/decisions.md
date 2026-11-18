@@ -2,6 +2,24 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Phase 6, characters and UI
+
+- Character select and creation moved up (was Phase 7). Menu: Play, character page,
+  world page. Any character plays any world. Each character is its own save file.
+- Character creation: name, hairstyle, a color per palette group (swatches plus hue,
+  saturation, lightness sliders), Randomize, live doll preview. No difficulty modes yet.
+- Crafting and chests are separate windows on the right side of the screen, apart from
+  the inventory. Hand crafting opens with K (C is walk), or the Craft button.
+- Crafting window: list on the left, selected recipe details on the right, Craft / x10
+  / All buttons. Chests get Take all and Deposit all.
+- Stations scaled to the Scholar: Workbench 5x4 (hip height), Furnace 4x5, Anvil 3x3 on
+  a stump, Chest 3x3. Doors stay 1x8.
+- UI look: Scholar theme (leather, wood, brass, parchment), nine-slice placeholder art
+  in assets/ui from tools/make_ui_art.gd, drawn by UiSkin.
+- Inventory size is data (the character's inventory size), so a smaller start and
+  upgradeable bags later only change a number. Bags get a brief when we get there.
+- Fixed the paper doll's palette swap shader squaring the art's colors.
+
 ## 2026-11-17: Phase 5, crafting
 
 - Crafting is Starbound / Minecraft style: each station has its own recipe list; hand

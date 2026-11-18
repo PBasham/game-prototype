@@ -16,14 +16,16 @@ const WORLD_SCENE := "res://scenes/world/world.tscn"
 var state: State = State.BOOT
 ## The world to load or being played. Set by start_world(); read by World._ready().
 var world_info: WorldInfo
-## The character playing. Set by start_world() (the saved default character until
-## character select exists, Phase 7).
+## The character playing. Set by start_world() (the one picked on the main menu).
 var character: CharacterData
 
 
+func _ready() -> void:
+	get_tree().root.theme = UiSkin.theme()  # every menu and window uses the UI skin
+
+
 ## Loads a world (new or saved) and switches to the world scene.
-## `character` null = the saved default character (made with the starting kit the first
-## time).
+## `character` null = the saved "default" character (made empty the first time).
 func start_world(info: WorldInfo, playing: CharacterData = null) -> void:
 	world_info = info
 	character = playing if playing else CharacterData.load_or_create(CharacterData.DEFAULT_NAME)

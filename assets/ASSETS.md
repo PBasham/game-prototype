@@ -96,15 +96,29 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | objects/torch.png | 32x16: 4 frames of 8x16 (2 tiles tall): standing, on a block to the left, to the right, on a back wall |
 | items/{icons,held}/{stick,rock,flint,copper_bar,hand_hammer,stone_pickaxe,stone_axe}.png | Phase 5 materials and stone tools |
 | items/{icons,held}/{workbench,furnace,copper_anvil,chest,door}.png | furniture items |
-| objects/workbench.png | 24x16 (3x2 tiles) |
-| objects/furnace.png | 24x24 (3x3 tiles), glows orange in game |
-| objects/copper_anvil.png, objects/chest.png | 16x16 (2x2 tiles) |
+| objects/workbench.png | 40x32 (5x4 tiles), top at hip height |
+| objects/furnace.png | 32x40 (4x5 tiles), glows orange in game |
+| objects/copper_anvil.png, objects/chest.png | 24x24 (3x3 tiles); the anvil sits on a stump |
 | objects/door.png | 16x64: 2 frames of 8x64 (1x8 tiles): closed, open |
 | decor/pickup_{stick,rock,flint}.png | 8x6, lying on the grass, bottom-centered |
 | fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |
 
 Replace any of these with real art under the same name; if the size changes, check the
 item's `held.grip` (the pixel the hand holds).
+
+## UI: `ui/` (placeholders from tools/make_ui_art.gd)
+
+Nine-slice images drawn by `UiSkin` (src/ui/ui_skin.gd). The number is the margin (px
+from each edge that doesn't stretch); change it in `UiSkin.MARGINS` if real art differs.
+
+| File | Size | Margin | Notes |
+| --- | --- | --- | --- |
+| ui/panel.png | 32x32 | 8 | Window frame: wood border, brass line and corner studs, leather inside |
+| ui/title.png | 24x14 | 6 | Parchment title strip (text is dark ink) |
+| ui/slot.png, slot_hot.png, slot_selected.png, slot_magic.png | 20x20 | 4 | Item slot: normal, hovered, selected (brass), spell / equipment |
+| ui/button.png, button_hot.png, button_pressed.png, button_disabled.png | 24x16 | 5 | Wood plank buttons |
+| ui/row_hot.png | 12x12 | 3 | Highlighted list row |
+| ui/field.png | 16x16 | 4 | Text field and slider track |
 
 ## Backdrop: `backdrop/*.png`
 

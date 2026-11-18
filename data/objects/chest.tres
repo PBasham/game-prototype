@@ -7,8 +7,8 @@
 script = ExtResource("2_vk67m")
 frames = ExtResource("1_24kct")
 style = 2
-height_tiles = 2
-width_tiles = 2
+height_tiles = 3
+width_tiles = 3
 needs_floor = true
 container_slots = 40
 health = 1.0

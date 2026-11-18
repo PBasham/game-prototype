@@ -48,7 +48,7 @@ func test_inventory_stacks_and_fills_hotbar_first() -> void:
 
 func test_inventory_full() -> void:
 	var inv := Inventory.new()
-	for i in Inventory.SIZE:
+	for i in inv.size:
 		inv.set_slot(i, &"copper_axe", 1)
 	assert_eq(inv.room_for(&"dirt"), 0)
 	assert_eq(inv.add(&"dirt", 5), 5, "nothing fits")

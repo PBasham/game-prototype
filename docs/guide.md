@@ -37,10 +37,21 @@ in [items-and-mining.md](items-and-mining.md); crafting, stations, furniture and
 
 **Main menu** (`scenes/menu/main_menu.tscn`, code `src/ui/menu/main_menu.gd`):
 
-- **New World:** name, size (Small / Medium / Large) and seed. The seed can be any
-  number or word; blank picks a random one. The same seed always makes the same world.
-- **Load World:** saved worlds, most recently played first, with Delete.
-- **Test Course** (debug builds only): the Phase 1 movement course. Never saved.
+- **Play:** pick a character, then a world (Terraria style: any character can play any
+  world).
+  - **Characters:** every saved character with a live preview (hover a name), Delete
+    (asks first), and **New Character**.
+  - **New Character:** name, hairstyle (`<` `>`, includes bald), and a color for each
+    palette group (skin, hair, tunic, trim, pants, boots and belt): click a swatch, or
+    pick the group and fine tune it with the Hue / Color / Light sliders. Randomize
+    picks from the swatches. The preview is the real paper doll. Swatch lists are the
+    `*_PRESETS` constants in `main_menu.gd`; hairstyles are the .png files in
+    `assets/sprites/hair/`.
+  - **Worlds:** saved worlds (most recently played first) with Delete, and **New
+    World**: name, size (Small / Medium / Large) and seed. The seed can be any number
+    or word; blank picks a random one. The same seed always makes the same world.
+- **Test Course** (debug builds only): the Phase 1 movement course with a throwaway dev
+  character. Never saved.
 - **Doll Viewer** (debug builds only): every arm mode side by side, drawn vs
   code-posed, with recolor and hair buttons.
 - **Quit.**
@@ -54,7 +65,7 @@ inventory first if it's open.
 path) and calls `Game.start_world(info)`, which switches to `scenes/world/world.tscn`.
 `World._ready()` reads `Game.world_info`, creates the generator for that kind, loads
 any saved chunks, and spawns the player. The character comes from `Game.character`
-(the saved default character; see [items-and-mining.md](items-and-mining.md)).
+(the one picked on the character page; see [items-and-mining.md](items-and-mining.md)).
 
 **Saves** (`src/world/world_save.gd`): one file per world in `user://worlds/`
 (on Windows: `%APPDATA%\Godot\app_userdata\game-prototype\worlds\`). A world file
@@ -227,7 +238,7 @@ Debug builds only (running from the editor counts).
 | **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
-| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `dummy` / `dummy clear` (a training dummy for damage spells), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
+| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `color <group> <hex|reset>` (recolor your character, saved), `dummy` / `dummy clear` (a training dummy for damage spells), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |
 
@@ -272,6 +283,23 @@ every asset, its size and layout.
   (`-- --export=game`; add `--wood=A|B|C` to pick the wood variant).
 - **Item icons and held sprites, sapling, crack overlay:** placeholders from
   `tools/make_item_art.gd`. Replace the PNGs with yours (same names).
+
+## UI look
+
+Every window, slot and button is drawn by `UiSkin` (`src/ui/ui_skin.gd`) from nine-slice
+images in `assets/ui/` (Scholar theme: leather, wood, brass, parchment). They're
+placeholders from `tools/make_ui_art.gd`; replace any file with real art of the same
+size, or change its margin in `UiSkin.MARGINS`. Text colors (`TEXT`, `DIM`, `GOLD`,
+`INK` for parchment titles) are constants there too. Menus built from Controls get the
+same look through `UiSkin.theme()`.
+
+```
+godot --headless --path . --script res://tools/make_ui_art.gd
+```
+
+In game, the HUD (`src/ui/hud/hud.gd`) has the inventory panel top left and separate
+windows on the right (crafting, chests); their gap from the screen edge is the `Hud`
+exports `window_right` and `window_top`.
 
 ## Content as data
 

@@ -431,57 +431,112 @@ func _fill(img: Image, r: Rect2i, c: Color) -> void:
 	img.fill_rect(r, c)
 
 
-## Workbench 3x2 tiles (24x16): a plank top on two legs, a saw and a hammer on it.
+## Wood planks with grain, for furniture.
+func _planks(img: Image, r: Rect2i, base: Color, horizontal: bool = true) -> void:
+	for y in range(r.position.y, r.end.y):
+		for x in range(r.position.x, r.end.x):
+			var along := x if horizontal else y
+			var across := y - r.position.y if horizontal else x - r.position.x
+			var c := base
+			if across % 4 == 3:
+				c = base.darkened(0.25)  # seam between boards
+			elif (along * 7 + across * 13) % 11 == 0:
+				c = base.darkened(0.1)  # grain
+			elif across % 4 == 0:
+				c = base.lightened(0.1)
+			img.set_pixel(x, y, c)
+
+
+## Workbench 5x4 tiles (40x32): a thick plank top at hip height, legs with a shelf,
+## a saw and a hammer on top, a vise on the end.
 func _workbench() -> Image:
-	var img := Image.create_empty(24, 16, false, Image.FORMAT_RGBA8)
-	_fill(img, Rect2i(0, 6, 24, 3), Color("a07a4a"))
-	_fill(img, Rect2i(0, 8, 24, 1), Color("6e5030"))
-	_fill(img, Rect2i(2, 9, 3, 7), Color("7a5a36"))
-	_fill(img, Rect2i(19, 9, 3, 7), Color("7a5a36"))
-	_fill(img, Rect2i(5, 12, 14, 1), Color("6e5030"))
-	_fill(img, Rect2i(4, 3, 7, 2), Color("b4b4ae"))  # saw blade
-	_fill(img, Rect2i(10, 3, 2, 3), Color("7a5a36"))
-	_fill(img, Rect2i(15, 2, 4, 2), Color("8a8a86"))  # hammer head
-	_fill(img, Rect2i(16, 4, 1, 2), Color("7a5a36"))
+	var img := Image.create_empty(40, 32, false, Image.FORMAT_RGBA8)
+	var wood := Color("a07a4a")
+	var dark := Color("6e5030")
+	# Legs and the lower shelf.
+	for x: int in [2, 34]:
+		_planks(img, Rect2i(x, 12, 4, 20), Color("7a5a36"), false)
+	_planks(img, Rect2i(4, 22, 32, 3), Color("8a6840"))
+	_fill(img, Rect2i(4, 25, 32, 1), dark)
+	_fill(img, Rect2i(8, 19, 6, 3), Color("b4b4ae"))  # a box of nails on the shelf
+	_fill(img, Rect2i(8, 19, 6, 1), Color("d4d4ce"))
+	# Top.
+	_planks(img, Rect2i(0, 8, 40, 4), wood)
+	_fill(img, Rect2i(0, 8, 40, 1), wood.lightened(0.2))
+	_fill(img, Rect2i(0, 12, 40, 1), dark)
+	# Vise on the right end.
+	_fill(img, Rect2i(36, 5, 4, 3), Color("6a6a66"))
+	_fill(img, Rect2i(37, 12, 2, 4), Color("6a6a66"))
+	# Saw.
+	_fill(img, Rect2i(6, 6, 12, 2), Color("c4c4be"))
+	_fill(img, Rect2i(6, 6, 12, 1), Color("e4e4de"))
+	_fill(img, Rect2i(17, 4, 4, 4), Color("8a5a30"))
+	# Hammer.
+	_fill(img, Rect2i(24, 3, 6, 3), Color("8a8a86"))
+	_fill(img, Rect2i(26, 6, 2, 2), Color("7a5a36"))
+	_fill(img, Rect2i(24, 3, 6, 1), Color("aaaaa6"))
 	return img
 
 
-## Furnace 3x3 tiles (24x24): a stone dome with a glowing mouth.
+## Furnace 4x5 tiles (32x40): a stone kiln with a chimney and a glowing mouth.
 func _furnace() -> Image:
-	var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
-	for y in 24:
-		for x in 24:
-			var d := Vector2((x - 11.5) / 11.5, (y - 23.0) / 22.0).length()
-			if d < 1.0:
-				var c := Color("7a7a76") if (x / 4 + y / 3) % 2 == 0 else Color("6a6a66")
-				img.set_pixel(x, y, c)
-	_fill(img, Rect2i(7, 14, 10, 9), Color("2a1a14"))
-	_fill(img, Rect2i(8, 17, 8, 6), Color("e8601c"))
-	_fill(img, Rect2i(9, 19, 6, 4), Color("ffc94a"))
-	_fill(img, Rect2i(10, 2, 4, 3), Color("4a4a48"))  # chimney
+	var img := Image.create_empty(32, 40, false, Image.FORMAT_RGBA8)
+	# Body: rounded stone, bricks in offset rows.
+	for y in range(8, 40):
+		for x in 32:
+			var d := Vector2((x - 15.5) / 15.5, (y - 39.0) / 31.0).length()
+			if d >= 1.0:
+				continue
+			var row := y / 4
+			var brick := (x + (row % 2) * 3) / 6
+			var c := Color("7a7a76") if (brick + row) % 2 == 0 else Color("6e6e6a")
+			if y % 4 == 0 or (x + (row % 2) * 3) % 6 == 0:
+				c = Color("56564f")  # mortar
+			c = c.lightened(0.12 * (1.0 - float(x) / 32.0))  # light from the left
+			img.set_pixel(x, y, c)
+	# Chimney.
+	for y in 10:
+		for x in range(12, 20):
+			img.set_pixel(x, y, Color("5a5a56") if (x + y) % 3 else Color("4a4a46"))
+	_fill(img, Rect2i(11, 0, 10, 2), Color("6a6a66"))
+	# Mouth.
+	_fill(img, Rect2i(8, 24, 16, 14), Color("2a1a14"))
+	_fill(img, Rect2i(9, 28, 14, 10), Color("c84a14"))
+	_fill(img, Rect2i(10, 31, 12, 7), Color("e8801c"))
+	_fill(img, Rect2i(12, 34, 8, 4), Color("ffd060"))
+	_fill(img, Rect2i(7, 23, 18, 1), Color("8a8a86"))  # lintel
+	_fill(img, Rect2i(6, 38, 20, 2), Color("4a4a46"))  # hearth
 	return img
 
 
-## Copper anvil 2x2 tiles (16x16).
+## Copper anvil 3x3 tiles (24x24) on a stump.
 func _anvil() -> Image:
-	var img := Image.create_empty(16, 16, false, Image.FORMAT_RGBA8)
-	_fill(img, Rect2i(1, 6, 14, 3), Color("c87a3e"))
-	_fill(img, Rect2i(0, 6, 3, 2), Color("c87a3e"))
-	_fill(img, Rect2i(1, 6, 14, 1), Color("eaa868"))
-	_fill(img, Rect2i(5, 9, 6, 3), Color("a8602c"))
-	_fill(img, Rect2i(3, 12, 10, 4), Color("8a4e24"))
+	var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
+	_planks(img, Rect2i(6, 13, 12, 11), Color("7a5a36"), false)  # stump
+	_fill(img, Rect2i(5, 13, 14, 2), Color("a07a4a"))  # cut top
+	_fill(img, Rect2i(7, 13, 10, 1), Color("c09a6a"))
+	# Anvil.
+	_fill(img, Rect2i(2, 4, 19, 4), Color("c87a3e"))
+	_fill(img, Rect2i(0, 4, 4, 2), Color("c87a3e"))  # horn
+	_fill(img, Rect2i(0, 6, 2, 1), Color("a8602c"))
+	_fill(img, Rect2i(2, 4, 19, 1), Color("eaa868"))
+	_fill(img, Rect2i(8, 8, 8, 3), Color("a8602c"))
+	_fill(img, Rect2i(6, 11, 12, 2), Color("8a4e24"))
 	return img
 
 
-## Chest 2x2 tiles (16x16).
+## Chest 3x3 tiles (24x24).
 func _chest() -> Image:
-	var img := Image.create_empty(16, 16, false, Image.FORMAT_RGBA8)
-	_fill(img, Rect2i(1, 4, 14, 12), Color("8a5a30"))
-	_fill(img, Rect2i(1, 4, 14, 4), Color("a06a38"))
-	_fill(img, Rect2i(1, 8, 14, 1), Color("4a3018"))
-	for x: int in [1, 14]:
-		_fill(img, Rect2i(x, 4, 1, 12), Color("b4b4ae"))  # metal corners
-	_fill(img, Rect2i(7, 7, 2, 3), Color("e8c860"))  # latch
+	var img := Image.create_empty(24, 24, false, Image.FORMAT_RGBA8)
+	_planks(img, Rect2i(1, 4, 22, 20), Color("8a5a30"))
+	_planks(img, Rect2i(1, 4, 22, 7), Color("a06a38"))  # lid
+	_fill(img, Rect2i(1, 4, 22, 1), Color("b88048"))
+	_fill(img, Rect2i(1, 11, 22, 1), Color("4a3018"))
+	for x: int in [1, 21]:
+		_fill(img, Rect2i(x, 4, 2, 20), Color("9a9a96"))  # metal bands
+		_fill(img, Rect2i(x, 4, 1, 20), Color("c4c4be"))
+	_fill(img, Rect2i(10, 9, 4, 5), Color("c8a040"))  # latch
+	_fill(img, Rect2i(11, 11, 2, 2), Color("4a3018"))
 	return img
 
 

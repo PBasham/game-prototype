@@ -39,6 +39,10 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Items: `data/items/`, spells: `data/spells/`, objects: `data/objects/`, recipes: `data/recipes/`,
   defaults from `tools/make_items.gd` (same `--force` rule; `--only=a,b`);
   placeholder icons, held sprites, sapling and cracks from `tools/make_item_art.gd`.
+- UI look: `UiSkin` (src/ui/ui_skin.gd) with nine-slice art in `assets/ui/` from
+  `tools/make_ui_art.gd`. Draw every new window, slot and button with it.
+- Screenshots of menus: `-- --menu=characters` (or `new_character`, `worlds`); add
+  `--overlay=off` to hide the F3 overlay.
 - Scripted runs can aim with `--aim=DX:DY` (offset from the chest) for mining shots.
 - Terrain, trees, backdrop: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game` (style V5 = "t5")
 - Tile size is 8 px (`World.TILE`). The Scholar is ~3 tiles wide, ~8 tall.

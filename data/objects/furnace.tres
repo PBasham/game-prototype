@@ -7,8 +7,8 @@
 script = ExtResource("2_d7oiq")
 frames = ExtResource("1_valkc")
 style = 2
-height_tiles = 3
-width_tiles = 3
+height_tiles = 5
+width_tiles = 4
 needs_floor = true
 station = &"furnace"
 light_color = Color(1, 0.6, 0.3, 1)
