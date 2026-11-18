@@ -9,8 +9,12 @@ Newest first. Each entry: what was decided, why, and what it affects.
   0.5/s.
 - Doors are sized to the Scholar: closed is a thick slab edge on in the doorway, open
   shows the door's face 3 tiles wide, starting at its hinge (the doorway's edge).
-- Light doesn't go through walls: blocks cost 0.34 light per tile (was 0.1), and
-  torches 10 times more through blocks than air (was 3).
+- Light doesn't go through walls: sunlight still soaks down into the ground (0.1 per
+  block) but stops going sideways or up into blocks (0.5) and can't come out of a block
+  into a walled room or cave. Torches lose 10 times more through blocks than air, and
+  closed doors block light.
+- Doors only open where the door has room to swing (no blocks or objects there).
+- Background walls are drawn darker and greyer than blocks.
 
 ## 2026-11-17: Phase 6, health, hunger and dying
 

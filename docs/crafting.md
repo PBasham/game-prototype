@@ -112,7 +112,7 @@ can't mine the floor under furniture.
 | Furnace | 4x5 | Station `furnace`, gives orange light (radius 6) |
 | Copper Anvil | 3x3 | Station `anvil`, on a stump |
 | Chest | 3x3 | 40 slots |
-| Door | 1x8 | Right click opens and closes. Starbound style, two images, same 1x8 footprint: `door.png` closed (the wall runs across the screen, so the door is seen edge on: a thick slab with iron straps under a lintel) and `door_open.png` open (it swung toward you, so you see its face, drawn 3 tiles wide starting at its hinge, the doorway's edge: `sprite_width_px` 24, `sprite_align` from the hinge side). `door_open_left` is the mirror, used when you open it from the right. Won't close on you. |
+| Door | 1x8 | Right click opens and closes. Starbound style, two images, same 1x8 footprint: `door.png` closed (the wall runs across the screen, so the door is seen edge on: a thick slab with iron straps under a lintel) and `door_open.png` open (it swung toward you, so you see its face, drawn 3 tiles wide starting at its hinge, the doorway's edge: `sprite_width_px` 24, `sprite_align` from the hinge side). `door_open_left` is the mirror, used when you open it from the right. It only opens where it has room to swing: if a block or another object is in the way it opens the other way, and if both sides are blocked it stays shut ("Something's in the way"). Won't close on you. |
 
 - **Chests:** right click opens the chest in its own window on the right (the inventory
   opens too). Click to move items like the inventory; Shift+click moves a whole stack

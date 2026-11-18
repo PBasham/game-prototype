@@ -39,6 +39,10 @@ class ChunkView:
 	var props: TileMapLayer
 	var dirty := false
 
+## Background walls are drawn this much darker than blocks (1 = as drawn) and this
+## much greyer, so blocks stand out from walls.
+@export_range(0.2, 1.0) var wall_shade := 0.62
+@export_range(0.0, 1.0) var wall_desat := 0.2
 ## Chunks loaded around the camera, in each direction.
 var load_radius := Vector2i(2, 2)
 ## Max finished chunks turned into nodes per frame (spreads the main-thread cost).
@@ -396,6 +400,8 @@ func _build_terrain_material() -> void:
 	_material.set_shader_parameter("grass_slots", grass)
 	_material.set_shader_parameter("built_slots", built)
 	_material.set_shader_parameter("built_walls", built_walls)
+	_material.set_shader_parameter("wall_shade", wall_shade)
+	_material.set_shader_parameter("wall_desat", wall_desat)
 	for i in GRASS_COLORS.size():
 		_material.set_shader_parameter("grass_%d" % i, Color(GRASS_COLORS[i]))
 

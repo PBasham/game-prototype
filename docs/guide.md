@@ -202,9 +202,11 @@ per pixel from a small texture of tile ids:
 | --- | --- | --- |
 | `ambient` | 0.16 | Darkest anything gets (so caves aren't pure black). |
 | `open_falloff` | 0.06 | Light lost per tile through air and walls. |
-| `solid_falloff` | 0.34 | Light lost per tile through blocks: a wall one block thick stops most light, and sunlight only soaks about 3 blocks into the ground. |
+| `solid_falloff` | 0.1 | Sunlight lost per block going down into the ground (how far the surface soaks). |
+| `solid_side_falloff` | 0.5 | Light lost going sideways or up into a block, so walls and roofs stop sunlight. |
+| `indoors_falloff` | 1.0 | Light lost coming out of a block into a walled space (a room, a cave): 1 = none gets in. Rooms get light through open doors, gaps and torches. |
 | `min_interval` | 0.12 | Minimum seconds between recomputes. |
-| `source_solid_factor` | 10 | Light sources (torches) lose this many times more reach per tile through blocks than through air, so a torch doesn't light the other side of a wall. |
+| `source_solid_factor` | 10 | Light sources (torches) lose this many times more reach per tile through blocks than through air, so a torch doesn't light the other side of a wall. Closed doors block light like blocks. |
 
 Open sky (no block and no wall) is the light source. The spread runs on a background
 thread (`LightJob`), so editing tiles never stalls the game; light catches up a fraction
@@ -285,6 +287,10 @@ every asset, its size and layout.
   (`-- --export=game`; add `--wood=A|B|C` to pick the wood variant).
 - **Item icons and held sprites, sapling, crack overlay:** placeholders from
   `tools/make_item_art.gd`. Replace the PNGs with yours (same names).
+
+**Background walls** are drawn darker and a little greyer than blocks so the front layer
+stands out: `wall_shade` (0.62) and `wall_desat` (0.2) on the `Chunks` node
+(ChunkRenderer).
 
 ## UI look
 

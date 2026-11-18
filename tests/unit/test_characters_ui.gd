@@ -161,6 +161,16 @@ func test_doors_open_in_place_away_from_the_player() -> void:
 	assert_eq(w.object_at(left).id, &"door_open_left", "player on the right: hinge on the right")
 	assert_true(w.request_toggle_object(left))
 	assert_eq(w.object_at(left).id, &"door")
+	# Blocks where it would swing: it opens the other way; blocked both ways, it stays shut.
+	for y in 8:
+		w.request_set_block(left + Vector2i(-2, -y), w.blocks.index_of(&"dirt"))
+	assert_true(w.request_toggle_object(left))
+	assert_eq(w.object_at(left).id, &"door_open", "blocked on the left: swings right")
+	assert_true(w.request_toggle_object(left))
+	for y in 8:
+		w.request_set_block(left + Vector2i(2, -y), w.blocks.index_of(&"dirt"))
+	assert_false(w.request_toggle_object(left), "blocked both ways")
+	assert_eq(w.object_at(left).id, &"door")
 
 
 func test_drops_are_sized_by_item() -> void:

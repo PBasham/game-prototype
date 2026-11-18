@@ -12,7 +12,12 @@ extends Sprite2D
 
 @export var ambient := 0.16
 @export var open_falloff := 0.06
-@export var solid_falloff := 0.34
+## Sunlight lost per block going down into the ground (how far the surface soaks).
+@export var solid_falloff := 0.1
+## Light lost going sideways or up into a block (walls and roofs stop sunlight).
+@export var solid_side_falloff := 0.5
+## Light lost coming out of a block into a walled space (a room or cave): 1 = none.
+@export var indoors_falloff := 1.0
 ## Light sources lose this many times more reach per tile through solid blocks than
 ## through air.
 @export var source_solid_factor := 10.0
@@ -105,6 +110,12 @@ func _make_job() -> LightJob:
 	job.sky = _last_sky
 	job.open_falloff = open_falloff
 	job.solid_falloff = solid_falloff
+	job.solid_side_falloff = solid_side_falloff
+	job.indoors_falloff = indoors_falloff
+	job.object_solid.resize(world.objects.size())
+	for id in range(1, world.objects.size()):
+		var od := world.objects.def(id) as ObjectDef
+		job.object_solid[id] = 1 if od and od.blocks_movement else 0
 	job.source_solid_factor = source_solid_factor
 	job.emitters.resize(world.objects.size() * 4)
 	for id in range(1, world.objects.size()):

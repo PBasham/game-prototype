@@ -5,7 +5,12 @@ extends RefCounted
 ## (copy-on-write, so later edits don't touch this copy) and uploads the result.
 ##
 ## Open sky (no block, no wall) is fully lit. Light fades by `open_falloff` per tile
-## through air and walls and by `solid_falloff` per tile through solid blocks.
+## through air and walls. Sunlight soaks down into the ground by `solid_falloff` per
+## block, but going sideways or up into a block costs `solid_side_falloff`, and coming
+## out of a block into an enclosed space (a tile with a background wall: a room, a
+## cave) costs `indoors_falloff`. So the sun lights the top of the ground but doesn't
+## shine through a house's walls or roof. Objects that block movement (closed doors)
+## block light like blocks.
 ## Light sources (torches: tile objects with a light_radius) add colored light that
 ## fades to nothing at their radius through air, faster through blocks. The result is
 ## RGB: white sky light plus the sources' colors.
@@ -30,6 +35,10 @@ var ambient := 0.16
 var sky := Color.WHITE
 var open_falloff := 0.06
 var solid_falloff := 0.1
+var solid_side_falloff := 0.5
+var indoors_falloff := 1.0
+## 1 where an object id blocks light (closed doors).
+var object_solid := PackedByteArray()
 
 # --- outputs ---
 ## rect.size.x * rect.size.y * 3 bytes, FORMAT_RGB8.
@@ -44,52 +53,57 @@ func run() -> void:
 	var h := rect.size.y
 	var cols := w / SIZE
 	var light := PackedFloat32Array()
-	var cost := PackedFloat32Array()
 	light.resize(w * h)
-	cost.resize(w * h)
-	cost.fill(solid_falloff)
 
-	# Seed: sky tiles are lit; each tile's falloff depends on whether it's solid.
+	# Seed: sky tiles are lit. Flags per tile: solid (blocks and closed doors), walled.
+	var solid_at := PackedByteArray()
+	var walled := PackedByteArray()
+	solid_at.resize(w * h)
+	solid_at.fill(1)  # not generated yet: dark
+	walled.resize(w * h)
 	for k in blocks.size():
 		var cb := blocks[k]
 		if cb.is_empty():
 			continue
 		var cw := walls[k]
+		var co := objects[k] if k < objects.size() else PackedInt32Array()
 		var base := (k / cols) * SIZE * w + (k % cols) * SIZE
 		for ly in SIZE:
 			var row := base + ly * w
 			var src := ly * SIZE
 			for lx in SIZE:
 				var b := cb[src + lx]
-				var is_solid := b < 0 or (b > 0 and solid[b] == 1)
-				if not is_solid:
-					cost[row + lx] = open_falloff
-					if cw[src + lx] == 0:
-						light[row + lx] = 1.0
+				var o := co[src + lx] if not co.is_empty() else 0
+				var is_solid := b < 0 or (b > 0 and solid[b] == 1) or (o > 0 and o < object_solid.size() and object_solid[o] == 1)
+				solid_at[row + lx] = 1 if is_solid else 0
+				if cw[src + lx] != 0:
+					walled[row + lx] = 1
+				elif not is_solid:
+					light[row + lx] = 1.0
 
-	# Sweep passes (left/up, then right/down), twice: close to a full flood fill.
+	# Sweep passes (left/up, then right/down), twice: close to a full flood fill. The
+	# cost of moving into a tile depends on direction (down into a block is cheap, sideways
+	# or up is not) and on leaving a block into a walled space.
 	for _round in 2:
 		for y in h:
 			var row := y * w
 			for x in w:
 				var i := row + x
 				var v := light[i]
-				var c := cost[i]
 				if x > 0:
-					v = maxf(v, light[i - 1] - c)
+					v = maxf(v, light[i - 1] - _cost(solid_at, walled, i, i - 1, false))
 				if y > 0:
-					v = maxf(v, light[i - w] - c)
+					v = maxf(v, light[i - w] - _cost(solid_at, walled, i, i - w, true))
 				light[i] = v
 		for y in range(h - 1, -1, -1):
 			var row := y * w
 			for x in range(w - 1, -1, -1):
 				var i := row + x
 				var v := light[i]
-				var c := cost[i]
 				if x < w - 1:
-					v = maxf(v, light[i + 1] - c)
+					v = maxf(v, light[i + 1] - _cost(solid_at, walled, i, i + 1, false))
 				if y < h - 1:
-					v = maxf(v, light[i + w] - c)
+					v = maxf(v, light[i + w] - _cost(solid_at, walled, i, i + w, false))
 				light[i] = v
 
 	var colored := _sources(w, h, cols)
@@ -104,6 +118,15 @@ func run() -> void:
 			l = l * l * (3.0 - 2.0 * l)
 			bytes[i * 3 + ch] = int((ambient + (1.0 - ambient) * l) * 255.0 + 0.5)
 	usec = Time.get_ticks_usec() - t
+
+
+## Sunlight cost of moving from tile `from` into tile `to` (`down`: from above).
+func _cost(solid_at: PackedByteArray, walled: PackedByteArray, to: int, from: int, down: bool) -> float:
+	if solid_at[to] == 1:
+		return solid_falloff if down else solid_side_falloff
+	if walled[to] == 1 and solid_at[from] == 1:
+		return indoors_falloff
+	return open_falloff
 
 
 ## Light from sources, one array per color channel (empty if there are none). Each
@@ -135,10 +158,13 @@ func _sources(w: int, h: int, cols: int) -> Array:
 		var cb := blocks[k]
 		if cb.is_empty():
 			continue
+		var co := objects[k] if k < objects.size() else PackedInt32Array()
 		var base := (k / cols) * SIZE * w + (k % cols) * SIZE
 		for li in SIZE * SIZE:
 			var b := cb[li]
-			if not (b < 0 or (b > 0 and solid[b] == 1)):
+			var o := co[li] if not co.is_empty() else 0
+			var blocked := b < 0 or (b > 0 and solid[b] == 1) or (o > 0 and o < object_solid.size() and object_solid[o] == 1)
+			if not blocked:
 				cost[base + (li / SIZE) * w + li % SIZE] = 1.0
 	# (Packed arrays are values: fill local ones, then hand them out.)
 	var r := PackedFloat32Array()

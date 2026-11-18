@@ -610,10 +610,42 @@ func request_toggle_object(tile: Vector2i) -> bool:
 	return false
 
 
+## The tiles an object's sprite covers beyond its footprint (ObjectDef.sprite_width_px
+## and sprite_align), or none.
+static func sprite_tiles(anchor: Vector2i, def: ObjectDef) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var extra := ceili(float(def.sprite_width_px) / TILE) - def.width_tiles if def.sprite_width_px > 0 else 0
+	if extra <= 0:
+		return out
+	var columns: Array[int] = []
+	match def.sprite_align:
+		ObjectDef.SpriteAlign.FROM_LEFT:
+			for i in extra:
+				columns.append(def.width_tiles + i)
+		ObjectDef.SpriteAlign.FROM_RIGHT:
+			for i in extra:
+				columns.append(-1 - i)
+		_:
+			for i in ceili(extra / 2.0):
+				columns.append(def.width_tiles + i)
+				columns.append(-1 - i)
+	for dx in columns:
+		for dy in def.height_tiles:
+			out.append(anchor + Vector2i(dx, -dy))
+	return out
+
+
 ## Whether a toggled object fits: new tiles are free (the old footprint doesn't count),
 ## and something solid doesn't close on the player.
 func _can_toggle_into(anchor: Vector2i, def: ObjectDef, old_tiles: Array[Vector2i]) -> bool:
 	for t in footprint(anchor, def):
+		if t in old_tiles:
+			continue
+		if not data.in_bounds_y(t.y) or is_solid(t) or data.get_object(t.x, t.y) > 0:
+			return false
+	# A sprite wider than the footprint (an open door's face) needs that room too: no
+	# blocks or other objects where it swings.
+	for t in sprite_tiles(anchor, def):
 		if t in old_tiles:
 			continue
 		if not data.in_bounds_y(t.y) or is_solid(t) or data.get_object(t.x, t.y) > 0:
@@ -871,7 +903,8 @@ func _interact_object(anchor: Vector2i) -> bool:
 	if def == null or not _usable(def):
 		return false
 	if def.toggles_to != &"":
-		request_toggle_object(anchor)
+		if not request_toggle_object(anchor):
+			EventBus.debug_message.emit("Something's in the way" if def.blocks_movement else "Can't close: you're in the doorway")
 	elif def.container_slots > 0:
 		container_opened.emit(wrap_tile(anchor))
 	else:

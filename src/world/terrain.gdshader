@@ -23,6 +23,10 @@ uniform sampler2D noise_tex : filter_nearest, repeat_enable;
 uniform float grass_slots[16];
 uniform float built_slots[16];
 uniform float built_walls[16];
+// Background walls are drawn this much darker than blocks (and a little greyer), so
+// the front layer stands out. 1 = same as the art.
+uniform float wall_shade = 0.62;
+uniform float wall_desat = 0.2;
 uniform vec3 grass_0 : source_color;
 uniform vec3 grass_1 : source_color;
 uniform vec3 grass_2 : source_color;
@@ -106,6 +110,11 @@ int mat_at(vec2 p) {
 	m = nat(t + ivec2(1, 1));
 	if (m > 0) return m;
 	return nat(t + ivec2(-1, 1));
+}
+
+vec3 shade_wall(vec3 c) {
+	float grey = dot(c, vec3(0.299, 0.587, 0.114));
+	return mix(c, vec3(grey), wall_desat) * wall_shade;
 }
 
 int wall_at(vec2 p) {
@@ -234,10 +243,11 @@ void fragment() {
 		if (!done && wh > 0 && built_walls[wh] > 0.5) {
 			col = built_px(wall_tex, wh, p, wall_open(here_t + ivec2(0, -1)), wall_open(here_t + ivec2(0, 1)),
 				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false));
+			col.rgb = shade_wall(col.rgb);
 		} else if (!done && field_w(p) + nz(p) * 0.6 > 0.5) {
 			int w = wall_at(p);
 			if (w > 0 && built_walls[w] < 0.5) {
-				col = vec4(strip(wall_tex, w, p).rgb, 1.0);
+				col = vec4(shade_wall(strip(wall_tex, w, p).rgb), 1.0);
 			}
 		}
 	}
