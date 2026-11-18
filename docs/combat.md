@@ -15,7 +15,7 @@ training dummy.
 | `tint` | | Color applied to the sheet (green slime: pale green). |
 | `size` | 30x20 px | Collision box. |
 | `max_health` | 20 | |
-| `defense` | 0 | Subtracted from each hit (minimum 1 damage). |
+| `defense` | 0 | Half of it is subtracted from each hit (minimum 1 damage). |
 | `contact_damage` | 6 | Damage when it touches the player. |
 | `knockback` | 10 | How hard it shoves the player on contact. |
 | `knockback_resist` | 0 | 0 = full knockback from hits, 1 = none. |
@@ -25,27 +25,55 @@ training dummy.
 | `aggro_tiles` | 30 | Hops toward the player inside this range; wanders randomly outside it. Once hit, it chases regardless. |
 | `gravity` | 110 | Tiles/s². |
 | `loot` | | `LootDrop` list: `item`, `min_count`, `max_count`, `chance` (0 to 1). |
-| `day_weight`, `night_weight` | 1, 1 | Spawn weight by time of day (0 = never). |
 
 A hurt enemy shows a small health bar. On death it pops ("*pop*") and rolls its loot
 into item drops.
 
 ### Green Slime
 
-20 health, 6 contact damage, hops about 5 tiles. Drops 1 to 2 **Slime**.
+20 health, 6 contact damage, hops about 5 tiles. Drops 1 to 2 **Slime**. The common one.
 
-## Spawning (`EnemySpawner`, child of World, `src/combat/enemy_spawner.gd`)
+### Blue Slime
+
+The rare one (about 1 in 9 forest spawns). 35 health, 1 defense, 9 contact damage,
+hops about 7 tiles and more often (waits 0.6 to 1.8 s). Drops 2 to 4 **Slime**. Same
+sheet as the Green Slime, tinted blue.
+
+## Spawning
+
+Chance based, like Terraria: there's a small chance every frame, so on average one
+enemy arrives every `day_seconds` (or `night_seconds`), but the gaps are random and
+enemies pile up if you leave them alone, up to the cap. Killing them makes room.
+
+### Spawn tables: `data/spawns/<id>.tres` (`SpawnTable`, `src/combat/spawn_table.gd`)
+
+One table per biome and layer. Only `forest_surface` exists so far.
+
+| Field | forest_surface | |
+|---|---|---|
+| `biome`, `layer` | forest, SURFACE | Where it applies. |
+| `day_seconds` / `night_seconds` | 12 / 6 | Average seconds between spawns. Lower = more often. |
+| `max_day` / `max_night` | 4 / 7 | Most enemies around the player before spawning stops. |
+| `entries` | | `SpawnEntry` list: `enemy`, `weight`, `day`, `night`. |
+
+**Which enemy:** each entry's chance is its weight divided by the total weight of the
+entries allowed right now (by day or night). Forest: Green Slime 100, Blue Slime 12, so
+Blue is 12 / 112, about 11%. A rarer enemy is just a smaller weight; a night-only enemy
+has `day` off. Later biomes and layers (underground, caves) get their own tables, with
+their own rates and caps.
+
+### The spawner (`EnemySpawner`, child of World, `src/combat/enemy_spawner.gd`)
 
 | Export | Default | |
 |---|---|---|
-| `interval` | 3 s | Time between spawn attempts. |
-| `max_day` / `max_night` | 2 / 5 | Cap on enemies alive near the player. |
-| `min_distance_tiles` / `max_distance_tiles` | 44 / 60 tiles | Spawns off screen, on surface ground with room for the enemy. |
-| `despawn_tiles` | 90 tiles | Enemies further than this vanish. |
+| `rate_scale` | 1 | Multiplies every table's rate (2 = twice as often). |
+| `catch_up` | on | Spawn faster when few enemies are around: below 20% of the cap the average wait is x0.6, below 40% x0.7, below 60% x0.8 (Terraria's numbers). |
+| `min_distance_tiles` / `max_distance_tiles` | 44 / 60 tiles | Spawns off screen, on ground with room for the enemy. |
+| `despawn_tiles` | 90 tiles | Enemies farther than this vanish (no loot). |
 | `peaceful` | false | No spawns. |
 
-Never spawns indoors (a tile with a built back wall behind it). Picks an enemy weighted
-by `day_weight` / `night_weight`.
+Never spawns indoors (a tile with a built back wall behind it). Enemies you `summon`
+count toward the cap.
 
 ## Melee
 
@@ -76,8 +104,10 @@ in it is hit once per swing.
 
 Its own window: press **P** or the **Equip (P)** button in the inventory. It opens in
 the middle of the screen, can be dragged by its title bar, and keeps its spot until you
-quit. Columns: Head, Chest, Legs; three Accessory slots; Book and Conduit. Stats are
-listed on the right. Empty slots show a dim label. Ctrl + right click an inventory item
+quit. Your character is in the middle (armor isn't drawn on it yet), armor on the left
+(Head, Chest, Legs), trinkets on the right (three Accessory slots), Book and Conduit
+underneath, stats on the far right. Below that, **Equipped spells** (fold it away by
+clicking its header) and the **Spell Index (L)** button (see items-and-mining.md). Empty slots show a dim label. Ctrl + right click an inventory item
 equips it (accessories go to the first empty accessory slot); click with an item on the
 mouse to put it in a slot. Items don't show on the character yet; only the
 stats change.
@@ -130,7 +160,9 @@ Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 planks.
 
 ## Dev console
 
-- `summon <enemy> [n]`: spawn at the cursor (`summon green_slime 3`).
-- `peaceful`: toggle spawning.
-- `butcher`: kill every enemy.
+- `summon <enemy> [n]`: spawn at the cursor (`summon green_slime 3`, `summon blue_slime`).
+- `peaceful`: toggle natural spawning (summon still works).
+- `butcher`: kill every enemy; they drop their loot.
+- `spawns`: the spawn table here, how many enemies are around against the cap, the
+  current chance per second, and each enemy's share.
 - `equip <item>`: equips into any slot (armor, accessories, book, conduit).

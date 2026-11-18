@@ -43,6 +43,7 @@ Docs:
 | I or Tab | Inventory, equipment (book, conduit) and spells |
 | K | Crafting window (by hand; right click a station for its own list) |
 | P | Equipment window (drag its title bar to move it) |
+| L | Spell Index (all known spells; click one, then a book or hotbar slot) |
 | R | Tap: spellbook out / away. Hold: spell wheel |
 | Ctrl + mouse wheel | Mining / placing area |
 | Q | Throw the selected stack |

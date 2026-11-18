@@ -1,6 +1,7 @@
 extends SceneTree
 ## Writes the default items (data/items), spells (data/spells), tile objects
-## (data/objects: furniture) and recipes (data/recipes) from the tables below.
+## (data/objects: furniture), recipes (data/recipes), enemies (data/enemies) and spawn
+## tables (data/spawns) from the tables below.
 ## --only takes a comma-separated list of ids.
 ##
 ##   godot --headless --path . --script res://tools/make_items.gd
@@ -15,6 +16,7 @@ const SPELL_DIR := "res://data/spells"
 const OBJECT_DIR := "res://data/objects"
 const RECIPE_DIR := "res://data/recipes"
 const ENEMY_DIR := "res://data/enemies"
+const SPAWN_DIR := "res://data/spawns"
 
 var _force := false
 
@@ -44,6 +46,18 @@ func _init() -> void:
 			print("make_items: %s exists, kept (use --force to overwrite)" % path)
 			continue
 		ResourceSaver.save(res, path)
+		written += 1
+		print("make_items: wrote %s" % path)
+	# Spawn tables point at the saved enemy files, so they're written after them.
+	for table in _spawns():
+		if not _selected(table.id):
+			continue
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SPAWN_DIR))
+		var path := "%s/%s.tres" % [SPAWN_DIR, table.id]
+		if FileAccess.file_exists(path) and not _force:
+			print("make_items: %s exists, kept (use --force to overwrite)" % path)
+			continue
+		ResourceSaver.save(table, path)
 		written += 1
 		print("make_items: wrote %s" % path)
 	print("make_items: %d written" % written)
@@ -289,9 +303,44 @@ func _enemies() -> Array[EnemyData]:
 	slime.contact_damage = 6.0
 	slime.knockback = 10.0
 	slime.loot.append(LootDrop.make(&"slime", 1, 2))
-	slime.day_weight = 1.0
-	slime.night_weight = 1.0
 	out.append(slime)
+	# The rare one: tougher, hits harder, hops higher, drops more slime.
+	var blue := EnemyData.new()
+	blue.id = &"blue_slime"
+	blue.display_name = "Blue Slime"
+	blue.description = "A rarer, tougher slime. Hops higher and hits harder."
+	blue.texture = slime.texture
+	blue.frame_size = slime.frame_size
+	blue.tint = Color(0.3, 0.6, 1.0)
+	blue.size = slime.size
+	blue.max_health = 35.0
+	blue.defense = 1
+	blue.contact_damage = 9.0
+	blue.knockback = 12.0
+	blue.hop_speed = 11.0
+	blue.hop_tiles = 7.0
+	blue.hop_wait_min = 0.6
+	blue.hop_wait_max = 1.8
+	blue.loot.append(LootDrop.make(&"slime", 2, 4))
+	out.append(blue)
+	return out
+
+
+## Spawn tables (what spawns where, how often). Enemies are loaded from data/enemies.
+func _spawns() -> Array[SpawnTable]:
+	var out: Array[SpawnTable] = []
+	var forest := SpawnTable.new()
+	forest.id = &"forest_surface"
+	forest.display_name = "Forest surface"
+	forest.biome = &"forest"
+	forest.layer = SpawnTable.Layer.SURFACE
+	forest.day_seconds = 12.0
+	forest.night_seconds = 6.0
+	forest.max_day = 4
+	forest.max_night = 7
+	forest.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/green_slime.tres") as EnemyData, 100.0))
+	forest.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/blue_slime.tres") as EnemyData, 12.0))
+	out.append(forest)
 	return out
 
 

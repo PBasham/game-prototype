@@ -184,11 +184,28 @@ func _register() -> void:
 	_add("peaceful", "peaceful", "Toggle enemy spawning.", func(_a: PackedStringArray) -> void:
 		world.spawner.peaceful = not world.spawner.peaceful
 		_print("Enemies spawn: %s." % ("no" if world.spawner.peaceful else "yes")))
-	_add("butcher", "butcher", "Remove every enemy.", func(_a: PackedStringArray) -> void:
+	_add("butcher", "butcher", "Kill every enemy (they drop their loot).", func(_a: PackedStringArray) -> void:
 		var n := world.enemy_count()
 		for e in world.enemies():
-			e.queue_free()
-		_print("Removed %d." % n))
+			e.kill()
+		_print("Killed %d." % n))
+	_add("spawns", "spawns", "Show the spawn table here, the rate and the cap.", func(_a: PackedStringArray) -> void:
+		var t := world.spawner.table_here()
+		if t == null:
+			_print("No spawn table here.")
+			return
+		var night := world.spawner.is_night()
+		var chance := world.spawner.spawn_chance(t, 1.0)
+		_print("%s, %s: %d of %d enemies, %.0f%% chance per second (about every %.1f s)%s." % [
+			t.display_name, "night" if night else "day", world.enemy_count(), t.cap(night), chance * 100.0,
+			1.0 / chance if chance > 0.0 else INF, ", peaceful" if world.spawner.peaceful else ""])
+		var total := 0.0
+		for e in t.entries:
+			if e.enemy and (e.night if night else e.day):
+				total += e.weight
+		for e in t.entries:
+			if e.enemy and (e.night if night else e.day):
+				_print("  %s: %.0f%%" % [e.enemy.display_name, e.weight / total * 100.0]))
 	_add("god", "god", "Toggle taking no damage.", func(_a: PackedStringArray) -> void:
 		world.player.invincible = not world.player.invincible
 		_print("No damage: %s." % ("on" if world.player.invincible else "off")))

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SpawnTable" format=3]
+
+[ext_resource type="Script" path="res://src/combat/spawn_entry.gd" id="1_e3m1r"]
+[ext_resource type="Resource" path="res://data/enemies/green_slime.tres" id="2_xot03"]
+[ext_resource type="Resource" path="res://data/enemies/blue_slime.tres" id="3_d32di"]
+[ext_resource type="Script" path="res://src/combat/spawn_table.gd" id="4_jinop"]
+
+[sub_resource type="Resource" id="Resource_o0vqb"]
+script = ExtResource("1_e3m1r")
+enemy = ExtResource("2_xot03")
+
+[sub_resource type="Resource" id="Resource_3vud0"]
+script = ExtResource("1_e3m1r")
+enemy = ExtResource("3_d32di")
+weight = 12.0
+
+[resource]
+script = ExtResource("4_jinop")
+entries = Array[ExtResource("1_e3m1r")]([SubResource("Resource_o0vqb"), SubResource("Resource_3vud0")])
+id = &"forest_surface"
+display_name = "Forest surface"

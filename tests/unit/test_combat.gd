@@ -137,11 +137,45 @@ func test_spawner_spawns_on_the_surface_not_indoors() -> void:
 	var dx := absf(spot.x - w.player.global_position.x)
 	assert_gt(dx, w.spawner.min_distance_tiles * 8.0 - 8.0, "off screen")
 	w.clock.set_hour(12.0)
-	w.spawner.max_day = 1
-	for i in 5:
-		w.spawner._timer = 0.0
-		w.spawner._process(0.01)
-	assert_lte(w.enemy_count(), 1, "capped by day")
+	var table := w.spawner.table_here()
+	assert_not_null(table, "the forest surface table")
+	for i in 12:
+		w.spawner.try_spawn(table)
+	assert_gte(w.enemy_count(), table.cap(false))
+	assert_eq(w.spawner.spawn_chance(table, 1.0), 0.0, "no chance at the cap")
+
+
+func test_spawn_chance_and_weighted_picks() -> void:
+	var t := w.spawner.table_here()
+	w.clock.set_hour(12.0)
+	# Empty area: catch up (12 s * 0.6 = 7.2 s average wait).
+	assert_almost_eq(w.spawner.spawn_chance(t, 1.0), 1.0 / (t.day_seconds * 0.6), 0.0001)
+	w.spawner.catch_up = false
+	assert_almost_eq(w.spawner.spawn_chance(t, 1.0), 1.0 / t.day_seconds, 0.0001)
+	w.clock.set_hour(23.0)
+	assert_almost_eq(w.spawner.spawn_chance(t, 1.0), 1.0 / t.night_seconds, 0.0001, "more often at night")
+	assert_gt(t.cap(true), t.cap(false), "a higher cap at night")
+	# Weighted picks: Blue Slime is the rare one.
+	var blue := 0
+	for i in 1000:
+		if t.pick(false, i / 1000.0).id == &"blue_slime":
+			blue += 1
+	assert_almost_eq(blue, roundi(1000.0 * 12.0 / 112.0), 2.0, "about 11% Blue Slime")
+	var only_night := SpawnTable.new()
+	only_night.entries.append(SpawnEntry.make(_slime(), 1.0, false, true))
+	assert_null(only_night.pick(false, 0.5), "nothing allowed by day")
+	assert_eq(only_night.pick(true, 0.5), _slime())
+
+
+func test_butcher_kills_with_loot() -> void:
+	var p := w.player
+	w.request_spawn_enemy(_slime(), p.global_position + Vector2(60, -20))
+	await wait_physics_frames(2)
+	var before := w.drop_count()
+	w.enemies()[0].kill()
+	await wait_physics_frames(2)
+	assert_eq(w.enemy_count(), 0)
+	assert_gt(w.drop_count(), before, "dropped its loot")
 
 
 func test_beds_set_the_respawn_point_and_sleep_through_the_night() -> void:
@@ -180,26 +214,69 @@ func test_equipment_window_opens_centered_and_drags() -> void:
 	var view := hud._view_size()
 	var center := hud._equip.position + hud._equip.size * 0.5
 	assert_almost_eq(center.x, view.x * 0.5, 2.0, "opens in the middle")
+	# Layout: armor left of the character, trinkets right, book and conduit under it.
+	var e := hud._equip
+	var doll := e.doll_rect()
+	assert_lt(e.slot_rect(0).end.x, doll.position.x, "head on the left")
+	assert_gt(e.slot_rect(3).position.x, doll.end.x, "trinket on the right")
+	assert_gt(e.slot_rect(6).position.y, doll.end.y, "book underneath")
+	assert_not_null(e._doll, "a character preview")
 	# Drag by the title bar.
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
 	press.position = Vector2(30, 8)
-	hud._equipment_input(hud._equip, press)
+	e._gui_input(press)
 	var move := InputEventMouseMotion.new()
 	move.position = Vector2(30 - 50, 8 + 20)
-	var before := hud._equip.position
-	hud._equipment_input(hud._equip, move)
-	assert_eq(hud._equip.position, before + Vector2(-50, 20))
+	var before := e.position
+	e._gui_input(move)
+	assert_eq(e.position, before + Vector2(-50, 20))
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
-	hud._equipment_input(hud._equip, release)
-	# Remembered when reopened; closing the inventory closes it.
+	e._gui_input(release)
+	# Kept when reopened; closing the inventory closes it.
 	hud.set_open(false)
-	assert_false(hud._equip.visible)
+	assert_false(e.visible)
 	hud.toggle_equipment()
-	assert_eq(hud._equip.position, before + Vector2(-50, 20), "keeps its spot")
+	assert_eq(e.position, before + Vector2(-50, 20), "keeps its spot")
+	# Folding the spells section makes it shorter.
+	var tall := e.size.y
+	var fold := InputEventMouseButton.new()
+	fold.button_index = MOUSE_BUTTON_LEFT
+	fold.pressed = true
+	fold.position = e.fold_rect().get_center()
+	e._gui_input(fold)
+	assert_false(e.spells_shown)
+	assert_lt(e.size.y, tall)
 	hud.toggle_equipment()
 	assert_false(hud.equipping)
 	assert_true(hud.open, "closing equipment keeps the inventory open")
+
+
+func test_spell_index_lists_spells_and_puts_them_in_the_book() -> void:
+	var hud := w.hud
+	var c := w.character
+	hud.toggle_equipment()
+	hud.toggle_spells()
+	assert_true(hud._spells.visible)
+	assert_gt(hud._spells.position.x, hud._equip.position.x, "opens beside the equipment window")
+	assert_gt(c.known_spells.size(), 0, "the dev kit knows spells")
+	# Pick the first known spell from the index and drop it in book slot 0.
+	c.put_in_book(0, &"")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = hud._spells.row_rect(0).get_center()
+	hud._spells._gui_input(click)
+	assert_eq(hud.cursor_id, ItemData.spell_key(c.known_spells[0]))
+	var book_click := InputEventMouseButton.new()
+	book_click.button_index = MOUSE_BUTTON_LEFT
+	book_click.pressed = true
+	book_click.position = hud._equip.book_rect(0).get_center()
+	hud._equip._gui_input(book_click)
+	assert_eq(c.book_loadout()[0], c.known_spells[0], "in the book")
+	assert_eq(hud.cursor_count, 0)
+	hud.set_open(false)
+	assert_false(hud._spells.visible)

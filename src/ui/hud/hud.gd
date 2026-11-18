@@ -5,23 +5,19 @@ extends CanvasLayer
 ## chest window, the spellbook key (tap R: book out or away, hold R: spell wheel), the
 ## stack held on the mouse, tooltips, and pickup notes. Drawn with UiSkin.
 ##
-## Inventory panel: rows of 10 (the character's inventory size), the top row is the
-## hotbar.
+## Inventory panel (I or Tab): rows of 10 (the character's inventory size), the top row
+## is the hotbar. Items only; to the right are the Craft (K), Equip (P) and Spells (L)
+## buttons.
 ##   Left click: pick up a stack / put it down / swap / merge.
 ##   Right click: pick up half, or put one down from the stack on the mouse.
 ##   Shift + left click: move a stack between the hotbar and the rest (or into the open
 ##   chest).
-##   Ctrl + right click: equip a book or conduit (swapping with the equipped one); on an
-##   equipment slot, put it back in the inventory.
+##   Ctrl + right click: equip armor, an accessory, a book or a conduit (swapping with the
+##   equipped one).
 ##   Click outside the windows with a stack on the mouse: throw it.
-## Right of the grid: the Craft (K) and Equipment (P) buttons.
-## Equipment window (P): head, chest and legs armor, three accessories, the Book and
-## Conduit, and your stats. Opens in the middle of the screen; drag its title bar to
-## move it (the spot is kept until you quit). An empty book slot means the Basic
-## Spellbook.
-## Spellbook (under the grid): the equipped book's slots. Spells (under that): every
-## spell you know. Click a spell to pick it up, then click a book slot to put it in the
-## book, or a hotbar slot to make a shortcut. Right click a book slot to empty it.
+## Equipment window (P, EquipmentWindow) and Spell Index (L, SpellWindow): movable
+## windows (drag the title bar), opened in the middle of the screen. Opening either opens
+## the inventory too; closing the inventory closes them.
 ##
 ## Windows (crafting, chest) open on the right side of the screen, apart from the
 ## inventory. Crafting: click a recipe in the list, then Craft, x10 or All.
@@ -36,19 +32,16 @@ const TITLE_H := 14
 const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
-enum Area { NONE, INVENTORY, EQUIPMENT, BOOK, SPELLS, CRAFT_BUTTON, EQUIP_BUTTON, CHEST, CHEST_TAKE,
-	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TITLE }
+enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CHEST, CHEST_TAKE,
+	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
 const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
 const EQUIP_LABELS: Array[String] = ["Head", "Body", "Legs", "Acc", "Acc", "Acc", "Book", "Cond"]
 const EQUIP_NAMES: Array[String] = ["Head armor", "Chest armor", "Leg armor", "Accessory", "Accessory",
 	"Accessory", "Spellbook (empty: the Basic Spellbook)", "Conduit"]
+## Width of the button column right of the inventory grid.
 const EQUIP_W := 3 * STEP - GAP
-## Width of the stats column in the equipment window.
-const STATS_W := 96
-## Top of the slots in a window with a title bar.
-const BODY_TOP := 22
 
 ## Crafting window: size, list width, row height.
 const CRAFT_SIZE := Vector2(288, 214)
@@ -73,14 +66,10 @@ var world: World
 var open := false
 ## The crafting window is open (hand crafting, or the station in `station`).
 var crafting := false
-## The equipment window is open.
+## The Equipment window (P) is open.
 var equipping := false
-## Where the equipment window sits (top left, screen pixels); NAN until first opened,
-## then wherever you dragged it.
-var equip_pos := Vector2(NAN, NAN)
-## Dragging a window by its title bar: the window and the grab offset.
-var _drag: Pane
-var _drag_offset := Vector2.ZERO
+## The Spell Index (L) is open.
+var spells_open := false
 ## Stack held on the mouse (inventory open). "spell:<id>" = a spell being placed.
 var cursor_id: StringName = &""
 var cursor_count := 0
@@ -103,7 +92,8 @@ var _craft_scroll := 0
 var _inv: Pane
 var _craft: Pane
 var _chest: Pane
-var _equip: Pane
+var _equip: EquipmentWindow
+var _spells: SpellWindow
 var _status: Pane
 const STATUS_SIZE := Vector2(140, 44)
 const STATUS_BARS: Array[Array] = [
@@ -150,7 +140,12 @@ func _ready() -> void:
 	_craft = _pane(_draw_crafting, _crafting_input)
 	_craft.size = CRAFT_SIZE
 	_chest = _pane(_draw_chest, _chest_input)
-	_equip = _pane(_draw_equipment, _equipment_input)
+	_equip = EquipmentWindow.new(self)
+	_equip.close_pressed.connect(toggle_equipment)
+	add_child(_equip)
+	_spells = SpellWindow.new(self)
+	_spells.close_pressed.connect(toggle_spells)
+	add_child(_spells)
 	_status = _pane(_draw_status, func(_p: Pane, _e: InputEvent) -> void: pass)
 	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status.size = STATUS_SIZE
@@ -230,6 +225,7 @@ func _redraw() -> void:
 	_craft.queue_redraw()
 	_chest.queue_redraw()
 	_equip.queue_redraw()
+	_spells.queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
@@ -256,6 +252,8 @@ func _process(delta: float) -> void:
 		toggle_crafting()
 	if Input.is_action_just_pressed("equipment") and not paused:
 		toggle_equipment()
+	if Input.is_action_just_pressed("spells") and not paused:
+		toggle_spells()
 	_update_wheel(paused)
 	var p := world.player
 	var over := _over_pane()
@@ -274,8 +272,8 @@ func _process(delta: float) -> void:
 
 
 ## The window under the mouse, or null.
-func _over_pane() -> Pane:
-	for pane: Pane in [_equip, _craft, _chest, _inv]:
+func _over_pane() -> Control:
+	for pane: Control in [_spells, _equip, _craft, _chest, _inv]:
 		if pane.visible and pane.get_global_rect().has_point(pane.get_global_mouse_position()):
 			return pane
 	return null
@@ -290,7 +288,7 @@ func set_open(value: bool) -> void:
 		bag = null
 		crafting = false
 		equipping = false
-		_drag = null
+		spells_open = false
 		if cursor_count > 0:
 			if _cursor_is_spell():
 				_clear_cursor()  # a spell being placed just goes back
@@ -316,12 +314,18 @@ func toggle_crafting() -> void:
 
 ## P: the equipment window (with the inventory), or closes it.
 func toggle_equipment() -> void:
+	equipping = not equipping
 	if equipping:
-		equipping = false
-		_drag = null
-	else:
 		open = true
-		equipping = true
+		_equip.refresh_look()
+	_layout()
+
+
+## L: the Spell Index (with the inventory), or closes it.
+func toggle_spells() -> void:
+	spells_open = not spells_open
+	if spells_open:
+		open = true
 	_layout()
 
 
@@ -426,7 +430,7 @@ func _inventory() -> Inventory:
 
 func _layout() -> void:
 	if open:
-		var bottom := _spells_origin().y + _rows(_known().size()) * STEP - GAP + PAD
+		var bottom := maxf(_rows(_inventory().size) * STEP - GAP, 3 * 20.0 - 4.0) + PAD * 2
 		_inv.size = Vector2(_equip_origin().x + EQUIP_W + PAD, bottom)
 	else:
 		_inv.size = Vector2(PAD * 2 + 10 * STEP - GAP, PAD * 2 + SLOT)
@@ -441,26 +445,49 @@ func _layout() -> void:
 		var n := store.size if store else 40
 		_chest.size = Vector2(PAD * 2 + 10 * STEP - GAP, 22 + _rows(n) * STEP - GAP + 6 + 16 + PAD)
 		_chest.position = Vector2(view.x - _chest.size.x - window_right, window_top)
-	_equip.visible = open and equipping
-	if _equip.visible:
-		_equip.size = _equip_size()
-		if is_nan(equip_pos.x):
-			equip_pos = ((view - _equip.size) * 0.5).floor()
-		equip_pos = _clamp_to_view(equip_pos, _equip.size)
-		_equip.position = equip_pos
+	if open and equipping:
+		_equip.show_at(_equip_spot())
+	else:
+		_equip.visible = false
+	if open and spells_open:
+		_spells.show_at(_spell_window_spot())
+	else:
+		_spells.visible = false
 	_redraw()
 
 
-func _equip_size() -> Vector2:
-	var lines := _stat_lines().size()
-	var h := maxf(3 * STEP - GAP, 10 + lines * 9)
-	return Vector2(PAD + EQUIP_W + 10 + STATS_W + PAD, BODY_TOP + h + PAD)
 
 
-## Keeps a window's title bar on screen.
-func _clamp_to_view(pos: Vector2, size: Vector2) -> Vector2:
+
+
+## Where the Equipment window opens the first time: the middle of the screen, nudged
+## down below the inventory when there's room.
+func _equip_spot() -> Vector2:
+	var at := _equip.centered()
+	var below := _inv.position.y + _inv.size.y + 4
+	if at.y < below and below + _equip.size.y <= _view_size().y:
+		at.y = below
+	return at
+
+
+## Where the Spell Index opens the first time: beside the Equipment window if it's open.
+## If you haven't moved the Equipment window, the two are centered together; otherwise
+## the index goes on whichever side has room, or in the middle.
+func _spell_window_spot() -> Vector2:
+	var mid := _spells.centered()
+	if not _equip.visible:
+		return mid
 	var view := _view_size()
-	return Vector2(clampf(pos.x, 0.0, maxf(0.0, view.x - size.x)), clampf(pos.y, 0.0, maxf(0.0, view.y - BODY_TOP)))
+	if not _equip.moved:
+		var both := _equip.size.x + 4 + _spells.size.x
+		if both <= view.x:
+			_equip.position.x = floorf((view.x - both) * 0.5)
+			return Vector2(_equip.position.x + _equip.size.x + 4, _equip.position.y)
+	var right := _equip.position.x + _equip.size.x + 4
+	if right + _spells.size.x <= view.x:
+		return Vector2(right, _equip.position.y)
+	var left := _equip.position.x - _spells.size.x - 4
+	return Vector2(left, _equip.position.y) if left >= 0.0 else mid
 
 
 func _view_size() -> Vector2:
@@ -479,12 +506,6 @@ func _equip_origin() -> Vector2:
 	return _grid_origin() + Vector2(10 * STEP + 6, 0)
 
 
-## Slot `i` of EQUIP_SLOTS in the equipment window: columns of 3 (armor, accessories,
-## book and conduit).
-func _equip_cell(i: int) -> Rect2:
-	return Rect2(Vector2(PAD, BODY_TOP) + Vector2((i / 3) * STEP, (i % 3) * STEP), Vector2(SLOT, SLOT))
-
-
 func _craft_button_rect() -> Rect2:
 	return Rect2(_equip_origin() + Vector2(0, 2), Vector2(EQUIP_W - 2, 16))
 
@@ -493,12 +514,12 @@ func _equip_button_rect() -> Rect2:
 	return Rect2(_equip_origin() + Vector2(0, 22), Vector2(EQUIP_W - 2, 16))
 
 
-func _book_origin() -> Vector2:
-	return _grid_origin() + Vector2(0, _rows(_inventory().size) * STEP + 12)
+func _spells_button_rect() -> Rect2:
+	return Rect2(_equip_origin() + Vector2(0, 42), Vector2(EQUIP_W - 2, 16))
 
 
-func _spells_origin() -> Vector2:
-	return _book_origin() + Vector2(0, _rows(world.character.book_slot_count()) * STEP + 12)
+
+
 
 
 func _known() -> Array[StringName]:
@@ -527,12 +548,8 @@ func hit(local: Vector2) -> Array:
 		return [Area.CRAFT_BUTTON, 0]
 	if _equip_button_rect().has_point(local):
 		return [Area.EQUIP_BUTTON, 0]
-	for i in world.character.book_slot_count():
-		if _cell(_book_origin(), i).has_point(local):
-			return [Area.BOOK, i]
-	for i in _known().size():
-		if _cell(_spells_origin(), i).has_point(local):
-			return [Area.SPELLS, i]
+	if _spells_button_rect().has_point(local):
+		return [Area.SPELLS_BUTTON, 0]
 	return [Area.NONE, -1]
 
 
@@ -566,13 +583,15 @@ func _draw_inventory(g: Control) -> void:
 			g.draw_string(font, r.position + Vector2(3, 8), str((i + 1) % 10), HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
 				Color(UiSkin.DIM, 0.8))
 	if open:
-		_draw_magic(g, font, hover)
 		var br := _craft_button_rect()
 		var state := UiSkin.Btn.PRESSED if crafting else (UiSkin.Btn.HOT if hover[0] == Area.CRAFT_BUTTON else UiSkin.Btn.NORMAL)
 		UiSkin.button(g, br, "Craft (K)", state)
 		var er := _equip_button_rect()
 		state = UiSkin.Btn.PRESSED if equipping else (UiSkin.Btn.HOT if hover[0] == Area.EQUIP_BUTTON else UiSkin.Btn.NORMAL)
 		UiSkin.button(g, er, "Equip (P)", state)
+		var sr := _spells_button_rect()
+		state = UiSkin.Btn.PRESSED if spells_open else (UiSkin.Btn.HOT if hover[0] == Area.SPELLS_BUTTON else UiSkin.Btn.NORMAL)
+		UiSkin.button(g, sr, "Spells (L)", state)
 	_draw_cursor_stack(g)
 
 
@@ -605,131 +624,15 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 		_draw_count(g, font, r, count)
 
 
-func _draw_magic(g: Control, font: Font, hover: Array) -> void:
-	var c := world.character
-	# The book's slots.
-	var book := c.book()
-	var title := "%s  (%d slots)" % [book.display_name if book else "Spellbook", c.book_slot_count()]
-	g.draw_string(font, _book_origin() + Vector2(0, -3), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
-	var loadout := c.book_loadout()
-	for i in loadout.size():
-		var r := _cell(_book_origin(), i)
-		var hot: bool = hover[0] == Area.BOOK and hover[1] == i
-		UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hot else UiSkin.SlotLook.MAGIC)
-		var spell := ItemData.find(ItemData.spell_key(loadout[i])) if loadout[i] != &"" else null
-		if spell:
-			_draw_item(g, font, r, spell, 1)
-	# Known spells.
-	var known := _known()
-	var hint := "Spells you know" + (" (click one, then a book or hotbar slot)" if not known.is_empty() else ": none yet")
-	g.draw_string(font, _spells_origin() + Vector2(0, -3), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
-	for i in known.size():
-		var r := _cell(_spells_origin(), i)
-		var hot: bool = hover[0] == Area.SPELLS and hover[1] == i
-		var look := UiSkin.SlotLook.SELECTED if c.in_book(known[i]) else (UiSkin.SlotLook.HOT if hot else UiSkin.SlotLook.MAGIC)
-		UiSkin.slot(g, r, look)
-		var spell := ItemData.find(ItemData.spell_key(known[i]))
-		if spell and spell.icon:
-			g.draw_texture_rect(spell.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false)
 
 
-## Your defense and every non-zero stat bonus from equipment, one per line.
-func _stat_lines() -> Array[String]:
-	var p := world.player
-	var lines: Array[String] = ["Defense %d" % p.defense]
-	var names := {&"max_health": "Max health", &"max_mana": "Max mana", &"mana_regen": "Mana regen",
-		&"move_speed": "Speed", &"jump": "Jump", &"melee_damage": "Melee damage",
-		&"magic_damage": "Magic damage", &"mining_speed": "Mining speed"}
-	for k: StringName in CharacterData.STATS:
-		var v := p.stat(k)
-		if v == 0.0:
-			continue
-		if k in [&"max_health", &"max_mana", &"mana_regen"]:
-			lines.append("%s %+d" % [names[k], roundi(v)])
-		else:
-			lines.append("%s %+d%%" % [names[k], roundi(v * 100.0)])
-	return lines
 
 
-# --- drawing: equipment ------------------------------------------------------------------
-
-func _equip_hit(local: Vector2) -> Array:
-	if _close_rect(_equip).has_point(local):
-		return [Area.CLOSE, 0]
-	for i in EQUIP_SLOTS.size():
-		if _equip_cell(i).has_point(local):
-			return [Area.EQUIPMENT, i]
-	if Rect2(0, 0, _equip.size.x, BODY_TOP - 2).has_point(local):
-		return [Area.TITLE, 0]
-	return [Area.NONE, -1]
 
 
-func _draw_equipment(g: Control) -> void:
-	var font := ThemeDB.fallback_font
-	var hover := _equip_hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
-	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
-	UiSkin.title(g, Rect2(4, 4, g.size.x - 24, TITLE_H), "Equipment", "")
-	_close_button(g, hover[0] == Area.CLOSE)
-	var c := world.character
-	# Equipment.
-	for i in EQUIP_SLOTS.size():
-		var r := _equip_cell(i)
-		var hot: bool = hover[0] == Area.EQUIPMENT and hover[1] == i
-		var magic := EQUIP_SLOTS[i] in [CharacterData.SLOT_BOOK, CharacterData.SLOT_CONDUIT]
-		UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hot else (UiSkin.SlotLook.MAGIC if magic else UiSkin.SlotLook.NORMAL))
-		var item := ItemData.find(c.equipment[EQUIP_SLOTS[i]]) if c.equipment[EQUIP_SLOTS[i]] != &"" else null
-		if item:
-			_draw_item(g, font, r, item, 1)
-		elif EQUIP_SLOTS[i] == CharacterData.SLOT_BOOK:
-			var basic := c.book()
-			if basic and basic.icon:
-				g.draw_texture_rect(basic.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false, Color(1, 1, 1, 0.4))
-		else:
-			var label := EQUIP_LABELS[i]
-			var lw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 5).x
-			g.draw_string(font, r.position + Vector2((SLOT - lw) * 0.5, 12), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 5,
-				Color(UiSkin.DIM, 0.55))
-	# Stats, right of the slots.
-	var at := Vector2(PAD + EQUIP_W + 10, BODY_TOP + 7)
-	g.draw_string(font, at, "Stats", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
-	var lines := _stat_lines()
-	for i in lines.size():
-		g.draw_string(font, at + Vector2(0, 10 + i * 9), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
-	_draw_cursor_stack(g)
 
 
-func _equipment_input(pane: Pane, event: InputEvent) -> void:
-	var motion := event as InputEventMouseMotion
-	if motion and _drag == pane:
-		equip_pos = _clamp_to_view(pane.position + motion.position - _drag_offset, pane.size)
-		pane.position = equip_pos
-		pane.accept_event()
-		return
-	var mb := event as InputEventMouseButton
-	if mb == null:
-		return
-	if not mb.pressed:
-		if mb.button_index == MOUSE_BUTTON_LEFT:
-			_drag = null
-		return
-	pane.accept_event()
-	var h := _equip_hit(mb.position)
-	var left := mb.button_index == MOUSE_BUTTON_LEFT
-	var right := mb.button_index == MOUSE_BUTTON_RIGHT
-	match h[0]:
-		Area.CLOSE:
-			if left:
-				toggle_equipment()
-		Area.TITLE:
-			if left:
-				_drag = pane
-				_drag_offset = mb.position
-		Area.EQUIPMENT:
-			if (right and mb.ctrl_pressed) or (left and mb.shift_pressed):
-				quick_unequip(EQUIP_SLOTS[h[1]])
-			elif left:
-				click_equipment(EQUIP_SLOTS[h[1]])
-	_redraw()
+
 
 
 ## Health, mana and hunger, bottom left: an icon, a bar and the numbers.
@@ -1070,14 +973,9 @@ func _inventory_input(pane: Pane, event: InputEvent) -> void:
 		Area.EQUIP_BUTTON:
 			if left:
 				toggle_equipment()
-		Area.BOOK:
+		Area.SPELLS_BUTTON:
 			if left:
-				click_book_slot(h[1])
-			elif right:
-				world.character.put_in_book(h[1], &"")
-		Area.SPELLS:
-			if left:
-				click_known_spell(h[1])
+				toggle_spells()
 	_redraw()
 
 
@@ -1448,7 +1346,7 @@ func draw_wheel(w: Control) -> void:
 
 # --- tooltips and notes ------------------------------------------------------------------
 
-func _update_tooltip(over: Pane) -> void:
+func _update_tooltip(over: Control) -> void:
 	var item: ItemData = null
 	var extra := ""
 	var extra_only := ""
@@ -1461,21 +1359,13 @@ func _update_tooltip(over: Pane) -> void:
 			h = _chest_hit(over.get_local_mouse_position())
 		elif over == _craft:
 			h = _craft_hit(over.get_local_mouse_position())
-		elif over == _equip:
-			h = _equip_hit(over.get_local_mouse_position())
+		elif over is HudWindow:
+			var t: Array = (over as HudWindow).tooltip_at(over.get_local_mouse_position())
+			item = t[0]
+			extra_only = t[1]
 		match h[0]:
 			Area.INVENTORY:
 				item = c.inventory.item(h[1])
-			Area.EQUIPMENT:
-				var id: StringName = c.equipment[EQUIP_SLOTS[h[1]]]
-				item = ItemData.find(id) if id != &"" else (c.book() if EQUIP_SLOTS[h[1]] == CharacterData.SLOT_BOOK else null)
-				if item == null:
-					extra_only = EQUIP_NAMES[h[1]]
-			Area.BOOK:
-				var s: StringName = c.book_loadout()[h[1]]
-				item = ItemData.find(ItemData.spell_key(s)) if s != &"" else null
-			Area.SPELLS:
-				item = ItemData.find(ItemData.spell_key(_known()[h[1]]))
 			Area.CHEST:
 				var store := _store()
 				item = store.item(h[1]) if store else null

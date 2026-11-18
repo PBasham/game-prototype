@@ -15,9 +15,10 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **Left click** | Use the held item on the **front** layer: swing, mine, chop, place a block, plant. Hold to repeat. |
 | **Right click** | On something you can interact with (stations, chests, doors, pickups on the grass): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
 | **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest pickup) |
-| **I** or **Tab** | Open / close the inventory (with spells) |
+| **I** or **Tab** | Open / close the inventory |
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
-| **P** | Equipment window (armor, accessories, book, conduit, stats); see [combat.md](combat.md) |
+| **P** | Equipment window (armor, accessories, book, conduit, stats, equipped spells); see [combat.md](combat.md) |
+| **L** | Spell Index (every spell you know) |
 | **R** (tap) | Take the spellbook out (like Starbound's matter manipulator), with the last spell you used; tap again to go back to your hotbar slot |
 | **R** (hold) | Spell wheel: move the mouse toward a spell, let go to cast with it |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
@@ -36,11 +37,21 @@ the panel lays itself out from it.
   equipped one). On an equipment slot (or shift + click it): back into the inventory.
 - Click the world with a stack on the mouse: throw it. Closing the panel puts it back.
 - Hover a slot for its tooltip.
-- To the right: the **Craft (K)** and **Equip (P)** buttons. Below: the **Spellbook**
-  slots and **Spells you know** (see Magic).
-- **Equipment window (P):** armor, accessories, Book and Conduit slots, and your stats.
-  Opens in the middle of the screen (the inventory opens with it); drag its title bar
-  to move it. It keeps that spot until you quit. Closing the inventory closes it.
+- To the right: the **Craft (K)**, **Equip (P)** and **Spells (L)** buttons. The
+  inventory holds items only.
+- **Equipment window (P)**, `src/ui/hud/equipment_window.gd`: your character in the
+  middle (a live preview; armor isn't drawn on it yet), armor on the left (head, chest,
+  legs), trinkets on the right (3 accessory slots), Book and Conduit underneath, stats on
+  the far right. Below: **Equipped spells** (the book's slots), folded away by clicking
+  its header, and the **Spell Index (L)** button.
+- **Spell Index (L)**, `src/ui/hud/spell_window.gd`: every spell you know with its tier
+  and description; "In book" marks the ones in your book. Mouse wheel scrolls
+  (`rows_shown`, 7). Click a spell, then a book slot or a hotbar slot.
+- Both are movable windows (`HudWindow`, `src/ui/hud/hud_window.gd`): drag the title
+  bar. The Equipment window opens in the middle (below the inventory when there's
+  room); the Spell Index opens beside it, and if you haven't moved the Equipment window
+  the two are centered together. Each keeps its spot until you quit. Opening either
+  opens the inventory; closing the inventory closes them.
 
 While the mouse is over the hotbar or panel, you're carrying a stack, or the spell wheel
 is open, clicks don't use items.
@@ -176,11 +187,12 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
   `devkit` teaches the four and fills the book). How you learn spells in the real game
   comes later.
 - **The spellbook is part of the character**, not a hotbar item: the **Book** slot in
-  the inventory panel. Empty = the Basic Spellbook (4 slots). Other books can have more
+  the Equipment window. Empty = the Basic Spellbook (4 slots). Other books can have more
   slots and `spell_power`. Your loadout stays when you swap books; a smaller book just
   uses its first slots.
-- **Putting spells in the book:** open the inventory, click a spell under "Spells you
-  know", then click a Spellbook slot. Right click a Spellbook slot to empty it. Only
+- **Putting spells in the book:** open the Spell Index (L), click a spell, then click a
+  slot under "Equipped spells" in the Equipment window (P). Right click a book slot to
+  empty it. Only
   spells in the book can be cast (from the wheel or a shortcut).
 - **Casting:**
   - **R, the spellbook key:** tap R to take the book out with the last spell you used

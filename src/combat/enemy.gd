@@ -83,6 +83,14 @@ func knock_back(from: Vector2, strength: float) -> void:
 	_wait = 0.25  # hop again soon
 
 
+## Dies now, dropping its loot (dev console `butcher`).
+func kill() -> void:
+	if health <= 0.0:
+		return
+	health = 0.0
+	_die()
+
+
 func _die() -> void:
 	var drops := LootDrop.roll(data.loot)
 	for item_id: StringName in drops:

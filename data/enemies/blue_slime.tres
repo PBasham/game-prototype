@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://src/combat/loot_drop.gd" id="1_j3x2u"]
+[ext_resource type="Script" path="res://src/combat/enemy_data.gd" id="2_217tg"]
+[ext_resource type="Texture2D" path="res://assets/enemies/slime.png" id="3_be802"]
+
+[sub_resource type="Resource" id="Resource_lhn1y"]
+script = ExtResource("1_j3x2u")
+item = &"slime"
+min_count = 2
+max_count = 4
+
+[resource]
+script = ExtResource("2_217tg")
+texture = ExtResource("3_be802")
+tint = Color(0.3, 0.6, 1, 1)
+max_health = 35.0
+defense = 1
+contact_damage = 9.0
+knockback = 12.0
+hop_speed = 11.0
+hop_tiles = 7.0
+hop_wait_min = 0.6
+hop_wait_max = 1.8
+loot = Array[ExtResource("1_j3x2u")]([SubResource("Resource_lhn1y")])
+id = &"blue_slime"
+display_name = "Blue Slime"
+description = "A rarer, tougher slime. Hops higher and hits harder."

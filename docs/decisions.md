@@ -7,12 +7,20 @@ Newest first. Each entry: what was decided, why, and what it affects.
 
 - **First enemy:** Green Slime. Hops, light damage (6), 20 health, drops 1 to 2 Slime.
   Enemies are data (`data/enemies/`) so more can be added without code.
-- **Spawning:** off screen on the surface, never indoors (back wall built), more at night
-  (2 by day, 5 at night), despawn when far.
+- **Spawning:** chance based like Terraria (random gaps, piles up to a cap), per biome
+  and layer spawn tables with weighted enemies (rarer = smaller weight). Forest surface:
+  one every 12 s by day, 6 s at night on average, caps 4 / 7, catch-up when few are
+  around. Off screen, never indoors, despawn when far.
+- **Second enemy:** Blue Slime, rare (about 11%), tougher. Patrick is wary slimes read as
+  copying Terraria; fine as a first enemy, revisit later.
 - **Melee:** swords hit everything in a box in front, on the swing's impact frame.
 - **Defense:** enemy damage reduced by half the player's defense, minimum 1.
 - **Equipment:** head, chest, legs, 3 accessories. Stats only, nothing drawn on the
-  character yet. Its own window (P), opened in the middle and draggable, per Patrick.
+  character yet. Its own window (P), opened in the middle and draggable, per Patrick:
+  character preview in the middle, armor left, trinkets right, book and conduit below,
+  stats, a foldable Equipped spells section.
+- **Spells out of the inventory:** a Spell Index window (L) lists known spells; the
+  Equipment window shows the book's slots.
 - **Beds:** set the spawn point any time; sleep only at night with no enemies within 20
   tiles. Sleeping skips to morning, grows plants, drains hunger.
 - **Slime use for now:** torches (slime + stick).

@@ -42,8 +42,3 @@ enum AI { SLIME }
 
 @export_group("Loot")
 @export var loot: Array[LootDrop] = []
-
-@export_group("Spawning")
-## Relative chance to be picked when something spawns, by day and by night (0 = never).
-@export var day_weight := 1.0
-@export var night_weight := 1.0
