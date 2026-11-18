@@ -41,18 +41,30 @@ func is_night() -> bool:
 	return world.clock != null and world.clock.is_night()
 
 
-## The spawn table for where the player is. Only the forest surface exists so far.
+## The spawn table for where the player is, or null (nothing spawns there). Only the
+## forest surface has one so far: underground, nothing spawns.
 func table_here() -> SpawnTable:
-	var fallback: SpawnTable = null
+	var feet := world.world_to_tile(world.player.global_position)
 	for d in Registry.get_all(&"spawns"):
 		var t := d as SpawnTable
-		if t == null:
-			continue
-		if t.biome == &"forest" and t.layer == SpawnTable.Layer.SURFACE:
+		if t and t.biome == biome_at(feet.x) and in_layer(t, feet):
 			return t
-		if fallback == null:
-			fallback = t
-	return fallback
+	return null
+
+
+## The biome at a column. Only the forest exists so far.
+func biome_at(_x: int) -> StringName:
+	return &"forest"
+
+
+## Whether a tile is in a table's layer (SURFACE: not deeper than max_depth_tiles below
+## the natural surface).
+func in_layer(t: SpawnTable, tile: Vector2i) -> bool:
+	match t.layer:
+		SpawnTable.Layer.SURFACE:
+			var surface := world.generator.surface_at(world.wrap_tile(tile).x)
+			return tile.y - surface <= t.max_depth_tiles
+	return false
 
 
 ## Chance of a spawn in the next `delta` seconds (0 when at the cap).
@@ -74,13 +86,14 @@ func spawn_chance(table: SpawnTable, delta: float) -> float:
 	return clampf(delta / maxf(wait, 0.01), 0.0, 1.0)
 
 
-## Picks an enemy from the table and spawns it at a free spot. The new enemy or null.
+## Picks an enemy from the table and spawns it at a free spot in the table's layer.
+## The new enemy or null.
 func try_spawn(table: SpawnTable) -> Enemy:
-	var data := table.pick(is_night(), randf())
+	var data := table.pick(is_night(), randf(), world)
 	if data == null:
 		return null
 	var spot := find_spot(data)
-	if spot == Vector2.INF:
+	if spot == Vector2.INF or not in_layer(table, world.world_to_tile(spot)):
 		return null
 	return world.request_spawn_enemy(data, spot)
 

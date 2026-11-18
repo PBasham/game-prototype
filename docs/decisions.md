@@ -11,8 +11,17 @@ Newest first. Each entry: what was decided, why, and what it affects.
   and layer spawn tables with weighted enemies (rarer = smaller weight). Forest surface:
   one every 12 s by day, 6 s at night on average, caps 4 / 7, catch-up when few are
   around. Off screen, never indoors, despawn when far.
-- **Second enemy:** Blue Slime, rare (about 11%), tougher. Patrick is wary slimes read as
-  copying Terraria; fine as a first enemy, revisit later.
+- **Second enemy:** Blue Slime, rare (about 11%), tougher, and only after the first Green
+  Slime is slain in the world. Slimes are fine (many games use them).
+- **Spawn conditions:** per entry, all must be met. First kind: kills of an enemy in this
+  world (kills saved per world). More kinds as content needs them.
+- **Biomes and layers:** forest enemies spawn only on the forest surface (20 tiles below
+  the natural surface at most). Underground and other biomes spawn nothing for now.
+- **Max health from gear doesn't refill health;** regen does.
+- **Armor is drawn on the character** as placeholder overlays generated from the body
+  parts (Patrick: "feel free"); the real ones are hand-drawn later. Accessories aren't
+  drawn.
+- **Window positions** reset when you quit (fine for now).
 - **Melee:** swords hit everything in a box in front, on the swing's impact frame.
 - **Defense:** enemy damage reduced by half the player's defense, minimum 1.
 - **Equipment:** head, chest, legs, 3 accessories. Stats only, nothing drawn on the
@@ -24,6 +33,21 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Beds:** set the spawn point any time; sleep only at night with no enemies within 20
   tiles. Sleeping skips to morning, grows plants, drains hunger.
 - **Slime use for now:** torches (slime + stick).
+
+## Future phase (to be defined): Housing
+
+Beyond beds: what makes a valid house, NPCs moving in, fewer spawns near your base.
+To be defined in detail.
+
+## Future phase (to be defined): Bosses
+
+Bosses and tier progression (summoned when conditions are met, per the foundations).
+When and how is open.
+
+## Later
+
+- New biomes, ores and enemies: after playtesting what exists.
+- Multiplayer: tested later (the code is host-authoritative already).
 
 ## Future phase (to be defined): Farming
 

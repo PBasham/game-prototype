@@ -230,6 +230,18 @@ func equipment_stats() -> Dictionary[StringName, float]:
 	return out
 
 
+## Equipped armor and accessories with a look on the character (legs, chest, head,
+## then accessories), for PaperDoll.wear.
+func worn_items() -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	for slot: StringName in [SLOT_LEGS, SLOT_CHEST, SLOT_HEAD] + SLOT_ACCESSORIES:
+		var id: StringName = equipment.get(slot, &"")
+		var it := ItemData.find(id) if id != &"" else null
+		if it and not it.wear.is_empty():
+			out.append(it)
+	return out
+
+
 ## Whether an item can go in an equipment slot.
 static func fits(slot: StringName, item: ItemData) -> bool:
 	if item == null:

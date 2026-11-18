@@ -42,6 +42,8 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Items: `data/items/`, spells: `data/spells/`, objects: `data/objects/`, recipes: `data/recipes/`, enemies: `data/enemies/`, spawn tables: `data/spawns/`,
   defaults from `tools/make_items.gd` (same `--force` rule; `--only=a,b`);
   placeholder icons, held sprites, sapling and cracks from `tools/make_item_art.gd`.
+- Armor overlays on the paper doll: placeholders from `tools/make_armor_art.gd`
+  (`assets/armor/`, listed in each armor item's `wear`).
 - UI look: `UiSkin` (src/ui/ui_skin.gd) with nine-slice art in `assets/ui/` from
   `tools/make_ui_art.gd`. Draw every new window, slot and button with it.
 - Screenshots of menus: `-- --menu=characters` (or `new_character`, `worlds`, `new_world`); add

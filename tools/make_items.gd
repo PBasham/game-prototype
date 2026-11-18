@@ -168,6 +168,14 @@ func _items() -> Array[ItemData]:
 		armor.max_stack = 1
 		armor.equip_slot = a[2]
 		armor.defense = a[3]
+		# Drawn on the character: overlays from tools/make_armor_art.gd.
+		var parts: Array = {&"head": ["Head"], &"chest": ["Torso", "Front Arm Upper", "Back Arm Upper"],
+			&"legs": ["Front Leg Upper", "Back Leg Upper", "Front Leg Lower", "Back Leg Lower"]}[a[2]]
+		for part: String in parts:
+			var path := "res://assets/armor/%s_%s.png" % [a[0], part.to_lower().replace(" ", "_")]
+			if ResourceLoader.exists(path):
+				armor.wear[part] = load(path) as Texture2D
+		armor.hides_hair = a[2] == &"head"
 		out.append(armor)
 	var bed_item := _small(&"bed", "Bed", "Right click: set your respawn point here, and sleep through the night.")
 	bed_item.kind = ItemData.Kind.FURNITURE
@@ -339,7 +347,10 @@ func _spawns() -> Array[SpawnTable]:
 	forest.max_day = 4
 	forest.max_night = 7
 	forest.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/green_slime.tres") as EnemyData, 100.0))
-	forest.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/blue_slime.tres") as EnemyData, 12.0))
+	forest.max_depth_tiles = 20
+	# Blue Slimes only once a Green Slime has been slain in this world.
+	var after_green: Array[SpawnCondition] = [KillCountCondition.make(&"green_slime", 1)]
+	forest.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/blue_slime.tres") as EnemyData, 12.0, true, true, after_green))
 	out.append(forest)
 	return out
 

@@ -20,6 +20,8 @@ signal container_opened(anchor: Vector2i)
 signal bag_opened(bag: ItemBag)
 ## The player slept through the night (the HUD fades the screen).
 signal slept
+## An enemy was slain (its EnemyData id).
+signal enemy_killed(enemy_id: StringName)
 
 ## Tile size in pixels. The Scholar is about 3 tiles wide and 8 tall.
 const TILE := 8
@@ -72,6 +74,8 @@ var _enemies: Node2D
 var spawner: EnemySpawner
 ## Bed respawn points: character name -> bed anchor tile.
 var spawn_points: Dictionary[String, Vector2i] = {}
+## Enemies slain in this world, by enemy id (saved). Spawn conditions read these.
+var kills: Dictionary[StringName, int] = {}
 ## Spell projectiles, damage numbers, dev dummies.
 var effects: Node2D
 var _cracks: CrackOverlay
@@ -184,6 +188,9 @@ func _ready() -> void:
 		for who: String in sp:
 			var a: Array = sp[who]
 			spawn_points[who] = Vector2i(int(a[0]), int(a[1]))
+		var k: Dictionary = WorldSave.read_extra(info.path, WorldSave.META_KILLS)
+		for id: String in k:
+			kills[StringName(id)] = int(k[id])
 	if is_saved():
 		for d: Dictionary in WorldSave.read_extra(info.path, WorldSave.META_BAGS).get("list", []):
 			_bags.add_child(ItemBag.from_dict(self, d))
@@ -325,7 +332,7 @@ func save() -> Error:
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
 		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_CONTAINERS: _containers_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
-			WorldSave.META_SPAWNS: _spawns_to_dict()}, objects)
+			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict()}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
@@ -449,6 +456,26 @@ func sleep_until_morning() -> void:
 
 ## Within this many tiles, enemies keep you awake.
 @export var sleep_enemy_tiles := 20.0
+
+
+## How many of an enemy have been slain in this world.
+func kill_count(enemy_id: StringName) -> int:
+	return kills.get(enemy_id, 0)
+
+
+## An enemy died (Enemy calls this). Host only.
+func record_kill(enemy_id: StringName) -> void:
+	if not Game.is_authority():
+		return
+	kills[enemy_id] = kill_count(enemy_id) + 1
+	enemy_killed.emit(enemy_id)
+
+
+func _kills_to_dict() -> Dictionary:
+	var out := {}
+	for id in kills:
+		out[String(id)] = kills[id]
+	return out
 
 
 func request_spawn_enemy(data: EnemyData, pos: Vector2) -> Enemy:

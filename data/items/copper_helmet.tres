@@ -1,27 +1,32 @@
 [gd_resource type="Resource" script_class="ItemData" format=3]
 
-[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_p4iu7"]
-[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_mgpow"]
-[ext_resource type="Texture2D" path="res://assets/items/held/copper_helmet.png" id="3_g4d05"]
-[ext_resource type="Texture2D" path="res://assets/items/icons/copper_helmet.png" id="4_twlsn"]
-[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_lj7w3"]
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_mgpow"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_g4d05"]
+[ext_resource type="Texture2D" path="res://assets/items/held/copper_helmet.png" id="3_twlsn"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/copper_helmet.png" id="4_lj7w3"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_50v35"]
+[ext_resource type="Texture2D" path="res://assets/armor/copper_helmet_head.png" id="6_hvq2u"]
 
-[sub_resource type="Resource" id="Resource_50v35"]
-script = ExtResource("2_mgpow")
+[sub_resource type="Resource" id="Resource_ara22"]
+script = ExtResource("2_g4d05")
 id = &"copper_helmet"
-texture = ExtResource("3_g4d05")
+texture = ExtResource("3_twlsn")
 type = &"block"
 grip = Vector2(4, 6)
 
 [resource]
-script = ExtResource("5_lj7w3")
+script = ExtResource("5_50v35")
 kind = 12
-icon = ExtResource("4_twlsn")
+icon = ExtResource("4_lj7w3")
 max_stack = 1
-held = SubResource("Resource_50v35")
+held = SubResource("Resource_ara22")
 impact_at = 0.2
 equip_slot = &"head"
 defense = 1
+wear = Dictionary[String, Texture2D]({
+"Head": ExtResource("6_hvq2u")
+})
+hides_hair = true
 id = &"copper_helmet"
 display_name = "Copper Helmet"
 description = "Armor (head). Defense 1."

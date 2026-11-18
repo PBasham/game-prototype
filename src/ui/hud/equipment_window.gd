@@ -58,10 +58,11 @@ func _ready() -> void:
 	refresh_look()
 
 
-## Matches the preview to the character's colors.
+## Matches the preview to the character's colors and armor.
 func refresh_look() -> void:
 	if _doll and hud.world and hud.world.character:
 		_doll.look = hud.world.character.make_look()
+		_doll.wear(hud.world.character.worn_items())
 
 
 # --- layout ------------------------------------------------------------------------------

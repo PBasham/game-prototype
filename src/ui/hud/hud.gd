@@ -447,6 +447,7 @@ func _layout() -> void:
 		_chest.position = Vector2(view.x - _chest.size.x - window_right, window_top)
 	if open and equipping:
 		_equip.show_at(_equip_spot())
+		_equip.refresh_look()
 	else:
 		_equip.visible = false
 	if open and spells_open:

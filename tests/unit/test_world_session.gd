@@ -31,6 +31,8 @@ func test_edits_survive_save_and_load() -> void:
 	var torch_tile := Vector2i(s.x + 3, s.y - 1)
 	assert_true(w.request_set_object(torch_tile, w.objects.index_of(&"torch")))
 	assert_false(w.request_set_block(Vector2i(0, w.data.height - 1), WorldData.AIR), "floor row is locked")
+	w.record_kill(&"green_slime")
+	w.record_kill(&"green_slime")
 	w.queue_free()
 	await wait_physics_frames(2)
 	assert_true(FileAccess.file_exists(PATH), "leaving the world saved it")
@@ -42,6 +44,7 @@ func test_edits_survive_save_and_load() -> void:
 	await wait_physics_frames(3)
 	assert_eq(w2.data.get_block(tile.x, tile.y), copper, "edit loaded back")
 	assert_eq(w2.data.get_object(torch_tile.x, torch_tile.y), w2.objects.index_of(&"torch"), "torch loaded back")
+	assert_eq(w2.kill_count(&"green_slime"), 2, "kills saved with the world")
 	w2.queue_free()
 	await wait_physics_frames(2)
 

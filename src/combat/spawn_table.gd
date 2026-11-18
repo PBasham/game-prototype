@@ -10,6 +10,9 @@ enum Layer { SURFACE }
 ## Biome id this table is for (only &"forest" exists so far).
 @export var biome: StringName = &"forest"
 @export var layer := Layer.SURFACE
+## SURFACE: the player (and each spawn spot) must be no deeper than this many tiles
+## below the world's natural surface at that column. Anything above counts.
+@export var max_depth_tiles := 20
 
 @export_group("Rate")
 ## Average seconds between spawns. Lower = more often.
@@ -32,19 +35,19 @@ func cap(night: bool) -> int:
 	return max_night if night else max_day
 
 
-## Picks an enemy by weight among the entries allowed now (`roll` in 0..1). Null if
-## none are allowed.
-func pick(night: bool, roll: float) -> EnemyData:
+## Picks an enemy by weight among the entries allowed now (`roll` in 0..1): right time
+## of day and every condition met in `world`. Null if none are allowed.
+func pick(night: bool, roll: float, world: Node) -> EnemyData:
 	var total := 0.0
 	for e in entries:
-		if e.enemy and e.weight > 0.0 and (e.night if night else e.day):
+		if e.allowed(night, world):
 			total += e.weight
 	if total <= 0.0:
 		return null
 	var r := roll * total
 	var last: EnemyData = null
 	for e in entries:
-		if e.enemy and e.weight > 0.0 and (e.night if night else e.day):
+		if e.allowed(night, world):
 			last = e.enemy
 			r -= e.weight
 			if r <= 0.0:

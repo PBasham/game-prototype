@@ -77,6 +77,12 @@ const SPELL_PREFIX := "spell:"
 ## max_mana (points), mana_regen (per second), move_speed, jump, melee_damage,
 ## magic_damage, mining_speed (fractions: 0.1 = +10%).
 @export var stats: Dictionary[StringName, float] = {}
+## How it looks on the character: overlay textures by doll part name ("Head", "Torso",
+## "Front Arm Upper"...), each laid out like one row of the parts sheet (see
+## docs/character-art.md). Empty = not drawn.
+@export var wear: Dictionary[String, Texture2D] = {}
+## A helmet that hides the hair.
+@export var hides_hair := false
 @export_group("Food")
 ## Eating it (left click while holding it) refills this much hunger...
 @export var food_value := 0.0

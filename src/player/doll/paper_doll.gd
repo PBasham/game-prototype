@@ -80,6 +80,15 @@ var _time := 0.0
 var _slots: Array[Node2D] = []  ## per part
 var _sprites: Array[Sprite2D] = []  ## per part (base layer)
 var _overlays: Array[Array] = []  ## per part: overlay Sprite2Ds
+## Overlay textures by group (an armor piece) and part index. A code-posed arm drawn
+## with another part's pixels (back arm from the front arm) shows that part's overlay.
+var _overlay_tex: Dictionary[StringName, Dictionary] = {}
+## Hide the hair (a helmet is on).
+var hair_hidden := false:
+	set(v):
+		hair_hidden = v
+		if _hair:
+			_hair.visible = not v
 var _hair: Sprite2D
 var _item_sprite: Sprite2D
 var _stow_back: Sprite2D
@@ -173,7 +182,9 @@ func frame_count(anim: StringName) -> int:
 
 ## Adds armor or clothing over a part. `texture` has the same layout as one row of the
 ## parts sheet (one frame cell per frame) and follows the part's frames and poses.
-func add_overlay(part_name: String, texture: Texture2D) -> Sprite2D:
+## `group` ties together the overlays of one piece (an item id), so a code-posed arm
+## that borrows another part's pixels also borrows that part's overlay.
+func add_overlay(part_name: String, texture: Texture2D, group: StringName = &"") -> Sprite2D:
 	var pi := rig.part_index(part_name)
 	if pi < 0:
 		push_warning("PaperDoll: no part named %s" % part_name)
@@ -183,8 +194,12 @@ func add_overlay(part_name: String, texture: Texture2D) -> Sprite2D:
 	s.region_enabled = true
 	s.centered = false
 	s.use_parent_material = true
+	s.set_meta(&"overlay_group", group)
 	_slots[pi].add_child(s)
 	_overlays[pi].append(s)
+	if not _overlay_tex.has(group):
+		_overlay_tex[group] = {}
+	_overlay_tex[group][pi] = texture
 	return s
 
 
@@ -193,6 +208,21 @@ func clear_overlays() -> void:
 		for s: Sprite2D in list:
 			s.queue_free()
 		list.clear()
+	_overlay_tex.clear()
+
+
+## Dresses the doll in worn items (armor): each item's `wear` overlays, in order, and
+## hides the hair under a helmet that `hides_hair`.
+func wear(items: Array[ItemData]) -> void:
+	clear_overlays()
+	var hide := false
+	for it in items:
+		if it == null:
+			continue
+		for part: String in it.wear:
+			add_overlay(part, it.wear[part], it.id)
+		hide = hide or it.hides_hair
+	hair_hidden = hide
 
 
 ## The drawn arm tag this motion would play, or "" if the art has none (or force_posed).
@@ -292,10 +322,21 @@ func _show_frame(pi: int, abs_frame: int, shift: Vector2) -> void:
 	_set_region(pi, rig.region(pi, abs_frame), -rig.anchor)
 
 
-func _set_region(pi: int, region: Rect2, offset: Vector2) -> void:
+func _set_region(pi: int, region: Rect2, offset: Vector2, source: int = -1) -> void:
 	_sprites[pi].region_rect = region
 	_sprites[pi].offset = offset
+	var src := source if source >= 0 else pi
 	for s: Sprite2D in _overlays[pi]:
+		if src != pi:
+			var group: StringName = s.get_meta(&"overlay_group", &"")
+			var tex: Texture2D = _overlay_tex.get(group, {}).get(src, null)
+			s.visible = tex != null
+			if tex:
+				s.texture = tex
+		else:
+			var group: StringName = s.get_meta(&"overlay_group", &"")
+			s.texture = _overlay_tex.get(group, {}).get(pi, s.texture)
+			s.visible = true
 		s.region_rect = Rect2(region.position.x, 0, region.size.x, region.size.y)
 		s.offset = offset
 
@@ -439,7 +480,7 @@ func _bone(pi: int, joint_rest: Vector2, at: Vector2, rot: float, source: int = 
 	slot.position = at
 	slot.rotation = rot
 	slot.modulate = tint
-	_set_region(pi, rig.region(source if source >= 0 else pi, rig.rest_frame), -joint_rest)
+	_set_region(pi, rig.region(source if source >= 0 else pi, rig.rest_frame), -joint_rest, source)
 
 
 ## Which arm's pieces and joints a posed arm is drawn with.
@@ -525,3 +566,4 @@ func _apply_look() -> void:
 	_material.set_shader_parameter(&"count", tex.get_width() if tex else 0)
 	if _hair:
 		_hair.texture = look.hair if look else null
+		_hair.visible = not hair_hidden

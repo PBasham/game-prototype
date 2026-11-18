@@ -92,6 +92,7 @@ func kill() -> void:
 
 
 func _die() -> void:
+	world.record_kill(data.id)
 	var drops := LootDrop.roll(data.loot)
 	for item_id: StringName in drops:
 		world.request_spawn_drop(item_id, drops[item_id], global_position + Vector2(0, -data.size.y * 0.5),

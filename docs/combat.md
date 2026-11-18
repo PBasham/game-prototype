@@ -35,7 +35,8 @@ into item drops.
 
 ### Blue Slime
 
-The rare one (about 1 in 9 forest spawns). 35 health, 1 defense, 9 contact damage,
+The rare one (about 1 in 9 forest spawns), and only after a Green Slime has been slain
+in this world. 35 health, 1 defense, 9 contact damage,
 hops about 7 tiles and more often (waits 0.6 to 1.8 s). Drops 2 to 4 **Slime**. Same
 sheet as the Green Slime, tinted blue.
 
@@ -52,15 +53,38 @@ One table per biome and layer. Only `forest_surface` exists so far.
 | Field | forest_surface | |
 |---|---|---|
 | `biome`, `layer` | forest, SURFACE | Where it applies. |
+| `max_depth_tiles` | 20 | SURFACE: the player and each spawn spot must be no deeper than this below the world's natural surface. Deeper, nothing spawns (no underground tables yet). |
 | `day_seconds` / `night_seconds` | 12 / 6 | Average seconds between spawns. Lower = more often. |
 | `max_day` / `max_night` | 4 / 7 | Most enemies around the player before spawning stops. |
-| `entries` | | `SpawnEntry` list: `enemy`, `weight`, `day`, `night`. |
+| `entries` | | `SpawnEntry` list: `enemy`, `weight`, `day`, `night`, `conditions`. |
 
 **Which enemy:** each entry's chance is its weight divided by the total weight of the
-entries allowed right now (by day or night). Forest: Green Slime 100, Blue Slime 12, so
+entries allowed right now (right time of day, every condition met). Before the first
+Green Slime kill, Blue is locked, so every spawn is Green. Forest: Green Slime 100, Blue Slime 12, so
 Blue is 12 / 112, about 11%. A rarer enemy is just a smaller weight; a night-only enemy
 has `day` off. Later biomes and layers (underground, caves) get their own tables, with
 their own rates and caps.
+
+### Spawn conditions (`SpawnCondition`, `src/combat/spawn_condition.gd`)
+
+An entry's `conditions` must all be met for it to spawn. Add one in the Inspector on a
+spawn entry. Kinds so far:
+
+| Condition | Fields | Met when |
+|---|---|---|
+| `KillCountCondition` | `enemy` (id), `count` | at least `count` of that enemy have been slain in this world |
+
+Forest: Blue Slime needs 1 Green Slime slain. New kinds (time, rain, depth, a boss
+beaten) are a small script each, extending `SpawnCondition` with `met(world)` and
+`describe(world)`.
+
+**Kills** are counted per world (`World.kills`, saved with it), by anyone, including
+`butcher`. Enemies that despawn don't count.
+
+### Despawning
+
+Enemies more than `despawn_tiles` (90) away from you, sideways or up and down, are
+removed without loot and don't count as kills. That's about two and a half screens.
 
 ### The spawner (`EnemySpawner`, child of World, `src/combat/enemy_spawner.gd`)
 
@@ -104,13 +128,13 @@ in it is hit once per swing.
 
 Its own window: press **P** or the **Equip (P)** button in the inventory. It opens in
 the middle of the screen, can be dragged by its title bar, and keeps its spot until you
-quit. Your character is in the middle (armor isn't drawn on it yet), armor on the left
+quit. Your character is in the middle (wearing your armor), armor on the left
 (Head, Chest, Legs), trinkets on the right (three Accessory slots), Book and Conduit
 underneath, stats on the far right. Below that, **Equipped spells** (fold it away by
 clicking its header) and the **Spell Index (L)** button (see items-and-mining.md). Empty slots show a dim label. Ctrl + right click an inventory item
 equips it (accessories go to the first empty accessory slot); click with an item on the
-mouse to put it in a slot. Items don't show on the character yet; only the
-stats change.
+mouse to put it in a slot. Armor is drawn on the character
+(placeholder copper overlays, see character-art.md); accessories aren't drawn.
 
 Armor and accessories use the Equipment group on `ItemData`:
 
@@ -119,6 +143,8 @@ Armor and accessories use the Equipment group on `ItemData`:
 | `equip_slot` | `head`, `chest` or `legs` (armor only). |
 | `defense` | Added to the player's defense. |
 | `stats` | Dictionary of bonuses (see below). |
+| `wear` | How it looks on the character: overlay textures by doll part name (see character-art.md). |
+| `hides_hair` | A helmet that hides the hair. |
 
 Stats (`CharacterData.STATS`), all summed across equipment:
 
@@ -163,6 +189,8 @@ Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 planks.
 - `summon <enemy> [n]`: spawn at the cursor (`summon green_slime 3`, `summon blue_slime`).
 - `peaceful`: toggle natural spawning (summon still works).
 - `butcher`: kill every enemy; they drop their loot.
-- `spawns`: the spawn table here, how many enemies are around against the cap, the
-  current chance per second, and each enemy's share.
+- `spawns`: the spawn table here (or that nothing spawns here), how many enemies are
+  around against the cap, the current chance per second, each enemy's share, and why a
+  locked one is locked.
+- `kills`: enemies slain in this world.
 - `equip <item>`: equips into any slot (armor, accessories, book, conduit).

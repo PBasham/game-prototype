@@ -663,7 +663,8 @@ func _day_seconds() -> float:
 
 
 ## Equipment changed: recompute the stats it raises (max health and mana, regen, speed,
-## jump, damage) and defense.
+## jump, damage), defense, and how the armor looks. Max health going up doesn't refill
+## health (regen does that).
 func apply_stats() -> void:
 	if _base.is_empty():
 		_base = {"max_health": max_health, "max_mana": max_mana, "mana_regen": mana_regen}
@@ -674,6 +675,8 @@ func apply_stats() -> void:
 	mana_regen = float(_base["mana_regen"]) + stat(&"mana_regen")
 	health = minf(health, max_health)
 	mana = minf(mana, max_mana)
+	if _doll:
+		_doll.wear(character.worn_items() if character else [] as Array[ItemData])
 
 
 ## An equipment bonus (0 when nothing raises it).

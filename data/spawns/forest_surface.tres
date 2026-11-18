@@ -1,21 +1,27 @@
 [gd_resource type="Resource" script_class="SpawnTable" format=3]
 
-[ext_resource type="Script" path="res://src/combat/spawn_entry.gd" id="1_e3m1r"]
-[ext_resource type="Resource" path="res://data/enemies/green_slime.tres" id="2_xot03"]
-[ext_resource type="Resource" path="res://data/enemies/blue_slime.tres" id="3_d32di"]
-[ext_resource type="Script" path="res://src/combat/spawn_table.gd" id="4_jinop"]
+[ext_resource type="Script" path="res://src/combat/spawn_entry.gd" id="1_d32di"]
+[ext_resource type="Script" path="res://src/combat/spawn_condition.gd" id="2_jinop"]
+[ext_resource type="Resource" path="res://data/enemies/green_slime.tres" id="3_o0vqb"]
+[ext_resource type="Script" path="res://src/combat/kill_count_condition.gd" id="4_3vud0"]
+[ext_resource type="Resource" path="res://data/enemies/blue_slime.tres" id="5_qe5rb"]
+[ext_resource type="Script" path="res://src/combat/spawn_table.gd" id="6_8ejdu"]
 
-[sub_resource type="Resource" id="Resource_o0vqb"]
-script = ExtResource("1_e3m1r")
-enemy = ExtResource("2_xot03")
+[sub_resource type="Resource" id="Resource_taoo8"]
+script = ExtResource("1_d32di")
+enemy = ExtResource("3_o0vqb")
 
-[sub_resource type="Resource" id="Resource_3vud0"]
-script = ExtResource("1_e3m1r")
-enemy = ExtResource("3_d32di")
+[sub_resource type="Resource" id="Resource_3ma2q"]
+script = ExtResource("4_3vud0")
+
+[sub_resource type="Resource" id="Resource_4hgp8"]
+script = ExtResource("1_d32di")
+enemy = ExtResource("5_qe5rb")
 weight = 12.0
+conditions = Array[ExtResource("2_jinop")]([SubResource("Resource_3ma2q")])
 
 [resource]
-script = ExtResource("4_jinop")
-entries = Array[ExtResource("1_e3m1r")]([SubResource("Resource_o0vqb"), SubResource("Resource_3vud0")])
+script = ExtResource("6_8ejdu")
+entries = Array[ExtResource("1_d32di")]([SubResource("Resource_taoo8"), SubResource("Resource_4hgp8")])
 id = &"forest_surface"
 display_name = "Forest surface"

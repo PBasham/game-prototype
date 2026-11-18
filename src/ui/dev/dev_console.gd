@@ -192,7 +192,7 @@ func _register() -> void:
 	_add("spawns", "spawns", "Show the spawn table here, the rate and the cap.", func(_a: PackedStringArray) -> void:
 		var t := world.spawner.table_here()
 		if t == null:
-			_print("No spawn table here.")
+			_print("Nothing spawns here (no spawn table for this biome and depth).")
 			return
 		var night := world.spawner.is_night()
 		var chance := world.spawner.spawn_chance(t, 1.0)
@@ -201,11 +201,26 @@ func _register() -> void:
 			1.0 / chance if chance > 0.0 else INF, ", peaceful" if world.spawner.peaceful else ""])
 		var total := 0.0
 		for e in t.entries:
-			if e.enemy and (e.night if night else e.day):
+			if e.allowed(night, world):
 				total += e.weight
 		for e in t.entries:
-			if e.enemy and (e.night if night else e.day):
-				_print("  %s: %.0f%%" % [e.enemy.display_name, e.weight / total * 100.0]))
+			if e.enemy == null:
+				continue
+			if e.allowed(night, world):
+				_print("  %s: %.0f%%" % [e.enemy.display_name, e.weight / total * 100.0])
+			else:
+				var why: PackedStringArray = []
+				if not (e.night if night else e.day):
+					why.append("not at this time of day")
+				for c in e.conditions:
+					if c and not c.met(world):
+						why.append(c.describe(world))
+				_print("  %s: locked, %s" % [e.enemy.display_name, ", ".join(why)]))
+	_add("kills", "kills", "Enemies slain in this world.", func(_a: PackedStringArray) -> void:
+		if world.kills.is_empty():
+			_print("Nothing slain yet.")
+		for id in world.kills:
+			_print("  %s: %d" % [id, world.kills[id]]))
 	_add("god", "god", "Toggle taking no damage.", func(_a: PackedStringArray) -> void:
 		world.player.invincible = not world.player.invincible
 		_print("No damage: %s." % ("on" if world.player.invincible else "off")))

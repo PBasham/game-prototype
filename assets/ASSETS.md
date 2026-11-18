@@ -142,3 +142,14 @@ plus `sun.png` (fixed). The sky gradient is set in code.
 | enemies/slime.png | 108x27 | 3 frames of 36x27 (rest, squash, air), pale; tinted per enemy |
 | objects/bed.png | 72x24 | Bed, 9x3 tiles |
 | items/icons/ and items/held/: slime, wooden_sword, copper_sword, copper_helmet, copper_chestplate, copper_greaves, bed | | Icons and held sprites |
+
+## Armor overlays: `armor/*.png` (tools/make_armor_art.gd)
+
+1232x64 strips, one 44x64 cell per doll frame, laid out like one row of
+`sprites/scholar_parts.png`. Placeholders cut from the body parts and shaded copper.
+
+| File | Part |
+|---|---|
+| copper_helmet_head.png | Head (top half, 1 px rim) |
+| copper_chestplate_torso.png, _front_arm_upper.png, _back_arm_upper.png | Chest and shoulders |
+| copper_greaves_front_leg_upper.png, _back_leg_upper.png, _front_leg_lower.png, _back_leg_lower.png | Legs (feet left bare) |

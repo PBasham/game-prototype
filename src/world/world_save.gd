@@ -28,6 +28,8 @@ const META_BAGS := "bags"
 const META_TIME := "time"
 ## Respawn points set by beds: {character name: [x, y] (the bed's anchor tile)}.
 const META_SPAWNS := "spawns"
+## Enemies slain in this world, by enemy id (spawn conditions read these).
+const META_KILLS := "kills"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

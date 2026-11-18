@@ -155,16 +155,52 @@ func test_spawn_chance_and_weighted_picks() -> void:
 	w.clock.set_hour(23.0)
 	assert_almost_eq(w.spawner.spawn_chance(t, 1.0), 1.0 / t.night_seconds, 0.0001, "more often at night")
 	assert_gt(t.cap(true), t.cap(false), "a higher cap at night")
-	# Weighted picks: Blue Slime is the rare one.
+	# Blue Slime is locked until a Green Slime has been slain in this world.
+	for i in 200:
+		assert_eq(t.pick(false, i / 200.0, w).id, &"green_slime", "only green before the first kill")
+	var e := w.request_spawn_enemy(_slime(), w.player.global_position + Vector2(80, -20))
+	await wait_physics_frames(1)
+	e.kill()
+	assert_eq(w.kill_count(&"green_slime"), 1)
+	# Weighted picks: now Blue Slime is the rare one.
 	var blue := 0
 	for i in 1000:
-		if t.pick(false, i / 1000.0).id == &"blue_slime":
+		if t.pick(false, i / 1000.0, w).id == &"blue_slime":
 			blue += 1
 	assert_almost_eq(blue, roundi(1000.0 * 12.0 / 112.0), 2.0, "about 11% Blue Slime")
 	var only_night := SpawnTable.new()
 	only_night.entries.append(SpawnEntry.make(_slime(), 1.0, false, true))
-	assert_null(only_night.pick(false, 0.5), "nothing allowed by day")
-	assert_eq(only_night.pick(true, 0.5), _slime())
+	assert_null(only_night.pick(false, 0.5, w), "nothing allowed by day")
+	assert_eq(only_night.pick(true, 0.5, w), _slime())
+	var needs_two := SpawnTable.new()
+	needs_two.entries.append(SpawnEntry.make(_slime(), 1.0, true, true,
+		[KillCountCondition.make(&"green_slime", 2)] as Array[SpawnCondition]))
+	assert_null(needs_two.pick(false, 0.5, w), "1 of 2 kills: still locked")
+
+
+func test_nothing_spawns_underground() -> void:
+	var p := w.player
+	var feet := w.world_to_tile(p.global_position)
+	assert_not_null(w.spawner.table_here(), "the forest surface")
+	var surface := w.generator.surface_at(w.wrap_tile(feet).x)
+	p.global_position = w.tile_to_world(Vector2i(feet.x, surface + 40))
+	assert_null(w.spawner.table_here(), "40 tiles down: no table")
+
+
+func test_armor_is_drawn_on_the_character() -> void:
+	var c := w.character
+	var doll: PaperDoll = w.player._doll
+	c.equip(&"chest", &"copper_chestplate")
+	c.equip(&"head", &"copper_helmet")
+	await wait_physics_frames(1)
+	var torso := doll.rig.part_index("Torso")
+	assert_eq(doll._overlays[torso].size(), 1, "chestplate over the torso")
+	assert_true(doll.hair_hidden, "helmet hides the hair")
+	c.equip(&"head", &"")
+	c.equip(&"chest", &"")
+	await wait_physics_frames(1)
+	assert_eq(doll._overlays[torso].size(), 0)
+	assert_false(doll.hair_hidden)
 
 
 func test_butcher_kills_with_loot() -> void:
