@@ -146,7 +146,7 @@ Not playtested yet.
 | 20 Wood Planks + 5 Copper Bars + 4 Paper | Workbench | Spell Weaving Table (6x3, station `spell_weaving`) |
 | 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table | Scroll: <spell>, one recipe per spell |
 | 1 Blank Scroll + 20 Slime | Spell Weaving Table | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
-| 1 Blank Scroll + mana | Spell Weaving Table, **Copy** tab | **Copy: <spell>**, for any spell you know |
+| 1 Blank Scroll (and a big enough max mana) | Spell Weaving Table, **Copy** tab | **Copy: <spell>**, for any spell you know |
 
 The **Spell Weaving Table** window has two tabs:
 
@@ -154,14 +154,15 @@ The **Spell Weaving Table** window has two tabs:
   half the materials, rounded up (`World.known_scroll_discount`, 0.5); the Blank Scroll
   is still needed. Those are listed in green with a note. The plain recipes stay until
   scrolls come from loot.
-- **Copy:** every spell you know, written onto a Blank Scroll with your mana: the
-  spell's cost (per cast, or 2 seconds of a beam or concentration) times
-  `World.copy_mana_factor` (3), kept between `copy_mana_min` (10) and `copy_mana_max`
-  (60). This is also how you'll make more of spells that can't be crafted at all.
-  Recipes come from `Crafting.copy_recipes` (made on the fly, not data files).
+- **Copy:** every spell you know, written onto a Blank Scroll. It takes a strong enough
+  mage: your **max** mana must be at least `World.copy_max_mana_by_tier` for the
+  spell's tier (100 / 200 / 300), so a starting mage copies tier 1 spells. No mana is
+  used, so you can copy as many as you have Blank Scrolls. This is also how you'll make
+  more of spells that can't be crafted at all. Recipes come from `Crafting.copy_recipes`
+  (made on the fly, not data files). Later: mastery of the spell as a requirement too.
 
 Tabs per station are `Hud.STATION_TABS` (Create and Empower join later). A recipe's
-`mana` is spent per craft and limits how many you can make.
+`requires_max_mana` is checked, never used up.
 
 A scroll (`ItemData.teaches_spell`, kind SCROLL) is one use: left click casts its spell
 once for free, right click at a Spell Weaving Table learns it for the spell's

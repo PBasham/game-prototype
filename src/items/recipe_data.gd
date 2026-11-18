@@ -14,8 +14,9 @@ extends GameData
 ## Item ids that must be somewhere in your inventory but aren't used up (the Hand
 ## Hammer for the Workbench).
 @export var requires: Array[StringName] = []
-## Mana used per craft (copying a spell into a scroll). The Copy tab makes these.
-@export var mana := 0.0
+## Max mana pool the crafter needs (copying a spell into a scroll: a stronger mage for
+## stronger spells). Nothing is used up by it. The Copy tab makes these.
+@export var requires_max_mana := 0.0
 ## A short note shown with the recipe ("Known spell: half cost"). Not saved.
 var note := ""
 ## What it makes, and how many per craft.

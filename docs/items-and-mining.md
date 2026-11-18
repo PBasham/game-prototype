@@ -217,6 +217,12 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 Damageable things are nodes in the `damageable` group with `hit_rect()` and
 `take_damage(amount, from)`; enemies will use the same.
 
+- **Book or not:** any spell you know can be cast, also from a hotbar slot (put it
+  there from the Spell Index). Spells in your book are **focused**; known spells outside
+  it are **unfocused**: 1.5x mana and cooldown, and no book bonus to their power
+  (`Player.unfocused_mana_mult`, `unfocused_cooldown_mult`). The book's tier limit
+  applies either way. A hint by the cursor and the tooltip say when a spell is
+  unfocused. R, the spell wheel, book number keys and quick cast use the book.
 - **Spells you know** are kept on the character. A new character knows none. You learn
   one from its **scroll** (made at the Spell Weaving Table, crafting.md).
 - **Scrolls are one use.** Hold one:
@@ -404,7 +410,7 @@ Spell controls** (saved), or with the console `spellopt [option] [on|off]`. Code
 
 | Option | Default | What it does |
 |---|---|---|
-| `movement_key` | on | **F** turns your movement spell on or off: the last of Fly or Levitate you used (Fly first). It still has to be in your book, with the mana for it. You keep whatever is in your hand. |
+| `movement_key` | on | **F** turns your movement spell on or off: the last of Fly or Levitate you used (Fly first). It needs the mana for it (unfocused, 1.5x, if it's not in your book). You keep whatever is in your hand. |
 | `double_jump` | on | Jumping again in the air (after 0.12 s) turns the movement spell on. |
 | `book_numbers` | on | With the spellbook out (R), the number keys pick the book's slots instead of the hotbar. R again goes back to the hotbar. |
 | `quick_cast` | on | Hold R and tap a number: casts that book slot once, then you're back to what you held. Concentration spells just toggle. The wheel doesn't open after a quick cast. |

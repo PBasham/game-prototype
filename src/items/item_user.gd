@@ -85,7 +85,7 @@ func _process(delta: float) -> void:
 	# Spell beams drain mana while they run, and stop when it's gone.
 	if _item and _item.beam and _item.is_spell() and p.is_using() and not p.input_blocked \
 			and not p.is_free_spell(_item as SpellData):
-		if not p.spend_mana((_item as SpellData).mana_per_second * delta):
+		if not p.spend_mana((_item as SpellData).mana_per_second * p.mana_mult(_item as SpellData) * delta):
 			p.stop_using()
 			EventBus.debug_message.emit("Out of mana")
 	if _item and _item.beam and mode == Mode.CHOP and p.is_using() and not p.input_blocked and tree != PlantLayer.NONE:
@@ -141,7 +141,7 @@ func _spell_power() -> float:
 	if p.character == null:
 		return 1.0
 	var tome := p.held_item if p.held_item and p.held_item.tome_spell != &"" else null
-	return p.character.spell_power(tome) * (1.0 + p.stat(&"magic_damage"))
+	return p.character.spell_power(tome, p.is_unfocused(_item as SpellData)) * (1.0 + p.stat(&"magic_damage"))
 
 
 ## Where the player is aiming (world px).
@@ -166,7 +166,7 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 		problem = p.character.cast_problem(_item as SpellData, from_tome)
 		var sp := _item as SpellData
 		var turning_off := sp.cast == SpellData.Cast.TOGGLE and p.concentration == sp
-		var need := sp.mana_cost * (sp.charge_min_mana if sp.cast == SpellData.Cast.CHARGED else 1.0)
+		var need := sp.mana_cost * (sp.charge_min_mana if sp.cast == SpellData.Cast.CHARGED else 1.0) * p.mana_mult(sp)
 		if problem == "" and not turning_off and not p.has_mana(maxf(need, minf(sp.mana_per_second * 0.1, 1.0))):
 			problem = "Not enough mana"
 		if p.is_free_spell(sp):
@@ -598,12 +598,13 @@ func _on_impact(item: ItemData) -> void:
 			# Mana is checked before the reagents are used up, so a failed cast costs nothing.
 			# A ritual pays when it completes.
 			var pays := spell.cast != SpellData.Cast.RITUAL
-			if cooldown_left(spell) <= 0.0 and p.has_mana(spell.mana_cost) and p.character.take_reagents(spell):
+			var cost := spell.mana_cost * p.mana_mult(spell)
+			if cooldown_left(spell) <= 0.0 and p.has_mana(cost) and p.character.take_reagents(spell):
 				if pays:
-					p.spend_mana(spell.mana_cost)
-				_ready_at[spell.id] = _now() + spell.cooldown
+					p.spend_mana(cost)
+				_ready_at[spell.id] = _now() + spell.cooldown * p.cooldown_mult(spell)
 				if not cast(spell) and pays:
-					p.mana += spell.mana_cost  # it fizzled (no room, no target): refund
+					p.mana += cost  # it fizzled (no room, no target): refund
 					_ready_at.erase(spell.id)
 		Mode.PLACE_BLOCK:
 			var id := world.blocks.index_of(item.places_block)
@@ -697,11 +698,11 @@ func release_charge() -> SpellProjectile:
 	queue_redraw()
 	if spell == null:
 		return null
-	var cost := spell.mana_cost * lerpf(spell.charge_min_mana, 1.0, k)
+	var cost := spell.mana_cost * lerpf(spell.charge_min_mana, 1.0, k) * p.mana_mult(spell)
 	if not p.spend_mana(cost):
 		EventBus.debug_message.emit("Not enough mana")
 		return null
-	_ready_at[spell.id] = _now() + spell.cooldown
+	_ready_at[spell.id] = _now() + spell.cooldown * p.cooldown_mult(spell)
 	var from := p.casting_hand_position()
 	var bolt := world.request_spawn_projectile(spell, from, (cursor() - from).normalized(),
 		_spell_power() * lerpf(spell.charge_min_damage, 1.0, k), p)
@@ -831,6 +832,13 @@ func _draw() -> void:
 		draw_string_outline(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.7))
 		draw_string(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
 			valid_color if not known else Color(valid_color, 0.5))
+	if _item is SpellData and p.is_unfocused(_item as SpellData) and problem == "":
+		# Cast from outside the book: say so (it costs more).
+		var font := ThemeDB.fallback_font
+		draw_string_outline(font, aim + Vector2(8, 14), "Unfocused (not in your book)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2,
+			Color(0, 0, 0, 0.7))
+		draw_string(font, aim + Vector2(8, 14), "Unfocused (not in your book)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
+			Color(valid_color, 0.6))
 	if mode in [Mode.CAST, Mode.TOGGLE, Mode.CHARGE]:
 		# No target box: just say why it can't be cast, if it can't.
 		if problem != "":

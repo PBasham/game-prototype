@@ -271,6 +271,11 @@ var _ritual_fx: SpellEffect
 ## A spell cast from a scroll runs free (no mana) for this long: concentration spells
 ## (Fly, Levitate, Mend) and held beams (Mining Spell, Hyper Drill). Shown as a buff.
 @export var scroll_concentration_seconds := 60.0
+## A known spell cast from outside your book (from the hotbar) is unfocused: it costs
+## this much more mana, gets no book bonus to its power, and its cooldown is this much
+## longer. The book's tier limit still applies.
+@export var unfocused_mana_mult := 1.5
+@export var unfocused_cooldown_mult := 1.5
 @export var scroll_beam_seconds := 15.0
 var _ritual_free := false
 ## Set when R was used for a quick cast, so letting go of R does nothing else.
@@ -666,9 +671,10 @@ func _update_mana(delta: float) -> void:
 	_update_ritual(delta)
 	# A concentration spell drains while it's on; it ends when mana runs out.
 	if concentration and concentration.effect == &"mend":
-		heal(concentration.heal_per_second * spell_power() * delta)
+		heal(concentration.heal_per_second * spell_power(is_unfocused(concentration)) * delta)
 	if concentration and concentration.mana_per_second > 0.0 and not is_free_spell(concentration):
-		var cost := concentration.mana_per_second * (concentration.boost_mana_mult if is_boosting() else 1.0)
+		var cost := concentration.mana_per_second * (concentration.boost_mana_mult if is_boosting() else 1.0) \
+			* mana_mult(concentration)
 		if not spend_mana(cost * delta):
 			toggle_concentration(concentration)
 			EventBus.debug_message.emit("Out of mana")
@@ -846,8 +852,8 @@ func is_boosting() -> bool:
 
 ## Spell strength from the book, conduit and gear (for heals; ItemUser has its own for
 ## the held spell, which also counts a tome).
-func spell_power() -> float:
-	return (character.spell_power(null) if character else 1.0) * (1.0 + stat(&"magic_damage"))
+func spell_power(unfocused: bool = false) -> float:
+	return (character.spell_power(null, unfocused) if character else 1.0) * (1.0 + stat(&"magic_damage"))
 
 
 ## Flying: no gravity, WASD in every direction, Space also goes up. Shift boosts.
@@ -1420,6 +1426,23 @@ func end_buff(effect: StringName, used: bool = false) -> void:
 		EventBus.sound_requested.emit(&"buff_end", global_position)
 
 
+## A known spell used from outside your book (not from a tome or a scroll's free time).
+func is_unfocused(spell: SpellData) -> bool:
+	if spell == null or character == null or character.in_book(spell.id) or is_free_spell(spell):
+		return false
+	return not (held_item != null and held_item.tome_spell == spell.id)
+
+
+## Mana multiplier for a spell right now (unfocused costs more).
+func mana_mult(spell: SpellData) -> float:
+	return unfocused_mana_mult if is_unfocused(spell) else 1.0
+
+
+## Cooldown multiplier for a spell right now (unfocused is slower).
+func cooldown_mult(spell: SpellData) -> float:
+	return unfocused_cooldown_mult if is_unfocused(spell) else 1.0
+
+
 func _scroll_key(spell: SpellData) -> StringName:
 	return StringName("scroll_" + String(spell.id))
 
@@ -1514,7 +1537,7 @@ func _complete_ritual() -> void:
 	ritual = null
 	if is_instance_valid(_ritual_fx):
 		_ritual_fx.queue_free()
-	if not _ritual_free and not spend_mana(spell.mana_cost):
+	if not _ritual_free and not spend_mana(spell.mana_cost * mana_mult(spell)):
 		EventBus.debug_message.emit("%s: not enough mana" % spell.display_name)
 		ritual_finished.emit(spell, false)
 		return

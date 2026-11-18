@@ -269,8 +269,8 @@ static func fits(slot: StringName, item: ItemData) -> bool:
 func cast_problem(spell: SpellData, from_tome: bool = false) -> String:
 	if spell == null:
 		return "Unknown spell"
-	if not from_tome and not in_book(spell.id):
-		return "Not in your spellbook"
+	if not from_tome and not knows(spell.id):
+		return "You don't know this spell"
 	if not from_tome and spell.tier > max_spell_tier():
 		return "Too powerful for your spellbook (tier %d)" % spell.tier
 	if spell.requires_conduit != &"":
@@ -294,9 +294,10 @@ func take_reagents(spell: SpellData) -> bool:
 	return true
 
 
-## Spell strength multiplier from the book (or the tome) and the conduit.
-func spell_power(tome: ItemData = null) -> float:
-	var source := tome if tome else book()
+## Spell strength multiplier from the book (or the tome) and the conduit. `unfocused`: a
+## known spell cast from outside the book gets no book bonus (the conduit still counts).
+func spell_power(tome: ItemData = null, unfocused: bool = false) -> float:
+	var source := tome if tome else (null if unfocused else book())
 	var p := source.spell_power if source else 1.0
 	var c := conduit()
 	return p * (c.spell_power if c else 1.0)

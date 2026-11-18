@@ -32,10 +32,10 @@ static func for_crafter(r: RecipeData, c: CharacterData, share: float) -> Recipe
 	return cheap
 
 
-## Copy tab: a recipe per spell the character knows: a Blank Scroll plus mana makes that
-## spell's scroll. Mana is the spell's cost (per cast, or 2 seconds of a beam or
-## concentration) times `factor`, kept between `low` and `high`.
-static func copy_recipes(c: CharacterData, factor: float, low: float, high: float) -> Array[RecipeData]:
+## Copy tab: a recipe per spell the character knows: a Blank Scroll makes that spell's
+## scroll, if their max mana is at least `max_mana_by_tier` for the spell's tier (a
+## stronger mage for stronger spells). Mana isn't used up.
+static func copy_recipes(c: CharacterData, max_mana_by_tier: Array[float]) -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	if c == null:
 		return out
@@ -50,24 +50,25 @@ static func copy_recipes(c: CharacterData, factor: float, low: float, high: floa
 		r.station = &"spell_weaving"
 		r.inputs = {&"blank_scroll": 1}
 		r.output = scroll
-		r.mana = clampf(maxf(spell.mana_cost, spell.mana_per_second * 2.0) * factor, low, high)
-		r.note = "Copied from your known spells, with %d mana" % roundi(r.mana)
+		var tier := clampi(spell.tier, 1, maxi(max_mana_by_tier.size(), 1)) - 1
+		r.requires_max_mana = max_mana_by_tier[tier] if not max_mana_by_tier.is_empty() else 0.0
+		r.note = "Copied from your known spells. Needs %d max mana" % roundi(r.requires_max_mana)
 		out.append(r)
 	out.sort_custom(func(a: RecipeData, b: RecipeData) -> bool: return a.display_name < b.display_name)
 	return out
 
 
-## How many times the recipe can be made from what's in the inventory (0 = can't), and
-## with `mana` to spend on recipes that use it.
-static func times_craftable(inv: Inventory, r: RecipeData, mana: float = INF) -> int:
+## How many times the recipe can be made from what's in the inventory (0 = can't), by a
+## crafter with `max_mana` (for recipes that need a big enough pool).
+static func times_craftable(inv: Inventory, r: RecipeData, max_mana: float = INF) -> int:
+	if r.requires_max_mana > 0.0 and max_mana < r.requires_max_mana:
+		return 0
 	for q in r.requires:
 		if inv.count_of(q) <= 0:
 			return 0
 	var times := 1000000
 	for k: StringName in r.inputs:
 		times = mini(times, inv.count_of(k) / maxi(r.inputs[k], 1))
-	if r.mana > 0.0 and mana != INF:
-		times = mini(times, floori(mana / r.mana))
 	return times
 
 
@@ -85,9 +86,9 @@ static func missing(inv: Inventory, r: RecipeData) -> PackedStringArray:
 
 
 ## Crafts up to `times`: takes the inputs, adds the outputs. Returns [times made,
-## outputs that didn't fit] (the caller drops the extra, and spends r.mana * times made).
-static func craft(inv: Inventory, r: RecipeData, times: int, mana: float = INF) -> Array:
-	var n := mini(times, times_craftable(inv, r, mana))
+## outputs that didn't fit] (the caller drops the extra).
+static func craft(inv: Inventory, r: RecipeData, times: int, max_mana: float = INF) -> Array:
+	var n := mini(times, times_craftable(inv, r, max_mana))
 	if n <= 0:
 		return [0, 0]
 	for k: StringName in r.inputs:

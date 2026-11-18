@@ -26,12 +26,14 @@ func test_new_character_knows_mining_and_has_a_shortcut() -> void:
 	assert_eq(c.book_slot_count(), 4)
 
 
-func test_spells_must_be_in_the_book() -> void:
+func test_known_spells_cast_outside_the_book_unknown_ones_dont() -> void:
 	var c := CharacterData.create_dev(NAME)
 	var spell := ItemData.find(&"spell:mining_spell") as SpellData
 	c.put_in_book(0, &"")
-	assert_ne(c.cast_problem(spell), "", "not in the book")
-	assert_eq(c.cast_problem(spell, true), "", "a tome doesn't need the book")
+	assert_eq(c.cast_problem(spell), "", "known, not in the book: castable (unfocused)")
+	c.known_spells.erase(&"mining_spell")
+	assert_ne(c.cast_problem(spell), "", "not known")
+	assert_eq(c.cast_problem(spell, true), "", "a tome doesn't need you to know it")
 
 
 func test_books_change_slots_and_power() -> void:

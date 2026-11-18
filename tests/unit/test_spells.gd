@@ -202,7 +202,7 @@ func test_scrolls_teach_spells() -> void:
 	assert_eq(drill.station, &"spell_weaving")
 
 
-func test_known_spells_craft_cheaper_and_copy_for_mana() -> void:
+func test_known_spells_craft_cheaper_and_copy_needs_a_strong_mage() -> void:
 	var c := w.character
 	var p := w.player
 	var plain := Registry.get_def(&"recipes", &"scroll_hyper_drill") as RecipeData
@@ -216,27 +216,56 @@ func test_known_spells_craft_cheaper_and_copy_for_mana() -> void:
 	assert_eq(plain.inputs[&"copper_bar"], 10, "the real recipe is untouched")
 	var other := Registry.get_def(&"recipes", &"wooden_sword") as RecipeData
 	assert_eq(Crafting.for_crafter(other, c, 0.5), other, "not a scroll: unchanged")
-	# Copy tab: every known spell (not only the book), for a Blank Scroll and mana.
+	# Copy tab: every known spell (not only the book), for a Blank Scroll, if your max mana
+	# is big enough for the spell's tier. No mana is used.
 	c.book_spells.erase(&"hyper_drill")
-	var copies := Crafting.copy_recipes(c, 3.0, 10.0, 60.0)
+	var copies := Crafting.copy_recipes(c, [100.0, 200.0, 300.0] as Array[float])
 	var with_scrolls := c.known_spells.filter(func(id: StringName) -> bool:
 		return ItemData.find(StringName("scroll_" + String(id))) != null)
 	assert_eq(copies.size(), with_scrolls.size(), "one per known spell that has a scroll")
 	var drill: RecipeData = copies.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_hyper_drill")[0]
 	assert_eq(drill.inputs, {&"blank_scroll": 1} as Dictionary[StringName, int])
-	assert_eq(drill.mana, 60.0, "30/s x 2 s x 3, capped at 60")
+	assert_eq(drill.requires_max_mana, 300.0, "tier 3")
 	var spark: RecipeData = copies.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_spark")[0]
-	assert_eq(spark.mana, 10.0, "2 x 3 = 6, at least 10")
-	# Making copies spends mana and is limited by it.
+	assert_eq(spark.requires_max_mana, 100.0, "tier 1")
 	c.inventory.add(&"blank_scroll", 5)
+	assert_eq(Crafting.times_craftable(c.inventory, drill, 100.0), 0, "too weak a mage for tier 3")
+	assert_gt(Crafting.times_craftable(c.inventory, spark, 100.0), 4, "a starting mage copies tier 1")
+	p.mana = 40.0
+	var before := c.inventory.count_of(&"scroll_spark")
+	assert_eq(w.hud.craft(spark, 3), 3)
+	assert_eq(c.inventory.count_of(&"scroll_spark"), before + 3)
+	assert_eq(p.mana, 40.0, "no mana used")
+
+
+func test_unfocused_casting_outside_the_book() -> void:
+	var c := w.character
+	var p := w.player
+	var u := w.item_user
+	var spark := _spell(&"spark")
+	c.book_spells.erase(&"spark")
+	assert_eq(c.cast_problem(spark), "", "a known spell can be cast from outside the book")
+	c.known_spells.erase(&"blink")
+	assert_eq(c.cast_problem(_spell(&"blink")), "You don't know this spell")
+	assert_true(p.is_unfocused(spark))
+	assert_eq(p.mana_mult(spark), 1.5)
+	assert_eq(p.cooldown_mult(spark), 1.5)
+	# Tier still counts: a tier 3 spell needs a tier 3 book.
+	assert_ne(c.cast_problem(_spell(&"hyper_drill")), "", "the basic book can't handle tier 3")
+	# Power: no book bonus.
+	assert_almost_eq(c.spell_power(null, true), c.spell_power(null) / (c.book().spell_power if c.book() else 1.0), 0.001)
+	# Casting it from a hotbar slot costs 1.5x.
+	c.inventory.set_slot(4, ItemData.spell_key(&"spark"), 1)
+	p.select_slot(4)
+	p.mana = 100.0
 	p.infinite_mana = false
-	p.mana = 130.0
-	assert_eq(Crafting.times_craftable(c.inventory, drill, p.mana), 2, "two copies' worth of mana")
-	var hud := w.hud
-	hud.station = w.world_to_tile(p.global_position)  # no station: crafting needs only the recipe here
-	assert_eq(hud.craft(drill, 5), 2)
-	assert_almost_eq(p.mana, 10.0, 0.01, "60 per copy")
-	assert_eq(c.inventory.count_of(&"scroll_hyper_drill"), 2)
+	await wait_seconds(0.2)
+	u.cursor_override = p.chest() + Vector2(40, 0)
+	u._on_impact(spark)
+	assert_almost_eq(p.mana, 100.0 - spark.mana_cost * 1.5, 0.01, "1.5x mana")
+	c.put_in_book(0, &"spark")
+	assert_false(p.is_unfocused(spark), "in the book: focused")
+	u.cursor_override = Vector2.INF
 
 
 func test_scroll_casts_share_the_cooldown() -> void:
@@ -510,6 +539,7 @@ func test_recall_ritual() -> void:
 	p.reset_physics_interpolation()
 	await wait_seconds(1.0)
 	var recall := _spell(&"recall")
+	w.character.put_in_book(0, &"recall")  # focused: 40 mana (unfocused would be 60)
 	p.mana = 100.0
 	assert_true(p.start_ritual(recall))
 	Input.action_press("move_right")

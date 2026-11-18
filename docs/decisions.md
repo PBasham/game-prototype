@@ -23,12 +23,16 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Scrolls, one use:** left click casts the spell once free (no mana, reagents, book or
   tier; concentration 60 s, held beams 15 s, bolts at full charge), right click learns
   it. Fizzled casts keep the scroll.
+- **The book matters but doesn't gatekeep:** known spells outside the book can be cast
+  (from the hotbar) unfocused: 1.5x mana and cooldown, no book bonus; the book's tier
+  limit still applies.
 - **Known spells vs the book:** known spells are your library; the book holds the active
   ones (a quick slot loadout). "Copy from your book" means copy from known spells.
 - **Scroll economy (built now):** learning a scroll costs extra (at a Spell Weaving Table,
   bars by tier); the table has a **Craft** tab (known spells cost half the materials) and
-  a **Copy** tab (any known spell onto a Blank Scroll for mana, including spells that
-  can't be crafted); scroll casts share the spell's cooldown. Plain scroll recipes stay
+  a **Copy** tab (any known spell onto a Blank Scroll, including spells that can't be
+  crafted; needs a max mana pool of 100 / 200 / 300 by tier, nothing drained so making
+  several isn't a wait); scroll casts share the spell's cooldown. Plain scroll recipes stay
   until a loot pool.
 - **Scroll economy (for Magic progression, decided):**
   - Found scrolls are plain (base spell, no modifiers).

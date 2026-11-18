@@ -802,13 +802,12 @@ func recipes() -> Array[RecipeData]:
 	var def := world.object_at(station) if station != World.NO_TILE else null
 	var c := world.character
 	var key := "%s|%d|%d|%d|%s|%s" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
-		hash(c.known_spells) if c else 0, world.known_scroll_discount,
-		[world.copy_mana_factor, world.copy_mana_min, world.copy_mana_max]]
+		hash(c.known_spells) if c else 0, world.known_scroll_discount, world.copy_max_mana_by_tier]
 	if key == _recipe_key:
 		return _recipe_cache
 	var list: Array[RecipeData] = []
 	if def and def.station == &"spell_weaving" and craft_tab == 1:
-		list = Crafting.copy_recipes(c, world.copy_mana_factor, world.copy_mana_min, world.copy_mana_max)
+		list = Crafting.copy_recipes(c, world.copy_max_mana_by_tier)
 	else:
 		var base := Crafting.recipes_for(def.station, def.station_tier) if def and def.station != &"" \
 			else Crafting.recipes_for(&"")
@@ -834,14 +833,13 @@ func _body_top() -> float:
 	return 22.0 + (TAB_H + 3.0 if not _tabs().is_empty() else 0.0)
 
 
-## Mana there is to spend on a recipe that uses it.
-func _mana_for_crafting() -> float:
-	var p := world.player
-	return INF if p.infinite_mana else p.mana
+## The crafter's max mana (some recipes need a big enough pool).
+func _max_mana() -> float:
+	return world.player.max_mana
 
 
 func _times(r: RecipeData) -> int:
-	return Crafting.times_craftable(_inventory(), r, _mana_for_crafting())
+	return Crafting.times_craftable(_inventory(), r, _max_mana())
 
 
 func _station_def() -> ObjectDef:
@@ -947,10 +945,11 @@ func _draw_crafting(g: Control) -> void:
 		var out := ItemData.find(r.output)
 		_draw_icon(g, out.icon if out else null, rect.position + Vector2(3, 1), a)
 		var label_text := (out.display_name if out else String(r.output)) + (" x%d" % r.output_count if r.output_count > 1 else "")
-		if r.mana > 0.0:
+		var copying := r.requires_max_mana > 0.0
+		if copying:
 			label_text = r.display_name
 		# Known spells' scrolls (cheaper) are listed in green.
-		var label_color := UiSkin.GOOD if r.note != "" and r.mana <= 0.0 else UiSkin.TEXT
+		var label_color := UiSkin.GOOD if r.note != "" and not copying else UiSkin.TEXT
 		g.draw_string(font, rect.position + Vector2(22, 12), label_text, HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 46, 7,
 			Color(label_color, a))
 		if times > 0:
@@ -1007,11 +1006,12 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 	y += 4
 	for k: StringName in r.inputs:
 		y = _ingredient_row(g, font, d, y, k, "%d / %d" % [inv.count_of(k), r.inputs[k]], inv.count_of(k) >= r.inputs[k])
-	if r.mana > 0.0:
-		var have := _mana_for_crafting()
-		var ok := have >= r.mana
-		var right := "%s / %d" % ["inf" if have == INF else str(floori(have)), roundi(r.mana)]
-		g.draw_string(font, Vector2(d.position.x + 15, y + 10), "Mana", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
+	if r.requires_max_mana > 0.0:
+		var have := _max_mana()
+		var ok := have >= r.requires_max_mana
+		var right := "%d / %d" % [roundi(have), roundi(r.requires_max_mana)]
+		g.draw_string(font, Vector2(d.position.x + 15, y + 10), "Max mana (kept)", HORIZONTAL_ALIGNMENT_LEFT, -1, 7,
+			UiSkin.TEXT)
 		var rw := font.get_string_size(right, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 		g.draw_string(font, Vector2(d.end.x - rw, y + 10), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 7,
 			UiSkin.GOOD if ok else UiSkin.BAD)
@@ -1184,9 +1184,7 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 func craft(r: RecipeData, times: int) -> int:
 	if times <= 0:
 		return 0
-	var result := Crafting.craft(world.character.inventory, r, times, _mana_for_crafting())
-	if r.mana > 0.0 and int(result[0]) > 0:
-		world.player.spend_mana(r.mana * int(result[0]))
+	var result := Crafting.craft(world.character.inventory, r, times, _max_mana())
 	if int(result[1]) > 0:
 		world.request_spawn_drop(r.output, int(result[1]), world.player.chest(), Vector2.ZERO, true)
 	if int(result[0]) > 0:
@@ -1561,6 +1559,8 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 			lines.append("Needs a %s conduit" % String(spell.requires_conduit))
 		if c and c.cast_problem(spell) != "":
 			lines.append("Can't cast now: %s" % c.cast_problem(spell))
+		elif c and c.knows(spell.id) and not c.in_book(spell.id) and item.tome_spell == &"":
+			lines.append("Not in your book: casts unfocused (1.5x mana and cooldown, no book bonus)")
 	elif item.places_wall != &"":
 		lines.append("Right click: place as a back wall")
 	if item.teaches_spell != &"":
