@@ -5,7 +5,8 @@ docs/guide.md explains every feature; docs/world-generation.md covers generation
 docs/character-art.md covers the paper doll; docs/items-and-mining.md covers items,
 the inventory, layers, mining, placing, magic and plants; docs/crafting.md covers
 crafting, stations, furniture, chests, doors, pickups and mana; docs/survival.md covers
-day and night, health, hunger, food, berry bushes, dying and the magic bag. Keep them up to date when behavior or
+day and night, health, hunger, food, berry bushes, dying and the magic bag; docs/combat.md covers
+enemies, spawning, melee, armor, equipment stats and beds. Keep them up to date when behavior or
 tunables change: Patrick tweaks things by hand from these docs.
 
 ## Collaboration rules
@@ -19,7 +20,8 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Patrick supplies real art and audio; use placeholders and record them in assets/ASSETS.md.
 - No dark outlines on terrain, trees or decorations; transitions use texture.
 - Don't invent biomes, ores or content. Current scope: surface forest, copper only
-  (plus the Phase 5 stone age items: sticks, rocks, flint, stone tools).
+  (plus the Phase 5 stone age items: sticks, rocks, flint, stone tools; Phase 7: green
+  slime, slime, wooden and copper swords, copper armor, bed).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.
@@ -37,7 +39,7 @@ tunables change: Patrick tweaks things by hand from these docs.
   asking Patrick for frames; he draws real poses later.
 - Item types (hold + attack animations as curves): `data/item_types/`, defaults from
   `tools/make_item_types.gd` (never `--force` over Patrick's edits without asking).
-- Items: `data/items/`, spells: `data/spells/`, objects: `data/objects/`, recipes: `data/recipes/`,
+- Items: `data/items/`, spells: `data/spells/`, objects: `data/objects/`, recipes: `data/recipes/`, enemies: `data/enemies/`,
   defaults from `tools/make_items.gd` (same `--force` rule; `--only=a,b`);
   placeholder icons, held sprites, sapling and cracks from `tools/make_item_art.gd`.
 - UI look: `UiSkin` (src/ui/ui_skin.gd) with nine-slice art in `assets/ui/` from

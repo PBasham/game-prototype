@@ -18,6 +18,8 @@ signal station_opened(anchor: Vector2i)
 signal container_opened(anchor: Vector2i)
 ## Right click or E on a magic bag (ItemBag).
 signal bag_opened(bag: ItemBag)
+## The player slept through the night (the HUD fades the screen).
+signal slept
 
 ## Tile size in pixels. The Scholar is about 3 tiles wide and 8 tall.
 const TILE := 8
@@ -65,6 +67,11 @@ var item_user: ItemUser
 var hud: Hud
 var _drops: Node2D
 var _bags: Node2D
+var _enemies: Node2D
+## Spawns enemies around the player.
+var spawner: EnemySpawner
+## Bed respawn points: character name -> bed anchor tile.
+var spawn_points: Dictionary[String, Vector2i] = {}
 ## Spell projectiles, damage numbers, dev dummies.
 var effects: Node2D
 var _cracks: CrackOverlay
@@ -154,6 +161,8 @@ func _ready() -> void:
 	if character.hunger >= 0.0:
 		player.hunger = minf(character.hunger, player.max_hunger)
 	player.died.connect(_on_player_died)
+	character.equipment_changed.connect(player.apply_stats)
+	player.apply_stats.call_deferred()
 	character.inventory.changed.connect(player.refresh_held)
 	character.magic_changed.connect(player.refresh_held)
 	player.select_slot(0)
@@ -163,6 +172,18 @@ func _ready() -> void:
 	_bags = Node2D.new()
 	_bags.name = "Bags"
 	add_child(_bags)
+	_enemies = Node2D.new()
+	_enemies.name = "Enemies"
+	add_child(_enemies)
+	spawner = EnemySpawner.new()
+	spawner.name = "Spawner"
+	spawner.world = self
+	add_child(spawner)
+	if is_saved():
+		var sp: Dictionary = WorldSave.read_extra(info.path, WorldSave.META_SPAWNS)
+		for who: String in sp:
+			var a: Array = sp[who]
+			spawn_points[who] = Vector2i(int(a[0]), int(a[1]))
 	if is_saved():
 		for d: Dictionary in WorldSave.read_extra(info.path, WorldSave.META_BAGS).get("list", []):
 			_bags.add_child(ItemBag.from_dict(self, d))
@@ -303,7 +324,8 @@ func save() -> Error:
 		coords.append(c.coord)
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
 		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_CONTAINERS: _containers_to_dict(),
-			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict()}, objects)
+			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
+			WorldSave.META_SPAWNS: _spawns_to_dict()}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
@@ -360,17 +382,114 @@ func _on_player_died(cause: StringName) -> void:
 	get_tree().create_timer(respawn_seconds).timeout.connect(respawn_player)
 
 
-## Back at the world spawn with full health, hunger and mana.
+## Back at your bed (or the world spawn if you have none, or it's gone) with full
+## health, hunger and mana.
 func respawn_player() -> void:
 	if not is_instance_valid(player) or not player.dead:
 		return
-	var spawn := generator.spawn_tile()
-	var pos := tile_to_world(spawn) + Vector2(TILE * 0.5, 0)
+	var pos := respawn_position()
 	renderer.load_all_now(pos)
 	teleport_player(pos)
 	player.revive()
 	player.visible = true
 	player.set_physics_process(true)
+
+
+## Where the player respawns: next to their bed if it's still there, else the world
+## spawn.
+func respawn_position() -> Vector2:
+	var who := character.name if character else ""
+	if spawn_points.has(who):
+		var a: Vector2i = spawn_points[who]
+		var def := object_at(a)
+		if def and def.bed and object_anchor(a) == a:
+			return tile_to_world(a) + Vector2(def.width_tiles * TILE * 0.5, TILE)
+		spawn_points.erase(who)
+		EventBus.debug_message.emit("Your bed is gone: back to the world spawn")
+	return tile_to_world(generator.spawn_tile()) + Vector2(TILE * 0.5, 0)
+
+
+func _spawns_to_dict() -> Dictionary:
+	var out := {}
+	for who in spawn_points:
+		out[who] = [spawn_points[who].x, spawn_points[who].y]
+	return out
+
+
+## A bed: sets the respawn point, and at night (with no enemies close) sleeps until
+## morning.
+func use_bed(anchor: Vector2i) -> void:
+	spawn_points[character.name] = wrap_tile(anchor)
+	if clock == null or not clock.is_night():
+		EventBus.debug_message.emit("Spawn point set. You can only sleep at night.")
+		return
+	if not enemies_near(player.global_position, sleep_enemy_tiles).is_empty():
+		EventBus.debug_message.emit("Spawn point set. You can't sleep with enemies nearby.")
+		return
+	sleep_until_morning()
+
+
+## Skips to an hour after sunrise. Plants grow for the skipped time and you get as
+## hungry as you would have.
+func sleep_until_morning() -> void:
+	var from_h := clock.hour()
+	var to_h := clock.sunrise_hour + 1.0
+	var hours := fposmod(to_h - from_h, 24.0)
+	var seconds := clock.days(hours / 24.0)
+	clock.advance(seconds / maxf(clock.speed, 0.0001))
+	plants.advance(seconds)
+	if player.hunger_on:
+		var per_second := player.max_hunger / maxf(clock.days(player.hunger_full_days), 1.0)
+		player.hunger = maxf(player.hunger - per_second * seconds, 1.0)
+	EventBus.debug_message.emit("You slept until morning. Spawn point set.")
+	slept.emit()
+
+
+# --- enemies -------------------------------------------------------------------------
+
+## Within this many tiles, enemies keep you awake.
+@export var sleep_enemy_tiles := 20.0
+
+
+func request_spawn_enemy(data: EnemyData, pos: Vector2) -> Enemy:
+	if not Game.is_authority() or data == null:
+		return null
+	var e := Enemy.new()
+	e.setup(self, data)
+	e.position = pos
+	_enemies.add_child(e)
+	return e
+
+
+func enemies() -> Array[Enemy]:
+	var out: Array[Enemy] = []
+	if _enemies == null:
+		return out
+	for e in _enemies.get_children():
+		if e is Enemy and not e.is_queued_for_deletion():
+			out.append(e)
+	return out
+
+
+func enemy_count() -> int:
+	return enemies().size()
+
+
+func enemies_near(pos: Vector2, tiles: float) -> Array[Enemy]:
+	var out: Array[Enemy] = []
+	for e in enemies():
+		if absf(e._wrapped_dx(pos.x)) <= tiles * TILE and absf(e.global_position.y - pos.y) <= tiles * TILE:
+			out.append(e)
+	return out
+
+
+## A tile inside a building: a built (player placed) back wall behind it.
+func is_indoors(tile: Vector2i) -> bool:
+	var w := data.get_wall(wrap_tile(tile).x, tile.y) if data.in_bounds_y(tile.y) else 0
+	if w <= 0:
+		return false
+	var def := walls.def(w) as TileDef
+	return def != null and def.built
 
 
 ## Tosses a magic bag up from `pos` (it falls and settles like a tombstone).
@@ -895,14 +1014,16 @@ func try_interact_near(who: Player) -> bool:
 
 
 static func _usable(def: ObjectDef) -> bool:
-	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &""
+	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &"" or def.bed
 
 
 func _interact_object(anchor: Vector2i) -> bool:
 	var def := object_at(anchor)
 	if def == null or not _usable(def):
 		return false
-	if def.toggles_to != &"":
+	if def.bed:
+		use_bed(anchor)
+	elif def.toggles_to != &"":
 		if not request_toggle_object(anchor):
 			EventBus.debug_message.emit("Something's in the way" if def.blocks_movement else "Can't close: you're in the doorway")
 	elif def.container_slots > 0:

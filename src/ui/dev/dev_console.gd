@@ -172,6 +172,23 @@ func _register() -> void:
 				return
 		_print("Needs open grass under the cursor."))
 	_add("time", "time [hour | day | night | dusk | dawn | speed <x>]", "Show or set the time of day (24 minute days).", _time)
+	_add("summon", "summon <enemy> [count]", "Spawn enemies at the cursor (green_slime).", func(a: PackedStringArray) -> void:
+		if a.is_empty() or not Registry.has_def(&"enemies", StringName(a[0])):
+			_print("Enemies: %s" % ", ".join(_enemy_ids()))
+			return
+		var n := int(a[1]) if a.size() > 1 and a[1].is_valid_int() else 1
+		for i in n:
+			world.request_spawn_enemy(Registry.get_def(&"enemies", StringName(a[0])) as EnemyData,
+				world.item_user.cursor() + Vector2(i * 12, 0))
+		_print("Summoned %d %s." % [n, a[0]]))
+	_add("peaceful", "peaceful", "Toggle enemy spawning.", func(_a: PackedStringArray) -> void:
+		world.spawner.peaceful = not world.spawner.peaceful
+		_print("Enemies spawn: %s." % ("no" if world.spawner.peaceful else "yes")))
+	_add("butcher", "butcher", "Remove every enemy.", func(_a: PackedStringArray) -> void:
+		var n := world.enemy_count()
+		for e in world.enemies():
+			e.queue_free()
+		_print("Removed %d." % n))
 	_add("god", "god", "Toggle taking no damage.", func(_a: PackedStringArray) -> void:
 		world.player.invincible = not world.player.invincible
 		_print("No damage: %s." % ("on" if world.player.invincible else "off")))
@@ -195,7 +212,7 @@ func _register() -> void:
 			world.player.hunger = clampf(float(a[0]), 0.0, world.player.max_hunger)
 		_print("Hunger %d." % roundi(world.player.hunger)))
 	_add("color", "color <group> <hex|reset>", "Recolor the character: skin, hair, tunic, trim, pants, leather (saved).", _color)
-	_add("equip", "equip <book or conduit>", "Equip a book or conduit (no item needed).", _equip)
+	_add("equip", "equip <item>", "Equip armor, an accessory, a book or a conduit (no item needed).", _equip)
 	_add("clear", "clear", "Empty the inventory.", func(_a: PackedStringArray) -> void:
 		for i in world.character.inventory.size:
 			world.character.inventory.clear(i)
@@ -297,6 +314,13 @@ func _forget(a: PackedStringArray) -> void:
 	_print("Forgot %s." % spell.display_name)
 
 
+func _enemy_ids() -> PackedStringArray:
+	var out := PackedStringArray()
+	for d in Registry.get_all(&"enemies"):
+		out.append(String(d.id))
+	return out
+
+
 func _time(a: PackedStringArray) -> void:
 	var c := world.clock
 	if a.size() >= 2 and a[0] == "speed" and a[1].is_valid_float():
@@ -335,12 +359,16 @@ func _equip(a: PackedStringArray) -> void:
 	var item := find_item(" ".join(a))
 	if item == null:
 		return
-	for slot: StringName in [CharacterData.SLOT_BOOK, CharacterData.SLOT_CONDUIT]:
-		if CharacterData.fits(slot, item):
-			world.character.equip(slot, item.id)
-			_print("Equipped %s." % item.display_name)
-			return
-	_print("%s isn't a book or a conduit." % item.display_name)
+	var c := world.character
+	var target: StringName = &""
+	for slot: StringName in CharacterData.ALL_SLOTS:
+		if CharacterData.fits(slot, item) and (target == &"" or (c.equipment[target] != &"" and c.equipment[slot] == &"")):
+			target = slot
+	if target == &"":
+		_print("%s can't be equipped." % item.display_name)
+		return
+	c.equip(target, item.id)
+	_print("Equipped %s." % item.display_name)
 
 
 func _fill(a: PackedStringArray, wall: bool) -> void:

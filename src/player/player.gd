@@ -84,7 +84,7 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var health_regen := 0.5
 @export var health_regen_delay := 5.0
 ## Seconds you can't be hurt again after a hit (except by starving).
-@export var hurt_cooldown := 0.4
+@export var hurt_cooldown := 0.66
 @export_group("Hunger")
 @export var max_hunger := 100.0
 ## In-game days a full hunger bar lasts (1.5 = 36 real minutes with 24 minute days),
@@ -179,6 +179,10 @@ var infinite_mana := false
 var _since_spell := 99.0
 var health := 100.0
 var hunger := 100.0
+## Bonuses from equipment (CharacterData.equipment_stats()), and total defense.
+var stat_bonus: Dictionary[StringName, float] = {}
+var defense := 0
+var _base := {}
 ## Dev: no damage (console `god`).
 var invincible := false
 ## Hunger drains (the world's option).
@@ -241,6 +245,7 @@ static func jump_values(height_tiles: float, apex_time: float) -> Vector2:
 
 func _ready() -> void:
 	floor_snap_length = max_step_down_tiles * TILE + 2.0
+	_base = {"max_health": max_health, "max_mana": max_mana, "mana_regen": mana_regen}
 	health = max_health
 	hunger = max_hunger
 	mana = max_mana
@@ -463,7 +468,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _move(input_x: float, input_y: float, delta: float) -> void:
-	var jv := jump_values(jump_height, time_to_apex)
+	var jv := jump_values(_jump_height(), time_to_apex)
 	var gravity := jv.x * (1.0 if velocity.y < 0.0 else fall_gravity_multiplier)
 	velocity.y = minf(velocity.y + gravity * delta, max_fall_speed * TILE)
 
@@ -527,6 +532,10 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 
 
 func _current_speed() -> float:
+	return _base_speed() * (1.0 + stat(&"move_speed"))
+
+
+func _base_speed() -> float:
 	if _held("run"):
 		return run_speed
 	return walk_speed if walk_toggled else jog_speed
@@ -611,11 +620,17 @@ func _update_mana(delta: float) -> void:
 
 ## Takes damage (ignored when invincible, dead, or just hurt, except starving). Emits
 ## hurt, and died at 0.
-func take_damage(amount: float, cause: StringName = &"") -> void:
+func take_damage(amount: float, cause: StringName = &"", knock_from: Variant = null, knock := 0.0) -> void:
 	if amount <= 0.0 or dead or invincible:
 		return
 	if cause != &"starving" and _since_hurt < hurt_cooldown:
 		return
+	if cause == &"enemy":
+		# Defense takes off half its value (at least 1 damage gets through).
+		amount = maxf(1.0, amount - defense * 0.5)
+	if knock_from is Vector2 and knock > 0.0:
+		var dir := signf(global_position.x - (knock_from as Vector2).x)
+		velocity = Vector2((dir if dir != 0.0 else 1.0) * knock * TILE, -knock * 0.6 * TILE)
 	health = maxf(health - amount, 0.0)
 	_since_hurt = 0.0
 	hurt.emit(roundi(amount), cause)
@@ -645,6 +660,29 @@ func eat(food: float, heal_amount: float = 0.0) -> void:
 
 func _day_seconds() -> float:
 	return clock.days(1.0) if clock else 24.0 * 60.0
+
+
+## Equipment changed: recompute the stats it raises (max health and mana, regen, speed,
+## jump, damage) and defense.
+func apply_stats() -> void:
+	if _base.is_empty():
+		_base = {"max_health": max_health, "max_mana": max_mana, "mana_regen": mana_regen}
+	stat_bonus = character.equipment_stats() if character else {} as Dictionary[StringName, float]
+	defense = character.defense() if character else 0
+	max_health = float(_base["max_health"]) + stat(&"max_health")
+	max_mana = float(_base["max_mana"]) + stat(&"max_mana")
+	mana_regen = float(_base["mana_regen"]) + stat(&"mana_regen")
+	health = minf(health, max_health)
+	mana = minf(mana, max_mana)
+
+
+## An equipment bonus (0 when nothing raises it).
+func stat(stat_name: StringName) -> float:
+	return stat_bonus.get(stat_name, 0.0)
+
+
+func _jump_height() -> float:
+	return jump_height * (1.0 + stat(&"jump"))
 
 
 ## Forget the current fall (after a teleport: no fall damage for the jump).
@@ -732,7 +770,7 @@ func _climb(input_x: float, input_y: float) -> void:
 		if _drop_timer <= 0.0:
 			set_collision_mask_value(2, true)
 		if _just("jump"):
-			velocity.y = -jump_values(jump_height, time_to_apex).y * 0.7
+			velocity.y = -jump_values(_jump_height(), time_to_apex).y * 0.7
 		return
 	velocity = Vector2(input_x * walk_speed * 0.5, input_y * climb_speed) * TILE
 	_peak_y = global_position.y
@@ -892,7 +930,7 @@ func jump_frame_for(count: int) -> int:
 		var rising := apex - 1
 		if rising <= 0:
 			return apex
-		var launch := jump_values(jump_height, time_to_apex).y / TILE
+		var launch := jump_values(_jump_height(), time_to_apex).y / TILE
 		var t := clampf((-vy - apex_band) / maxf(launch - apex_band, 0.001), 0.0, 1.0)
 		return apex - 1 - mini(int(t * rising), rising - 1)
 	# Falling: frames apex+1 .. last, slowest first.

@@ -401,6 +401,13 @@ func _grow(delta: float) -> void:
 		tree.health = tree_health
 
 
+## Time passes for every plant at once (sleeping through the night).
+func advance(seconds: float) -> void:
+	_grow(seconds)
+	_regrow(seconds)
+	_grow_bushes(seconds)
+
+
 ## Young bushes grow to full size.
 func _grow_bushes(delta: float) -> void:
 	for g: Vector2i in _young.duplicate():

@@ -14,6 +14,7 @@ const DIR := "res://data/items"
 const SPELL_DIR := "res://data/spells"
 const OBJECT_DIR := "res://data/objects"
 const RECIPE_DIR := "res://data/recipes"
+const ENEMY_DIR := "res://data/enemies"
 
 var _force := false
 
@@ -30,6 +31,8 @@ func _init() -> void:
 		all.append([obj, OBJECT_DIR])
 	for recipe in _recipes():
 		all.append([recipe, RECIPE_DIR])
+	for enemy in _enemies():
+		all.append([enemy, ENEMY_DIR])
 	for e: Array in all:
 		var res: GameData = e[0]
 		var dir: String = e[1]
@@ -132,6 +135,32 @@ func _items() -> Array[ItemData]:
 	stone_axe.axe_damage = 15.0
 	stone_axe.reach_tiles = 7.0
 	out.append(stone_axe)
+	# Combat (Phase 7).
+	out.append(_small(&"slime", "Slime", "Sticky. Drops from slimes."))
+	var wsword := _weapon(&"wooden_sword", "Wooden Sword", "A practice sword. Better than your fists.")
+	wsword.melee_damage = 8.0
+	wsword.melee_reach = 4.0
+	wsword.knockback = 10.0
+	out.append(wsword)
+	var csword := _weapon(&"copper_sword", "Copper Sword", "A proper blade.")
+	csword.melee_damage = 13.0
+	csword.melee_reach = 4.5
+	csword.knockback = 13.0
+	out.append(csword)
+	for a: Array in [[&"copper_helmet", "Copper Helmet", &"head", 1], [&"copper_chestplate", "Copper Chestplate", &"chest", 2],
+			[&"copper_greaves", "Copper Greaves", &"legs", 1]]:
+		var armor := _small(a[0], a[1], "Armor (%s). Defense %d." % [String(a[2]), a[3]])
+		armor.kind = ItemData.Kind.ARMOR
+		armor.max_stack = 1
+		armor.equip_slot = a[2]
+		armor.defense = a[3]
+		out.append(armor)
+	var bed_item := _small(&"bed", "Bed", "Right click: set your respawn point here, and sleep through the night.")
+	bed_item.kind = ItemData.Kind.FURNITURE
+	bed_item.places_object = &"bed"
+	bed_item.place_area_max = 1
+	bed_item.max_stack = 99
+	out.append(bed_item)
 	# The spellbook used when the book slot is empty. Not found in the world.
 	var book := _base(&"basic_spellbook", "Basic Spellbook", "Holds 4 spells. Used when no other book is equipped.")
 	book.kind = ItemData.Kind.BOOK
@@ -230,6 +259,39 @@ func _objects() -> Array[ObjectDef]:
 		open.toggles_to = &"door"
 		open.toggles_to_left = &""
 		out.append(open)
+	var bed := ObjectDef.new()
+	bed.id = &"bed"
+	bed.display_name = "Bed"
+	bed.style = ObjectDef.Style.FURNITURE
+	bed.width_tiles = 9  # the Scholar is 8 tiles tall
+	bed.height_tiles = 3
+	bed.needs_floor = true
+	bed.health = 1.0
+	bed.drop_item = &"bed"
+	bed.bed = true
+	bed.frames = load("res://assets/objects/bed.png") as Texture2D
+	out.append(bed)
+	return out
+
+
+## Enemies (Phase 7).
+func _enemies() -> Array[EnemyData]:
+	var out: Array[EnemyData] = []
+	var slime := EnemyData.new()
+	slime.id = &"green_slime"
+	slime.display_name = "Green Slime"
+	slime.description = "Hops around. Not very dangerous."
+	slime.texture = load("res://assets/enemies/slime.png") as Texture2D
+	slime.frame_size = Vector2i(36, 27)
+	slime.tint = Color(0.55, 1.0, 0.45)
+	slime.size = Vector2(30, 20)
+	slime.max_health = 20.0
+	slime.contact_damage = 6.0
+	slime.knockback = 10.0
+	slime.loot.append(LootDrop.make(&"slime", 1, 2))
+	slime.day_weight = 1.0
+	slime.night_weight = 1.0
+	out.append(slime)
 	return out
 
 
@@ -256,6 +318,14 @@ func _recipes() -> Array[RecipeData]:
 		# Anvil.
 		[&"copper_pickaxe", &"anvil", {&"copper_bar": 10, &"stick": 3}, &"copper_pickaxe", 1, []],
 		[&"copper_axe", &"anvil", {&"copper_bar": 8, &"stick": 3}, &"copper_axe", 1, []],
+		# Phase 7: combat and beds.
+		[&"torch_from_slime", &"", {&"slime": 1, &"stick": 1}, &"torch", 5, []],
+		[&"wooden_sword", &"workbench", {&"wood_planks": 10}, &"wooden_sword", 1, []],
+		[&"bed", &"workbench", {&"wood_planks": 20}, &"bed", 1, []],
+		[&"copper_sword", &"anvil", {&"copper_bar": 8, &"wood_planks": 2}, &"copper_sword", 1, []],
+		[&"copper_helmet", &"anvil", {&"copper_bar": 10}, &"copper_helmet", 1, []],
+		[&"copper_chestplate", &"anvil", {&"copper_bar": 16}, &"copper_chestplate", 1, []],
+		[&"copper_greaves", &"anvil", {&"copper_bar": 12}, &"copper_greaves", 1, []],
 	]
 	for e: Array in table:
 		var r := RecipeData.new()
@@ -315,6 +385,14 @@ func _small(item_id: StringName, label: String, text: String) -> ItemData:
 	var item := _base(item_id, label, text)
 	item.impact_at = 0.2
 	item.held = _look(item_id, &"block", Vector2(4, 6))
+	return item
+
+
+func _weapon(item_id: StringName, label: String, text: String) -> ItemData:
+	var item := _base(item_id, label, text)
+	item.kind = ItemData.Kind.WEAPON
+	item.max_stack = 1
+	item.held = _look(item_id, &"sword", Vector2(2, 13))
 	return item
 
 

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_khbqq"]
+
+[resource]
+script = ExtResource("1_khbqq")
+station = &"anvil"
+inputs = Dictionary[StringName, int]({
+&"copper_bar": 8,
+&"wood_planks": 2
+})
+output = &"copper_sword"
+id = &"copper_sword"
+display_name = "Copper Sword"

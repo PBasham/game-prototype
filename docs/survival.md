@@ -113,3 +113,9 @@ left. A character saved while dead comes back full.
 `mana` (infinite mana), `time` (show), `time <hour>` or `time day | noon | dusk | night | dawn`, `time speed <x>`,
 `bush` / `bush young` (a ripe berry bush on the grass under the cursor), `grow` (also
 makes picked bushes ripe and young bushes full grown).
+
+
+## Enemies, beds and sleeping
+
+See [combat.md](combat.md): beds set your respawn point and let you sleep through the
+night; enemy hits are a new death cause ("You were slain.").

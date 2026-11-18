@@ -61,6 +61,8 @@ enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 @export_group("Crafting station")
 ## Station kind for recipes (&"workbench", &"furnace", &"anvil"). Empty = not a station.
 @export var station: StringName = &""
+## A bed: right click sets your respawn point here, and at night you sleep till morning.
+@export var bed := false
 ## Recipes need at least this tier of their station.
 @export var station_tier := 1
 ## Upgrading turns it into this station (the next tier) in place. Empty = top tier.

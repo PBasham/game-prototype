@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_dfshi"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_d4x04"]
+[ext_resource type="Texture2D" path="res://assets/items/held/bed.png" id="3_p8duk"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/bed.png" id="4_rdqcu"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_j48ek"]
+
+[sub_resource type="Resource" id="Resource_o5rrc"]
+script = ExtResource("2_d4x04")
+id = &"bed"
+texture = ExtResource("3_p8duk")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_j48ek")
+kind = 10
+icon = ExtResource("4_rdqcu")
+max_stack = 99
+held = SubResource("Resource_o5rrc")
+impact_at = 0.2
+places_object = &"bed"
+place_area_max = 1
+id = &"bed"
+display_name = "Bed"
+description = "Right click: set your respawn point here, and sleep through the night."

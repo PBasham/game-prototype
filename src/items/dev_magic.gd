@@ -7,6 +7,8 @@ extends RefCounted
 ##   Dev Focus        conduit of type "focus", spell power x1.25, +4 reach
 ##   Dev Wide Beam    spell (tier 2): a wider, weaker beam that needs a "focus" conduit
 ##   Dev Tome         tome of Dev Wide Beam (no book needed, still needs the focus)
+##   Dev Ring         accessory: defense 2, +20 max health, +20% speed, +15% jump,
+##                    +25% magic damage (to test equipment stats)
 ##
 ## Put in the third inventory row; Dev Wide Beam is added to the known spells.
 
@@ -17,7 +19,7 @@ static func add_to(c: CharacterData) -> void:
 	_register()
 	var inv := c.inventory
 	var slot := FIRST_SLOT
-	for item_id: StringName in [&"dev_grimoire", &"dev_focus", &"dev_tome"]:
+	for item_id: StringName in [&"dev_grimoire", &"dev_focus", &"dev_tome", &"dev_ring"]:
 		if inv.count_of(item_id) > 0 or c.equipment.values().has(item_id):
 			continue
 		while slot < inv.size and not inv.is_empty(slot):
@@ -61,6 +63,12 @@ static func _register() -> void:
 	wide.tier = 2  # the Basic Spellbook can't hold it: the Dev Grimoire can
 	wide.icon = _crystal(Color("ff9a5a"))
 	ItemData.register_runtime(wide)
+
+	var ring := _item(&"dev_ring", "Dev Ring (dev)", "Accessory to test stats.", ItemData.Kind.ACCESSORY)
+	ring.defense = 2
+	ring.stats = {&"max_health": 20.0, &"move_speed": 0.2, &"jump": 0.15, &"magic_damage": 0.25}
+	ring.icon = _crystal(Color("ffd27a"))
+	ItemData.register_runtime(ring)
 
 	var tome := _item(&"dev_tome", "Dev Tome (dev)", "Casts Dev Wide Beam without a spellbook slot.", ItemData.Kind.TOME)
 	tome.tome_spell = &"dev_wide_beam"

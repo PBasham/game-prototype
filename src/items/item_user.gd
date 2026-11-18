@@ -100,7 +100,7 @@ func _process(delta: float) -> void:
 func damage() -> float:
 	if _item == null:
 		return 0.0
-	return _item.mining_damage * (_spell_power() if _item.is_spell() else 1.0)
+	return _item.mining_damage * (_spell_power() if _item.is_spell() else 1.0) * (1.0 + world.player.stat(&"mining_speed"))
 
 
 ## Chopping damage of the item in use (spells: with book and conduit strength).
@@ -136,7 +136,7 @@ func _spell_power() -> float:
 	if p.character == null:
 		return 1.0
 	var tome := p.held_item if p.held_item and p.held_item.tome_spell != &"" else null
-	return p.character.spell_power(tome)
+	return p.character.spell_power(tome) * (1.0 + p.stat(&"magic_damage"))
 
 
 ## Where the player is aiming (world px).
@@ -253,6 +253,38 @@ func can_use(on_back: bool = false) -> bool:
 			var held := world.player.held_item
 			return not on_back and (held == null or held.kind in [ItemData.Kind.WEAPON, ItemData.Kind.TOOL])
 	return true
+
+
+## The area a melee swing hits: in front of the player, toward the cursor, from the
+## head to the knees.
+func melee_rect(item: ItemData) -> Rect2:
+	var p := world.player
+	var chest := p.chest()
+	var dir := signf(cursor().x - chest.x)
+	if dir == 0.0:
+		dir = float(p.facing)
+	var reach_px := item.melee_reach * World.TILE
+	var x := chest.x if dir > 0.0 else chest.x - reach_px
+	return Rect2(x, chest.y - 5.0 * World.TILE, reach_px, 9.0 * World.TILE)
+
+
+## Hits everything damageable in the swing (once each). Returns how many were hit.
+func melee_hit(item: ItemData) -> int:
+	var p := world.player
+	var area := melee_rect(item)
+	var amount := item.melee_damage * (1.0 + p.stat(&"melee_damage"))
+	var hit := 0
+	for node in get_tree().get_nodes_in_group(&"damageable"):
+		if node == p or not is_instance_valid(node):
+			continue
+		var r: Rect2 = node.call(&"hit_rect")
+		if not area.intersects(r):
+			continue
+		node.call(&"take_damage", amount, p)
+		if node.has_method(&"knock_back"):
+			node.call(&"knock_back", p.chest(), item.knockback)
+		hit += 1
+	return hit
 
 
 ## Eats one of the held food (refills hunger and heals). Returns true if eaten.
@@ -424,6 +456,8 @@ func _on_impact(item: ItemData) -> void:
 	var p := world.player
 	update_target(cursor(), p.use_back)
 	var inv := p.character.inventory
+	if item.melee_damage > 0.0:
+		melee_hit(item)
 	match mode:
 		Mode.MINE:
 			if not item.beam:

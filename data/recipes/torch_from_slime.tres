@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_ntyqt"]
+
+[resource]
+script = ExtResource("1_ntyqt")
+inputs = Dictionary[StringName, int]({
+&"slime": 1,
+&"stick": 1
+})
+output = &"torch"
+output_count = 5
+id = &"torch_from_slime"
+display_name = "Torch"

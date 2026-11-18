@@ -323,3 +323,10 @@ screenshots can show mining and placing:
 ```
 godot --path . -- --aim=60:36 --tap=hotbar_3:20 --hold=use_primary:30:200 --shot=100:/tmp/beam.png --quit=105
 ```
+
+
+## Equipment and weapons
+
+Armor (head, chest, legs), three accessory slots and melee weapons are covered in
+[combat.md](combat.md). Item kinds `ARMOR` and `ACCESSORY` were added; weapons are any item
+with `melee_damage > 0`.

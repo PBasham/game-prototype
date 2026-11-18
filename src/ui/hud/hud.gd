@@ -35,8 +35,13 @@ const BAD := Color(1.0, 0.35, 0.3, 0.45)
 ## Where a click landed.
 enum Area { NONE, INVENTORY, EQUIPMENT, BOOK, SPELLS, CRAFT_BUTTON, CHEST, CHEST_TAKE, CHEST_DEPOSIT,
 	RECIPE, CRAFT, CLOSE }
-const EQUIP_SLOTS: Array[StringName] = [CharacterData.SLOT_BOOK, CharacterData.SLOT_CONDUIT]
-const EQUIP_W := 60
+## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
+## conduit).
+const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
+const EQUIP_LABELS: Array[String] = ["Head", "Body", "Legs", "Acc", "Acc", "Acc", "Book", "Cond"]
+const EQUIP_NAMES: Array[String] = ["Head armor", "Chest armor", "Leg armor", "Accessory", "Accessory",
+	"Accessory", "Spellbook (empty: the Basic Spellbook)", "Conduit"]
+const EQUIP_W := 3 * STEP - GAP
 
 ## Crafting window: size, list width, row height.
 const CRAFT_SIZE := Vector2(288, 214)
@@ -90,6 +95,8 @@ const STATUS_BARS: Array[Array] = [
 ]
 var _status_icons: Array[Texture2D] = []
 var _death: Label
+## Black fade when you sleep.
+var _fade: ColorRect
 var _death_sub: Label
 var _wheel: Wheel
 var _name_label: Label
@@ -176,6 +183,13 @@ func _ready() -> void:
 	world.station_opened.connect(_on_station_opened)
 	world.container_opened.connect(_on_container_opened)
 	world.bag_opened.connect(_on_bag_opened)
+	world.slept.connect(_on_slept)
+	_fade = ColorRect.new()
+	_fade.color = Color(0, 0, 0, 0)
+	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_fade)
+	move_child(_fade, 0)
 	EventBus.player_died.connect(_on_player_died)
 	world.character.inventory.changed.connect(_redraw)
 	world.character.magic_changed.connect(_layout)
@@ -321,7 +335,14 @@ func _store_open() -> bool:
 	return chest != World.NO_TILE or (bag != null and is_instance_valid(bag))
 
 
-const DEATH_CAUSES := {&"fall": "You fell too far.", &"starving": "You starved."}
+const DEATH_CAUSES := {&"fall": "You fell too far.", &"starving": "You starved.", &"enemy": "You were slain."}
+
+
+func _on_slept() -> void:
+	_fade.color.a = 1.0
+	var t := create_tween()
+	t.tween_interval(0.4)
+	t.tween_property(_fade, "color:a", 0.0, 1.2)
 
 
 func _on_player_died(cause: StringName) -> void:
@@ -406,7 +427,7 @@ func _equip_origin() -> Vector2:
 
 
 func _equip_cell(i: int) -> Rect2:
-	return Rect2(_equip_origin() + Vector2(0, i * STEP), Vector2(SLOT, SLOT))
+	return Rect2(_equip_origin() + Vector2((i / 3) * STEP, (i % 3) * STEP), Vector2(SLOT, SLOT))
 
 
 func _craft_button_rect() -> Rect2:
@@ -526,19 +547,24 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 func _draw_magic(g: Control, font: Font, hover: Array) -> void:
 	var c := world.character
 	# Equipment.
-	var labels := ["Book", "Conduit"]
 	for i in EQUIP_SLOTS.size():
 		var r := _equip_cell(i)
 		var hot: bool = hover[0] == Area.EQUIPMENT and hover[1] == i
-		UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hot else UiSkin.SlotLook.MAGIC)
+		var magic := EQUIP_SLOTS[i] in [CharacterData.SLOT_BOOK, CharacterData.SLOT_CONDUIT]
+		UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hot else (UiSkin.SlotLook.MAGIC if magic else UiSkin.SlotLook.NORMAL))
 		var item := ItemData.find(c.equipment[EQUIP_SLOTS[i]]) if c.equipment[EQUIP_SLOTS[i]] != &"" else null
 		if item:
 			_draw_item(g, font, r, item, 1)
-		elif i == 0:
+		elif EQUIP_SLOTS[i] == CharacterData.SLOT_BOOK:
 			var basic := c.book()
 			if basic and basic.icon:
 				g.draw_texture_rect(basic.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false, Color(1, 1, 1, 0.4))
-		g.draw_string(font, r.position + Vector2(SLOT + 4, 13), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
+		else:
+			var label := EQUIP_LABELS[i]
+			var lw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 5).x
+			g.draw_string(font, r.position + Vector2((SLOT - lw) * 0.5, 12), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 5,
+				Color(UiSkin.DIM, 0.55))
+	_draw_stats(g, font)
 	# The book's slots.
 	var book := c.book()
 	var title := "%s  (%d slots)" % [book.display_name if book else "Spellbook", c.book_slot_count()]
@@ -563,6 +589,28 @@ func _draw_magic(g: Control, font: Font, hover: Array) -> void:
 		var spell := ItemData.find(ItemData.spell_key(known[i]))
 		if spell and spell.icon:
 			g.draw_texture_rect(spell.icon, Rect2(r.position + Vector2(2, 2), Vector2(16, 16)), false)
+
+
+## Your stats from equipment, to the right of the spellbook row.
+func _draw_stats(g: Control, font: Font) -> void:
+	var p := world.player
+	var lines: Array[String] = ["Defense %d" % p.defense]
+	var names := {&"max_health": "Max health", &"max_mana": "Max mana", &"mana_regen": "Mana regen",
+		&"move_speed": "Speed", &"jump": "Jump", &"melee_damage": "Melee damage",
+		&"magic_damage": "Magic damage", &"mining_speed": "Mining speed"}
+	for k: StringName in CharacterData.STATS:
+		var v := p.stat(k)
+		if v == 0.0:
+			continue
+		if k in [&"max_health", &"max_mana", &"mana_regen"]:
+			lines.append("%s %+d" % [names[k], roundi(v)])
+		else:
+			lines.append("%s %+d%%" % [names[k], roundi(v * 100.0)])
+	var at := _book_origin() + Vector2(5 * STEP + 4, -3)
+	g.draw_string(font, at, "Stats", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
+	for i in lines.size():
+		g.draw_string(font, at + Vector2((i / 3) * 70, 10 + (i % 3) * 8), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 7,
+			UiSkin.TEXT)
 
 
 ## Health, mana and hunger, bottom left: an icon, a bar and the numbers.
@@ -1110,11 +1158,14 @@ func quick_equip(slot: int) -> void:
 	var item := c.inventory.item(slot)
 	if item == null:
 		return
+	# The first slot it fits, preferring an empty one (accessories).
+	var target: StringName = &""
 	for eq in EQUIP_SLOTS:
-		if CharacterData.fits(eq, item):
-			var old := c.equip(eq, item.id)
-			c.inventory.set_slot(slot, old, 1 if old != &"" else 0)
-			return
+		if CharacterData.fits(eq, item) and (target == &"" or (c.equipment[target] != &"" and c.equipment[eq] == &"")):
+			target = eq
+	if target != &"":
+		var old := c.equip(target, item.id)
+		c.inventory.set_slot(slot, old, 1 if old != &"" else 0)
 
 
 ## Ctrl + right click (or shift + click) on an equipment slot: back into the inventory.
@@ -1283,6 +1334,7 @@ func draw_wheel(w: Control) -> void:
 func _update_tooltip(over: Pane) -> void:
 	var item: ItemData = null
 	var extra := ""
+	var extra_only := ""
 	if over and cursor_count == 0:
 		var c := world.character
 		var h: Array = [Area.NONE, -1]
@@ -1297,7 +1349,9 @@ func _update_tooltip(over: Pane) -> void:
 				item = c.inventory.item(h[1])
 			Area.EQUIPMENT:
 				var id: StringName = c.equipment[EQUIP_SLOTS[h[1]]]
-				item = ItemData.find(id) if id != &"" else (c.book() if h[1] == 0 else null)
+				item = ItemData.find(id) if id != &"" else (c.book() if EQUIP_SLOTS[h[1]] == CharacterData.SLOT_BOOK else null)
+				if item == null:
+					extra_only = EQUIP_NAMES[h[1]]
 			Area.BOOK:
 				var s: StringName = c.book_loadout()[h[1]]
 				item = ItemData.find(ItemData.spell_key(s)) if s != &"" else null
@@ -1311,10 +1365,10 @@ func _update_tooltip(over: Pane) -> void:
 					var r: RecipeData = recipes()[h[1]]
 					item = ItemData.find(r.output)
 					extra = "\nDouble click: craft 1"
-	_tooltip.visible = item != null
-	if item == null:
+	_tooltip.visible = item != null or extra_only != ""
+	if not _tooltip.visible:
 		return
-	_tooltip_text.text = tooltip_for(item, world.character) + extra
+	_tooltip_text.text = extra_only if item == null else tooltip_for(item, world.character) + extra
 	_tooltip.reset_size()
 	var at := over.get_global_mouse_position() + Vector2(10, 8)
 	var view := _view_size()

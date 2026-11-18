@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_vnvsi"]
+
+[resource]
+script = ExtResource("1_vnvsi")
+station = &"anvil"
+inputs = Dictionary[StringName, int]({
+&"copper_bar": 12
+})
+output = &"copper_greaves"
+id = &"copper_greaves"
+display_name = "Copper Greaves"

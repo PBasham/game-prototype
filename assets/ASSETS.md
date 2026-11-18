@@ -134,3 +134,11 @@ from tools/make_item_art.gd.
 Screen-space parallax layers (`src/world/backdrop.gd`), 1280 px wide and tiling
 horizontally: `clouds.png`, `mountains.png`, `hills_0.png` (far), `hills_1.png` (near),
 plus `sun.png` (fixed). The sky gradient is set in code.
+
+## Phase 7 placeholders (tools/make_item_art.gd)
+
+| File | Size | Notes |
+|---|---|---|
+| enemies/slime.png | 108x27 | 3 frames of 36x27 (rest, squash, air), pale; tinted per enemy |
+| objects/bed.png | 72x24 | Bed, 9x3 tiles |
+| items/icons/ and items/held/: slime, wooden_sword, copper_sword, copper_helmet, copper_chestplate, copper_greaves, bed | | Icons and held sprites |

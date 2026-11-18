@@ -128,6 +128,13 @@ can't mine the floor under furniture.
   upgrade yet; the framework is ready for it.
 - Alchemy and enchanting stations come later, each with a design brief first.
 
+## Phase 7 recipes and the bed
+
+Not playtested yet. Hand: 1 Slime + 1 Stick = 5 Torches. Workbench: Wooden Sword (10 planks),
+Bed (20 planks). Anvil: Copper Sword (8 bars, 2 planks), Copper Helmet (10 bars), Copper
+Chestplate (16 bars), Copper Greaves (12 bars). The bed object is 9x3 with `needs_floor`
+and the new `ObjectDef.bed` flag; what it does is in [combat.md](combat.md).
+
 ## Mana (on the Player, `src/player/player.gd`)
 
 | Export | Default | What it does |

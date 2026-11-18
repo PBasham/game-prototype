@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_kbmpf"]
+
+[resource]
+script = ExtResource("1_kbmpf")
+station = &"workbench"
+inputs = Dictionary[StringName, int]({
+&"wood_planks": 10
+})
+output = &"wooden_sword"
+id = &"wooden_sword"
+display_name = "Wooden Sword"

@@ -343,6 +343,7 @@ func _phase5_art() -> void:
 	_big_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_bare.png"))
 	_magic_bag().save_png(ProjectSettings.globalize_path("res://assets/objects/magic_bag.png"))
 	_moon().save_png(ProjectSettings.globalize_path("res://assets/backdrop/moon.png"))
+	_phase7_art()
 	_stars().save_png(ProjectSettings.globalize_path("res://assets/backdrop/stars.png"))
 	_save(_hand_hammer(), "hand_hammer", true)
 	_save(_stone_tool(false), "stone_pickaxe", false)
@@ -783,4 +784,151 @@ func _stars() -> Image:
 		if rng.randf() < 0.12 and p.x < 319 and p.y < 129:
 			img.set_pixel(p.x + 1, p.y, Color(1, 1, 0.95, a * 0.5))
 			img.set_pixel(p.x, p.y + 1, Color(1, 1, 0.95, a * 0.5))
+	return img
+
+
+# --- Phase 7: combat and beds --------------------------------------------------------------
+
+func _phase7_art() -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/enemies"))
+	_slime_sheet().save_png(ProjectSettings.globalize_path("res://assets/enemies/slime.png"))
+	_save(_gel(), "slime", true)
+	_save(_sword(Color("a07a4a"), Color("c8a070"), Color("6e5030")), "wooden_sword", false)
+	_save(_sword(Color("d0844a"), Color("f0b07a"), Color("8a4e24")), "copper_sword", false)
+	_save(_helmet(), "copper_helmet", true)
+	_save(_chestplate(), "copper_chestplate", true)
+	_save(_greaves(), "copper_greaves", true)
+	var bed := _bed()
+	bed.save_png(ProjectSettings.globalize_path("res://assets/objects/bed.png"))
+	var icon := _canvas()
+	var small := bed.duplicate() as Image
+	small.resize(16, 6, Image.INTERPOLATE_NEAREST)
+	icon.blit_rect(small, Rect2i(0, 0, 16, 6), Vector2i(0, 6))
+	_save(icon, "bed", true)
+
+
+## Slime sheet: 3 frames of 36x27 (resting, squashed, in the air), drawn pale so the
+## enemy's tint colors it. A translucent dome with a rim, a lighter core, a shine and
+## two eyes. About half the Scholar's height.
+func _slime_sheet() -> Image:
+	const FW := 36
+	const FH := 27
+	var img := Image.create_empty(FW * 3, FH, false, Image.FORMAT_RGBA8)
+	var shapes: Array[Vector2] = [Vector2(15.5, 13.0), Vector2(17.5, 10.0), Vector2(13.5, 16.5)]  # half width, height
+	for f in 3:
+		var hw: float = shapes[f].x
+		var ht: float = shapes[f].y
+		for y in FH:
+			for x in FW:
+				var dx := (x - (FW - 1) * 0.5) / hw
+				var dy := (FH - 1.0 - y) / ht  # 0 at the bottom, 1 at the top
+				if dy < 0.0 or dy > 1.0:
+					continue
+				var edge := sqrt(maxf(0.0, 1.0 - pow(dy, 2.2)))
+				if absf(dx) > edge:
+					continue
+				var c := Color(0.85, 0.95, 0.85, 0.8)
+				if absf(dx) > edge - 0.12 or dy > 0.9:
+					c = Color(0.6, 0.76, 0.6, 0.95)  # rim
+				elif dy < 0.4 and absf(dx) < 0.55:
+					c = Color(0.96, 1.0, 0.96, 0.66)  # lighter core
+				elif dy < 0.12:
+					c = Color(0.7, 0.84, 0.7, 0.9)  # shaded base
+				img.set_pixel(f * FW + x, y, c)
+		var top := int(FH - 1 - ht)
+		# Shine.
+		for p: Vector2i in [Vector2i(10, 4), Vector2i(11, 3), Vector2i(12, 3), Vector2i(10, 5)]:
+			img.set_pixel(f * FW + p.x, top + p.y, Color(1, 1, 1, 0.95))
+		# Eyes (2x3) looking ahead.
+		var eye_y := top + int(ht * 0.42)
+		for ex: int in [14, 21]:
+			for yy in 3:
+				img.set_pixel(f * FW + ex, eye_y + yy, Color(0.06, 0.12, 0.06))
+				img.set_pixel(f * FW + ex + 1, eye_y + yy, Color(0.06, 0.12, 0.06))
+			img.set_pixel(f * FW + ex, eye_y, Color(0.9, 1.0, 0.9))
+	return img
+
+
+func _gel() -> Image:
+	var img := _canvas()
+	for y in range(5, 15):
+		for x in range(2, 14):
+			var d := Vector2((x - 7.5) / 6.0, (y - 10.5) / 5.0).length()
+			if d < 1.0:
+				var c := Color("5ac850") if d < 0.8 else Color("3a9a34")
+				if y < 9 and x < 7:
+					c = Color("aaf0a0")
+				img.set_pixel(x, y, Color(c, 0.9))
+	img.set_pixel(5, 7, Color.WHITE)
+	return img
+
+
+func _sword(blade: Color, edge: Color, guard: Color) -> Image:
+	var img := _canvas()
+	_line(img, Vector2i(5, 10), Vector2i(14, 1), blade, blade.darkened(0.3))
+	_line(img, Vector2i(6, 10), Vector2i(14, 2), edge)
+	img.set_pixel(15, 0, edge)
+	_line(img, Vector2i(2, 8), Vector2i(7, 13), guard)  # cross guard
+	_line(img, Vector2i(1, 14), Vector2i(4, 11), Color("5e4630"))  # grip
+	img.set_pixel(0, 15, guard)
+	return img
+
+
+func _helmet() -> Image:
+	var img := _canvas()
+	for y in range(3, 12):
+		for x in range(2, 14):
+			var d := Vector2((x - 7.5) / 6.0, (y - 11.0) / 8.0).length()
+			if d < 1.0:
+				img.set_pixel(x, y, Color("d0844a") if x > 5 else Color("f0b07a"))
+	img.fill_rect(Rect2i(2, 11, 12, 2), Color("8a4e24"))
+	img.fill_rect(Rect2i(9, 7, 4, 2), Color("3a2414"))  # eye slit
+	return img
+
+
+func _chestplate() -> Image:
+	var img := _canvas()
+	img.fill_rect(Rect2i(3, 3, 10, 11), Color("d0844a"))
+	img.fill_rect(Rect2i(1, 3, 3, 4), Color("d0844a"))
+	img.fill_rect(Rect2i(12, 3, 3, 4), Color("d0844a"))
+	img.fill_rect(Rect2i(6, 3, 4, 2), Color(0, 0, 0, 0))  # neck
+	img.fill_rect(Rect2i(3, 5, 3, 8), Color("f0b07a"))
+	img.fill_rect(Rect2i(3, 13, 10, 1), Color("8a4e24"))
+	return img
+
+
+func _greaves() -> Image:
+	var img := _canvas()
+	for x0: int in [3, 9]:
+		img.fill_rect(Rect2i(x0, 3, 4, 10), Color("d0844a"))
+		img.fill_rect(Rect2i(x0, 3, 1, 10), Color("f0b07a"))
+		img.fill_rect(Rect2i(x0, 12, 5, 2), Color("8a4e24"))
+	img.fill_rect(Rect2i(3, 2, 10, 2), Color("8a4e24"))
+	return img
+
+
+## Bed 9x3 tiles (72x24): a wooden frame with a tall headboard on the left, a mattress,
+## a pillow and a red blanket.
+func _bed() -> Image:
+	var img := Image.create_empty(72, 24, false, Image.FORMAT_RGBA8)
+	_planks(img, Rect2i(0, 2, 5, 22), Color("8a6440"), false)  # headboard
+	_fill(img, Rect2i(0, 2, 5, 1), Color("a8845a"))
+	_planks(img, Rect2i(67, 10, 5, 14), Color("8a6440"), false)  # footboard
+	_fill(img, Rect2i(67, 10, 5, 1), Color("a8845a"))
+	_planks(img, Rect2i(5, 16, 62, 4), Color("7a5a36"))  # side rail
+	_fill(img, Rect2i(5, 20, 3, 4), Color("6e5030"))  # legs
+	_fill(img, Rect2i(64, 20, 3, 4), Color("6e5030"))
+	_fill(img, Rect2i(5, 12, 62, 4), Color("e8e0d0"))  # mattress
+	_fill(img, Rect2i(5, 12, 62, 1), Color("f4eee4"))
+	_fill(img, Rect2i(6, 8, 13, 5), Color("f4f0ea"))  # pillow
+	_fill(img, Rect2i(6, 12, 13, 1), Color("d8d0c0"))
+	for y in range(10, 17):
+		for x in range(22, 67):
+			var c := Color("b03a3a") if (x + y) % 6 != 0 else Color("c84a4a")
+			if y == 10:
+				c = Color("d86a6a")
+			elif y == 16:
+				c = Color("8a2a2a")
+			img.set_pixel(x, y, c)  # blanket
+	_fill(img, Rect2i(22, 10, 3, 7), Color("e8e0d0"))  # folded edge
 	return img

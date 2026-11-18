@@ -26,6 +26,8 @@ const META_CONTAINERS := "containers"
 const META_BAGS := "bags"
 ## The clock: {"time": fraction of the day, "day": n}.
 const META_TIME := "time"
+## Respawn points set by beds: {character name: [x, y] (the bed's anchor tile)}.
+const META_SPAWNS := "spawns"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

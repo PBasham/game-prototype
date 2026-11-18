@@ -11,7 +11,7 @@ extends GameData
 ## "spell:<spell id>".
 
 ## New kinds go at the end (saved .tres files store the number).
-enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE, FOOD }
+enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE, FOOD, ARMOR, ACCESSORY }
 
 const SPELL_PREFIX := "spell:"
 
@@ -60,6 +60,23 @@ const SPELL_PREFIX := "spell:"
 ## Placing reach in tiles. 0 = the spellbook's build_reach_tiles.
 @export var place_reach_tiles := 0.0
 
+@export_group("Weapon")
+## Damage per swing to enemies in front of you (0 = not a melee weapon).
+@export var melee_damage := 0.0
+## How far the swing reaches, in tiles from your chest.
+@export var melee_reach := 4.5
+## How hard it knocks enemies back (tiles/s).
+@export var knockback := 12.0
+@export_group("Equipment")
+## Armor slot: &"head", &"chest" or &"legs" (kind ARMOR). Accessories go in any
+## accessory slot.
+@export var equip_slot: StringName = &""
+## Damage taken from enemies is reduced by half the total defense.
+@export var defense := 0
+## Stat bonuses while equipped (CharacterData.STATS lists the names): max_health,
+## max_mana (points), mana_regen (per second), move_speed, jump, melee_damage,
+## magic_damage, mining_speed (fractions: 0.1 = +10%).
+@export var stats: Dictionary[StringName, float] = {}
 @export_group("Food")
 ## Eating it (left click while holding it) refills this much hunger...
 @export var food_value := 0.0
@@ -142,7 +159,7 @@ func drop_pixels() -> float:
 	match kind:
 		Kind.MATERIAL, Kind.SEED, Kind.FOOD:
 			return 10.0
-		Kind.TOOL, Kind.WEAPON:
+		Kind.TOOL, Kind.WEAPON, Kind.ARMOR:
 			return 13.0
 		Kind.FURNITURE:
 			return 14.0

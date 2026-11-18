@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_abqjo"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_df5sj"]
+[ext_resource type="Texture2D" path="res://assets/items/held/slime.png" id="3_fd7ax"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/slime.png" id="4_bbinl"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_vycnm"]
+
+[sub_resource type="Resource" id="Resource_cjyvu"]
+script = ExtResource("2_df5sj")
+id = &"slime"
+texture = ExtResource("3_fd7ax")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_vycnm")
+icon = ExtResource("4_bbinl")
+held = SubResource("Resource_cjyvu")
+impact_at = 0.2
+id = &"slime"
+display_name = "Slime"
+description = "Sticky. Drops from slimes."

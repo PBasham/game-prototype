@@ -2,6 +2,40 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+
+## 2026-11-18: Phase 7, combat, equipment, beds (not playtested yet)
+
+- **First enemy:** Green Slime. Hops, light damage (6), 20 health, drops 1 to 2 Slime.
+  Enemies are data (`data/enemies/`) so more can be added without code.
+- **Spawning:** off screen on the surface, never indoors (back wall built), more at night
+  (2 by day, 5 at night), despawn when far.
+- **Melee:** swords hit everything in a box in front, on the swing's impact frame.
+- **Defense:** enemy damage reduced by half the player's defense, minimum 1.
+- **Equipment:** head, chest, legs, 3 accessories. Stats only, nothing drawn on the
+  character yet.
+- **Beds:** set the spawn point any time; sleep only at night with no enemies within 20
+  tiles. Sleeping skips to morning, grows plants, drains hunger.
+- **Slime use for now:** torches (slime + stick).
+
+## Future phase (to be defined): Farming
+
+Held off by Patrick until it is needed. Ideas so far: crops, and transplanting bushes
+with special tools. Needs a design brief.
+
+## Future phase (to be defined): Magic progression
+
+Patrick wants to be closely involved in designing this. Ideas so far:
+
+- A **spell crafting table** with two tabs: **Create** and **Empower**.
+- **Empower** lists every known spell. Crystals or other materials empower a spell
+  through a small **node tree** you work down.
+- Example nodes: reduce mana cost, increase power, increase fly speed, increase
+  levitation speed.
+- A **levitation spell**: fast, fluid movement but only floats about 5 blocks above the
+  ground.
+- **Usage goals** as another source of power, e.g. "kill X enemies" with a spell raises
+  its damage.
+
 ## 2026-11-18: Day and night clock, door sizes
 
 - A day is 24 real minutes (15 day, 9 night). Growth is in in-game days: saplings 1 to

@@ -14,6 +14,8 @@ extends RefCounted
 
 ## Equipment or spells changed (the held spell's look and strength may change).
 signal magic_changed
+## Something was equipped or taken off (stats may have changed).
+signal equipment_changed
 
 const DEFAULT_NAME := "default"
 ## Used when the book slot is empty (data/items).
@@ -21,6 +23,16 @@ const DEFAULT_BOOK := &"basic_spellbook"
 ## Equipment slots and the item kind each accepts.
 const SLOT_BOOK := &"book"
 const SLOT_CONDUIT := &"conduit"
+const SLOT_HEAD := &"head"
+const SLOT_CHEST := &"chest"
+const SLOT_LEGS := &"legs"
+const SLOT_ACCESSORIES: Array[StringName] = [&"accessory_1", &"accessory_2", &"accessory_3"]
+## Every equipment slot, in panel order: armor, accessories, magic.
+const ALL_SLOTS: Array[StringName] = [&"head", &"chest", &"legs", &"accessory_1", &"accessory_2",
+	&"accessory_3", &"book", &"conduit"]
+## Stat names items can raise (ItemData.stats).
+const STATS: Array[StringName] = [&"max_health", &"max_mana", &"mana_regen", &"move_speed", &"jump",
+	&"melee_damage", &"magic_damage", &"mining_speed"]
 ## Hairstyles are the .png files in this folder (Patrick draws more later).
 const HAIR_DIR := "res://assets/sprites/hair"
 const DEFAULT_HAIR := &"short"
@@ -31,6 +43,11 @@ const DEV_KIT: Array = [
 	[&"copper_pickaxe", 1], [&"copper_axe", 1], [&"spell:mining_spell", 1], [&"wood_planks", 99],
 	[&"wood_platform", 30], [&"rope", 30], [&"torch", 20], [&"tree_seed", 5], [&"grass_seeds", 10],
 	[&"dirt", 50],
+]
+## More dev kit items, added after the debug placeholders (so they fill later rows).
+const DEV_KIT_EXTRA: Array = [
+	[&"copper_sword", 1], [&"wooden_sword", 1], [&"copper_helmet", 1], [&"copper_chestplate", 1],
+	[&"copper_greaves", 1], [&"bed", 1], [&"berries", 10],
 ]
 ## Spells the dev kit teaches and puts in the book (in order).
 const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark"]
@@ -46,7 +63,10 @@ var hairstyle: StringName = DEFAULT_HAIR
 var health := -1.0
 var hunger := -1.0
 ## Equipment slot -> item id (empty = nothing).
-var equipment: Dictionary[StringName, StringName] = {SLOT_BOOK: &"", SLOT_CONDUIT: &""}
+var equipment: Dictionary[StringName, StringName] = {
+	&"head": &"", &"chest": &"", &"legs": &"", &"accessory_1": &"", &"accessory_2": &"",
+	&"accessory_3": &"", &"book": &"", &"conduit": &"",
+}
 ## Spells learned (data/spells ids).
 var known_spells: Array[StringName] = []
 ## The equipped book's slots: spell id or &"" per slot. Kept when books are swapped;
@@ -84,6 +104,8 @@ func give_dev_kit() -> void:
 	if OS.is_debug_build():
 		DevHeldItems.add_to(inventory)
 		DevMagic.add_to(self)
+	for e: Array in DEV_KIT_EXTRA:
+		inventory.add(e[0], e[1])
 
 
 # --- looks -----------------------------------------------------------------------------
@@ -182,7 +204,30 @@ func equip(slot: StringName, item_id: StringName) -> StringName:
 	var old: StringName = equipment.get(slot, &"")
 	equipment[slot] = item_id
 	magic_changed.emit()
+	equipment_changed.emit()
 	return old
+
+
+## Total defense of everything equipped.
+func defense() -> int:
+	var d := 0
+	for slot in equipment:
+		var it := ItemData.find(equipment[slot]) if equipment[slot] != &"" else null
+		if it:
+			d += it.defense
+	return d
+
+
+## Sum of every equipped item's stat bonuses: name -> amount (STATS).
+func equipment_stats() -> Dictionary[StringName, float]:
+	var out: Dictionary[StringName, float] = {}
+	for slot in equipment:
+		var it := ItemData.find(equipment[slot]) if equipment[slot] != &"" else null
+		if it == null:
+			continue
+		for k: StringName in it.stats:
+			out[k] = out.get(k, 0.0) + it.stats[k]
+	return out
 
 
 ## Whether an item can go in an equipment slot.
@@ -194,6 +239,10 @@ static func fits(slot: StringName, item: ItemData) -> bool:
 			return item.kind == ItemData.Kind.BOOK
 		SLOT_CONDUIT:
 			return item.kind == ItemData.Kind.CONDUIT
+		SLOT_HEAD, SLOT_CHEST, SLOT_LEGS:
+			return item.kind == ItemData.Kind.ARMOR and item.equip_slot == slot
+	if slot in SLOT_ACCESSORIES:
+		return item.kind == ItemData.Kind.ACCESSORY
 	return false
 
 
@@ -274,7 +323,7 @@ static func load_file(path: String) -> CharacterData:
 	c.name = String(d.get("name", DEFAULT_NAME))
 	c.inventory.from_dict(d.get("inventory", {}))
 	var eq: Dictionary = d.get("equipment", {})
-	for slot: StringName in [SLOT_BOOK, SLOT_CONDUIT]:
+	for slot: StringName in ALL_SLOTS:
 		var item_id := StringName(eq.get(String(slot), ""))
 		c.equipment[slot] = item_id if item_id != &"" and ItemData.find(item_id) != null else &""
 	for s: String in d.get("known_spells", []):

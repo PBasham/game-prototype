@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_h3r1l"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_5exox"]
+[ext_resource type="Texture2D" path="res://assets/items/held/wooden_sword.png" id="3_x5rtt"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/wooden_sword.png" id="4_uhblf"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_fgy78"]
+
+[sub_resource type="Resource" id="Resource_gi8g6"]
+script = ExtResource("2_5exox")
+id = &"wooden_sword"
+texture = ExtResource("3_x5rtt")
+type = &"sword"
+grip = Vector2(2, 13)
+
+[resource]
+script = ExtResource("5_fgy78")
+kind = 6
+icon = ExtResource("4_uhblf")
+max_stack = 1
+held = SubResource("Resource_gi8g6")
+melee_damage = 8.0
+melee_reach = 4.0
+knockback = 10.0
+id = &"wooden_sword"
+display_name = "Wooden Sword"
+description = "A practice sword. Better than your fists."

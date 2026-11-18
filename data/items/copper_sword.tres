@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_i1yw5"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_tcgg5"]
+[ext_resource type="Texture2D" path="res://assets/items/held/copper_sword.png" id="3_siomi"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/copper_sword.png" id="4_vnebn"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_8i6sa"]
+
+[sub_resource type="Resource" id="Resource_j17lo"]
+script = ExtResource("2_tcgg5")
+id = &"copper_sword"
+texture = ExtResource("3_siomi")
+type = &"sword"
+grip = Vector2(2, 13)
+
+[resource]
+script = ExtResource("5_8i6sa")
+kind = 6
+icon = ExtResource("4_vnebn")
+max_stack = 1
+held = SubResource("Resource_j17lo")
+melee_damage = 13.0
+knockback = 13.0
+id = &"copper_sword"
+display_name = "Copper Sword"
+description = "A proper blade."
