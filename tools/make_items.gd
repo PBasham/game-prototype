@@ -303,6 +303,17 @@ func _spells() -> Array[ItemData]:
 	wisp.impact_at = 0.2
 	out.append(wisp)
 
+	var gel := _spell(&"gel_cushion", "Gel Cushion", "A slime cushion: the next fall that would hurt you doesn't. Lasts 2 minutes or one fall. Uses 5 Slime.")
+	gel.cast = SpellData.Cast.BUFF
+	gel.effect = &"gel_cushion"
+	gel.duration = 120.0
+	gel.mana_cost = 10.0
+	gel.reagents = {&"slime": 5}
+	gel.cooldown = 0.5
+	gel.impact_at = 0.3
+	gel.projectile_color = Color(0.55, 1.0, 0.45)
+	out.append(gel)
+
 	var mend := _spell(&"mend", "Mend", "Concentration. Slowly heals you while it's on.")
 	mend.cast = SpellData.Cast.TOGGLE
 	mend.effect = &"mend"
@@ -471,8 +482,9 @@ func _recipes() -> Array[RecipeData]:
 	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by tier.
 	for sp in _spells():
 		var spell := sp as SpellData
-		table.append([StringName("scroll_" + String(spell.id)), &"spell_weaving",
-			{&"blank_scroll": 1, &"copper_bar": SCROLL_BARS[clampi(spell.tier, 1, 3) - 1]},
+		var cost: Dictionary = SCROLL_COSTS.get(spell.id,
+			{&"blank_scroll": 1, &"copper_bar": SCROLL_BARS[clampi(spell.tier, 1, 3) - 1]})
+		table.append([StringName("scroll_" + String(spell.id)), &"spell_weaving", cost,
 			StringName("scroll_" + String(spell.id)), 1, []])
 	for e: Array in table:
 		var r := RecipeData.new()
@@ -491,6 +503,8 @@ func _recipes() -> Array[RecipeData]:
 
 ## Copper bars a spell scroll costs, by tier (1, 2, 3).
 const SCROLL_BARS: Array[int] = [2, 5, 10]
+## Scrolls that cost something else instead.
+const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20}}
 
 
 ## Paper, the Blank Scroll, and a scroll for every spell (left click to learn it).

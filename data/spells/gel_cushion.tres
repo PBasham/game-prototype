@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/gel_cushion.png" id="1_fncmb"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_0e5hd"]
+
+[resource]
+script = ExtResource("2_0e5hd")
+cast = 6
+cooldown = 0.5
+projectile_color = Color(0.55, 1, 0.45, 1)
+effect = &"gel_cushion"
+duration = 120.0
+mana_cost = 10.0
+reagents = Dictionary[StringName, int]({
+&"slime": 5
+})
+kind = 4
+icon = ExtResource("1_fncmb")
+max_stack = 1
+impact_at = 0.3
+id = &"gel_cushion"
+display_name = "Gel Cushion"
+description = "A slime cushion: the next fall that would hurt you doesn't. Lasts 2 minutes or one fall. Uses 5 Slime."

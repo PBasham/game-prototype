@@ -145,6 +145,7 @@ Not playtested yet.
 | 3 Paper + 1 Slime | Workbench | 1 Blank Scroll |
 | 20 Wood Planks + 5 Copper Bars + 4 Paper | Workbench | Spell Weaving Table (6x3, station `spell_weaving`) |
 | 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table | Scroll: <spell>, one recipe per spell |
+| 1 Blank Scroll + 20 Slime | Spell Weaving Table | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
 
 A scroll (`ItemData.teaches_spell`, kind SCROLL) is read with left click while holding it:
 you learn the spell and the scroll is used up. If you already know it, nothing is used.

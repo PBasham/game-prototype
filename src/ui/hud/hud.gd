@@ -95,6 +95,8 @@ var _chest: Pane
 var _equip: EquipmentWindow
 var _spells: SpellWindow
 var _status: Pane
+## Buff icons with their time left, above the status panel.
+var _buffs: Pane
 const STATUS_SIZE := Vector2(140, 44)
 const STATUS_BARS: Array[Array] = [
 	["icon_health", "d83a3a"], ["icon_mana", "3a7ae0"], ["icon_hunger", "d8942a"],
@@ -146,6 +148,8 @@ func _ready() -> void:
 	_spells = SpellWindow.new(self)
 	_spells.close_pressed.connect(toggle_spells)
 	add_child(_spells)
+	_buffs = _pane(_draw_buffs, func(_p: Pane, _e: InputEvent) -> void: pass)
+	_buffs.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status = _pane(_draw_status, func(_p: Pane, _e: InputEvent) -> void: pass)
 	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status.size = STATUS_SIZE
@@ -222,6 +226,7 @@ func _pane(draw_fn: Callable, input_fn: Callable) -> Pane:
 func _redraw() -> void:
 	_inv.queue_redraw()
 	_status.queue_redraw()
+	_buffs.queue_redraw()
 	_craft.queue_redraw()
 	_chest.queue_redraw()
 	_equip.queue_redraw()
@@ -258,7 +263,7 @@ func _process(delta: float) -> void:
 	var p := world.player
 	var over := _over_pane()
 	p.input_blocked = over != null or cursor_count > 0 or paused or wheel_open
-	_update_tooltip(over)
+	_update_tooltip(over if over else (_buffs if _buff_at_mouse() != &"" else null))
 	if (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
 		close_window()  # walked away from the station or chest
 	if bag != null and (not is_instance_valid(bag) or bag.is_queued_for_deletion()
@@ -437,6 +442,8 @@ func _layout() -> void:
 	_name_label.position = MARGIN + Vector2(2, _inv.size.y + 2)
 	var view := _view_size()
 	_status.position = Vector2(MARGIN.x, view.y - STATUS_SIZE.y - MARGIN.y)
+	_buffs.size = Vector2(STATUS_SIZE.x, BUFF_STEP)
+	_buffs.position = _status.position - Vector2(0, BUFF_STEP + 8)
 	_craft.visible = open and crafting
 	_craft.position = Vector2(view.x - CRAFT_SIZE.x - window_right, window_top)
 	_chest.visible = open and _store_open()
@@ -634,6 +641,51 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 
 
 
+
+
+## Space per buff icon (px).
+const BUFF_STEP := 20
+
+
+## Buffs on you, left to right, above the status panel: the spell's icon in a slot and
+## the time left under it. Hover one for what it does.
+func _draw_buffs(g: Control) -> void:
+	var p := world.player
+	var font := ThemeDB.fallback_font
+	var i := 0
+	for effect: StringName in p.buffs:
+		var spell: SpellData = p.buff_spells.get(effect)
+		var r := Rect2(i * BUFF_STEP, 0, BUFF_STEP - 2, BUFF_STEP - 2)
+		UiSkin.slot(g, r, UiSkin.SlotLook.MAGIC)
+		if spell and spell.icon:
+			# Blinks in its last 10 seconds.
+			var left: float = p.buffs[effect]
+			var a := 1.0 if left > 10.0 or fmod(left, 0.5) > 0.2 else 0.35
+			g.draw_texture_rect(spell.icon, Rect2(r.position + Vector2(1, 1), Vector2(16, 16)), false, Color(1, 1, 1, a))
+		var text := _clock(p.buffs[effect])
+		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
+		g.draw_string_outline(font, r.position + Vector2((r.size.x - tw) * 0.5, r.size.y + 6), text,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.8))
+		g.draw_string(font, r.position + Vector2((r.size.x - tw) * 0.5, r.size.y + 6), text,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.TEXT)
+		i += 1
+
+
+## The buff under the mouse (effect id), or &"".
+func _buff_at_mouse() -> StringName:
+	var local := _buffs.get_local_mouse_position()
+	var i := 0
+	for effect: StringName in world.player.buffs:
+		if Rect2(i * BUFF_STEP, 0, BUFF_STEP - 2, BUFF_STEP - 2).has_point(local):
+			return effect
+		i += 1
+	return &""
+
+
+## Seconds as m:ss.
+static func _clock(seconds: float) -> String:
+	var s := ceili(maxf(seconds, 0.0))
+	return "%d:%02d" % [s / 60, s % 60]
 
 
 ## Health, mana and hunger, bottom left: an icon, a bar and the numbers.
@@ -1367,6 +1419,11 @@ func _update_tooltip(over: Control) -> void:
 			h = _chest_hit(over.get_local_mouse_position())
 		elif over == _craft:
 			h = _craft_hit(over.get_local_mouse_position())
+		elif over == _buffs:
+			var effect := _buff_at_mouse()
+			var spell: SpellData = world.player.buff_spells.get(effect)
+			if spell:
+				extra_only = "%s, %s left\n%s" % [spell.display_name, _clock(world.player.buffs[effect]), spell.description]
 		elif over is HudWindow:
 			var t: Array = (over as HudWindow).tooltip_at(over.get_local_mouse_position())
 			item = t[0]

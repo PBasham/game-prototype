@@ -3,6 +3,20 @@
 Newest first. Each entry: what was decided, why, and what it affects.
 
 
+
+## 2026-11-18: Phase 8, spell types (branch phase-08-spell-types)
+
+- **Every spell type in the list goes in:** timed buff, charged, zone, ward, summon,
+  conjure, imbue, reactive, chain, ritual, sense (plus the existing instant, channeled,
+  concentration, companion and placed). One example spell each; Patrick confirms the
+  examples first.
+- **Gel Cushion** (timed buff): saves you from one fall that would hurt, else lasts 2
+  minutes. 10 mana + 5 Slime per cast; the scroll takes 20 Slime. Shows "*squish*" and a
+  splat when used; a sound hook for later.
+- **Reagents:** any spell can use up items per cast.
+- **Later:** an option (an empowerment) to recast a buff automatically when it runs out
+  or gets used.
+
 ## 2026-11-18: Phase 7, combat, equipment, beds (not playtested yet)
 
 - **First enemy:** Green Slime. Hops, light damage (6), 20 health, drops 1 to 2 Slime.

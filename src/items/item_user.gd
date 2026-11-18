@@ -374,7 +374,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.NONE
 	if item is SpellData:
 		match (item as SpellData).cast:
-			SpellData.Cast.PROJECTILE, SpellData.Cast.GUST, SpellData.Cast.BLINK, SpellData.Cast.LIGHT:
+			SpellData.Cast.PROJECTILE, SpellData.Cast.GUST, SpellData.Cast.BLINK, SpellData.Cast.LIGHT, \
+					SpellData.Cast.BUFF:
 				return Mode.CAST
 			SpellData.Cast.TOGGLE:
 				return Mode.TOGGLE
@@ -511,7 +512,9 @@ func _on_impact(item: ItemData) -> void:
 					inv.take(p.selected, 1)
 		Mode.CAST:
 			var spell := item as SpellData
-			if cooldown_left(spell) <= 0.0 and p.spend_mana(spell.mana_cost):
+			# Mana is checked before the reagents are used up, so a failed cast costs nothing.
+			if cooldown_left(spell) <= 0.0 and p.has_mana(spell.mana_cost) and p.character.take_reagents(spell):
+				p.spend_mana(spell.mana_cost)
 				_ready_at[spell.id] = _now() + spell.cooldown
 				cast(spell)
 		Mode.PLACE_BLOCK:
@@ -555,6 +558,9 @@ func cast(spell: SpellData) -> void:
 				EventBus.debug_message.emit("No room to blink there")
 		SpellData.Cast.LIGHT:
 			world.summon_light_orb(spell)
+		SpellData.Cast.BUFF:
+			p.add_buff(spell)
+			SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, p.chest(), Vector2.ZERO, spell.projectile_color)
 
 
 ## Air Push: everything damageable in the cone is hurt and shoved away; in the air the

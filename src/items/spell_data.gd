@@ -16,6 +16,9 @@ extends ItemData
 ##               in it; in the air it pushes you back a little.
 ##   BLINK       teleports you toward the cursor, up to `blink_tiles`, to the farthest
 ##               spot you fit.
+##   BUFF        a timed effect on you (`effect`, for `duration` seconds), shown as an
+##               icon by the health panel. Casting again refreshes it. Gel Cushion
+##               (&"gel_cushion"): the next fall that would hurt doesn't, and it ends.
 ##   LIGHT       a floating light for `duration` seconds: follows you (Light Orb), or with
 ##               `light_placed` you steer it while the button is held and it stays where
 ##               you let go (Wisp).
@@ -23,7 +26,7 @@ extends ItemData
 ## Casting animation: the "spell" item type (book in the back hand, the front hand
 ## channels at the cursor). Its Channel motion (0.3 s) is the time between casts.
 
-enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT }
+enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT, BUFF }
 
 @export var cast := Cast.TOOL
 ## How powerful the spell is. The equipped book's max_spell_tier must be at least this.
@@ -69,7 +72,8 @@ enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT }
 @export var blink_tiles := 12.0
 
 @export_group("Light")
-## Light Orb and Wisp: light radius (tiles), color and how long it lasts (seconds).
+## Light Orb and Wisp: light radius (tiles) and color. `duration`: seconds a light or a
+## BUFF lasts.
 @export var light_radius := 10.0
 @export var light_color := Color(1.0, 0.92, 0.75)
 @export var duration := 180.0
@@ -82,6 +86,9 @@ enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT }
 ## Mana per cast, and per second while a beam is held or a concentration spell is on.
 @export var mana_cost := 0.0
 @export var mana_per_second := 0.0
+## Items used up by each cast (item id to count), e.g. Gel Cushion: 5 Slime. It can't be
+## cast without them.
+@export var reagents: Dictionary[StringName, int] = {}
 @export_group("")
 
 

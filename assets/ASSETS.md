@@ -165,3 +165,9 @@ code (`src/combat/light_orb.gd`, `src/combat/spell_effect.gd`).
 `items/icons/paper.png`, `blank_scroll.png`, `scroll_<spell>.png` (parchment with the spell's
 icon), `spell_weaving_table.png`, and `objects/spell_weaving_table.png` (48x24, 6x3 tiles).
 Also `items/icons/wisp.png` (spell). Placeholders.
+
+## Phase 8 placeholders
+
+`items/icons/gel_cushion.png` (spell), `scroll_gel_cushion.png`. The Gel Cushion splat is
+drawn in code (`SpellEffect.Kind.SPLAT`). **Sound wanted:** `gel_cushion_used` (a squish
+when it saves you), played through `EventBus.sound_requested` once audio exists.

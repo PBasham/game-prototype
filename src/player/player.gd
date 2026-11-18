@@ -16,6 +16,10 @@ extends CharacterBody2D
 signal landed(fall_tiles: float)
 ## Fall damage to apply. Health arrives in Phase 6; for now it's shown in the overlay.
 signal fall_damage_taken(amount: int)
+## A timed buff started or was refreshed (its spell).
+signal buff_started(spell: SpellData)
+## A buff ended: ran out, or `used` (Gel Cushion saving you from a fall).
+signal buff_ended(effect: StringName, used: bool)
 ## Health went down (any cause: falls, starving...).
 signal hurt(amount: int, cause: StringName)
 ## Health reached 0. The World respawns the player.
@@ -249,6 +253,10 @@ var last_spell: StringName = &""
 var _quick_return: Array = []
 ## The button that keeps a quick-cast beam going (&"" = none).
 var _quick_button: StringName = &""
+## Timed buffs on you (SpellData.Cast.BUFF): effect id to seconds left, and the spell
+## that gave it. Not saved: they end when you leave the world.
+var buffs: Dictionary[StringName, float] = {}
+var buff_spells: Dictionary[StringName, SpellData] = {}
 ## Set when R was used for a quick cast, so letting go of R does nothing else.
 var r_combo_used := false
 ## Seconds in the air since leaving the ground (for double jump).
@@ -638,6 +646,7 @@ func has_mana(amount: float) -> bool:
 
 
 func _update_mana(delta: float) -> void:
+	_tick_buffs(delta)
 	# A concentration spell drains while it's on; it ends when mana runs out.
 	if concentration and concentration.effect == &"mend":
 		heal(concentration.heal_per_second * spell_power() * delta)
@@ -1321,7 +1330,9 @@ func _track_fall() -> void:
 			landed.emit(fall)
 			if fall >= 2.0:
 				_land_timer = land_time
-			if fall > fall_damage_start:
+			if fall > fall_damage_start and has_buff(&"gel_cushion"):
+				_cushion_landing(fall)
+			elif fall > fall_damage_start:
 				var amount := roundi((fall - fall_damage_start) * fall_damage_per_tile)
 				fall_damage_taken.emit(amount)
 				take_damage(amount, &"fall")
@@ -1335,6 +1346,46 @@ func _track_fall() -> void:
 			_airborne = true
 			_peak_y = global_position.y
 		_peak_y = minf(_peak_y, global_position.y)
+
+
+# --- buffs --------------------------------------------------------------------------
+
+## Starts a timed buff from a BUFF spell, or refreshes its timer.
+func add_buff(spell: SpellData) -> void:
+	buffs[spell.effect] = spell.duration
+	buff_spells[spell.effect] = spell
+	buff_started.emit(spell)
+
+
+func has_buff(effect: StringName) -> bool:
+	return buffs.get(effect, 0.0) > 0.0
+
+
+## Ends a buff now (`used`: it did its job, e.g. a cushioned fall).
+func end_buff(effect: StringName, used: bool = false) -> void:
+	if not buffs.has(effect):
+		return
+	buffs.erase(effect)
+	buff_spells.erase(effect)
+	buff_ended.emit(effect, used)
+
+
+func _tick_buffs(delta: float) -> void:
+	for effect: StringName in buffs.keys():
+		buffs[effect] -= delta
+		if buffs[effect] <= 0.0:
+			end_buff(effect)
+
+
+## Gel Cushion takes a fall that would hurt: no damage, a green splat and "*squish*",
+## and the buff is used up.
+func _cushion_landing(fall: float) -> void:
+	end_buff(&"gel_cushion", true)
+	DebugOverlay.watch("last fall", "%.1f tiles, cushioned" % fall)
+	if world:
+		SpellEffect.spawn(world.effects, SpellEffect.Kind.SPLAT, global_position, Vector2.ZERO, Color(0.55, 1.0, 0.45))
+		FloatingText.spawn(world.effects, global_position + Vector2(0, -70), "*squish*", Color(0.6, 1.0, 0.5))
+	EventBus.sound_requested.emit(&"gel_cushion_used", global_position)
 
 
 func _debug_watch() -> void:

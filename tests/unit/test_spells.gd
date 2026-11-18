@@ -255,3 +255,47 @@ func test_offhand_spell() -> void:
 	_set_opt("two_hands", false)
 	p.ready_spell(&"spark")
 	assert_false(p._offhand_cast(), "option off")
+
+
+func test_gel_cushion_needs_slime_and_saves_one_fall() -> void:
+	var p := w.player
+	var c := w.character
+	var gel := _spell(&"gel_cushion")
+	c.put_in_book(3, &"gel_cushion")
+	c.inventory.remove(&"slime", c.inventory.count_of(&"slime"))
+	assert_eq(c.cast_problem(gel), "Needs 5 Slime")
+	c.inventory.add(&"slime", 7)
+	assert_eq(c.cast_problem(gel), "")
+	assert_true(c.take_reagents(gel))
+	assert_eq(c.inventory.count_of(&"slime"), 2, "5 used")
+	assert_false(c.take_reagents(gel), "not enough left: nothing taken")
+	assert_eq(c.inventory.count_of(&"slime"), 2)
+	# The buff: a big fall does no damage once, then the buff is gone.
+	p.add_buff(gel)
+	assert_true(p.has_buff(&"gel_cushion"))
+	var used := [false]
+	p.buff_ended.connect(func(effect: StringName, was_used: bool) -> void:
+		used[0] = effect == &"gel_cushion" and was_used)
+	p.invincible = false
+	p.health = p.max_health
+	p.global_position.y -= 60 * World.TILE
+	p.reset_physics_interpolation()
+	await wait_seconds(2.5)
+	assert_true(p.is_on_floor())
+	assert_eq(p.health, p.max_health, "no fall damage")
+	assert_false(p.has_buff(&"gel_cushion"), "used up")
+	assert_true(used[0], "ended as used")
+	# A second fall hurts.
+	p.global_position.y -= 60 * World.TILE
+	p.reset_physics_interpolation()
+	await wait_seconds(2.5)
+	assert_lt(p.health, p.max_health, "the next fall hurts")
+
+
+func test_buffs_run_out() -> void:
+	var p := w.player
+	var gel := _spell(&"gel_cushion")
+	p.add_buff(gel)
+	p.buffs[&"gel_cushion"] = 0.2
+	await wait_seconds(0.4)
+	assert_false(p.has_buff(&"gel_cushion"), "timed out")

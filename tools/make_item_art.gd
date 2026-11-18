@@ -360,6 +360,14 @@ func _spell_icon(kind: String, c: Color) -> Image:
 				img.set_pixel(8 + int(round(cos(a) * 5.0)), 10 - int(round(sin(a) * 5.0)), g)
 			for p: Vector2i in [Vector2i(12, 11), Vector2i(12, 12), Vector2i(13, 11)]:
 				img.set_pixelv(p, Color.WHITE)
+		"gel_cushion":  # a squashed slime pad with a down arrow onto it
+			for y in range(10, 14):
+				for x in range(2 + (13 - y), 14 - (13 - y)):
+					img.set_pixel(x, y, g if y > 10 else g.lightened(0.4))
+			for y in range(2, 8):
+				img.set_pixel(8, y, Color.WHITE)
+			for p: Vector2i in [Vector2i(6, 6), Vector2i(7, 7), Vector2i(9, 7), Vector2i(10, 6)]:
+				img.set_pixelv(p, Color.WHITE)
 		"wisp":  # a small light with a trailing tail
 			for i in 6:
 				img.set_pixel(4 + i, 11 - i / 2, Color(g, 0.3 + i * 0.1))
@@ -383,7 +391,8 @@ func _spell_icon(kind: String, c: Color) -> Image:
 ## Phase 7 spell icons, written only where no file exists yet.
 func _new_spell_icons() -> void:
 	var colors := {"levitate": Color("b8d8ff"), "hyper_drill": Color("ff7a4a"), "air_push": Color("d8f0ff"),
-		"blink": Color("c89aff"), "light_orb": Color("ffe8a8"), "mend": Color("8ae88a"), "wisp": Color("bfe6ff")}
+		"blink": Color("c89aff"), "light_orb": Color("ffe8a8"), "mend": Color("8ae88a"), "wisp": Color("bfe6ff"),
+		"gel_cushion": Color("8cf06e")}
 	for id: String in colors:
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [ICONS, id])
 		if FileAccess.file_exists(path):
@@ -1001,7 +1010,7 @@ func _bed() -> Image:
 # --- Spell scrolls ------------------------------------------------------------------
 
 const SCROLL_SPELLS: Array[String] = ["mining_spell", "chopping_spell", "fly", "spark", "levitate", "hyper_drill",
-	"air_push", "blink", "light_orb", "wisp", "mend"]
+	"air_push", "blink", "light_orb", "wisp", "mend", "gel_cushion"]
 
 
 ## Paper, the Blank Scroll, a scroll per spell (the spell's icon on parchment) and the

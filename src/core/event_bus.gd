@@ -29,3 +29,9 @@ signal item_picked_up(item_id: StringName, count: int)
 ## The local player died (cause: &"fall", &"starving", ...). The HUD shows it.
 @warning_ignore("unused_signal")
 signal player_died(cause: StringName)
+
+
+## A sound should play (`id` names it, e.g. &"gel_cushion_used"; `at` is a world
+## position). Nothing plays them yet: the hook for Patrick's audio.
+@warning_ignore("unused_signal")
+signal sound_requested(id: StringName, at: Vector2)

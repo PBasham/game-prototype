@@ -51,7 +51,7 @@ const DEV_KIT_EXTRA: Array = [
 ]
 ## Spells the dev kit teaches and puts in the book (in order).
 const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark", &"levitate",
-	&"hyper_drill", &"air_push", &"blink", &"light_orb", &"wisp", &"mend"]
+	&"hyper_drill", &"air_push", &"blink", &"light_orb", &"wisp", &"mend", &"gel_cushion"]
 
 ## The movement spell the movement key (F) and double jump use: the last of Fly or
 ## Levitate you turned on (empty = Fly if known, else Levitate).
@@ -275,7 +275,21 @@ func cast_problem(spell: SpellData, from_tome: bool = false) -> String:
 		var c := conduit()
 		if c == null or c.conduit_type != spell.requires_conduit:
 			return "Needs a %s conduit" % String(spell.requires_conduit)
+	for id: StringName in spell.reagents:
+		if inventory.count_of(id) < spell.reagents[id]:
+			var item := ItemData.find(id)
+			return "Needs %d %s" % [spell.reagents[id], item.display_name if item else String(id)]
 	return ""
+
+
+## Uses up a spell's reagents from the inventory. False (nothing taken) if any are short.
+func take_reagents(spell: SpellData) -> bool:
+	for id: StringName in spell.reagents:
+		if inventory.count_of(id) < spell.reagents[id]:
+			return false
+	for id: StringName in spell.reagents:
+		inventory.remove(id, spell.reagents[id])
+	return true
 
 
 ## Spell strength multiplier from the book (or the tome) and the conduit.

@@ -172,10 +172,12 @@ How a spell works is its `cast`:
 | TOGGLE | A concentration spell: a click turns its `effect` on or off. Only one at a time; the HUD shows "Concentrating: ..." | `effect` (&"fly", &"levitate", &"mend"), `move_speed`, `boost_speed_mult`, `boost_mana_mult`, `hover_tiles`, `heal_per_second` |
 | GUST | A push in a cone toward the cursor: shoves and hurts what's in it; in the air it pushes you back | `damage`, `gust_tiles`, `gust_angle`, `gust_push`, `gust_recoil` |
 | BLINK | Teleports you toward the cursor to the farthest spot you fit | `blink_tiles` |
+| BUFF | A timed effect on you (`effect`, `duration` seconds), shown as an icon with the time left above the health panel (hover for details; it blinks in its last 10 s). Casting again refreshes it. Buffs end when you leave the world | `effect`, `duration` |
 | LIGHT | A floating light: follows you (one at a time; casting again refreshes it), or with `light_placed` you steer it with the cursor while the button is held and it stays where you let go | `light_radius`, `light_color`, `duration`, `light_placed`, `light_max` |
 
 Every spell also has `mana_cost` (per cast) and `mana_per_second` (beams and
-concentration), a `tier`, and a `cooldown` (seconds before it can be cast again; 0 = only
+concentration), `reagents` (items used up by each cast, e.g. 5 Slime; it can't be cast
+without them, and a cast that fails on mana uses nothing), a `tier`, and a `cooldown` (seconds before it can be cast again; 0 = only
 the casting animation limits it). An item with `mining_round` mines a circle as wide as
 its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md](crafting.md#mana-on-the-player-srcplayerplayergd).
 
@@ -191,6 +193,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Blink | BLINK | Up to 12 tiles toward the cursor (your middle goes there), stopping at the farthest spot you fit; nothing happens if there's no room. 15 mana, 1 s cooldown. |
 | Light Orb | LIGHT | A warm light (radius 10) floating by your head for 3 minutes, fading at the end. Not concentration, so it works while you fly. 10 mana. |
 | Wisp | LIGHT (placed) | Hold to steer a cool light with the cursor (within 24 tiles of you), let go to leave it there. Radius 9, 5 minutes, up to 3 at once (the oldest goes). 12 mana, 0.5 s cooldown. |
+| Gel Cushion | BUFF | The next fall that would hurt does no damage, then the buff is gone ("*squish*" and a green splat at your feet). Otherwise it lasts 2 minutes. 10 mana + **5 Slime** per cast. Scroll: Blank Scroll + 20 Slime. A sound hook fires when it saves you (`EventBus.sound_requested`, id `gel_cushion_used`). |
 | Mend | TOGGLE | Heals 3 health per second (times spell power) while on. 6 mana/s. |
 
 Damageable things are nodes in the `damageable` group with `hit_rect()` and
