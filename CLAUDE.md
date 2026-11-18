@@ -21,7 +21,8 @@ tunables change: Patrick tweaks things by hand from these docs.
 - No dark outlines on terrain, trees or decorations; transitions use texture.
 - Don't invent biomes, ores or content. Current scope: surface forest, copper only
   (plus the Phase 5 stone age items: sticks, rocks, flint, stone tools; Phase 7: green
-  and blue slime, slime, wooden and copper swords, copper armor, bed).
+  and blue slime, slime, wooden and copper swords, copper armor, bed, paper, blank and spell
+  scrolls, the Spell Weaving Table, and the spells in data/spells).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

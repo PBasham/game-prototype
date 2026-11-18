@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_w3kmm"]
+
+[resource]
+script = ExtResource("1_w3kmm")
+station = &"spell_weaving"
+inputs = Dictionary[StringName, int]({
+&"blank_scroll": 1,
+&"copper_bar": 2
+})
+output = &"scroll_chopping_spell"
+id = &"scroll_chopping_spell"
+display_name = "Scroll Chopping Spell"

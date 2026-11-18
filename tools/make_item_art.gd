@@ -7,6 +7,8 @@ extends SceneTree
 ##   godot --headless --path . --script res://tools/make_item_art.gd
 ##   godot --headless --path . --script res://tools/make_item_art.gd -- --new-spells
 ##     (only the Phase 7 spell icons that don't exist yet; nothing else is touched)
+##   godot --headless --path . --script res://tools/make_item_art.gd -- --scrolls
+##     (paper, scrolls and the Spell Weaving Table, where missing)
 
 const ICONS := "res://assets/items/icons"
 const HELD := "res://assets/items/held"
@@ -16,6 +18,10 @@ const TERRAIN := "res://assets/terrain"
 func _init() -> void:
 	if OS.get_cmdline_user_args().has("--new-spells"):
 		_new_spell_icons()
+		quit()
+		return
+	if OS.get_cmdline_user_args().has("--scrolls"):
+		_scroll_art()
 		quit()
 		return
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(ICONS))
@@ -354,6 +360,11 @@ func _spell_icon(kind: String, c: Color) -> Image:
 				img.set_pixel(8 + int(round(cos(a) * 5.0)), 10 - int(round(sin(a) * 5.0)), g)
 			for p: Vector2i in [Vector2i(12, 11), Vector2i(12, 12), Vector2i(13, 11)]:
 				img.set_pixelv(p, Color.WHITE)
+		"wisp":  # a small light with a trailing tail
+			for i in 6:
+				img.set_pixel(4 + i, 11 - i / 2, Color(g, 0.3 + i * 0.1))
+			for p: Vector2i in [Vector2i(10, 7), Vector2i(11, 7), Vector2i(10, 8), Vector2i(11, 8), Vector2i(10, 6), Vector2i(12, 7)]:
+				img.set_pixelv(p, Color.WHITE)
 		"light_orb":  # a bright orb
 			for y in 16:
 				for x in 16:
@@ -372,7 +383,7 @@ func _spell_icon(kind: String, c: Color) -> Image:
 ## Phase 7 spell icons, written only where no file exists yet.
 func _new_spell_icons() -> void:
 	var colors := {"levitate": Color("b8d8ff"), "hyper_drill": Color("ff7a4a"), "air_push": Color("d8f0ff"),
-		"blink": Color("c89aff"), "light_orb": Color("ffe8a8"), "mend": Color("8ae88a")}
+		"blink": Color("c89aff"), "light_orb": Color("ffe8a8"), "mend": Color("8ae88a"), "wisp": Color("bfe6ff")}
 	for id: String in colors:
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [ICONS, id])
 		if FileAccess.file_exists(path):
@@ -984,4 +995,91 @@ func _bed() -> Image:
 				c = Color("8a2a2a")
 			img.set_pixel(x, y, c)  # blanket
 	_fill(img, Rect2i(22, 10, 3, 7), Color("e8e0d0"))  # folded edge
+	return img
+
+
+# --- Spell scrolls ------------------------------------------------------------------
+
+const SCROLL_SPELLS: Array[String] = ["mining_spell", "chopping_spell", "fly", "spark", "levitate", "hyper_drill",
+	"air_push", "blink", "light_orb", "wisp", "mend"]
+
+
+## Paper, the Blank Scroll, a scroll per spell (the spell's icon on parchment) and the
+## Spell Weaving Table. Only writes files that don't exist yet.
+func _scroll_art() -> void:
+	_save_missing(_paper(), "paper", true)
+	_save_missing(_scroll(null), "blank_scroll", true)
+	for id in SCROLL_SPELLS:
+		var icon_path := ProjectSettings.globalize_path("%s/%s.png" % [ICONS, id])
+		var spell_icon := Image.load_from_file(icon_path) if FileAccess.file_exists(icon_path) else null
+		_save_missing(_scroll(spell_icon), "scroll_" + id, true)
+	var table_path := ProjectSettings.globalize_path("res://assets/objects/spell_weaving_table.png")
+	var table := _weaving_table()
+	if not FileAccess.file_exists(table_path):
+		table.save_png(table_path)
+		print("make_item_art: wrote %s" % table_path)
+	var icon := _canvas()
+	var small := table.duplicate() as Image
+	small.resize(16, 8, Image.INTERPOLATE_NEAREST)
+	icon.blend_rect(small, Rect2i(0, 0, 16, 8), Vector2i(0, 5))
+	_save_missing(icon, "spell_weaving_table", true)
+
+
+func _save_missing(img: Image, item_id: String, small_held: bool) -> void:
+	if FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s.png" % [ICONS, item_id])):
+		print("make_item_art: %s exists, kept" % item_id)
+		return
+	_save(img, item_id, small_held)
+	print("make_item_art: wrote %s" % item_id)
+
+
+func _paper() -> Image:
+	var img := _canvas()
+	for i in 3:
+		var o := Vector2i(3 + i, 2 + i * 2)
+		for y in range(o.y, o.y + 9):
+			for x in range(o.x, o.x + 8):
+				img.set_pixel(x, y, Color("eae2cc") if i < 2 else Color("f6f0e0"))
+		for x in range(o.x, o.x + 8):
+			img.set_pixel(x, o.y + 8, Color("c8bea4"))
+	return img
+
+
+## A rolled parchment; with a spell icon, the spell shown small in the middle.
+func _scroll(spell_icon: Image) -> Image:
+	var img := _canvas()
+	for y in range(3, 13):
+		for x in range(3, 13):
+			img.set_pixel(x, y, Color("e8dcb8"))
+	for y in range(2, 14):
+		img.set_pixel(2, y, Color("b89a68"))
+		img.set_pixel(13, y, Color("b89a68"))
+		img.set_pixel(3, y, Color("d4c08e"))
+		img.set_pixel(12, y, Color("d4c08e"))
+	if spell_icon:
+		var sm := spell_icon.duplicate() as Image
+		sm.convert(Image.FORMAT_RGBA8)
+		sm.resize(8, 8, Image.INTERPOLATE_NEAREST)
+		img.blend_rect(sm, Rect2i(0, 0, 8, 8), Vector2i(4, 4))
+	else:
+		for row: int in [5, 7, 9]:
+			for x in range(5, 11):
+				img.set_pixel(x, row, Color("a89470"))
+	return img
+
+
+## 6x3 tiles: a writing desk with a glowing spell circle and a quill.
+func _weaving_table() -> Image:
+	var img := Image.create_empty(48, 24, false, Image.FORMAT_RGBA8)
+	_planks(img, Rect2i(0, 9, 48, 4), Color("6e4a8a"))  # top
+	_fill(img, Rect2i(0, 9, 48, 1), Color("9a74b8"))
+	_fill(img, Rect2i(2, 13, 4, 11), Color("5a3a70"))  # legs
+	_fill(img, Rect2i(42, 13, 4, 11), Color("5a3a70"))
+	_fill(img, Rect2i(6, 15, 36, 2), Color("5a3a70"))  # rail
+	for a in 24:
+		var p := Vector2(16, 5) + Vector2.from_angle(TAU * a / 24.0) * Vector2(7, 3)
+		img.set_pixel(int(p.x), int(p.y), Color("bfe6ff"))
+	_fill(img, Rect2i(15, 4, 3, 2), Color("eaf6ff"))
+	_fill(img, Rect2i(28, 6, 10, 3), Color("e8dcb8"))  # a scroll
+	_line(img, Vector2i(40, 8), Vector2i(44, 1), Color("f4f0ea"))  # quill
 	return img

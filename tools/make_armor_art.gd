@@ -31,11 +31,12 @@ func _init() -> void:
 	_img = Image.load_from_file(ProjectSettings.globalize_path(SHEET + "_parts.png"))
 	_img.convert(Image.FORMAT_RGBA8)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
-	# [item, part, top fraction covered (0..1 of the part's height in that frame), rim,
+	# [item, part, top fraction covered (0..1 of the part's height in that frame; a
+	#  Vector2 is (back, front): deeper at the back, the art faces right), rim,
 	#  seam (fraction down the piece for a darker line, -1 = none)]
-	# The helmet stops above where the eyes would be (about 40% down the head).
+	# The helmet angles up: down to the neck at the back, above the eyes at the front.
 	var pieces: Array[Array] = [
-		["copper_helmet", "Head", 0.38, true, -1.0],
+		["copper_helmet", "Head", Vector2(0.75, 0.3), true, -1.0],
 		["copper_chestplate", "Torso", 0.42, false, 0.62],
 		["copper_chestplate", "Front Arm Upper", 0.5, false, -1.0],
 		["copper_chestplate", "Back Arm Upper", 0.5, false, -1.0],
@@ -45,7 +46,8 @@ func _init() -> void:
 		["copper_greaves", "Back Leg Lower", 0.7, false, 0.45],
 	]
 	for p: Array in pieces:
-		var strip := _overlay(String(p[1]), float(p[2]), bool(p[3]), float(p[4]))
+		var cover: Vector2 = p[2] if p[2] is Vector2 else Vector2(float(p[2]), float(p[2]))
+		var strip := _overlay(String(p[1]), cover, bool(p[3]), float(p[4]))
 		var path := "%s/%s_%s.png" % [OUT, p[0], file_part(String(p[1]))]
 		strip.save_png(ProjectSettings.globalize_path(path))
 		print("make_armor_art: wrote %s" % path)
@@ -56,10 +58,10 @@ static func file_part(part: String) -> String:
 	return part.to_lower().replace(" ", "_")
 
 
-## One overlay strip for a part: its shape in the top `cover` of each frame, as a solid
-## copper plate. `rim` grows the shape by a pixel to the sides and top (a helmet sits
+## One overlay strip for a part: its shape in the top `cover` of each frame (x: at the
+## back, y: at the front, blended across), as a solid copper plate. `rim` grows the shape by a pixel to the sides and top (a helmet sits
 ## on the head). `seam` draws a darker line that far down the piece (-1 = none).
-func _overlay(part: String, cover: float, rim: bool, seam: float) -> Image:
+func _overlay(part: String, cover: Vector2, rim: bool, seam: float) -> Image:
 	var out := Image.create_empty(_frame.x * _frames, _frame.y, false, Image.FORMAT_RGBA8)
 	if not _rows.has(part):
 		push_warning("make_armor_art: no part %s" % part)
@@ -71,10 +73,11 @@ func _overlay(part: String, cover: float, rim: bool, seam: float) -> Image:
 		var used := src.get_used_rect()
 		if used.size == Vector2i.ZERO:
 			continue
-		var limit := used.position.y + maxi(1, int(ceil(used.size.y * cover)))
 		var mask: Dictionary[Vector2i, bool] = {}
-		for y in range(used.position.y, limit):
-			for x in range(used.position.x, used.end.x):
+		for x in range(used.position.x, used.end.x):
+			var across := float(x - used.position.x) / maxf(used.size.x - 1, 1)  # 0 back, 1 front
+			var limit := used.position.y + maxi(1, int(ceil(used.size.y * lerpf(cover.x, cover.y, across))))
+			for y in range(used.position.y, limit):
 				if src.get_pixel(x, y).a > 0.5:
 					mask[Vector2i(x, y)] = true
 		if rim:

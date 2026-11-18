@@ -135,6 +135,22 @@ Bed (20 planks). Anvil: Copper Sword (8 bars, 2 planks), Copper Helmet (10 bars)
 Chestplate (16 bars), Copper Greaves (12 bars). The bed object is 9x3 with `needs_floor`
 and the new `ObjectDef.bed` flag; what it does is in [combat.md](combat.md).
 
+## Spell scrolls (placeholder chain, will change)
+
+Not playtested yet.
+
+| Recipe | Station | Makes |
+|---|---|---|
+| 1 Wood | Workbench | 3 Paper |
+| 3 Paper + 1 Slime | Workbench | 1 Blank Scroll |
+| 20 Wood Planks + 5 Copper Bars + 4 Paper | Workbench | Spell Weaving Table (6x3, station `spell_weaving`) |
+| 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table | Scroll: <spell>, one recipe per spell |
+
+A scroll (`ItemData.teaches_spell`, kind SCROLL) is read with left click while holding it:
+you learn the spell and the scroll is used up. If you already know it, nothing is used.
+The bar costs per tier are `SCROLL_BARS` in tools/make_items.gd. The table becomes the
+Create and Empower table in the Magic progression phase.
+
 ## Mana (on the Player, `src/player/player.gd`)
 
 | Export | Default | What it does |

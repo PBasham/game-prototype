@@ -35,6 +35,8 @@ func _init() -> void:
 		all.append([recipe, RECIPE_DIR])
 	for enemy in _enemies():
 		all.append([enemy, ENEMY_DIR])
+	for scroll in _scrolls():
+		all.append([scroll, DIR])
 	for e: Array in all:
 		var res: GameData = e[0]
 		var dir: String = e[1]
@@ -115,7 +117,8 @@ func _items() -> Array[ItemData]:
 			[&"furnace", "Furnace", "A crafting station: smelts ore into bars."],
 			[&"copper_anvil", "Copper Anvil", "A crafting station: copper tools."],
 			[&"chest", "Chest", "Stores 40 stacks. Right click or E to open."],
-			[&"door", "Door", "Right click or E to open and close."]]:
+			[&"door", "Door", "Right click or E to open and close."],
+			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: writes spells onto blank scrolls."]]:
 		var furn := _small(f[0], f[1], f[2])
 		furn.kind = ItemData.Kind.FURNITURE
 		furn.places_object = f[0]
@@ -288,6 +291,18 @@ func _spells() -> Array[ItemData]:
 	orb.impact_at = 0.3
 	out.append(orb)
 
+	var wisp := _spell(&"wisp", "Wisp", "Hold to steer a wisp of light with the cursor; let go to leave it there. Up to 3 at once, 5 minutes each.")
+	wisp.cast = SpellData.Cast.LIGHT
+	wisp.light_placed = true
+	wisp.light_max = 3
+	wisp.light_radius = 9.0
+	wisp.light_color = Color(0.75, 0.9, 1.0)
+	wisp.duration = 300.0
+	wisp.mana_cost = 12.0
+	wisp.cooldown = 0.5
+	wisp.impact_at = 0.2
+	out.append(wisp)
+
 	var mend := _spell(&"mend", "Mend", "Concentration. Slowly heals you while it's on.")
 	mend.cast = SpellData.Cast.TOGGLE
 	mend.effect = &"mend"
@@ -309,7 +324,7 @@ func _objects() -> Array[ObjectDef]:
 	# [id, name, w, h, station, frames file]
 	for f: Array in [[&"workbench", "Workbench", 5, 4, &"workbench"], [&"furnace", "Furnace", 4, 5, &"furnace"],
 			[&"copper_anvil", "Copper Anvil", 3, 3, &"anvil"], [&"chest", "Chest", 3, 3, &""],
-			[&"door", "Door", 1, 8, &""]]:
+			[&"door", "Door", 1, 8, &""], [&"spell_weaving_table", "Spell Weaving Table", 6, 3, &"spell_weaving"]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -448,7 +463,17 @@ func _recipes() -> Array[RecipeData]:
 		[&"copper_helmet", &"anvil", {&"copper_bar": 10}, &"copper_helmet", 1, []],
 		[&"copper_chestplate", &"anvil", {&"copper_bar": 16}, &"copper_chestplate", 1, []],
 		[&"copper_greaves", &"anvil", {&"copper_bar": 12}, &"copper_greaves", 1, []],
+		# Spell scrolls (placeholder chain, will change).
+		[&"paper", &"workbench", {&"wood": 1}, &"paper", 3, []],
+		[&"blank_scroll", &"workbench", {&"paper": 3, &"slime": 1}, &"blank_scroll", 1, []],
+		[&"spell_weaving_table", &"workbench", {&"wood_planks": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
 	]
+	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by tier.
+	for sp in _spells():
+		var spell := sp as SpellData
+		table.append([StringName("scroll_" + String(spell.id)), &"spell_weaving",
+			{&"blank_scroll": 1, &"copper_bar": SCROLL_BARS[clampi(spell.tier, 1, 3) - 1]},
+			StringName("scroll_" + String(spell.id)), 1, []])
 	for e: Array in table:
 		var r := RecipeData.new()
 		r.id = e[0]
@@ -461,6 +486,26 @@ func _recipes() -> Array[RecipeData]:
 			r.requires.append(q)
 		r.display_name = String(e[3]).capitalize()
 		out.append(r)
+	return out
+
+
+## Copper bars a spell scroll costs, by tier (1, 2, 3).
+const SCROLL_BARS: Array[int] = [2, 5, 10]
+
+
+## Paper, the Blank Scroll, and a scroll for every spell (left click to learn it).
+func _scrolls() -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	out.append(_small(&"paper", "Paper", "Made from wood. Used for scrolls and the Spell Weaving Table."))
+	out.append(_small(&"blank_scroll", "Blank Scroll", "Write a spell on it at the Spell Weaving Table."))
+	for sp in _spells():
+		var spell := sp as SpellData
+		var scroll := _small(StringName("scroll_" + String(spell.id)), "Scroll: %s" % spell.display_name,
+			"Left click to learn %s. The scroll is used up." % spell.display_name)
+		scroll.kind = ItemData.Kind.SCROLL
+		scroll.teaches_spell = spell.id
+		scroll.max_stack = 20
+		out.append(scroll)
 	return out
 
 

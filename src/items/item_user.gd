@@ -18,7 +18,7 @@ extends Node2D
 ## the beam from the casting hand, and a range ring that fades in as the cursor nears
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
-enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT }
+enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT, LEARN }
 
 const TILE := World.TILE
 
@@ -251,6 +251,10 @@ func can_use(on_back: bool = false) -> bool:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				eat_held()
 			return false  # no swing
+		Mode.LEARN:
+			if not on_back and Input.is_action_just_pressed("use_primary"):
+				read_scroll()
+			return false
 		Mode.NONE:
 			# Empty hands punch and weapons swing; materials, books and the like have no
 			# use, so the arm just keeps holding them.
@@ -289,6 +293,26 @@ func melee_hit(item: ItemData) -> int:
 			node.call(&"knock_back", p.chest(), item.knockback)
 		hit += 1
 	return hit
+
+
+## Reads the held spell scroll: learns its spell and uses up the scroll. Returns true if
+## a spell was learned.
+func read_scroll() -> bool:
+	var p := world.player
+	var item := p.held_item
+	if item == null or item.teaches_spell == &"" or p.selected < 0 or p.character == null:
+		return false
+	var spell := ItemData.find(ItemData.spell_key(item.teaches_spell))
+	if spell == null:
+		return false
+	if p.character.knows(item.teaches_spell):
+		EventBus.debug_message.emit("You already know %s" % spell.display_name)
+		return false
+	if p.character.inventory.take(p.selected, 1) <= 0:
+		return false
+	p.character.learn_spell(item.teaches_spell)
+	EventBus.debug_message.emit("You learned %s" % spell.display_name)
+	return true
 
 
 ## Eats one of the held food (refills hunger and heals). Returns true if eaten.
@@ -358,6 +382,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.MINE
 	if item.kind == ItemData.Kind.FOOD:
 		return Mode.EAT if not on_back else Mode.NONE
+	if item.teaches_spell != &"":
+		return Mode.LEARN if not on_back else Mode.NONE
 	if on_back:
 		return Mode.PLACE_WALL if item.places_wall != &"" else Mode.NONE
 	if item.axe_damage > 0.0:

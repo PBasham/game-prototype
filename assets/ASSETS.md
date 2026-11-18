@@ -159,3 +159,9 @@ plus `sun.png` (fixed). The sky gradient is set in code.
 `items/icons/levitate.png`, `hyper_drill.png`, `air_push.png`, `blink.png`, `light_orb.png`,
 `mend.png`: 16x16 placeholders. The Light Orb, Blink and Air Push effects are drawn in
 code (`src/combat/light_orb.gd`, `src/combat/spell_effect.gd`).
+
+## Scrolls and the Spell Weaving Table (tools/make_item_art.gd -- --scrolls)
+
+`items/icons/paper.png`, `blank_scroll.png`, `scroll_<spell>.png` (parchment with the spell's
+icon), `spell_weaving_table.png`, and `objects/spell_weaving_table.png` (48x24, 6x3 tiles).
+Also `items/icons/wisp.png` (spell). Placeholders.

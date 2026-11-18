@@ -19,6 +19,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
 | **P** | Equipment window (armor, accessories, book, conduit, stats, equipped spells); see [combat.md](combat.md) |
 | **L** | Spell Index (every spell you know) |
+| **F** | Movement spell (Fly or Levitate) on or off; see Spell controls |
 | **R** (tap) | Take the spellbook out (like Starbound's matter manipulator), with the last spell you used; tap again to go back to your hotbar slot |
 | **R** (hold) | Spell wheel: move the mouse toward a spell, let go to cast with it |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
@@ -171,7 +172,7 @@ How a spell works is its `cast`:
 | TOGGLE | A concentration spell: a click turns its `effect` on or off. Only one at a time; the HUD shows "Concentrating: ..." | `effect` (&"fly", &"levitate", &"mend"), `move_speed`, `boost_speed_mult`, `boost_mana_mult`, `hover_tiles`, `heal_per_second` |
 | GUST | A push in a cone toward the cursor: shoves and hurts what's in it; in the air it pushes you back | `damage`, `gust_tiles`, `gust_angle`, `gust_push`, `gust_recoil` |
 | BLINK | Teleports you toward the cursor to the farthest spot you fit | `blink_tiles` |
-| LIGHT | A floating light that follows you (one at a time; casting again refreshes it) | `light_radius`, `light_color`, `duration` |
+| LIGHT | A floating light: follows you (one at a time; casting again refreshes it), or with `light_placed` you steer it with the cursor while the button is held and it stays where you let go | `light_radius`, `light_color`, `duration`, `light_placed`, `light_max` |
 
 Every spell also has `mana_cost` (per cast) and `mana_per_second` (beams and
 concentration), a `tier`, and a `cooldown` (seconds before it can be cast again; 0 = only
@@ -189,14 +190,16 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Air Push | GUST | Cone 8 tiles long, 35 degrees each side. 2 damage, push 24 tiles/s; in the air you get pushed back 12 tiles/s. 8 mana, 0.6 s cooldown. |
 | Blink | BLINK | Up to 12 tiles toward the cursor (your middle goes there), stopping at the farthest spot you fit; nothing happens if there's no room. 15 mana, 1 s cooldown. |
 | Light Orb | LIGHT | A warm light (radius 10) floating by your head for 3 minutes, fading at the end. Not concentration, so it works while you fly. 10 mana. |
+| Wisp | LIGHT (placed) | Hold to steer a cool light with the cursor (within 24 tiles of you), let go to leave it there. Radius 9, 5 minutes, up to 3 at once (the oldest goes). 12 mana, 0.5 s cooldown. |
 | Mend | TOGGLE | Heals 3 health per second (times spell power) while on. 6 mana/s. |
 
 Damageable things are nodes in the `damageable` group with `hit_rect()` and
 `take_damage(amount, from)`; enemies will use the same.
 
-- **Spells you know** are kept on the character. A new character knows none (console
-  `devkit` teaches them all and fills the book's free slots; `book <slot> <spell>` puts
-  one in a slot). How you learn spells in the real game
+- **Spells you know** are kept on the character. A new character knows none. You learn
+  one by reading its **scroll** (hold it, left click; the scroll is used up), made at the
+  Spell Weaving Table (crafting.md). Console `devkit` teaches them all and fills the
+  book's free slots; `book <slot> <spell>` puts one in a slot. How you learn spells in the real game
   comes later.
 - **The spellbook is part of the character**, not a hotbar item: the **Book** slot in
   the Equipment window. Empty = the Basic Spellbook (4 slots). Other books can have more
@@ -358,3 +361,18 @@ godot --path . -- --aim=60:36 --tap=hotbar_3:20 --hold=use_primary:30:200 --shot
 Armor (head, chest, legs), three accessory slots and melee weapons are covered in
 [combat.md](combat.md). Item kinds `ARMOR` and `ACCESSORY` were added; weapons are any item
 with `melee_damage > 0`.
+
+
+## Spell controls (options being tried out)
+
+Five ways to switch spells faster. Each can be turned on or off in **Esc, Settings,
+Spell controls** (saved), or with the console `spellopt [option] [on|off]`. Code:
+`Player._number_key`, `toggle_movement_spell`, `quick_cast`, `_offhand_cast`.
+
+| Option | Default | What it does |
+|---|---|---|
+| `movement_key` | on | **F** turns your movement spell on or off: the last of Fly or Levitate you used (Fly first). It still has to be in your book, with the mana for it. You keep whatever is in your hand. |
+| `double_jump` | on | Jumping again in the air (after 0.12 s) turns the movement spell on. |
+| `book_numbers` | on | With the spellbook out (R), the number keys pick the book's slots instead of the hotbar. R again goes back to the hotbar. |
+| `quick_cast` | on | Hold R and tap a number: casts that book slot once, then you're back to what you held. Concentration spells just toggle. The wheel doesn't open after a quick cast. |
+| `two_hands` | off | With the spellbook out, right click casts the **off-hand spell**: book slot 2, or slot 1 when slot 2 is in your hand. Not while holding a mining or chopping spell (right click stays the back layer). Off by default because it takes right click from the back layer for other spells. |

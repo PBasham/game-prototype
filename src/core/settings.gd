@@ -21,6 +21,20 @@ const DEFAULTS := {
 	"debug": {
 		"show_overlay": true,
 	},
+	## Spell control options (being tried out; see docs/items-and-mining.md, Spell controls).
+	"spells": {
+		## F turns your movement spell (Fly or Levitate) on and off.
+		"movement_key": true,
+		## Jumping again in the air turns your movement spell on.
+		"double_jump": true,
+		## With the spellbook out, number keys pick the book's spells.
+		"book_numbers": true,
+		## Hold R and tap a number: cast that book slot once, then back to what you held.
+		"quick_cast": true,
+		## With the spellbook out, right click casts the off-hand spell (book slot 2, or 1
+		## when slot 2 is in hand). Not for mining and chopping spells (right click = back layer).
+		"two_hands": false,
+	},
 }
 
 ## Zoom range for the settings slider.

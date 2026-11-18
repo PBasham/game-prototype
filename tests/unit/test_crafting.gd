@@ -30,7 +30,13 @@ func _floor_spot(dx: int) -> Vector2i:
 func test_every_recipe_is_valid() -> void:
 	var all := Registry.get_all(&"recipes")
 	assert_gt(all.size(), 10)
-	var stations := [&"", &"workbench", &"furnace", &"anvil"]
+	# Hand crafting, plus every station some furniture provides.
+	var stations: Array[StringName] = [&""]
+	for o in Registry.get_all(&"objects"):
+		var def := o as ObjectDef
+		if def and def.station != &"" and not def.station in stations:
+			stations.append(def.station)
+	assert_true(&"spell_weaving" in stations, "the Spell Weaving Table is a station")
 	for d in all:
 		var r := d as RecipeData
 		assert_eq(r.validate(), PackedStringArray(), "%s valid" % r.id)

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_i8rtk"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_sd5f8"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_wisp.png" id="3_qc88i"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_wisp.png" id="4_xbjd2"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_8obl0"]
+
+[sub_resource type="Resource" id="Resource_uocdi"]
+script = ExtResource("2_sd5f8")
+id = &"scroll_wisp"
+texture = ExtResource("3_qc88i")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_8obl0")
+kind = 14
+icon = ExtResource("4_xbjd2")
+max_stack = 20
+held = SubResource("Resource_uocdi")
+impact_at = 0.2
+teaches_spell = &"wisp"
+id = &"scroll_wisp"
+display_name = "Scroll: Wisp"
+description = "Left click to learn Wisp. The scroll is used up."

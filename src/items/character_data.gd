@@ -51,7 +51,11 @@ const DEV_KIT_EXTRA: Array = [
 ]
 ## Spells the dev kit teaches and puts in the book (in order).
 const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark", &"levitate",
-	&"hyper_drill", &"air_push", &"blink", &"light_orb", &"mend"]
+	&"hyper_drill", &"air_push", &"blink", &"light_orb", &"wisp", &"mend"]
+
+## The movement spell the movement key (F) and double jump use: the last of Fly or
+## Levitate you turned on (empty = Fly if known, else Levitate).
+var movement_spell: StringName = &""
 
 var name := DEFAULT_NAME
 var inventory := Inventory.new()
@@ -351,6 +355,7 @@ static func load_file(path: String) -> CharacterData:
 	c.hairstyle = StringName(look.get("hair", String(DEFAULT_HAIR)))
 	c.health = float(d.get("health", -1.0))
 	c.hunger = float(d.get("hunger", -1.0))
+	c.movement_spell = StringName(d.get("movement_spell", ""))
 	return c
 
 
@@ -386,4 +391,5 @@ func to_dict() -> Dictionary:
 		cols[String(group)] = colors[group].to_html(false)
 	return {"name": name, "inventory": inventory.to_dict(), "equipment": eq,
 		"known_spells": known, "book_spells": book_list,
-		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger}
+		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger,
+		"movement_spell": String(movement_spell)}

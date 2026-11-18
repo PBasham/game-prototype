@@ -27,7 +27,13 @@ Newest first. Each entry: what was decided, why, and what it affects.
   later. Light Orb is a timed cast, not concentration, so it works alongside Fly or
   Levitate; Mend is concentration.
 - **Armor placeholders are solid plates** shaped from the body parts; the helmet leaves
-  the eye line clear.
+  the eye line clear. The helmet angles up (deep at the back, above the eyes at the front).
+- **Wisp:** a separate light spell you steer with the cursor and leave in place.
+- **Spell controls on trial:** movement key (F), double jump, book number keys, R + number
+  quick cast, right click off-hand (off by default). Each is a setting; Patrick picks
+  which to keep after playing. Movement spells still need to be in the book.
+- **Learning spells:** scrolls from a Spell Weaving Table (paper, blank scroll plus copper
+  by tier). Placeholder; Patrick isn't sold on it yet.
 - **Melee:** swords hit everything in a box in front, on the swing's impact frame.
 - **Defense:** enemy damage reduced by half the player's defense, minimum 1.
 - **Equipment:** head, chest, legs, 3 accessories. Stats only, nothing drawn on the

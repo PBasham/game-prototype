@@ -1273,14 +1273,21 @@ func _update_wheel(paused: bool) -> void:
 	if Input.is_action_just_pressed("spellbook") and not paused and not open:
 		_r_held = 0.0
 		_r_down = true
+		world.player.r_combo_used = false
 	if _r_down:
 		_r_held += get_process_delta_time()
-		if not wheel_open and _r_held >= wheel_hold_seconds:
+		if not wheel_open and _r_held >= wheel_hold_seconds and not world.player.r_combo_used:
 			wheel_open = true
 			wheel_center = _wheel.get_local_mouse_position()
 			wheel_choice = &""
 		if not Input.is_action_pressed("spellbook"):
 			_r_down = false
+			if world.player.r_combo_used:
+				# R + number was a quick cast: letting go of R does nothing else.
+				wheel_open = false
+				wheel_choice = &""
+				_wheel.visible = false
+				return
 			if not wheel_open:
 				world.player.toggle_spellbook()
 	if not wheel_open:

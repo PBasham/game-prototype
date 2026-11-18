@@ -459,10 +459,21 @@ func sleep_until_morning() -> void:
 
 
 ## Light Orb: one orb follows the player; casting again replaces it (fresh timer).
+## Wisp (light_placed): a new one each cast, steered while the button is held; past
+## light_max of them, the oldest goes.
 func summon_light_orb(spell: SpellData) -> LightOrb:
+	var same: Array[LightOrb] = []
 	for old in get_tree().get_nodes_in_group(&"light_sources"):
-		if old is LightOrb:
-			old.queue_free()
+		var o := old as LightOrb
+		if o == null or o.is_queued_for_deletion():
+			continue
+		if spell.light_placed:
+			if o.placed and o.spell_id == spell.id:
+				same.append(o)
+		elif not o.placed:
+			o.queue_free()
+	while spell.light_placed and same.size() >= maxi(spell.light_max, 1):
+		same.pop_front().queue_free()
 	var orb := LightOrb.new()
 	effects.add_child(orb)
 	orb.setup(self, spell)

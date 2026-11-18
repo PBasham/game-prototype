@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_kcmon"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_pf3d8"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_mining_spell.png" id="3_ll1la"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_mining_spell.png" id="4_ankvt"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_3qxed"]
+
+[sub_resource type="Resource" id="Resource_43d25"]
+script = ExtResource("2_pf3d8")
+id = &"scroll_mining_spell"
+texture = ExtResource("3_ll1la")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_3qxed")
+kind = 14
+icon = ExtResource("4_ankvt")
+max_stack = 20
+held = SubResource("Resource_43d25")
+impact_at = 0.2
+teaches_spell = &"mining_spell"
+id = &"scroll_mining_spell"
+display_name = "Scroll: Mining Spell"
+description = "Left click to learn Mining Spell. The scroll is used up."

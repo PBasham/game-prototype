@@ -157,6 +157,18 @@ func _register() -> void:
 		_list(_all_spells(), " ".join(a)))
 	_add("learn", "learn <spell>", "Learn a spell (it also goes in a free book slot).", _learn)
 	_add("forget", "forget <spell>", "Forget a spell.", _forget)
+	_add("spellopt", "spellopt [option] [on|off]", "Spell control options (also in Settings).", func(a: PackedStringArray) -> void:
+		var opts: Dictionary = Settings.DEFAULTS["spells"]
+		if a.is_empty():
+			for k: String in opts:
+				_print("  %s: %s" % [k, "on" if Settings.get_value("spells", k) else "off"])
+			return
+		if not opts.has(a[0]):
+			_print("Options: %s" % ", ".join(opts.keys()))
+			return
+		var v := not bool(Settings.get_value("spells", a[0])) if a.size() < 2 else a[1] == "on"
+		Settings.set_value("spells", a[0], v)
+		_print("%s: %s" % [a[0], "on" if v else "off"]))
 	_add("book", "book <slot> <spell>", "Put a known spell in a book slot (1 = first), replacing what's there.", func(a: PackedStringArray) -> void:
 		if a.size() < 2 or not a[0].is_valid_int():
 			_print("Usage: book <slot> <spell>")

@@ -11,7 +11,7 @@ extends GameData
 ## "spell:<spell id>".
 
 ## New kinds go at the end (saved .tres files store the number).
-enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE, FOOD, ARMOR, ACCESSORY }
+enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE, FOOD, ARMOR, ACCESSORY, SCROLL }
 
 const SPELL_PREFIX := "spell:"
 
@@ -85,6 +85,10 @@ const SPELL_PREFIX := "spell:"
 @export var wear: Dictionary[String, Texture2D] = {}
 ## A helmet that hides the hair.
 @export var hides_hair := false
+@export_group("Scroll")
+## A spell scroll: left click while holding it to learn this spell (the scroll is used
+## up). Made at the Spell Weaving Table.
+@export var teaches_spell: StringName = &""
 @export_group("Food")
 ## Eating it (left click while holding it) refills this much hunger...
 @export var food_value := 0.0

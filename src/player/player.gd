@@ -244,6 +244,15 @@ var _readied: ItemData
 var _slot_before_book := 0
 ## The spell R takes out (the last one readied).
 var last_spell: StringName = &""
+## Quick cast or off-hand cast in progress: what to go back to afterwards
+## [selected, readied spell, slot before the book, last_spell], or empty.
+var _quick_return: Array = []
+## The button that keeps a quick-cast beam going (&"" = none).
+var _quick_button: StringName = &""
+## Set when R was used for a quick cast, so letting go of R does nothing else.
+var r_combo_used := false
+## Seconds in the air since leaving the ground (for double jump).
+var _airborne_for := 0.0
 ## Book looks for casting, per book id.
 var _book_looks: Dictionary[StringName, HeldItemLook] = {}
 
@@ -491,6 +500,12 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 	if _held("jump") and input_y > 0.0 and is_on_floor() and _drop_timer <= 0.0 and _standing_on_platform():
 		_buffer = jump_buffer_time
 	# Jump, or drop through a platform with Down + Jump.
+	_airborne_for = 0.0 if is_on_floor() else _airborne_for + delta
+	if _just("jump") and _coyote <= 0.0 and _airborne_for > 0.12 and not _climbing \
+			and spell_option("double_jump") and concentration == null and movement_spell_id() != &"":
+		_buffer = 0.0
+		toggle_movement_spell()
+		return
 	if _buffer > 0.0 and _coyote > 0.0:
 		_buffer = 0.0
 		if input_y > 0.0 and _standing_on_platform():
@@ -757,6 +772,8 @@ func stop_using() -> void:
 ## ends the previous one.
 func toggle_concentration(spell: SpellData) -> void:
 	concentration = null if concentration == spell else spell
+	if character and concentration and concentration.effect in [&"fly", &"levitate"]:
+		character.movement_spell = concentration.id
 	if not is_flying() and not is_levitating():
 		_rising_jump = false
 		_peak_y = global_position.y  # no fall damage from where the flight ended
@@ -894,7 +911,9 @@ func _update_use(delta: float) -> void:
 	if character:
 		for i in Inventory.HOTBAR:
 			if _just("hotbar_%d" % (i + 1)):
-				select_slot(i)
+				_number_key(i)
+	if _just("movement_spell") and spell_option("movement_key"):
+		toggle_movement_spell()
 	if _just("put_away"):
 		toggle_stowed()
 	_hold_time += delta
@@ -912,7 +931,7 @@ func _update_use(delta: float) -> void:
 			pass
 		elif _attack_time >= _attack.duration:
 			_end_attack(true)
-		elif used and used.beam and not _held(_button()):
+		elif used and used.beam and not _held(_quick_button if not _quick_return.is_empty() else _button()):
 			_end_attack(true)  # a beam stops when the button is let go
 	if _just("interact") and world:
 		world.try_interact_near(self)
@@ -923,6 +942,8 @@ func _update_use(delta: float) -> void:
 		var clicked := _just("use_primary")
 		if not clicked and _just("use_secondary"):
 			if world and world.try_interact_at(aim_point(), self):
+				return
+			if _offhand_cast():
 				return
 			back = held_item != null and not stowed
 			clicked = back
@@ -955,6 +976,151 @@ func _end_attack(finished: bool) -> void:
 	_combo_left = _combo_window() if finished else 0.0
 	if not finished:
 		_combo_index = -1
+	if not _quick_return.is_empty():
+		_combo_left = 0.0
+		_restore_quick()
+
+
+# --- spell controls (options in Settings, section "spells") ---------------------------
+
+## A spell control option (Settings "spells": movement_key, double_jump, book_numbers,
+## quick_cast, two_hands).
+static func spell_option(key: String) -> bool:
+	return bool(Settings.get_value("spells", key))
+
+
+## Number key `i`: R held = quick cast book slot i; spellbook out = ready book slot i;
+## otherwise the hotbar slot.
+func _number_key(i: int) -> void:
+	if spell_option("quick_cast") and _held("spellbook"):
+		r_combo_used = true
+		var loadout := character.book_loadout()
+		if i < loadout.size() and loadout[i] != &"":
+			quick_cast(loadout[i])
+		else:
+			EventBus.debug_message.emit("Book slot %d is empty" % (i + 1))
+		return
+	if selected < 0 and spell_option("book_numbers"):
+		var loadout := character.book_loadout()
+		if i < loadout.size() and loadout[i] != &"":
+			ready_spell(loadout[i])
+		else:
+			EventBus.debug_message.emit("Book slot %d is empty" % (i + 1))
+		return
+	select_slot(i)
+
+
+## The spell the movement key and double jump turn on: the last movement spell used,
+## else Fly, else Levitate (among the ones you know).
+func movement_spell_id() -> StringName:
+	if character == null:
+		return &""
+	if character.movement_spell != &"" and character.knows(character.movement_spell):
+		return character.movement_spell
+	for id: StringName in [&"fly", &"levitate"]:
+		if character.knows(id):
+			return id
+	return &""
+
+
+## Turns the movement spell on (or off if it's on). Same rules as casting it: it must
+## be in your book, with the mana for it. Returns true if something changed.
+func toggle_movement_spell() -> bool:
+	var id := movement_spell_id()
+	if id == &"":
+		EventBus.debug_message.emit("You don't know a movement spell")
+		return false
+	var spell := ItemData.find(ItemData.spell_key(id)) as SpellData
+	if concentration == spell:
+		toggle_concentration(spell)
+		return true
+	var problem := character.cast_problem(spell, false)
+	if problem == "" and not has_mana(maxf(spell.mana_per_second * 0.1, 1.0)):
+		problem = "Not enough mana"
+	if problem != "":
+		EventBus.debug_message.emit(problem)
+		return false
+	toggle_concentration(spell)
+	return true
+
+
+## Casts a book spell once right now and goes back to what you were holding (R + number,
+## or the off-hand). Concentration spells just toggle. `hold_button`: a beam keeps going
+## while this button is held. Returns true if it cast.
+func quick_cast(spell_id: StringName, hold_button: StringName = &"") -> bool:
+	var spell := ItemData.find(ItemData.spell_key(spell_id)) as SpellData
+	if spell == null or character == null or dead:
+		return false
+	if not character.in_book(spell_id):
+		EventBus.debug_message.emit("Not in your spellbook")
+		return false
+	var problem := character.cast_problem(spell, false)
+	if problem != "":
+		EventBus.debug_message.emit(problem)
+		return false
+	if spell.cast == SpellData.Cast.TOGGLE:
+		if concentration != spell and not has_mana(maxf(spell.mana_per_second * 0.1, 1.0)):
+			EventBus.debug_message.emit("Not enough mana")
+			return false
+		toggle_concentration(spell)
+		return true
+	if _attack != null:
+		return false
+	var back_to := [selected, _readied, _slot_before_book, last_spell]
+	ready_spell(spell_id)
+	_quick_return = back_to
+	_quick_button = hold_button
+	use_back = false
+	if use_check.is_valid() and not use_check.call(false):
+		_restore_quick()
+		return false
+	_start_attack()
+	if _attack == null:
+		_restore_quick()
+		return false
+	return true
+
+
+func _restore_quick() -> void:
+	var r := _quick_return
+	_quick_return = []
+	_quick_button = &""
+	if r.is_empty():
+		return
+	var was_selected: int = r[0]
+	var was_readied: ItemData = r[1]
+	_slot_before_book = r[2]
+	if was_selected >= 0:
+		select_slot(was_selected)
+	elif was_readied:
+		_readied = was_readied
+		refresh_held()
+		selection_changed.emit(selected)
+	last_spell = r[3]
+
+
+## The off-hand spell (two hands option): book slot 2, or slot 1 when slot 2 is in hand.
+func offhand_spell() -> StringName:
+	if character == null:
+		return &""
+	var loadout := character.book_loadout()
+	var main_id: StringName = _readied.id if _readied else &""
+	var pick := 1 if loadout.size() > 1 and loadout[1] != main_id else 0
+	return loadout[pick] if pick < loadout.size() else &""
+
+
+## Right click with the spellbook out (two hands option): casts the off-hand spell,
+## unless the spell in hand mines or chops (then right click is the back layer).
+func _offhand_cast() -> bool:
+	if not spell_option("two_hands") or selected >= 0 or _readied == null or stowed:
+		return false
+	if _readied.mining_damage > 0.0 or _readied.axe_damage > 0.0:
+		return false
+	var off := offhand_spell()
+	if off == &"":
+		return false
+	quick_cast(off, &"use_secondary")
+	return true
 
 
 func _animate(delta: float) -> void:

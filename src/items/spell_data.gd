@@ -16,7 +16,9 @@ extends ItemData
 ##               in it; in the air it pushes you back a little.
 ##   BLINK       teleports you toward the cursor, up to `blink_tiles`, to the farthest
 ##               spot you fit.
-##   LIGHT       a floating light that follows you for `duration` seconds (Light Orb).
+##   LIGHT       a floating light for `duration` seconds: follows you (Light Orb), or with
+##               `light_placed` you steer it while the button is held and it stays where
+##               you let go (Wisp).
 ##
 ## Casting animation: the "spell" item type (book in the back hand, the front hand
 ## channels at the cursor). Its Channel motion (0.3 s) is the time between casts.
@@ -67,10 +69,14 @@ enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT }
 @export var blink_tiles := 12.0
 
 @export_group("Light")
-## Light Orb: light radius (tiles), color and how long it lasts (seconds).
+## Light Orb and Wisp: light radius (tiles), color and how long it lasts (seconds).
 @export var light_radius := 10.0
 @export var light_color := Color(1.0, 0.92, 0.75)
 @export var duration := 180.0
+## Wisp: hold the button to steer the light with the cursor, let go to leave it there
+## (instead of following you). Up to `light_max` at once; the oldest goes first.
+@export var light_placed := false
+@export var light_max := 3
 
 @export_group("Mana")
 ## Mana per cast, and per second while a beam is held or a concentration spell is on.

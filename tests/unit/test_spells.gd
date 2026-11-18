@@ -143,3 +143,115 @@ func test_cooldowns() -> void:
 	assert_eq(u.cooldown_left(blink), 0.0)
 	u._ready_at[blink.id] = ItemUser._now() + blink.cooldown
 	assert_gt(u.cooldown_left(blink), 0.5)
+
+
+func _set_opt(key: String, on: bool) -> void:
+	Settings.set_value("spells", key, on)
+
+
+func test_wisp_follows_the_cursor_then_stays() -> void:
+	var p := w.player
+	var u := w.item_user
+	var wisp := _spell(&"wisp")
+	assert_true(wisp.light_placed)
+	u.cursor_override = p.chest() + Vector2(60, -20)
+	Input.action_press("use_primary")
+	var orb := w.summon_light_orb(wisp)
+	await wait_seconds(0.5)
+	assert_lt(orb.global_position.distance_to(u.cursor_override), 6.0, "steered to the cursor")
+	Input.action_release("use_primary")
+	await wait_physics_frames(2)
+	var spot := orb.global_position
+	u.cursor_override = p.chest() + Vector2(-80, 0)
+	await wait_seconds(0.3)
+	assert_almost_eq(orb.global_position, spot, Vector2(1, 1), "stays where you let go")
+	for i in 3:
+		w.summon_light_orb(wisp)
+	await wait_physics_frames(1)
+	assert_eq(w.dynamic_lights().size(), 3, "three Wisps at most")
+	u.cursor_override = Vector2.INF
+
+
+func test_scrolls_teach_spells() -> void:
+	var c := w.character
+	var p := w.player
+	c.known_spells.erase(&"blink")
+	c.inventory.set_slot(0, &"scroll_blink", 2)
+	p.select_slot(0)
+	assert_eq(w.item_user._mode_for(p.held_item, false), ItemUser.Mode.LEARN)
+	assert_true(w.item_user.read_scroll())
+	assert_true(c.knows(&"blink"))
+	assert_eq(c.inventory.counts[0], 1, "one scroll used")
+	assert_false(w.item_user.read_scroll(), "already known: nothing used")
+	assert_eq(c.inventory.counts[0], 1)
+	var drill := Registry.get_def(&"recipes", &"scroll_hyper_drill") as RecipeData
+	assert_eq(drill.inputs[&"copper_bar"], 10, "tier 3 costs 10 bars")
+	assert_eq(drill.station, &"spell_weaving")
+
+
+func test_movement_key_and_double_jump() -> void:
+	var p := w.player
+	_set_opt("movement_key", true)
+	_set_opt("double_jump", true)
+	w.character.put_in_book(3, &"levitate")  # movement spells must be in the book too
+	assert_eq(p.movement_spell_id(), &"fly")
+	assert_true(p.toggle_movement_spell())
+	assert_true(p.is_flying())
+	p.toggle_concentration(_spell(&"levitate"))
+	assert_eq(w.character.movement_spell, &"levitate", "remembers the last movement spell")
+	assert_true(p.toggle_movement_spell(), "F turns it off")
+	assert_false(p.is_levitating())
+	# Double jump: jump, then jump again in the air.
+	Input.action_press("jump")
+	await wait_physics_frames(2)
+	Input.action_release("jump")
+	await wait_seconds(0.25)
+	Input.action_press("jump")
+	await wait_physics_frames(2)
+	Input.action_release("jump")
+	assert_true(p.is_levitating(), "double jump starts the movement spell")
+	p.toggle_concentration(_spell(&"levitate"))
+
+
+func test_book_number_keys_and_quick_cast() -> void:
+	var p := w.player
+	var c := w.character
+	_set_opt("book_numbers", true)
+	_set_opt("quick_cast", true)
+	c.put_in_book(3, &"spark")
+	p.select_slot(2)
+	p.ready_spell(c.book_loadout()[0])
+	p._number_key(3)
+	assert_eq(p.held_item.id, &"spark", "book out: number keys pick book slots")
+	p.select_slot(2)
+	var held_before := p.held_item
+	# Quick cast (as if R is held): casts and goes back to the hotbar item.
+	assert_true(p.quick_cast(&"spark"))
+	assert_eq(p.held_item.id, &"spark")
+	await wait_seconds(0.6)
+	assert_eq(p.selected, 2, "back to the hotbar slot")
+	assert_eq(p.held_item, held_before)
+	_set_opt("book_numbers", false)
+	p.ready_spell(&"spark")
+	p._number_key(4)
+	assert_eq(p.selected, 4, "option off: number keys pick hotbar slots")
+	_set_opt("book_numbers", true)
+
+
+func test_offhand_spell() -> void:
+	var p := w.player
+	var c := w.character
+	c.put_in_book(0, &"spark")
+	c.put_in_book(1, &"mend")
+	_set_opt("two_hands", true)
+	p.ready_spell(&"spark")
+	assert_eq(p.offhand_spell(), &"mend")
+	assert_true(p._offhand_cast())
+	assert_eq(p.concentration, _spell(&"mend"), "right click cast the off-hand spell")
+	assert_eq(p.held_item.id, &"spark", "still holding the main spell")
+	p.toggle_concentration(_spell(&"mend"))
+	p.ready_spell(&"mining_spell")
+	assert_false(p._offhand_cast(), "mining spells keep right click for the back layer")
+	_set_opt("two_hands", false)
+	p.ready_spell(&"spark")
+	assert_false(p._offhand_cast(), "option off")
