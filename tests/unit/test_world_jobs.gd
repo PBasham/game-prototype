@@ -186,3 +186,55 @@ func test_torches_light_a_dark_cave_warm() -> void:
 	assert_gt(near.r, near.b + 0.1, "warm (more red than blue)")
 	assert_lt(far.r, near.r, "dimmer in the far corner")
 	assert_almost_eq(px.call(16, 16 + 14).r, ambient, 0.02, "past its radius through rock: dark")
+
+
+func test_closed_doors_block_torch_light() -> void:
+	# A room (x 4..15) with a stone wall at x 16 and a closed 1x8 door in it (rows 20..27),
+	# open air (no walls) outside, a torch inside near the door.
+	var stone := blocks.index_of(&"stone")
+	var tiles := PackedInt32Array()
+	tiles.resize(ChunkData.AREA)
+	for y in ChunkData.SIZE:
+		for x in ChunkData.SIZE:
+			if y >= 28 or x < 2 or (x == 16 and y < 20) or y < 10:
+				tiles[y * ChunkData.SIZE + x] = stone
+	var walls := PackedInt32Array()
+	walls.resize(ChunkData.AREA)
+	walls.fill(1)  # dark everywhere: only the torch lights it
+	var objs := PackedInt32Array()
+	objs.resize(ChunkData.AREA)
+	var objects := TileTypes.new(&"objects")
+	var torch := objects.index_of(&"torch")
+	var door := objects.index_of(&"door")
+	var filler := objects.index_of(&"filler")
+	objs[22 * ChunkData.SIZE + 14] = torch
+	objs[27 * ChunkData.SIZE + 16] = door
+	for y in range(20, 27):
+		objs[y * ChunkData.SIZE + 16] = filler
+	var run := func(with_door: bool) -> int:
+		var job := LightJob.new()
+		job.rect = Rect2i(0, 0, ChunkData.SIZE, ChunkData.SIZE)
+		job.blocks = [tiles]
+		job.walls = [walls]
+		job.objects = [objs]
+		var table := blocks.collision_table()
+		job.solid.resize(table.size())
+		for i in table.size():
+			job.solid[i] = 1 if table[i] == TileDef.Collision.SOLID else 0
+		var def := objects.def(torch) as ObjectDef
+		job.emitters.resize(objects.size() * 4)
+		job.emitters[torch * 4] = def.light_color.r
+		job.emitters[torch * 4 + 1] = def.light_color.g
+		job.emitters[torch * 4 + 2] = def.light_color.b
+		job.emitters[torch * 4 + 3] = def.light_radius
+		job.object_solid.resize(objects.size())
+		job.object_h.resize(objects.size())
+		if with_door:
+			job.object_solid[door] = 1
+			job.object_h[door] = 8
+		job.run()
+		return job.bytes[(22 * ChunkData.SIZE + 18) * 3]  # 2 tiles outside the door
+	var open_light: int = run.call(false)
+	var shut_light: int = run.call(true)
+	assert_gt(open_light, shut_light + 40, "the open doorway lets light out")
+	assert_almost_eq(shut_light, int(0.16 * 255.0 + 0.5), 3, "a closed door keeps it in")

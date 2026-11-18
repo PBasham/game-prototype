@@ -113,9 +113,12 @@ func _make_job() -> LightJob:
 	job.solid_side_falloff = solid_side_falloff
 	job.indoors_falloff = indoors_falloff
 	job.object_solid.resize(world.objects.size())
+	job.object_h.resize(world.objects.size())
 	for id in range(1, world.objects.size()):
 		var od := world.objects.def(id) as ObjectDef
-		job.object_solid[id] = 1 if od and od.blocks_movement else 0
+		if od and od.blocks_movement:
+			job.object_solid[id] = od.width_tiles
+			job.object_h[id] = od.height_tiles
 	job.source_solid_factor = source_solid_factor
 	job.emitters.resize(world.objects.size() * 4)
 	for id in range(1, world.objects.size()):

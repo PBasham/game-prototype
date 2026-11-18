@@ -27,7 +27,7 @@ var objects: Array[PackedInt32Array] = []
 ## Per object id: r, g, b, radius (radius 0 = gives no light).
 var emitters := PackedFloat32Array()
 ## Fraction of a source's reach used up per tile through solid blocks, relative to air.
-var source_solid_factor := 3.0
+var source_solid_factor := 10.0
 ## 1 where a block id is solid (index = block id).
 var solid := PackedByteArray()
 var ambient := 0.16
@@ -37,8 +37,11 @@ var open_falloff := 0.06
 var solid_falloff := 0.1
 var solid_side_falloff := 0.5
 var indoors_falloff := 1.0
-## 1 where an object id blocks light (closed doors).
+## Per object id that blocks light (closed doors): its footprint width and height in
+## tiles (0 = doesn't block). The id is only stored on the object's anchor (bottom-left)
+## tile; the rest of the footprint is "filler", so the whole footprint is marked here.
 var object_solid := PackedByteArray()
+var object_h := PackedByteArray()
 
 # --- outputs ---
 ## rect.size.x * rect.size.y * 3 bytes, FORMAT_RGB8.
@@ -58,6 +61,8 @@ func run() -> void:
 	# Seed: sky tiles are lit. Flags per tile: solid (blocks and closed doors), walled.
 	var solid_at := PackedByteArray()
 	var walled := PackedByteArray()
+	var blocked_by_object := PackedByteArray()
+	blocked_by_object.resize(w * h)
 	solid_at.resize(w * h)
 	solid_at.fill(1)  # not generated yet: dark
 	walled.resize(w * h)
@@ -74,12 +79,25 @@ func run() -> void:
 			for lx in SIZE:
 				var b := cb[src + lx]
 				var o := co[src + lx] if not co.is_empty() else 0
-				var is_solid := b < 0 or (b > 0 and solid[b] == 1) or (o > 0 and o < object_solid.size() and object_solid[o] == 1)
+				var is_solid := b < 0 or (b > 0 and solid[b] == 1)
 				solid_at[row + lx] = 1 if is_solid else 0
+				if o > 0 and o < object_solid.size() and object_solid[o] > 0:
+					# A blocking object: mark its whole footprint (it grows up and right).
+					for dy in object_h[o]:
+						for dx in object_solid[o]:
+							var tx := (k % cols) * SIZE + lx + dx
+							var ty := (k / cols) * SIZE + ly - dy
+							if tx < w and ty >= 0:
+								blocked_by_object[ty * w + tx] = 1
 				if cw[src + lx] != 0:
 					walled[row + lx] = 1
 				elif not is_solid:
 					light[row + lx] = 1.0
+	for i in w * h:
+		if blocked_by_object[i] == 1:
+			solid_at[i] = 1
+			if walled[i] == 0:
+				light[i] = 0.0  # a closed door isn't open sky
 
 	# Sweep passes (left/up, then right/down), twice: close to a full flood fill. The
 	# cost of moving into a tile depends on direction (down into a block is cheap, sideways
@@ -106,7 +124,7 @@ func run() -> void:
 					v = maxf(v, light[i + w] - _cost(solid_at, walled, i, i + w, false))
 				light[i] = v
 
-	var colored := _sources(w, h, cols)
+	var colored := _sources(w, h, cols, solid_at)
 
 	bytes.resize(w * h * 3)
 	for i in w * h:
@@ -134,7 +152,7 @@ func _cost(solid_at: PackedByteArray, walled: PackedByteArray, to: int, from: in
 ## (source_solid_factor per tile through solid blocks), so it reaches its radius; the
 ## brightness that leaves is then tinted by the source's color. Sources are grouped by
 ## color (one sweep per color), so mixed colors blend instead of splitting into rings.
-func _sources(w: int, h: int, cols: int) -> Array:
+func _sources(w: int, h: int, cols: int, solid_at: PackedByteArray) -> Array:
 	var by_color: Dictionary[Color, Array] = {}  # color -> [x, y, radius]
 	for k in objects.size():
 		var co := objects[k]
@@ -150,22 +168,11 @@ func _sources(w: int, h: int, cols: int) -> Array:
 				by_color[c].append(Vector3(base.x + li % SIZE, base.y + li / SIZE, emitters[id * 4 + 3]))
 	if by_color.is_empty():
 		return []
-	# Cost per tile: 1 through air, more through solid blocks.
+	# Cost per tile: 1 through air, more through solid blocks and closed doors.
 	var cost := PackedFloat32Array()
 	cost.resize(w * h)
-	cost.fill(source_solid_factor)
-	for k in blocks.size():
-		var cb := blocks[k]
-		if cb.is_empty():
-			continue
-		var co := objects[k] if k < objects.size() else PackedInt32Array()
-		var base := (k / cols) * SIZE * w + (k % cols) * SIZE
-		for li in SIZE * SIZE:
-			var b := cb[li]
-			var o := co[li] if not co.is_empty() else 0
-			var blocked := b < 0 or (b > 0 and solid[b] == 1) or (o > 0 and o < object_solid.size() and object_solid[o] == 1)
-			if not blocked:
-				cost[base + (li / SIZE) * w + li % SIZE] = 1.0
+	for i in w * h:
+		cost[i] = source_solid_factor if solid_at[i] == 1 else 1.0
 	# (Packed arrays are values: fill local ones, then hand them out.)
 	var r := PackedFloat32Array()
 	var g := PackedFloat32Array()
