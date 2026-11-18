@@ -7,10 +7,13 @@
 script = ExtResource("2_eqpxw")
 cast = 2
 effect = &"fly"
+move_speed = 34.0
+boost_speed_mult = 2.0
+boost_mana_mult = 4.0
 mana_per_second = 10.0
 kind = 4
 icon = ExtResource("1_afklv")
 max_stack = 1
 id = &"fly"
 display_name = "Fly"
-description = "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up."
+description = "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up. Hold Shift to fly much faster, for a lot more mana."

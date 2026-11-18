@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/air_push.png" id="1_vnpvo"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_rjuso"]
+
+[resource]
+script = ExtResource("2_rjuso")
+cast = 3
+cooldown = 0.6
+damage = 2.0
+projectile_color = Color(0.85, 0.95, 1, 1)
+mana_cost = 8.0
+kind = 4
+icon = ExtResource("1_vnpvo")
+max_stack = 1
+impact_at = 0.3
+id = &"air_push"
+display_name = "Air Push"
+description = "A gust toward the cursor that shoves enemies away. In the air, it pushes you back too."

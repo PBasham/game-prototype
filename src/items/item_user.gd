@@ -56,6 +56,8 @@ var back := false
 ## Why the held spell can't be cast ("" = it can).
 var problem := ""
 var _item: ItemData
+## When each spell (by id) can be cast again (seconds, engine time), for cooldowns.
+var _ready_at: Dictionary[StringName, float] = {}
 
 
 func _ready() -> void:
@@ -242,7 +244,9 @@ func can_use(on_back: bool = false) -> bool:
 			world.player.toggle_concentration(_item as SpellData)
 			return true
 		Mode.CAST:
-			return not on_back
+			if on_back:
+				return false
+			return cooldown_left(_item as SpellData) <= 0.0
 		Mode.EAT:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				eat_held()
@@ -346,7 +350,7 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.NONE
 	if item is SpellData:
 		match (item as SpellData).cast:
-			SpellData.Cast.PROJECTILE:
+			SpellData.Cast.PROJECTILE, SpellData.Cast.GUST, SpellData.Cast.BLINK, SpellData.Cast.LIGHT:
 				return Mode.CAST
 			SpellData.Cast.TOGGLE:
 				return Mode.TOGGLE
@@ -371,8 +375,13 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 
 func _tiles() -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
+	var round_area := _item != null and _item.mining_round and mode == Mode.MINE
+	var center := Vector2(rect.position) + Vector2(rect.size) * 0.5
+	var radius := rect.size.x * 0.5
 	for y in range(rect.position.y, rect.end.y):
 		for x in range(rect.position.x, rect.end.x):
+			if round_area and (Vector2(x, y) + Vector2(0.5, 0.5)).distance_to(center) > radius:
+				continue
 			out.append(Vector2i(x, y))
 	return out
 
@@ -476,9 +485,9 @@ func _on_impact(item: ItemData) -> void:
 					inv.take(p.selected, 1)
 		Mode.CAST:
 			var spell := item as SpellData
-			if p.spend_mana(spell.mana_cost):
-				var from := p.casting_hand_position()
-				world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
+			if cooldown_left(spell) <= 0.0 and p.spend_mana(spell.mana_cost):
+				_ready_at[spell.id] = _now() + spell.cooldown
+				cast(spell)
 		Mode.PLACE_BLOCK:
 			var id := world.blocks.index_of(item.places_block)
 			for t in valid:
@@ -500,6 +509,65 @@ func _on_impact(item: ItemData) -> void:
 					inv.take(p.selected, 1)
 	if not back and (item.kind == ItemData.Kind.TOOL or item.kind == ItemData.Kind.WEAPON):
 		_cut_flowers_in_swing()
+
+
+## Casts a non-toggle spell now (mana and cooldown already handled).
+func cast(spell: SpellData) -> void:
+	var p := world.player
+	var from := p.casting_hand_position()
+	match spell.cast:
+		SpellData.Cast.PROJECTILE:
+			world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
+		SpellData.Cast.GUST:
+			gust(spell, from, (cursor() - from).normalized())
+		SpellData.Cast.BLINK:
+			var start := p.chest()
+			if p.blink_toward(cursor(), spell.blink_tiles):
+				SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, start, Vector2.ZERO, spell.projectile_color)
+				SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, p.chest(), Vector2.ZERO, spell.projectile_color)
+			else:
+				EventBus.debug_message.emit("No room to blink there")
+		SpellData.Cast.LIGHT:
+			world.summon_light_orb(spell)
+
+
+## Air Push: everything damageable in the cone is hurt and shoved away; in the air the
+## caster is pushed back a little. Returns how many were hit.
+func gust(spell: SpellData, from: Vector2, dir: Vector2) -> int:
+	var p := world.player
+	var reach_px := spell.gust_tiles * TILE
+	var hit := 0
+	for node in get_tree().get_nodes_in_group(&"damageable"):
+		if node == p or not is_instance_valid(node):
+			continue
+		var r: Rect2 = node.call(&"hit_rect")
+		var to := r.get_center() - from
+		var d := to.length()
+		if d > reach_px + r.size.length() * 0.5:
+			continue
+		if d > 1.0 and rad_to_deg(absf(dir.angle_to(to))) > spell.gust_angle:
+			continue
+		if spell.damage > 0.0:
+			node.call(&"take_damage", spell.damage * _spell_power(), p)
+		if node.has_method(&"knock_back"):
+			node.call(&"knock_back", from, spell.gust_push)
+		hit += 1
+	if not p.is_on_floor() and spell.gust_recoil > 0.0:
+		p.velocity -= dir * spell.gust_recoil * TILE
+	SpellEffect.spawn(world.effects, SpellEffect.Kind.GUST, from, dir * reach_px, spell.projectile_color,
+		spell.gust_angle)
+	return hit
+
+
+## Seconds before a spell can be cast again.
+func cooldown_left(spell: SpellData) -> float:
+	if spell == null:
+		return 0.0
+	return maxf(_ready_at.get(spell.id, 0.0) - _now(), 0.0)
+
+
+static func _now() -> float:
+	return Time.get_ticks_msec() / 1000.0
 
 
 ## A swing cuts flowers in front of the player.
@@ -564,8 +632,12 @@ func _draw() -> void:
 		var core := beam_color if ok else invalid_color
 		core.a *= 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.03)
 		draw_line(from, to, core, 1.0)
-	# Target box.
-	draw_rect(Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE)).grow(0.5), color, false, 1.0)
+	# Target box (a circle for a round area).
+	if _item.mining_round and mode == Mode.MINE:
+		var box := Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE))
+		draw_arc(box.get_center(), box.size.x * 0.5, 0.0, TAU, 48, color, 1.0)
+	else:
+		draw_rect(Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE)).grow(0.5), color, false, 1.0)
 	if problem != "":
 		var font := ThemeDB.fallback_font
 		draw_string(font, aim + Vector2(6, -4), problem, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, invalid_color)

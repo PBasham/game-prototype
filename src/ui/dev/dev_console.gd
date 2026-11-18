@@ -157,6 +157,24 @@ func _register() -> void:
 		_list(_all_spells(), " ".join(a)))
 	_add("learn", "learn <spell>", "Learn a spell (it also goes in a free book slot).", _learn)
 	_add("forget", "forget <spell>", "Forget a spell.", _forget)
+	_add("book", "book <slot> <spell>", "Put a known spell in a book slot (1 = first), replacing what's there.", func(a: PackedStringArray) -> void:
+		if a.size() < 2 or not a[0].is_valid_int():
+			_print("Usage: book <slot> <spell>")
+			return
+		var spell := find_spell(" ".join(a.slice(1)))
+		if spell == null:
+			return
+		var c := world.character
+		if not spell.id in c.known_spells:
+			c.learn_spell(spell.id)
+		var i := int(a[0]) - 1
+		if i < 0 or i >= c.book_slot_count():
+			_print("The book has %d slots." % c.book_slot_count())
+			return
+		if c.put_in_book(i, spell.id):
+			_print("Slot %d: %s." % [i + 1, spell.display_name])
+		else:
+			_print("Can't: %s needs a book for tier %d." % [spell.display_name, spell.tier]))
 	_add("bush", "bush [young]", "Grow a ripe berry bush (full grown, or young) on the grass under the cursor.", func(a: PackedStringArray) -> void:
 		var t := world.world_to_tile(world.item_user.cursor())
 		for g: Vector2i in [t, t + Vector2i.DOWN, t + Vector2i(0, 2)]:

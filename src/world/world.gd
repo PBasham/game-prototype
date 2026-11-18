@@ -458,6 +458,28 @@ func sleep_until_morning() -> void:
 @export var sleep_enemy_tiles := 20.0
 
 
+## Light Orb: one orb follows the player; casting again replaces it (fresh timer).
+func summon_light_orb(spell: SpellData) -> LightOrb:
+	for old in get_tree().get_nodes_in_group(&"light_sources"):
+		if old is LightOrb:
+			old.queue_free()
+	var orb := LightOrb.new()
+	effects.add_child(orb)
+	orb.setup(self, spell)
+	lights.mark_dirty()
+	return orb
+
+
+## Moving light sources (Light Orb): [tile, radius, color] for the light map.
+func dynamic_lights() -> Array[Array]:
+	var out: Array[Array] = []
+	for n in get_tree().get_nodes_in_group(&"light_sources"):
+		if n.is_queued_for_deletion() or not n.has_method(&"light_tile"):
+			continue
+		out.append([n.call(&"light_tile"), float(n.get(&"radius")), n.get(&"color") as Color])
+	return out
+
+
 ## How many of an enemy have been slain in this world.
 func kill_count(enemy_id: StringName) -> int:
 	return kills.get(enemy_id, 0)

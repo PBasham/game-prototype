@@ -158,7 +158,7 @@ Running out stops a beam and ends Fly ("Out of mana"). Casting with too little s
 
 ## Spell tiers
 
-Each spell has a `tier` (1 for all real spells now) and each spellbook a
+Each spell has a `tier` (1 for all real spells now except Hyper Drill, tier 3) and each spellbook a
 `max_spell_tier` (Basic Spellbook: 1). A spell above the book's tier can't go in the
 book: "Too powerful for your spellbook". The debug Dev Wide Beam is tier 2 and needs the
 Dev Grimoire (tier 3).

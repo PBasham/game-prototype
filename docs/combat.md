@@ -118,6 +118,11 @@ in it is hit once per swing.
 | Wooden Sword | 8 | 4 | Workbench: 10 planks |
 | Copper Sword | 13 | 4.5 | Anvil: 8 copper bars, 2 planks |
 
+## Spells against enemies
+
+Spark (projectile) and Air Push (gust: shoves everything in a cone, light damage) hit
+enemies through the same `damageable` group. See items-and-mining.md, Magic.
+
 ## Taking damage
 
 - Enemy hits: `max(1, damage - defense * 0.5)`, then knockback away from the enemy.

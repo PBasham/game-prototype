@@ -97,10 +97,23 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export_group("")
 
 @export_group("Flying (the Fly spell)")
-## Tiles per second.
-@export var fly_speed := 22.0
+## Tiles per second, when the spell doesn't set its own move_speed.
+@export var fly_speed := 34.0
 ## Seconds to reach full speed or stop.
 @export var fly_accel_time := 0.15
+@export_group("")
+
+@export_group("Levitating (the Levitate spell)")
+## Seconds to reach full sideways speed or stop.
+@export var levitate_accel_time := 0.12
+## How quickly the height follows the ground (higher = snappier).
+@export var levitate_follow := 7.0
+## Fastest climb and drop toward the hover height (tiles/s).
+@export var levitate_max_vertical := 30.0
+## How far down (tiles) it looks for ground; past that you sink slowly.
+@export var levitate_scan_tiles := 40
+## Sinking speed with no ground below (tiles/s).
+@export var levitate_sink := 10.0
 @export_group("")
 
 @export_group("Ground (seconds to full speed / to stop)")
@@ -447,6 +460,8 @@ func _physics_process(delta: float) -> void:
 	_update_health(delta)
 	if is_flying():
 		_fly(input_x, input_y, delta)
+	elif is_levitating():
+		_levitate(input_x, input_y, delta)
 	elif _climbing:
 		_climb(input_x, input_y)
 	elif input_y != 0.0 and world and world.is_climbable_at(_body_center()):
@@ -609,8 +624,11 @@ func has_mana(amount: float) -> bool:
 
 func _update_mana(delta: float) -> void:
 	# A concentration spell drains while it's on; it ends when mana runs out.
+	if concentration and concentration.effect == &"mend":
+		heal(concentration.heal_per_second * spell_power() * delta)
 	if concentration and concentration.mana_per_second > 0.0:
-		if not spend_mana(concentration.mana_per_second * delta):
+		var cost := concentration.mana_per_second * (concentration.boost_mana_mult if is_boosting() else 1.0)
+		if not spend_mana(cost * delta):
 			toggle_concentration(concentration)
 			EventBus.debug_message.emit("Out of mana")
 	_since_spell += delta
@@ -739,7 +757,7 @@ func stop_using() -> void:
 ## ends the previous one.
 func toggle_concentration(spell: SpellData) -> void:
 	concentration = null if concentration == spell else spell
-	if not is_flying():
+	if not is_flying() and not is_levitating():
 		_rising_jump = false
 		_peak_y = global_position.y  # no fall damage from where the flight ended
 	concentration_changed.emit(concentration)
@@ -749,15 +767,106 @@ func is_flying() -> bool:
 	return concentration != null and concentration.effect == &"fly"
 
 
-## Flying: no gravity, WASD in every direction, Space also goes up.
+func is_levitating() -> bool:
+	return concentration != null and concentration.effect == &"levitate"
+
+
+## Flying with the run key held while moving (Fly's boost): faster, more mana.
+func is_boosting() -> bool:
+	return is_flying() and concentration.boost_speed_mult > 1.0 and _held("run") \
+		and (_axis("move_left", "move_right") != 0.0 or _axis("move_up", "move_down") != 0.0 or _held("jump"))
+
+
+## Spell strength from the book, conduit and gear (for heals; ItemUser has its own for
+## the held spell, which also counts a tome).
+func spell_power() -> float:
+	return (character.spell_power(null) if character else 1.0) * (1.0 + stat(&"magic_damage"))
+
+
+## Flying: no gravity, WASD in every direction, Space also goes up. Shift boosts.
 func _fly(input_x: float, input_y: float, delta: float) -> void:
 	_climbing = false
 	if _held("jump"):
 		input_y = -1.0
-	var target := Vector2(input_x, input_y).limit_length(1.0) * fly_speed * TILE
-	velocity = velocity.move_toward(target, fly_speed * TILE / maxf(fly_accel_time, 0.01) * delta)
+	var speed := concentration.move_speed if concentration.move_speed > 0.0 else fly_speed
+	if is_boosting():
+		speed *= concentration.boost_speed_mult
+	var target := Vector2(input_x, input_y).limit_length(1.0) * speed * TILE
+	velocity = velocity.move_toward(target, speed * TILE / maxf(fly_accel_time, 0.01) * delta)
 	_peak_y = global_position.y
 	move_and_slide()
+
+
+## Levitating: hovers `hover_tiles` above the ground below and follows it; fast, smooth
+## sideways movement. Down lowers you to the ground; you can't go above the hover height.
+## Over a drop with no ground in reach you sink slowly.
+func _levitate(input_x: float, input_y: float, delta: float) -> void:
+	_climbing = false
+	var spell := concentration
+	var speed := spell.move_speed if spell.move_speed > 0.0 else fly_speed
+	velocity.x = move_toward(velocity.x, input_x * speed * TILE, speed * TILE / maxf(levitate_accel_time, 0.01) * delta)
+	var ground := ground_below()
+	var vy := levitate_sink * TILE
+	if ground != INF:
+		var hover := 0.0 if input_y > 0.0 else spell.hover_tiles * TILE
+		var target := ground - hover
+		vy = clampf((target - global_position.y) * levitate_follow, -levitate_max_vertical * TILE, levitate_max_vertical * TILE)
+	velocity.y = vy
+	_peak_y = global_position.y
+	move_and_slide()
+
+
+## The y (px) of the top of the first solid ground under the player's feet, within
+## levitate_scan_tiles, or INF. Checks under both edges of the body.
+func ground_below() -> float:
+	if world == null:
+		return INF
+	var best := INF
+	for dx: float in [-6.0, 0.0, 6.0]:
+		var start := world.world_to_tile(global_position + Vector2(dx, -1.0))
+		for i in levitate_scan_tiles:
+			var t := start + Vector2i(0, i)
+			if world.is_solid(t):
+				best = minf(best, float(t.y * TILE))
+				break
+	return best
+
+
+## Blink: moves to the farthest free spot along the line toward `target` (the body's
+## middle goes there), up to `max_tiles`. Returns true if you moved.
+func blink_toward(target: Vector2, max_tiles: float) -> bool:
+	if world == null:
+		return false
+	var start := global_position
+	var center_offset := Vector2(0.0, -30.0)
+	var to := target - center_offset - start
+	if to.length() > max_tiles * TILE:
+		to = to.normalized() * max_tiles * TILE
+	var steps := maxi(1, ceili(to.length() / (TILE * 0.5)))
+	var best := start
+	for i in range(1, steps + 1):
+		var at := start + to * (float(i) / steps)
+		if body_fits(at):
+			best = at
+	if best.distance_to(start) < TILE:
+		return false
+	global_position = best
+	velocity = Vector2.ZERO
+	reset_fall()
+	reset_physics_interpolation()
+	return true
+
+
+## Whether the body fits with its feet at `feet` (no solid tile in the way).
+func body_fits(feet: Vector2) -> bool:
+	var r := Rect2(feet + Vector2(-8.0, -60.0), Vector2(16.0, 59.5))
+	var a := world.world_to_tile(r.position)
+	var b := world.world_to_tile(r.end)
+	for y in range(a.y, b.y + 1):
+		for x in range(a.x, b.x + 1):
+			if world.is_solid(Vector2i(x, y)):
+				return false
+	return true
 
 
 func _start_climb() -> void:
@@ -854,7 +963,7 @@ func _animate(delta: float) -> void:
 	_air_time = 0.0 if is_on_floor() else _air_time + delta
 	# Ease toward where the feet should be: on flat ground that's the body; on stairs
 	# it's the smooth slope the terrain is drawn as (see _slope_offset).
-	var target := _slope_offset() if follow_slopes and is_on_floor() and not _climbing and not is_flying() else 0.0
+	var target := _slope_offset() if follow_slopes and is_on_floor() and not _climbing and not is_flying() and not is_levitating() else 0.0
 	var gap := absf(_step_offset - target)
 	_step_offset = move_toward(_step_offset, target, maxf(gap / maxf(step_smooth_time, 0.001), 30.0) * delta)
 	_doll.position.y = _step_offset
@@ -867,7 +976,7 @@ func _animate(delta: float) -> void:
 	_doll.speed_scale = 1.0
 	_doll.reverse = is_aiming() and velocity.x != 0.0 and signf(velocity.x) != float(facing)
 	_doll.dip = 0.0
-	if is_flying():
+	if is_flying() or (is_levitating() and not is_on_floor()):
 		_doll.play(&"Jump")
 		_doll.pause()
 		_doll.frame = clampi(jump_apex_frame - 1, 0, maxi(_doll.frame_count(&"Jump") - 1, 0))

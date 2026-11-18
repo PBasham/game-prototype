@@ -22,6 +22,12 @@ Newest first. Each entry: what was decided, why, and what it affects.
   parts (Patrick: "feel free"); the real ones are hand-drawn later. Accessories aren't
   drawn.
 - **Window positions** reset when you quit (fine for now).
+- **Spells added:** Levitate, Hyper Drill (tier 3), Air Push, Blink, Light Orb, Mend.
+  Fly is faster (34) with a Shift boost (x2 speed, x4 mana), to become an empowerment
+  later. Light Orb is a timed cast, not concentration, so it works alongside Fly or
+  Levitate; Mend is concentration.
+- **Armor placeholders are solid plates** shaped from the body parts; the helmet leaves
+  the eye line clear.
 - **Melee:** swords hit everything in a box in front, on the swing's impact frame.
 - **Defense:** enemy damage reduced by half the player's defense, minimum 1.
 - **Equipment:** head, chest, legs, 3 accessories. Stats only, nothing drawn on the

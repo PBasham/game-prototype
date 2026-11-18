@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/blink.png" id="1_3coyf"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_cu8ek"]
+
+[resource]
+script = ExtResource("2_cu8ek")
+cast = 4
+cooldown = 1.0
+projectile_color = Color(0.78, 0.6, 1, 1)
+mana_cost = 15.0
+kind = 4
+icon = ExtResource("1_3coyf")
+max_stack = 1
+impact_at = 0.3
+id = &"blink"
+display_name = "Blink"
+description = "Teleport toward the cursor, up to 12 blocks, to the farthest spot you fit."

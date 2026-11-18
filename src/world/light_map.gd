@@ -7,8 +7,8 @@ extends Sprite2D
 ## sunlight soaks a few blocks into the ground and caves get dark. `ambient` keeps the
 ## darkest areas faintly visible. Recomputed (on a worker thread, see LightJob) when
 ## chunks load or a block changes.
-## Light sources (tile objects with a light_radius, like torches) add colored light,
-## so the overlay is RGB.
+## Light sources (tile objects with a light_radius, like torches, and moving ones like
+## the Light Orb, World.dynamic_lights) add colored light, so the overlay is RGB.
 
 @export var ambient := 0.16
 @export var open_falloff := 0.06
@@ -120,6 +120,8 @@ func _make_job() -> LightJob:
 			job.object_solid[id] = od.width_tiles
 			job.object_h[id] = od.height_tiles
 	job.source_solid_factor = source_solid_factor
+	for l in world.dynamic_lights():
+		job.extra.append([Vector2i(l[0]) - rect.position, l[1], l[2]])
 	job.emitters.resize(world.objects.size() * 4)
 	for id in range(1, world.objects.size()):
 		var def := world.objects.def(id) as ObjectDef

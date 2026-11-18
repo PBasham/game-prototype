@@ -153,3 +153,9 @@ plus `sun.png` (fixed). The sky gradient is set in code.
 | copper_helmet_head.png | Head (top half, 1 px rim) |
 | copper_chestplate_torso.png, _front_arm_upper.png, _back_arm_upper.png | Chest and shoulders |
 | copper_greaves_front_leg_upper.png, _back_leg_upper.png, _front_leg_lower.png, _back_leg_lower.png | Legs (feet left bare) |
+
+## Phase 7 spell icons (tools/make_item_art.gd -- --new-spells)
+
+`items/icons/levitate.png`, `hyper_drill.png`, `air_push.png`, `blink.png`, `light_orb.png`,
+`mend.png`: 16x16 placeholders. The Light Orb, Blink and Air Push effects are drawn in
+code (`src/combat/light_orb.gd`, `src/combat/spell_effect.gd`).

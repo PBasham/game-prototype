@@ -28,6 +28,8 @@ var objects: Array[PackedInt32Array] = []
 var emitters := PackedFloat32Array()
 ## Fraction of a source's reach used up per tile through solid blocks, relative to air.
 var source_solid_factor := 10.0
+## Moving light sources: [tile (relative to rect), radius, color].
+var extra: Array[Array] = []
 ## 1 where a block id is solid (index = block id).
 var solid := PackedByteArray()
 var ambient := 0.16
@@ -166,6 +168,14 @@ func _sources(w: int, h: int, cols: int, solid_at: PackedByteArray) -> Array:
 				if not by_color.has(c):
 					by_color[c] = []
 				by_color[c].append(Vector3(base.x + li % SIZE, base.y + li / SIZE, emitters[id * 4 + 3]))
+	for l: Array in extra:
+		var t: Vector2i = l[0]
+		if t.x < 0 or t.y < 0 or t.x >= w or t.y >= h:
+			continue
+		var c: Color = l[2]
+		if not by_color.has(c):
+			by_color[c] = []
+		by_color[c].append(Vector3(t.x, t.y, float(l[1])))
 	if by_color.is_empty():
 		return []
 	# Cost per tile: 1 through air, more through solid blocks and closed doors.

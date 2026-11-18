@@ -218,9 +218,12 @@ func _spells() -> Array[ItemData]:
 	chop.mana_per_second = 3.0
 	out.append(chop)
 
-	var fly := _spell(&"fly", "Fly", "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up.")
+	var fly := _spell(&"fly", "Fly", "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up. Hold Shift to fly much faster, for a lot more mana.")
 	fly.cast = SpellData.Cast.TOGGLE
 	fly.effect = &"fly"
+	fly.move_speed = 34.0
+	fly.boost_speed_mult = 2.0
+	fly.boost_mana_mult = 4.0
 	fly.mana_per_second = 10.0
 	out.append(fly)
 
@@ -232,6 +235,65 @@ func _spells() -> Array[ItemData]:
 	spark.impact_at = 0.35
 	spark.mana_cost = 2.0
 	out.append(spark)
+
+	# Phase 7 spells (numbers are first guesses).
+	var lev := _spell(&"levitate", "Levitate", "Concentration. Float about 5 blocks above the ground and glide fast. Down lowers you; you can't rise higher.")
+	lev.cast = SpellData.Cast.TOGGLE
+	lev.effect = &"levitate"
+	lev.move_speed = 30.0
+	lev.hover_tiles = 5.0
+	lev.mana_per_second = 4.0
+	out.append(lev)
+
+	var drill := _spell(&"hyper_drill", "Hyper Drill", "Hold for a huge drilling beam that tears through a round area. Very mana hungry. Right click: back walls.")
+	drill.beam = true
+	drill.mining_damage = 400.0  # per second, on every tile in the circle
+	drill.mining_area = 11  # 5 tiles each way from the center
+	drill.mining_round = true
+	drill.reach_tiles = 24.0
+	drill.mana_per_second = 30.0
+	drill.tier = 3
+	drill.projectile_color = Color(1.0, 0.55, 0.3)
+	out.append(drill)
+
+	var push := _spell(&"air_push", "Air Push", "A gust toward the cursor that shoves enemies away. In the air, it pushes you back too.")
+	push.cast = SpellData.Cast.GUST
+	push.damage = 2.0
+	push.gust_tiles = 8.0
+	push.gust_angle = 35.0
+	push.gust_push = 24.0
+	push.gust_recoil = 12.0
+	push.mana_cost = 8.0
+	push.cooldown = 0.6
+	push.impact_at = 0.3
+	push.projectile_color = Color(0.85, 0.95, 1.0)
+	out.append(push)
+
+	var blink := _spell(&"blink", "Blink", "Teleport toward the cursor, up to 12 blocks, to the farthest spot you fit.")
+	blink.cast = SpellData.Cast.BLINK
+	blink.blink_tiles = 12.0
+	blink.mana_cost = 15.0
+	blink.cooldown = 1.0
+	blink.impact_at = 0.3
+	blink.projectile_color = Color(0.78, 0.6, 1.0)
+	out.append(blink)
+
+	var orb := _spell(&"light_orb", "Light Orb", "A glowing orb follows you and lights the way for 3 minutes. Cast again to refresh it.")
+	orb.cast = SpellData.Cast.LIGHT
+	orb.light_radius = 10.0
+	orb.light_color = Color(1.0, 0.92, 0.75)
+	orb.duration = 180.0
+	orb.mana_cost = 10.0
+	orb.cooldown = 1.0
+	orb.impact_at = 0.3
+	out.append(orb)
+
+	var mend := _spell(&"mend", "Mend", "Concentration. Slowly heals you while it's on.")
+	mend.cast = SpellData.Cast.TOGGLE
+	mend.effect = &"mend"
+	mend.heal_per_second = 3.0
+	mend.mana_per_second = 6.0
+	out.append(mend)
 	return out
 
 

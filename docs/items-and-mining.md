@@ -168,23 +168,35 @@ How a spell works is its `cast`:
 | --- | --- | --- |
 | TOOL | Works on the world like a tool: mining (`mining_damage`) or chopping (`axe_damage`), as a beam while held (`beam`) or once per cast | the item fields: area, reach, `requires_conduit` |
 | PROJECTILE | Fires a bolt at the cursor that hurts the first thing it hits and fizzles on solid blocks | `damage`, `projectile_speed`, `projectile_range`, `projectile_color` |
-| TOGGLE | A concentration spell: a click turns its `effect` on or off. Only one at a time; the HUD shows "Concentrating: ..." | `effect` (&"fly") |
+| TOGGLE | A concentration spell: a click turns its `effect` on or off. Only one at a time; the HUD shows "Concentrating: ..." | `effect` (&"fly", &"levitate", &"mend"), `move_speed`, `boost_speed_mult`, `boost_mana_mult`, `hover_tiles`, `heal_per_second` |
+| GUST | A push in a cone toward the cursor: shoves and hurts what's in it; in the air it pushes you back | `damage`, `gust_tiles`, `gust_angle`, `gust_push`, `gust_recoil` |
+| BLINK | Teleports you toward the cursor to the farthest spot you fit | `blink_tiles` |
+| LIGHT | A floating light that follows you (one at a time; casting again refreshes it) | `light_radius`, `light_color`, `duration` |
 
 Every spell also has `mana_cost` (per cast) and `mana_per_second` (beams and
-concentration), and a `tier`. Mana, costs and tiers: [crafting.md](crafting.md#mana-on-the-player-srcplayerplayergd).
+concentration), a `tier`, and a `cooldown` (seconds before it can be cast again; 0 = only
+the casting animation limits it). An item with `mining_round` mines a circle as wide as
+its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md](crafting.md#mana-on-the-player-srcplayerplayergd).
 
 | Spell | Cast | Notes |
 | --- | --- | --- |
 | Mining Spell | TOOL beam | 55 mining per second per tile, area 2 (toggle 1 to 3), reach 12 |
 | Chopping Spell | TOOL beam | 55 chopping per second on the tree under the cursor (the copper axe is about 71/s), reach 12 |
-| Fly | TOGGLE | Click to fly, click again to stop. WASD in every direction, Space goes up. No gravity or fall damage while flying. Speed on the Player: `fly_speed` (22), `fly_accel_time` (0.15). Stays on when you switch items. |
-| Spark | PROJECTILE | 8 damage (times spell power), 40 tiles/s, 20 tiles. Hold to keep casting (one per 0.3 s). Nothing has health yet except the dev training dummy (console: `dummy`). |
+| Fly | TOGGLE | Click to fly, click again to stop. WASD in every direction, Space goes up. No gravity or fall damage while flying. 34 tiles/s (`move_speed`; the Player's `fly_speed` is the fallback), `fly_accel_time` (0.15). **Hold Shift while moving to boost:** speed x2 (`boost_speed_mult`), mana x4 (`boost_mana_mult`: 40/s, a full bar in about 2.5 s). The boost is meant to become an empowerment later. Stays on when you switch items. 10 mana/s. |
+| Spark | PROJECTILE | 8 damage (times spell power), 40 tiles/s, 20 tiles. Hold to keep casting (one per 0.3 s). 2 mana. |
+| Levitate | TOGGLE | Hovers 5 tiles (`hover_tiles`) above the ground under you and follows it; 30 tiles/s sideways. Down lowers you to the ground; you can't rise above the hover height. With no ground within 40 tiles you sink slowly. No fall damage. 4 mana/s. Tunables on the Player: `levitate_accel_time`, `levitate_follow`, `levitate_max_vertical`, `levitate_scan_tiles`, `levitate_sink`. |
+| Hyper Drill | TOOL beam | Tier 3 (needs the Dev Grimoire for now). 400 mining per second on every tile in a circle 5 tiles out from the center (`mining_area` 11, `mining_round`), reach 24. Right click: back walls. 30 mana/s. |
+| Air Push | GUST | Cone 8 tiles long, 35 degrees each side. 2 damage, push 24 tiles/s; in the air you get pushed back 12 tiles/s. 8 mana, 0.6 s cooldown. |
+| Blink | BLINK | Up to 12 tiles toward the cursor (your middle goes there), stopping at the farthest spot you fit; nothing happens if there's no room. 15 mana, 1 s cooldown. |
+| Light Orb | LIGHT | A warm light (radius 10) floating by your head for 3 minutes, fading at the end. Not concentration, so it works while you fly. 10 mana. |
+| Mend | TOGGLE | Heals 3 health per second (times spell power) while on. 6 mana/s. |
 
 Damageable things are nodes in the `damageable` group with `hit_rect()` and
 `take_damage(amount, from)`; enemies will use the same.
 
 - **Spells you know** are kept on the character. A new character knows none (console
-  `devkit` teaches the four and fills the book). How you learn spells in the real game
+  `devkit` teaches them all and fills the book's free slots; `book <slot> <spell>` puts
+  one in a slot). How you learn spells in the real game
   comes later.
 - **The spellbook is part of the character**, not a hotbar item: the **Book** slot in
   the Equipment window. Empty = the Basic Spellbook (4 slots). Other books can have more

@@ -5,6 +5,8 @@ extends SceneTree
 ## drawn here. Patrick replaces these with real art (same file names).
 ##
 ##   godot --headless --path . --script res://tools/make_item_art.gd
+##   godot --headless --path . --script res://tools/make_item_art.gd -- --new-spells
+##     (only the Phase 7 spell icons that don't exist yet; nothing else is touched)
 
 const ICONS := "res://assets/items/icons"
 const HELD := "res://assets/items/held"
@@ -12,6 +14,10 @@ const TERRAIN := "res://assets/terrain"
 
 
 func _init() -> void:
+	if OS.get_cmdline_user_args().has("--new-spells"):
+		_new_spell_icons()
+		quit()
+		return
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(ICONS))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(HELD))
 	# Blocks: a 16x16 cut of the terrain texture as the icon, an 8x8 cut held in hand.
@@ -326,7 +332,54 @@ func _spell_icon(kind: String, c: Color) -> Image:
 					Vector2i(7, 9), Vector2i(8, 9), Vector2i(9, 9), Vector2i(6, 6), Vector2i(10, 10), Vector2i(10, 6), Vector2i(6, 10)]:
 				img.set_pixelv(p, g)
 			img.set_pixel(8, 8, Color.WHITE)
+		"levitate":  # a figure floating over a ground line
+			_line(img, Vector2i(3, 13), Vector2i(12, 13), g.darkened(0.3))
+			for y in range(4, 10):
+				img.set_pixel(8, y, g)
+			for p: Vector2i in [Vector2i(7, 4), Vector2i(9, 4), Vector2i(6, 6), Vector2i(10, 6), Vector2i(7, 10), Vector2i(9, 10)]:
+				img.set_pixelv(p, g)
+			for x in [5, 8, 11]:
+				img.set_pixel(x, 11, Color(g, 0.6))
+		"hyper_drill":  # a drill cone pointing up-right
+			for i in 7:
+				_line(img, Vector2i(3 + i, 12 - i), Vector2i(3 + i + (6 - i) / 2, 12 - i + (6 - i) / 2), g if i % 2 == 0 else c)
+			img.set_pixel(12, 3, Color.WHITE)
+		"air_push":  # three wind streaks
+			for row: int in [5, 8, 11]:
+				_line(img, Vector2i(3 + (row % 3), row), Vector2i(12, row), g)
+				img.set_pixel(12, row - 1, g)
+		"blink":  # a dotted hop
+			for i in 6:
+				var a := PI * (1.0 - i / 5.0)
+				img.set_pixel(8 + int(round(cos(a) * 5.0)), 10 - int(round(sin(a) * 5.0)), g)
+			for p: Vector2i in [Vector2i(12, 11), Vector2i(12, 12), Vector2i(13, 11)]:
+				img.set_pixelv(p, Color.WHITE)
+		"light_orb":  # a bright orb
+			for y in 16:
+				for x in 16:
+					var d := Vector2(x + 0.5, y + 0.5).distance_to(Vector2(8, 8))
+					if d < 3.5:
+						img.set_pixel(x, y, g.lightened(0.5 - d * 0.1))
+		"mend":  # a plus
+			for i in range(4, 12):
+				img.set_pixel(i, 8, g)
+				img.set_pixel(i, 7, g)
+				img.set_pixel(8, i, g)
+				img.set_pixel(7, i, g)
 	return img
+
+
+## Phase 7 spell icons, written only where no file exists yet.
+func _new_spell_icons() -> void:
+	var colors := {"levitate": Color("b8d8ff"), "hyper_drill": Color("ff7a4a"), "air_push": Color("d8f0ff"),
+		"blink": Color("c89aff"), "light_orb": Color("ffe8a8"), "mend": Color("8ae88a")}
+	for id: String in colors:
+		var path := ProjectSettings.globalize_path("%s/%s.png" % [ICONS, id])
+		if FileAccess.file_exists(path):
+			print("make_item_art: %s exists, kept" % path)
+			continue
+		_spell_icon(id, colors[id]).save_png(path)
+		print("make_item_art: wrote %s" % path)
 
 
 

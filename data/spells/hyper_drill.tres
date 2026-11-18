@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/hyper_drill.png" id="1_20be8"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_n236g"]
+
+[resource]
+script = ExtResource("2_n236g")
+tier = 3
+projectile_color = Color(1, 0.55, 0.3, 1)
+mana_per_second = 30.0
+kind = 4
+icon = ExtResource("1_20be8")
+max_stack = 1
+mining_damage = 400.0
+beam = true
+mining_area = 11
+mining_round = true
+reach_tiles = 24.0
+id = &"hyper_drill"
+display_name = "Hyper Drill"
+description = "Hold for a huge drilling beam that tears through a round area. Very mana hungry. Right click: back walls."

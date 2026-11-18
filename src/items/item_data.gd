@@ -38,6 +38,8 @@ const SPELL_PREFIX := "spell:"
 ## Largest area the area toggle (Ctrl + mouse wheel) can pick. 0 = same as mining_area
 ## (no toggle).
 @export var mining_area_max := 0
+## The mining area is round (a circle as wide as the area) instead of square.
+@export var mining_round := false
 ## How far from the player it reaches, in tiles.
 @export var reach_tiles := 10.0
 ## When in the swing the hit lands (0..1 through the attack animation).

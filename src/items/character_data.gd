@@ -50,7 +50,8 @@ const DEV_KIT_EXTRA: Array = [
 	[&"copper_greaves", 1], [&"bed", 1], [&"berries", 10],
 ]
 ## Spells the dev kit teaches and puts in the book (in order).
-const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark"]
+const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark", &"levitate",
+	&"hyper_drill", &"air_push", &"blink", &"light_orb", &"mend"]
 
 var name := DEFAULT_NAME
 var inventory := Inventory.new()
