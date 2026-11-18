@@ -100,7 +100,7 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | objects/furnace.png | 32x40 (4x5 tiles), glows orange in game |
 | objects/copper_anvil.png, objects/chest.png | 24x24 (3x3 tiles); the anvil sits on a stump |
 | objects/door.png | 8x64 (1x8 tiles), closed, Starbound style: lintel, the door edge on (a 4 px slab with iron straps), hinge knuckles, handles |
-| objects/door_open.png | 48x64: 2 frames of 24x64, open: the door face on (boards, rails, brace, hinge straps, ring handle), drawn 3 tiles wide centered on the 1 tile doorway; frame 1 is the mirror. The item icon uses this face. |
+| objects/door_open.png | 48x64: 2 frames of 24x64, open: the door face on (boards, rails, brace, hinge straps, ring handle), drawn 3 tiles wide starting at the hinge side of the 1 tile doorway; frame 1 is the mirror (hinge on the right). The item icon uses this face. |
 | objects/magic_bag.png | 12x12, bottom-centered: the bag your items go into when you die |
 | decor/berry_bush.png, decor/berry_bush_bare.png | 24x19, bottom-centered: full grown, ripe and picked |
 | decor/berry_bush_young.png | 14x12, bottom-centered: young bush (no berries yet) |

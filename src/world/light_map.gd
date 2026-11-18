@@ -12,10 +12,10 @@ extends Sprite2D
 
 @export var ambient := 0.16
 @export var open_falloff := 0.06
-@export var solid_falloff := 0.1
+@export var solid_falloff := 0.34
 ## Light sources lose this many times more reach per tile through solid blocks than
 ## through air.
-@export var source_solid_factor := 3.0
+@export var source_solid_factor := 10.0
 ## Recompute when the sky light (day and night) changes by more than this.
 @export var sky_change := 0.012
 ## Minimum seconds between recomputes.

@@ -202,9 +202,9 @@ per pixel from a small texture of tile ids:
 | --- | --- | --- |
 | `ambient` | 0.16 | Darkest anything gets (so caves aren't pure black). |
 | `open_falloff` | 0.06 | Light lost per tile through air and walls. |
-| `solid_falloff` | 0.1 | Light lost per tile through blocks (how far sunlight soaks into the ground). |
+| `solid_falloff` | 0.34 | Light lost per tile through blocks: a wall one block thick stops most light, and sunlight only soaks about 3 blocks into the ground. |
 | `min_interval` | 0.12 | Minimum seconds between recomputes. |
-| `source_solid_factor` | 3 | Light sources (torches) lose this many times more reach per tile through blocks than through air. |
+| `source_solid_factor` | 10 | Light sources (torches) lose this many times more reach per tile through blocks than through air, so a torch doesn't light the other side of a wall. |
 
 Open sky (no block and no wall) is the light source. The spread runs on a background
 thread (`LightJob`), so editing tiles never stalls the game; light catches up a fraction

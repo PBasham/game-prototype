@@ -59,7 +59,7 @@ func _on_changed(tile: Vector2i, _old: int, _new: int) -> void:
 	for c: Vector2i in _views:
 		var lx := posmod(wx - c.x * SIZE + 1, world.data.width) - 1
 		var ly := tile.y - c.y * SIZE
-		if lx >= -2 and lx <= SIZE + 1 and ly >= -1 and ly <= SIZE + 8:
+		if lx >= -3 and lx <= SIZE + 2 and ly >= -1 and ly <= SIZE + 8:
 			_views[c].queue_redraw()
 			if lx >= 0 and lx < SIZE and ly >= 0 and ly < SIZE:
 				_sync_bodies(_views[c])
@@ -115,6 +115,10 @@ func draw_chunk(view: ChunkObjects) -> void:
 			# wider than its footprint is centered on it.
 			var sw := def.sprite_width_px if def.sprite_width_px > 0 else w * TILE
 			var x := lx * TILE + (w * TILE - sw) / 2
+			if def.sprite_align == ObjectDef.SpriteAlign.FROM_LEFT:
+				x = lx * TILE
+			elif def.sprite_align == ObjectDef.SpriteAlign.FROM_RIGHT:
+				x = lx * TILE + w * TILE - sw
 			view.draw_texture_rect_region(def.frames, Rect2(x, (ly - h + 1) * TILE, sw, h * TILE),
 				Rect2(frame * sw, 0, sw, h * TILE))
 

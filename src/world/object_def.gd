@@ -46,9 +46,13 @@ enum Style {
 ## the toggled object is placed so its hinge column lands on the same tile.
 @export var hinge_offset := 0
 ## Sprite width in px when it's wider than the footprint (an open door is drawn 3
-## tiles wide over the wall around its 1 tile doorway). Centered on the footprint;
-## 0 = the footprint's width.
+## tiles wide from its 1 tile doorway); 0 = the footprint's width.
 @export var sprite_width_px := 0
+## Where a wider sprite sits: centered on the footprint, starting at its left edge
+## (growing right), or ending at its right edge (growing left). An open door starts at
+## its hinge.
+enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
+@export var sprite_align := SpriteAlign.CENTER
 ## Storage slots (chests). It can only be picked up when empty.
 @export var container_slots := 0
 ## Internal: the filler that marks the tiles furniture covers besides its anchor.

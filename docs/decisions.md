@@ -8,7 +8,9 @@ Newest first. Each entry: what was decided, why, and what it affects.
   2, young bushes 2 to 3, berries back in 2 to 3. Hunger lasts 1.5 days. Health regen
   0.5/s.
 - Doors are sized to the Scholar: closed is a thick slab edge on in the doorway, open
-  shows the door's face 3 tiles wide over the wall.
+  shows the door's face 3 tiles wide, starting at its hinge (the doorway's edge).
+- Light doesn't go through walls: blocks cost 0.34 light per tile (was 0.1), and
+  torches 10 times more through blocks than air (was 3).
 
 ## 2026-11-17: Phase 6, health, hunger and dying
 

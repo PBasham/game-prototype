@@ -12,6 +12,7 @@ frame = 1
 needs_floor = true
 toggles_to = &"door"
 sprite_width_px = 24
+sprite_align = 2
 health = 1.0
 drop_item = &"door"
 id = &"door_open_left"
