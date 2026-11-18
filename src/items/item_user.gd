@@ -18,7 +18,7 @@ extends Node2D
 ## the beam from the casting hand, and a range ring that fades in as the cursor nears
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
-enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE }
+enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT }
 
 const TILE := World.TILE
 
@@ -243,11 +243,32 @@ func can_use(on_back: bool = false) -> bool:
 			return true
 		Mode.CAST:
 			return not on_back
+		Mode.EAT:
+			if not on_back and Input.is_action_just_pressed("use_primary"):
+				eat_held()
+			return false  # no swing
 		Mode.NONE:
 			# Empty hands punch and weapons swing; materials, books and the like have no
 			# use, so the arm just keeps holding them.
 			var held := world.player.held_item
 			return not on_back and (held == null or held.kind in [ItemData.Kind.WEAPON, ItemData.Kind.TOOL])
+	return true
+
+
+## Eats one of the held food (refills hunger and heals). Returns true if eaten.
+func eat_held() -> bool:
+	var p := world.player
+	var item := p.held_item
+	if item == null or item.kind != ItemData.Kind.FOOD or p.selected < 0:
+		return false
+	if p.hunger >= p.max_hunger and p.health >= p.max_health:
+		EventBus.debug_message.emit("You're full")
+		return false
+	var inv := p.character.inventory
+	if inv.take(p.selected, 1) <= 0:
+		return false
+	p.eat(item.food_value, item.heal_value)
+	EventBus.debug_message.emit("Ate %s" % item.display_name)
 	return true
 
 
@@ -299,6 +320,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 				return Mode.TOGGLE
 	if item.mining_damage > 0.0:
 		return Mode.MINE
+	if item.kind == ItemData.Kind.FOOD:
+		return Mode.EAT if not on_back else Mode.NONE
 	if on_back:
 		return Mode.PLACE_WALL if item.places_wall != &"" else Mode.NONE
 	if item.axe_damage > 0.0:

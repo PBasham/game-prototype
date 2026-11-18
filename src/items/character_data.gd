@@ -42,6 +42,9 @@ var inventory := Inventory.new()
 var colors: Dictionary[StringName, Color] = {}
 ## Hairstyle: a file name in HAIR_DIR (without .png), &"" = bald.
 var hairstyle: StringName = DEFAULT_HAIR
+## Health and hunger when last saved (-1 = full).
+var health := -1.0
+var hunger := -1.0
 ## Equipment slot -> item id (empty = nothing).
 var equipment: Dictionary[StringName, StringName] = {SLOT_BOOK: &"", SLOT_CONDUIT: &""}
 ## Spells learned (data/spells ids).
@@ -284,6 +287,8 @@ static func load_file(path: String) -> CharacterData:
 	for group: String in cols:
 		c.colors[StringName(group)] = Color.html(String(cols[group]))
 	c.hairstyle = StringName(look.get("hair", String(DEFAULT_HAIR)))
+	c.health = float(d.get("health", -1.0))
+	c.hunger = float(d.get("hunger", -1.0))
 	return c
 
 
@@ -319,4 +324,4 @@ func to_dict() -> Dictionary:
 		cols[String(group)] = colors[group].to_html(false)
 	return {"name": name, "inventory": inventory.to_dict(), "equipment": eq,
 		"known_spells": known, "book_spells": book_list,
-		"look": {"colors": cols, "hair": String(hairstyle)}}
+		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger}

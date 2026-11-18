@@ -14,7 +14,7 @@ const TILE := World.TILE
 const SIZE := ChunkData.SIZE
 const NONE := Vector2i(0, -1000000)
 
-enum Kind { TREE, SAPLING, FLOWER, PICKUP }
+enum Kind { TREE, SAPLING, FLOWER, PICKUP, BUSH }
 
 ## Things lying on the grass (Kind.PICKUP variants), the item each gives.
 const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
@@ -48,6 +48,15 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 ## Sticks a felled tree drops (random in this range).
 @export var sticks_min := 1
 @export var sticks_max := 3
+@export_group("Berry bushes")
+## Share of flower spots that are a berry bush instead.
+@export_range(0.0, 1.0) var bush_share := 0.06
+## Berries picked from a ripe bush (right click or E).
+@export var berries_min := 2
+@export var berries_max := 4
+## Seconds until a picked bush has berries again.
+@export var regrow_min_seconds := 180.0
+@export var regrow_max_seconds := 300.0
 @export_group("Flowers and grass")
 ## Chance that cutting a flower drops grass seeds.
 @export_range(0.0, 1.0) var grass_seed_chance := 0.35
@@ -82,6 +91,10 @@ var _trees: Array[Texture2D] = []
 var _flowers: Array[Texture2D] = []
 var _sapling_tex: Texture2D
 var _pickup_tex: Array[Texture2D] = []
+var _bush_tex: Texture2D
+var _bush_bare_tex: Texture2D
+## Bushes waiting for their berries to grow back.
+var _regrowing: Array[Vector2i] = []
 
 
 func setup(w: World) -> void:
@@ -95,6 +108,8 @@ func setup(w: World) -> void:
 	for i in 5:
 		_flowers.append(load("res://assets/decor/flower_%d.png" % i) as Texture2D)
 	_sapling_tex = load("res://assets/decor/sapling.png") as Texture2D
+	_bush_tex = load("res://assets/decor/berry_bush.png") as Texture2D
+	_bush_bare_tex = load("res://assets/decor/berry_bush_bare.png") as Texture2D
 	for kind: StringName in PICKUP_ITEMS:
 		_pickup_tex.append(load("res://assets/decor/pickup_%s.png" % kind) as Texture2D)
 	world.renderer.chunk_shown.connect(_on_chunk_shown)
@@ -221,6 +236,8 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array) -> void:
 			if spots[i + 2] >= 0:
 				var p := _add(ground, Kind.TREE, spots[i + 2], false)
 				p.health = tree_health
+			elif _hash(ground, 31) < bush_share:
+				_add(ground, Kind.BUSH, 0, false)
 			elif _hash(ground, 11) < pickup_share:
 				var h := _hash(ground, 23)
 				var variant := 2 if h < flint_share else (0 if h < flint_share + (1.0 - flint_share) * 0.5 else 1)
@@ -265,6 +282,9 @@ static func _hash(t: Vector2i, salt: int) -> float:
 func request_pick_up(tile: Vector2i, who: Player) -> bool:
 	if not Game.is_authority():
 		return false
+	var bush := _bush_near(tile)
+	if bush != NONE:
+		return request_pick_berries(bush, who)
 	var g := world.wrap_tile(tile + Vector2i.DOWN)
 	var p: Plant = _plants.get(g)
 	if p == null or p.kind != Kind.PICKUP or who == null or who.character == null:
@@ -277,6 +297,48 @@ func request_pick_up(tile: Vector2i, who: Player) -> bool:
 	return true
 
 
+## A ripe berry bush covering `tile` (bushes are about 2x2 tiles), or NONE.
+func _bush_near(tile: Vector2i) -> Vector2i:
+	for d: Vector2i in [Vector2i(0, 1), Vector2i(0, 2), Vector2i(-1, 1), Vector2i(1, 1), Vector2i(-1, 2), Vector2i(1, 2)]:
+		var g := world.wrap_tile(tile + d)
+		var p: Plant = _plants.get(g)
+		if p and p.kind == Kind.BUSH:
+			return g
+	return NONE
+
+
+func is_ripe(ground: Vector2i) -> bool:
+	var p: Plant = _plants.get(world.wrap_tile(ground))
+	return p != null and p.kind == Kind.BUSH and p.grow_left <= 0.0
+
+
+## Picks the berries off a ripe bush (`ground` = the grass tile it grows on). They grow
+## back in regrow_min..max seconds. Returns true if there were berries.
+func request_pick_berries(ground: Vector2i, who: Player) -> bool:
+	ground = world.wrap_tile(ground)
+	var p: Plant = _plants.get(ground)
+	if not Game.is_authority() or p == null or p.kind != Kind.BUSH or p.grow_left > 0.0:
+		return false
+	var n := randi_range(berries_min, berries_max)
+	if who and who.character:
+		var left := who.character.inventory.add(&"berries", n)
+		if left < n:
+			EventBus.item_picked_up.emit(&"berries", n - left)
+		if left > 0:
+			world.request_spawn_drop(&"berries", left, who.chest())
+	p.grow_left = randf_range(regrow_min_seconds, regrow_max_seconds)
+	_regrowing.append(ground)
+	_dirty[_chunk_of(ground)] = true
+	_refresh_node(ground, p)
+	return true
+
+
+func _refresh_node(g: Vector2i, p: Plant) -> void:
+	var s := p.node.get_child(0) as Sprite2D if p.node and p.node.get_child_count() > 0 else null
+	if s:
+		s.texture = _texture(p)
+
+
 ## The ground tile of the nearest pickup within `r` tiles of `feet`, or NONE.
 func nearest_pickup(feet: Vector2i, r: int) -> Vector2i:
 	var best := NONE
@@ -285,7 +347,8 @@ func nearest_pickup(feet: Vector2i, r: int) -> Vector2i:
 		for dx in range(-r, r + 1):
 			var g := world.wrap_tile(feet + Vector2i(dx, dy))
 			var p: Plant = _plants.get(g)
-			if p and p.kind == Kind.PICKUP and Vector2(dx, dy).length() < best_d:
+			var ripe := p != null and p.kind == Kind.BUSH and p.grow_left <= 0.0
+			if p and (p.kind == Kind.PICKUP or ripe) and Vector2(dx, dy).length() < best_d:
 				best = feet + Vector2i(dx, dy)
 				best_d = Vector2(dx, dy).length()
 	return best
@@ -295,6 +358,7 @@ func nearest_pickup(feet: Vector2i, r: int) -> Vector2i:
 
 func _process(delta: float) -> void:
 	_grow(delta)
+	_regrow(delta)
 	_spread_grass(delta)
 
 
@@ -316,11 +380,26 @@ func _grow(delta: float) -> void:
 		tree.health = tree_health
 
 
+func _regrow(delta: float) -> void:
+	for g: Vector2i in _regrowing.duplicate():
+		var p: Plant = _plants.get(g)
+		if p == null or p.kind != Kind.BUSH:
+			_regrowing.erase(g)
+			continue
+		p.grow_left -= delta
+		if p.grow_left <= 0.0:
+			p.grow_left = 0.0
+			_regrowing.erase(g)
+			_refresh_node(g, p)
+
+
 ## Dev console: every sapling grows on the next frame (if there's room). Returns how many.
 func grow_all() -> int:
 	for g in _saplings:
 		_plants[g].grow_left = 0.0
-	return _saplings.size()
+	for g in _regrowing:
+		_plants[g].grow_left = 0.001  # ripe next frame
+	return _saplings.size() + _regrowing.size()
 
 
 func _clear_above(g: Vector2i) -> bool:
@@ -425,6 +504,9 @@ func _break(g: Vector2i, p: Plant) -> void:
 				world.request_spawn_drop(&"grass_seeds", 1, pos, _pop())
 		Kind.PICKUP:
 			world.request_spawn_drop(PICKUP_ITEMS[p.variant % PICKUP_ITEMS.size()], 1, pos, _pop())
+		Kind.BUSH:
+			if p.grow_left <= 0.0:
+				world.request_spawn_drop(&"berries", randi_range(berries_min, berries_max), pos, _pop())
 	_remove(g)
 
 
@@ -496,6 +578,8 @@ func _texture(p: Plant) -> Texture2D:
 			return _sapling_tex
 		Kind.PICKUP:
 			return _pickup_tex[p.variant % _pickup_tex.size()]
+		Kind.BUSH:
+			return _bush_tex if p.grow_left <= 0.0 else _bush_bare_tex
 	return _flowers[p.variant % _flowers.size()]
 
 
@@ -531,3 +615,5 @@ func from_dict(d: Dictionary) -> void:
 			var p := _add(Vector2i(int(e[0]), int(e[1])), int(e[2]), int(e[3]))
 			p.health = float(e[4])
 			p.grow_left = float(e[5])
+			if p.kind == Kind.BUSH and p.grow_left > 0.0:
+				_regrowing.append(Vector2i(int(e[0]), int(e[1])))

@@ -16,6 +16,10 @@ extends CharacterBody2D
 signal landed(fall_tiles: float)
 ## Fall damage to apply. Health arrives in Phase 6; for now it's shown in the overlay.
 signal fall_damage_taken(amount: int)
+## Health went down (any cause: falls, starving...).
+signal hurt(amount: int, cause: StringName)
+## Health reached 0. The World respawns the player.
+signal died(cause: StringName)
 ## The held item's use landed (its impact_at point in the swing): mine, chop, place.
 signal use_impact(item: ItemData)
 ## Ctrl + mouse wheel: change the mining / placing area (+1 bigger, -1 smaller).
@@ -67,14 +71,29 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 
 @export_group("Mana")
 @export var max_mana := 100.0
-## Health and hunger: shown on the HUD (bottom left), not used by anything yet. Taking
-## damage, healing, eating and getting hungry come with their own design briefs.
-@export var max_health := 100.0
-@export var max_hunger := 100.0
 ## Mana per second refilled...
 @export var mana_regen := 15.0
 ## ...starting this many seconds after the last spell use.
 @export var mana_regen_delay := 1.0
+@export_group("")
+
+@export_group("Health")
+@export var max_health := 100.0
+## Health per second refilled, once you've gone health_regen_delay seconds unhurt (and
+## you're not starving).
+@export var health_regen := 1.0
+@export var health_regen_delay := 5.0
+## Seconds you can't be hurt again after a hit (except by starving).
+@export var hurt_cooldown := 0.4
+@export_group("Hunger")
+@export var max_hunger := 100.0
+## Seconds per point of hunger lost: standing or walking, and running (Shift).
+## Spells (Fly included) don't make you hungry.
+@export var hunger_seconds_per_point := 20.0
+@export var hunger_run_multiplier := 2.0
+## Starving (hunger 0): no health regen, and this much damage every starve_interval.
+@export var starve_damage := 1.0
+@export var starve_interval := 3.0
 @export_group("")
 
 @export_group("Flying (the Fly spell)")
@@ -134,7 +153,7 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var platform_drop_time := 0.25
 
 @export_group("Fall damage")
-@export var fall_damage_start := 50.0
+@export var fall_damage_start := 25.0
 @export var fall_damage_per_tile := 5.0
 
 ## Set by the World before the player enters the tree.
@@ -160,6 +179,13 @@ var infinite_mana := false
 var _since_spell := 99.0
 var health := 100.0
 var hunger := 100.0
+## Dev: no damage (console `god`).
+var invincible := false
+## Hunger drains (the world's option).
+var hunger_on := true
+var _since_hurt := 99.0
+var _starve_timer := 0.0
+var dead := false
 ## Optional: (back: bool) -> bool. False when using the held item now would do nothing
 ## (a block with nowhere to go), so the arm doesn't swing for nothing. Set by ItemUser.
 var use_check: Callable
@@ -411,6 +437,7 @@ func _physics_process(delta: float) -> void:
 			set_collision_mask_value(2, true)
 
 	_update_mana(delta)
+	_update_health(delta)
 	if is_flying():
 		_fly(input_x, input_y, delta)
 	elif _climbing:
@@ -578,6 +605,81 @@ func _update_mana(delta: float) -> void:
 	_since_spell += delta
 	if _since_spell >= mana_regen_delay:
 		mana = minf(mana + mana_regen * delta, max_mana)
+
+
+## Takes damage (ignored when invincible, dead, or just hurt, except starving). Emits
+## hurt, and died at 0.
+func take_damage(amount: float, cause: StringName = &"") -> void:
+	if amount <= 0.0 or dead or invincible:
+		return
+	if cause != &"starving" and _since_hurt < hurt_cooldown:
+		return
+	health = maxf(health - amount, 0.0)
+	_since_hurt = 0.0
+	hurt.emit(roundi(amount), cause)
+	if world and world.effects:
+		FloatingText.spawn(world.effects, global_position + Vector2(randf_range(-4, 4), -70), str(roundi(amount)),
+			Color("ff6a5a"))
+	_doll.modulate = Color(1.0, 0.45, 0.45)
+	if health <= 0.0:
+		dead = true
+		died.emit(cause)
+
+
+## The next hit lands even right after another (dev console).
+func reset_hurt_cooldown() -> void:
+	_since_hurt = 99.0
+
+
+func heal(amount: float) -> void:
+	health = minf(health + amount, max_health)
+
+
+## Eats: refills hunger (and a little health).
+func eat(food: float, heal_amount: float = 0.0) -> void:
+	hunger = minf(hunger + food, max_hunger)
+	heal(heal_amount)
+
+
+## Forget the current fall (after a teleport: no fall damage for the jump).
+func reset_fall() -> void:
+	_airborne = false
+	_peak_y = global_position.y
+
+
+## Back to full after dying (the World moves the player to the spawn).
+func revive() -> void:
+	dead = false
+	health = max_health
+	hunger = max_hunger
+	mana = max_mana
+	_since_hurt = 99.0
+	_starve_timer = 0.0
+	velocity = Vector2.ZERO
+	if concentration:
+		toggle_concentration(concentration)
+
+
+func _update_health(delta: float) -> void:
+	_since_hurt += delta
+	_doll.modulate = _doll.modulate.lerp(Color.WHITE, minf(delta * 8.0, 1.0))
+	if dead:
+		return
+	if hunger_on:
+		var running := _held("run") and absf(velocity.x) > 1.0 and is_on_floor()
+		var rate := 1.0 / maxf(hunger_seconds_per_point, 0.1) * (hunger_run_multiplier if running else 1.0)
+		hunger = maxf(hunger - rate * delta, 0.0)
+	else:
+		hunger = max_hunger
+	if hunger <= 0.0:
+		_starve_timer += delta
+		if _starve_timer >= starve_interval:
+			_starve_timer = 0.0
+			take_damage(starve_damage, &"starving")
+		return
+	_starve_timer = 0.0
+	if _since_hurt >= health_regen_delay:
+		heal(health_regen * delta)
 
 
 ## Stops the current use (a beam that ran out of mana).
@@ -900,6 +1002,7 @@ func _track_fall() -> void:
 			if fall > fall_damage_start:
 				var amount := roundi((fall - fall_damage_start) * fall_damage_per_tile)
 				fall_damage_taken.emit(amount)
+				take_damage(amount, &"fall")
 				DebugOverlay.watch("last fall", "%.1f tiles, %d damage" % [fall, amount])
 			elif fall >= 1.0:
 				DebugOverlay.watch("last fall", "%.1f tiles" % fall)

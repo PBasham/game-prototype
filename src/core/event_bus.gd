@@ -25,3 +25,7 @@ signal debug_message(text: String)
 ## The local player picked up items (for the pickup toast).
 @warning_ignore("unused_signal")
 signal item_picked_up(item_id: StringName, count: int)
+
+## The local player died (cause: &"fall", &"starving", ...). The HUD shows it.
+@warning_ignore("unused_signal")
+signal player_died(cause: StringName)

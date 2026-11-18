@@ -22,6 +22,8 @@ const META_OBJECTS := "objects"
 const META_PLANTS := "plants"
 ## Chest contents.
 const META_CONTAINERS := "containers"
+## Magic bags left where characters died: {"list": [ItemBag.to_dict()...]}.
+const META_BAGS := "bags"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

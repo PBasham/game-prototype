@@ -4,7 +4,8 @@ Godot 4.7.2 (GDScript) 2D sandbox. Read docs/architecture.md before changing cor
 docs/guide.md explains every feature; docs/world-generation.md covers generation;
 docs/character-art.md covers the paper doll; docs/items-and-mining.md covers items,
 the inventory, layers, mining, placing, magic and plants; docs/crafting.md covers
-crafting, stations, furniture, chests, doors, pickups and mana. Keep them up to date when behavior or
+crafting, stations, furniture, chests, doors, pickups and mana; docs/survival.md covers
+health, hunger, food, berry bushes, dying and the magic bag. Keep them up to date when behavior or
 tunables change: Patrick tweaks things by hand from these docs.
 
 ## Collaboration rules
@@ -41,7 +42,7 @@ tunables change: Patrick tweaks things by hand from these docs.
   placeholder icons, held sprites, sapling and cracks from `tools/make_item_art.gd`.
 - UI look: `UiSkin` (src/ui/ui_skin.gd) with nine-slice art in `assets/ui/` from
   `tools/make_ui_art.gd`. Draw every new window, slot and button with it.
-- Screenshots of menus: `-- --menu=characters` (or `new_character`, `worlds`); add
+- Screenshots of menus: `-- --menu=characters` (or `new_character`, `worlds`, `new_world`); add
   `--overlay=off` to hide the F3 overlay.
 - Scripted runs can aim with `--aim=DX:DY` (offset from the chest) for mining shots.
 - Terrain, trees, backdrop: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game` (style V5 = "t5")

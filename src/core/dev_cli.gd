@@ -21,7 +21,7 @@ extends Node
 ##   --scene=doll            open a dev scene instead of a world (doll = Doll Viewer)
 ##   --menu                  stay on the main menu (otherwise any of these arguments
 ##                           skips the menu and starts a temporary, unsaved world)
-##   --menu=PAGE             open a menu page: characters, new_character, worlds
+##   --menu=PAGE             open a menu page: characters, new_character, worlds, new_world
 ##   --overlay=off           hide the F3 debug overlay for this run (screenshots)
 
 var _frame := 0

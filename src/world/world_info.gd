@@ -17,6 +17,13 @@ var last_played_unix := 0
 ## Save file (user://worlds/<name>.gpworld); empty for temporary worlds.
 var path := ""
 
+## World options (chosen on the New World page).
+## What happens to your items when you die.
+enum DeathDrop { BAG, KEEP }
+## Hunger drains (off: the hunger bar stays full).
+var hunger := true
+var death_drop := DeathDrop.BAG
+
 
 static func create(world_name: String, world_size: WorldData.Size, world_seed: int) -> WorldInfo:
 	var info := WorldInfo.new()
@@ -58,6 +65,7 @@ func to_dict() -> Dictionary:
 		"name": name, "kind": String(kind), "seed": seed,
 		"size": String(WorldData.Size.keys()[size]),
 		"created": created_unix, "last_played": last_played_unix,
+		"hunger": hunger, "death_drop": String(DeathDrop.keys()[death_drop]),
 	}
 
 
@@ -69,4 +77,6 @@ static func from_dict(d: Dictionary) -> WorldInfo:
 	info.size = WorldData.Size.get(str(d.get("size", "SMALL")), WorldData.Size.SMALL)
 	info.created_unix = int(d.get("created", 0))
 	info.last_played_unix = int(d.get("last_played", 0))
+	info.hunger = bool(d.get("hunger", true))
+	info.death_drop = DeathDrop.get(str(d.get("death_drop", "BAG")), DeathDrop.BAG)
 	return info

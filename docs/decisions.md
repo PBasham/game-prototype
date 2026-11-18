@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-17: Phase 6, health, hunger and dying
+
+- Health 100, regenerates 1/s after 5 s unhurt. Fall damage after 25 tiles, 5 per tile.
+- Hunger 100, 1 point per 20 s, running twice as fast; spells (Fly too) never drain
+  it. At 0: no regen and 1 damage every 3 s.
+- Berry bushes on the grass (first food): berries +10 hunger, +2 health.
+- Dying: respawn at the world spawn after 3 s, full bars. Items go into a magic bag
+  (Valheim tombstone idea, Terraria tombstone physics), saved with the world.
+- World options: Hunger on / off, On death: magic bag / keep items.
+- Doors open Terraria style (flat panel next to the doorway), no perspective.
+
 ## 2026-11-17: Phase 6, house review
 
 - Health, mana and hunger bars bottom left (mana moved from under the hotbar). Health

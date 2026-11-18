@@ -11,7 +11,7 @@ extends GameData
 ## "spell:<spell id>".
 
 ## New kinds go at the end (saved .tres files store the number).
-enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE }
+enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE, FOOD }
 
 const SPELL_PREFIX := "spell:"
 
@@ -60,6 +60,11 @@ const SPELL_PREFIX := "spell:"
 ## Placing reach in tiles. 0 = the spellbook's build_reach_tiles.
 @export var place_reach_tiles := 0.0
 
+@export_group("Food")
+## Eating it (left click while holding it) refills this much hunger...
+@export var food_value := 0.0
+## ...and heals this much health.
+@export var heal_value := 0.0
 @export_group("Magic")
 ## Spellbooks: how many spells the book holds.
 @export var spell_slots := 0
@@ -135,7 +140,7 @@ func drop_pixels() -> float:
 	if drop_size > 0:
 		return float(drop_size)
 	match kind:
-		Kind.MATERIAL, Kind.SEED:
+		Kind.MATERIAL, Kind.SEED, Kind.FOOD:
 			return 10.0
 		Kind.TOOL, Kind.WEAPON:
 			return 13.0

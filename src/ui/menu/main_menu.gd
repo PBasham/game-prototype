@@ -62,6 +62,9 @@ func _ready() -> void:
 		"worlds":
 			_chosen = _first_character()
 			_show_worlds()
+		"new_world":
+			_chosen = _first_character()
+			_show_new_world()
 		_:
 			_show_main()
 
@@ -381,6 +384,16 @@ func _show_new_world() -> void:
 	var seed_edit := UiKit.line_edit("random")
 	box.add_child(UiKit.row("Seed", seed_edit))
 	box.add_child(UiKit.label("A seed can be any number or word. Blank = random.", 8, UiKit.DIM))
+	var hunger := CheckButton.new()
+	hunger.button_pressed = true
+	hunger.text = "on"
+	hunger.toggled.connect(func(on: bool) -> void: hunger.text = "on" if on else "off")
+	box.add_child(UiKit.row("Hunger", hunger))
+	var death := OptionButton.new()
+	death.add_theme_font_size_override("font_size", 10)
+	death.add_item("Drop items in a magic bag", WorldInfo.DeathDrop.BAG)
+	death.add_item("Keep items", WorldInfo.DeathDrop.KEEP)
+	box.add_child(UiKit.row("On death", death))
 	var error := UiKit.label("", 8, UiSkin.BAD)
 	box.add_child(error)
 	var create := func() -> void:
@@ -394,6 +407,8 @@ func _show_new_world() -> void:
 			return
 		var size: WorldData.Size = size_pick.get_selected_id() as WorldData.Size
 		var info := WorldInfo.create(world_name, size, WorldInfo.seed_from_text(seed_edit.text))
+		info.hunger = hunger.button_pressed
+		info.death_drop = death.get_selected_id() as WorldInfo.DeathDrop
 		info.path = path
 		Game.start_world(info, _chosen)
 	box.add_child(UiKit.button("Create", create))

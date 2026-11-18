@@ -337,6 +337,10 @@ func _phase5_art() -> void:
 	_save(_rock(Color("8a8a86"), Color("b4b4ae")), "rock", true)
 	_save(_rock(Color("4a4a52"), Color("8a8a9a")), "flint", true)
 	_save(_bar(), "copper_bar", true)
+	_save(_berries(), "berries", true)
+	_bush(true).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush.png"))
+	_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_bare.png"))
+	_magic_bag().save_png(ProjectSettings.globalize_path("res://assets/objects/magic_bag.png"))
 	_save(_hand_hammer(), "hand_hammer", true)
 	_save(_stone_tool(false), "stone_pickaxe", false)
 	_save(_stone_tool(true), "stone_axe", false)
@@ -570,30 +574,20 @@ func _door_pixel(x: int, y: int, light: float) -> Color:
 	return c.darkened(1.0 - light)
 
 
-## Open door, 2 frames of 16x64 (2x8 tiles): frame 0 swung to the right of the hinge,
-## frame 1 mirrored (swung left). The panel is drawn in perspective: shorter at its far
-## edge and in shade.
+## Open door, 2 frames of 16x64 (2x8 tiles), Terraria style: the doorway keeps its
+## frame post (with the hinges), and the door panel stands flat in the next tile, a
+## little shaded. Frame 0 swings right of the hinge, frame 1 is the mirror.
 func _door_open() -> Image:
 	var img := Image.create_empty(32, 64, false, Image.FORMAT_RGBA8)
 	var frame := Image.create_empty(16, 64, false, Image.FORMAT_RGBA8)
-	# The hinge side: the frame post the door hangs on.
 	for y in 64:
 		frame.set_pixel(0, y, Color("6e5030"))
 		frame.set_pixel(1, y, Color("8a6a40"))
-	# The panel from x 2 to 12, its top and bottom slanting in by 4 px at the far edge.
-	var near := 2
-	var far := 12
-	for x in range(near, far + 1):
-		var k := float(x - near) / float(far - near)
-		var top := roundi(k * 4.0)
-		var bottom := 63 - roundi(k * 4.0)
-		var src_x := clampi(roundi(k * 7.0), 0, 7)
-		for y in range(top, bottom + 1):
-			var v := float(y - top) / float(bottom - top)
-			frame.set_pixel(x, y, _door_pixel(src_x, roundi(v * 63.0), 0.82 - k * 0.12))
-	# The door's edge (its thickness) at the far side.
-	for y in range(4, 60):
-		frame.set_pixel(far + 1, y, Color("6e5030"))
+		if y >= 8 and y <= 10 or y >= 52 and y <= 54:
+			frame.set_pixel(1, y, Color("5a5a5e"))
+			frame.set_pixel(2, y, Color("5a5a5e"))
+		for x in 8:
+			frame.set_pixel(8 + x, y, _door_pixel(x, y, 0.85))
 	img.blit_rect(frame, Rect2i(0, 0, 16, 64), Vector2i.ZERO)
 	frame.flip_x()
 	img.blit_rect(frame, Rect2i(0, 0, 16, 64), Vector2i(16, 0))
@@ -638,3 +632,58 @@ func _pickup(kind: String) -> Image:
 				c = Color("34343c")
 			shard.set_pixel(x, y, c)
 	return shard
+
+
+## Berries icon: a small cluster of red berries with a leaf.
+func _berries() -> Image:
+	var img := _canvas()
+	for c: Vector2i in [Vector2i(6, 8), Vector2i(10, 8), Vector2i(8, 11), Vector2i(5, 12), Vector2i(11, 12)]:
+		for y in range(-2, 2):
+			for x in range(-2, 2):
+				if Vector2(x + 0.5, y + 0.5).length() < 2.2:
+					img.set_pixel(c.x + x, c.y + y, Color("c8283a"))
+		img.set_pixel(c.x - 1, c.y - 1, Color("ff7a8a"))
+	for p: Vector2i in [Vector2i(8, 4), Vector2i(9, 4), Vector2i(10, 3), Vector2i(9, 5), Vector2i(8, 6)]:
+		img.set_pixel(p.x, p.y, Color("4a8a3a"))
+	return img
+
+
+## Berry bush 14x12, bottom-aligned: a round leafy bush, with red berries when ripe.
+func _bush(ripe: bool) -> Image:
+	var img := Image.create_empty(14, 12, false, Image.FORMAT_RGBA8)
+	for y in 12:
+		for x in 14:
+			var d := Vector2((x - 6.5) / 7.0, (y - 11.0) / 11.0).length()
+			if d < 1.0:
+				var c := Color("3a7a34") if (x * 3 + y * 5) % 4 != 0 else Color("2e6a2c")
+				if y < 4 and x < 8:
+					c = Color("5a9a44")  # lit top
+				elif y > 9:
+					c = Color("2a5a28")
+				img.set_pixel(x, y, c)
+	if ripe:
+		for p: Vector2i in [Vector2i(3, 5), Vector2i(6, 3), Vector2i(9, 5), Vector2i(11, 8), Vector2i(4, 9),
+				Vector2i(7, 7), Vector2i(10, 2), Vector2i(2, 7)]:
+			img.set_pixel(p.x, p.y, Color("d02a3a"))
+			img.set_pixel(p.x, p.y + 1, Color("8a1a28"))
+	return img
+
+
+## Magic bag 12x12 (dropped where a character died): a purple sack, gold tie, runes.
+func _magic_bag() -> Image:
+	var img := Image.create_empty(12, 12, false, Image.FORMAT_RGBA8)
+	for y in range(3, 12):
+		for x in 12:
+			var d := Vector2((x - 5.5) / 5.5, (y - 7.5) / 4.6).length()
+			if d < 1.0:
+				var c := Color("6a3aa8")
+				if x < 5 and y < 8:
+					c = Color("8a5ac8")
+				elif y > 9 or x > 8:
+					c = Color("4a2878")
+				img.set_pixel(x, y, c)
+	img.fill_rect(Rect2i(4, 1, 4, 2), Color("6a3aa8"))  # neck
+	img.fill_rect(Rect2i(3, 3, 6, 1), Color("e8c860"))  # gold tie
+	for p: Vector2i in [Vector2i(4, 6), Vector2i(7, 7), Vector2i(5, 9)]:
+		img.set_pixel(p.x, p.y, Color("9ae8ff"))  # glowing runes
+	return img

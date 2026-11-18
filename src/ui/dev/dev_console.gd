@@ -157,6 +157,37 @@ func _register() -> void:
 		_list(_all_spells(), " ".join(a)))
 	_add("learn", "learn <spell>", "Learn a spell (it also goes in a free book slot).", _learn)
 	_add("forget", "forget <spell>", "Forget a spell.", _forget)
+	_add("bush", "bush", "Grow a ripe berry bush on the grass under the cursor.", func(_a: PackedStringArray) -> void:
+		var t := world.world_to_tile(world.item_user.cursor())
+		for g: Vector2i in [t, t + Vector2i.DOWN, t + Vector2i(0, 2)]:
+			if world.data.get_block(g.x, g.y) == world.blocks.index_of(&"grass") and world.data.get_block(g.x, g.y - 1) == WorldData.AIR \
+					and world.plants.plant_at(g) == null:
+				world.plants._add(world.wrap_tile(g), PlantLayer.Kind.BUSH, 0)
+				_print("A berry bush at %d, %d." % [g.x, g.y])
+				return
+		_print("Needs open grass under the cursor."))
+	_add("god", "god", "Toggle taking no damage.", func(_a: PackedStringArray) -> void:
+		world.player.invincible = not world.player.invincible
+		_print("No damage: %s." % ("on" if world.player.invincible else "off")))
+	_add("hurt", "hurt <amount>", "Take damage (to test health, dying and the magic bag).", func(a: PackedStringArray) -> void:
+		var was := world.player.invincible
+		world.player.invincible = false
+		world.player.reset_hurt_cooldown()
+		world.player.take_damage(float(a[0]) if a.size() > 0 and a[0].is_valid_float() else 10.0, &"console")
+		world.player.invincible = was
+		_print("Health %d." % roundi(world.player.health)))
+	_add("kill", "kill", "Die (drops the magic bag, respawns at the spawn).", func(_a: PackedStringArray) -> void:
+		world.player.invincible = false
+		world.player.reset_hurt_cooldown()
+		world.player.take_damage(world.player.health + 1.0, &"console"))
+	_add("heal", "heal", "Full health and hunger.", func(_a: PackedStringArray) -> void:
+		world.player.health = world.player.max_health
+		world.player.hunger = world.player.max_hunger
+		_print("Healed."))
+	_add("hunger", "hunger <0..100>", "Set hunger (0 = starving).", func(a: PackedStringArray) -> void:
+		if a.size() > 0 and a[0].is_valid_float():
+			world.player.hunger = clampf(float(a[0]), 0.0, world.player.max_hunger)
+		_print("Hunger %d." % roundi(world.player.hunger)))
 	_add("color", "color <group> <hex|reset>", "Recolor the character: skin, hair, tunic, trim, pants, leather (saved).", _color)
 	_add("equip", "equip <book or conduit>", "Equip a book or conduit (no item needed).", _equip)
 	_add("clear", "clear", "Empty the inventory.", func(_a: PackedStringArray) -> void:

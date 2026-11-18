@@ -85,6 +85,11 @@ func _items() -> Array[ItemData]:
 	out.append(_small(&"rock", "Rock", "Lies on the grass. A Workbench breaks stone into rocks."))
 	out.append(_small(&"flint", "Flint", "A sharp stone for the first tools. Found on the grass, sometimes in stone."))
 	out.append(_small(&"copper_bar", "Copper Bar", "Smelted from copper ore in a Furnace."))
+	var berries := _small(&"berries", "Berries", "Picked from berry bushes. Left click to eat: +10 hunger, +2 health.")
+	berries.kind = ItemData.Kind.FOOD
+	berries.food_value = 10.0
+	berries.heal_value = 2.0
+	out.append(berries)
 	var hammer := _small(&"hand_hammer", "Hand Hammer", "Needed in your inventory to build a Workbench and to break stone into rocks.")
 	hammer.max_stack = 1
 	out.append(hammer)

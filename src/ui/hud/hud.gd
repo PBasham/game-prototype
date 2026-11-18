@@ -73,6 +73,8 @@ var _r_held := 0.0
 ## The crafting station (anchor tile) or chest that was opened; NO_TILE = none.
 var station := World.NO_TILE
 var chest := World.NO_TILE
+## The magic bag (ItemBag) that's open, or null.
+var bag: ItemBag
 ## Selected crafting entry (an index into recipes(); recipes().size() = the upgrade).
 var selected_recipe := 0
 ## First crafting row shown (mouse wheel over the list scrolls).
@@ -87,6 +89,8 @@ const STATUS_BARS: Array[Array] = [
 	["icon_health", "d83a3a"], ["icon_mana", "3a7ae0"], ["icon_hunger", "d8942a"],
 ]
 var _status_icons: Array[Texture2D] = []
+var _death: Label
+var _death_sub: Label
 var _wheel: Wheel
 var _name_label: Label
 var _tooltip: PanelContainer
@@ -148,6 +152,22 @@ func _ready() -> void:
 	_tooltip.add_child(_tooltip_text)
 	_tooltip.visible = false
 	add_child(_tooltip)
+	_death = Label.new()
+	_death.add_theme_font_size_override("font_size", 16)
+	_death.add_theme_color_override("font_color", Color("ff7a6a"))
+	_death.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	_death.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_death.visible = false
+	_death.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_death)
+	_death_sub = Label.new()
+	_death_sub.add_theme_font_size_override("font_size", 8)
+	_death_sub.add_theme_color_override("font_color", UiSkin.TEXT)
+	_death_sub.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	_death_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_death_sub.visible = false
+	_death_sub.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_death_sub)
 	_notes = VBoxContainer.new()
 	_notes.position = Vector2(6, 300)
 	_notes.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -155,6 +175,8 @@ func _ready() -> void:
 	EventBus.item_picked_up.connect(_on_picked_up)
 	world.station_opened.connect(_on_station_opened)
 	world.container_opened.connect(_on_container_opened)
+	world.bag_opened.connect(_on_bag_opened)
+	EventBus.player_died.connect(_on_player_died)
 	world.character.inventory.changed.connect(_redraw)
 	world.character.magic_changed.connect(_layout)
 	world.player.selection_changed.connect(func(_s: int) -> void: _redraw())
@@ -206,6 +228,9 @@ func _process(delta: float) -> void:
 	_update_tooltip(over)
 	if (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
 		close_window()  # walked away from the station or chest
+	if bag != null and (not is_instance_valid(bag) or bag.is_queued_for_deletion()
+			or bag.global_position.distance_to(p.chest()) > (world.interact_tiles + 4.0) * World.TILE):
+		close_window()  # emptied (it vanished) or walked away
 	_redraw()  # mana bar, recipe counts, hover
 	var item := p.held_item
 	_name_label.text = item.display_name if item else ""
@@ -227,6 +252,7 @@ func set_open(value: bool) -> void:
 	if not open:
 		station = World.NO_TILE
 		chest = World.NO_TILE
+		bag = null
 		crafting = false
 		if cursor_count > 0:
 			if _cursor_is_spell():
@@ -246,6 +272,7 @@ func toggle_crafting() -> void:
 		close_window()
 		return
 	chest = World.NO_TILE
+	bag = null
 	station = World.NO_TILE
 	_open_crafting()
 
@@ -263,16 +290,62 @@ func close_window() -> void:
 	crafting = false
 	station = World.NO_TILE
 	chest = World.NO_TILE
+	bag = null
 	_layout()
 
 
 func _on_station_opened(anchor: Vector2i) -> void:
 	chest = World.NO_TILE
+	bag = null
 	station = anchor
 	_open_crafting()
 
 
+func _on_bag_opened(opened: ItemBag) -> void:
+	crafting = false
+	station = World.NO_TILE
+	chest = World.NO_TILE
+	open = true
+	bag = opened
+	_layout()
+
+
+## The open chest's or bag's slots (null when neither is open).
+func _store() -> Inventory:
+	if bag != null and is_instance_valid(bag):
+		return bag.inventory
+	return world.container_at(chest) if chest != World.NO_TILE else null
+
+
+func _store_open() -> bool:
+	return chest != World.NO_TILE or (bag != null and is_instance_valid(bag))
+
+
+const DEATH_CAUSES := {&"fall": "You fell too far.", &"starving": "You starved."}
+
+
+func _on_player_died(cause: StringName) -> void:
+	_death.text = "You died"
+	var lines := PackedStringArray()
+	if DEATH_CAUSES.has(cause):
+		lines.append(DEATH_CAUSES[cause])
+	if world.info.death_drop == WorldInfo.DeathDrop.BAG:
+		lines.append("Your items are in a magic bag where you fell.")
+	_death_sub.text = "\n".join(lines)
+	var view := _view_size()
+	_death.size = Vector2(view.x, 20)
+	_death.position = Vector2(0, view.y * 0.5 - 70)
+	_death_sub.size = Vector2(view.x, 24)
+	_death_sub.position = Vector2(0, view.y * 0.5 - 48)
+	_death.visible = true
+	_death_sub.visible = true
+	get_tree().create_timer(world.respawn_seconds).timeout.connect(func() -> void:
+		_death.visible = false
+		_death_sub.visible = false)
+
+
 func _on_container_opened(anchor: Vector2i) -> void:
+	bag = null
 	crafting = false
 	station = World.NO_TILE
 	open = true
@@ -307,9 +380,9 @@ func _layout() -> void:
 	_status.position = Vector2(MARGIN.x, view.y - STATUS_SIZE.y - MARGIN.y)
 	_craft.visible = open and crafting
 	_craft.position = Vector2(view.x - CRAFT_SIZE.x - window_right, window_top)
-	_chest.visible = open and chest != World.NO_TILE
+	_chest.visible = open and _store_open()
 	if _chest.visible:
-		var store := world.container_at(chest)
+		var store := _store()
 		var n := store.size if store else 40
 		_chest.size = Vector2(PAD * 2 + 10 * STEP - GAP, 22 + _rows(n) * STEP - GAP + 6 + 16 + PAD)
 		_chest.position = Vector2(view.x - _chest.size.x - window_right, window_top)
@@ -534,7 +607,7 @@ func _close_button(g: Control, hover: bool) -> void:
 func _chest_hit(local: Vector2) -> Array:
 	if _close_rect(_chest).has_point(local):
 		return [Area.CLOSE, 0]
-	var store := world.container_at(chest)
+	var store := _store()
 	if store:
 		for i in store.size:
 			if _cell(Vector2(PAD, 22), i).has_point(local):
@@ -553,13 +626,17 @@ func _chest_buttons() -> Array[Rect2]:
 
 
 func _draw_chest(g: Control) -> void:
-	var store := world.container_at(chest)
-	var def := world.object_at(chest)
+	var store := _store()
+	var def := world.object_at(chest) if chest != World.NO_TILE else null
 	var font := ThemeDB.fallback_font
 	var hover := _chest_hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
 	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
-	UiSkin.title(g, Rect2(4, 4, g.size.x - 24, TITLE_H), def.display_name if def else "Chest",
-		"%d slots" % store.size if store else "")
+	var title := def.display_name if def else "Chest"
+	var right := "%d slots" % store.size if store else ""
+	if bag != null and is_instance_valid(bag):
+		title = "Magic Bag"
+		right = bag.owner_name
+	UiSkin.title(g, Rect2(4, 4, g.size.x - 24, TITLE_H), title, right)
 	_close_button(g, hover[0] == Area.CLOSE)
 	if store:
 		for i in store.size:
@@ -805,8 +882,8 @@ func _inventory_input(pane: Pane, event: InputEvent) -> void:
 			elif right and mb.ctrl_pressed:
 				quick_equip(slot)
 			elif left and mb.shift_pressed:
-				if chest != World.NO_TILE:
-					_move_stack(_inventory(), slot, world.container_at(chest))
+				if _store_open():
+					_move_stack(_inventory(), slot, _store())
 				else:
 					_quick_move(slot)
 			elif left:
@@ -838,7 +915,7 @@ func _chest_input(pane: Pane, event: InputEvent) -> void:
 		return
 	pane.accept_event()
 	var h := _chest_hit(mb.position)
-	var store := world.container_at(chest)
+	var store := _store()
 	var left := mb.button_index == MOUSE_BUTTON_LEFT
 	match h[0]:
 		Area.CLOSE:
@@ -1220,7 +1297,7 @@ func _update_tooltip(over: Pane) -> void:
 			Area.SPELLS:
 				item = ItemData.find(ItemData.spell_key(_known()[h[1]]))
 			Area.CHEST:
-				var store := world.container_at(chest)
+				var store := _store()
 				item = store.item(h[1]) if store else null
 			Area.RECIPE:
 				if h[1] < recipes().size():

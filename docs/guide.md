@@ -5,7 +5,7 @@ you can tweak. For the rules the code follows (data-driven content, host-authori
 threading) see [architecture.md](architecture.md). World generation has its own deep
 dive: [world-generation.md](world-generation.md); items, mining, placing, magic and plants are
 in [items-and-mining.md](items-and-mining.md); crafting, stations, furniture and mana in
-[crafting.md](crafting.md).
+[crafting.md](crafting.md); health, hunger, food and dying in [survival.md](survival.md).
 
 **Tweaking in general:** almost every number is an `@export` on a node or a setting in a
 `.tres` file. Two ways to change them:
@@ -50,6 +50,8 @@ in [items-and-mining.md](items-and-mining.md); crafting, stations, furniture and
   - **Worlds:** saved worlds (most recently played first) with Delete, and **New
     World**: name, size (Small / Medium / Large) and seed. The seed can be any number
     or word; blank picks a random one. The same seed always makes the same world.
+    Options: **Hunger** on or off, and **On death**: drop items in a magic bag, or
+    keep them (see [survival.md](survival.md)).
 - **Test Course** (debug builds only): the Phase 1 movement course with a throwaway dev
   character. Never saved.
 - **Doll Viewer** (debug builds only): every arm mode side by side, drawn vs
@@ -238,7 +240,7 @@ Debug builds only (running from the editor counts).
 | **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
-| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `cursor <dx> <dy>` / `cursor off` (pin the cursor to a tile offset from your feet, for scripted building in `--console` runs), `color <group> <hex|reset>` (recolor your character, saved), `dummy` / `dummy clear` (a training dummy for damage spells), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
+| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `god`, `hurt <n>`, `kill`, `heal`, `hunger <n>`, `bush` (see survival.md), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `cursor <dx> <dy>` / `cursor off` (pin the cursor to a tile offset from your feet, for scripted building in `--console` runs), `color <group> <hex|reset>` (recolor your character, saved), `dummy` / `dummy clear` (a training dummy for damage spells), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |
 
@@ -299,9 +301,8 @@ godot --headless --path . --script res://tools/make_ui_art.gd
 
 In game, the HUD (`src/ui/hud/hud.gd`) has the inventory panel top left, the
 **health, mana and hunger** panel bottom left (pickup notes stack above it), and
-separate windows on the right (crafting, chests). Health and hunger are shown but not
-used yet (`max_health`, `max_hunger` on the Player); damage, healing, eating and
-hunger come with their own design briefs. Mana shows "inf" with infinite mana. The
+separate windows on the right (crafting, chests). See [survival.md](survival.md) for how
+health and hunger work. Mana shows "inf" with infinite mana. The
 windows gap from the screen edge is the `Hud`
 exports `window_right` and `window_top`.
 

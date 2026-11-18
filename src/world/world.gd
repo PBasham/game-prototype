@@ -16,6 +16,8 @@ signal object_changed(tile: Vector2i, old_id: int, new_id: int)
 signal station_opened(anchor: Vector2i)
 ## The player opened a container (a chest; anchor tile, wrapped).
 signal container_opened(anchor: Vector2i)
+## Right click or E on a magic bag (ItemBag).
+signal bag_opened(bag: ItemBag)
 
 ## Tile size in pixels. The Scholar is about 3 tiles wide and 8 tall.
 const TILE := 8
@@ -39,6 +41,8 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 @export var block_heal_seconds := 5.0
 ## E interacts with things this close (tiles).
 @export var interact_tiles := 6.0
+## Seconds dead before you respawn at the world spawn.
+@export var respawn_seconds := 3.0
 
 var info: WorldInfo
 var data: WorldData
@@ -58,6 +62,7 @@ var character: CharacterData
 var item_user: ItemUser
 var hud: Hud
 var _drops: Node2D
+var _bags: Node2D
 ## Spell projectiles, damage numbers, dev dummies.
 var effects: Node2D
 var _cracks: CrackOverlay
@@ -134,12 +139,24 @@ func _ready() -> void:
 	renderer.load_all_now(player.position)
 	add_child(player)
 	teleport_player(player.position)
+	player.hunger_on = info.hunger
+	if character.health > 0.0:
+		player.health = minf(character.health, player.max_health)
+	if character.hunger >= 0.0:
+		player.hunger = minf(character.hunger, player.max_hunger)
+	player.died.connect(_on_player_died)
 	character.inventory.changed.connect(player.refresh_held)
 	character.magic_changed.connect(player.refresh_held)
 	player.select_slot(0)
 	_drops = Node2D.new()
 	_drops.name = "Drops"
 	add_child(_drops)
+	_bags = Node2D.new()
+	_bags.name = "Bags"
+	add_child(_bags)
+	if is_saved():
+		for d: Dictionary in WorldSave.read_extra(info.path, WorldSave.META_BAGS).get("list", []):
+			_bags.add_child(ItemBag.from_dict(self, d))
 	effects = Node2D.new()
 	effects.name = "Effects"  # projectiles, damage numbers, dev dummies
 	add_child(effects)
@@ -262,6 +279,8 @@ func is_saved() -> bool:
 ## temporary worlds without writing anything.
 func save() -> Error:
 	if character:
+		character.health = player.health if player and not player.dead else -1.0
+		character.hunger = player.hunger if player and not player.dead else -1.0
 		var cerr := character.save()
 		if cerr != OK:
 			push_error("World: saving the character failed: %s" % error_string(cerr))
@@ -274,7 +293,8 @@ func save() -> Error:
 	for c in modified:
 		coords.append(c.coord)
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
-		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_CONTAINERS: _containers_to_dict()}, objects)
+		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_CONTAINERS: _containers_to_dict(),
+			WorldSave.META_BAGS: {"list": bags_to_list()}}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
@@ -308,12 +328,76 @@ func regenerate() -> void:
 	EventBus.debug_message.emit("Regenerated from forest.tres")
 
 
+# --- dying -----------------------------------------------------------------------------
+
+## The player died: their items go into a magic bag where they fell (unless the world
+## keeps items), and they respawn at the world spawn after respawn_seconds.
+func _on_player_died(cause: StringName) -> void:
+	var inv := character.inventory
+	if info.death_drop == WorldInfo.DeathDrop.BAG and not inv.is_all_empty():
+		var bag_inv := Inventory.new(inv.size)
+		for i in inv.size:
+			if not inv.is_empty(i) and not String(inv.ids[i]).begins_with(ItemData.SPELL_PREFIX):
+				bag_inv.set_slot(i, inv.ids[i], inv.counts[i])
+				inv.clear(i)
+		inv.changed.emit()
+		if not bag_inv.is_all_empty():
+			request_spawn_bag(bag_inv, character.name, player.chest())
+	player.visible = false
+	player.set_physics_process(false)
+	EventBus.player_died.emit(cause)
+	if hud:
+		hud.set_open(false)
+	get_tree().create_timer(respawn_seconds).timeout.connect(respawn_player)
+
+
+## Back at the world spawn with full health, hunger and mana.
+func respawn_player() -> void:
+	if not is_instance_valid(player) or not player.dead:
+		return
+	var spawn := generator.spawn_tile()
+	var pos := tile_to_world(spawn) + Vector2(TILE * 0.5, 0)
+	renderer.load_all_now(pos)
+	teleport_player(pos)
+	player.revive()
+	player.visible = true
+	player.set_physics_process(true)
+
+
+## Tosses a magic bag up from `pos` (it falls and settles like a tombstone).
+func request_spawn_bag(inv: Inventory, who: String, pos: Vector2) -> ItemBag:
+	if not Game.is_authority():
+		return null
+	var bag := ItemBag.new()
+	bag.setup(self, inv, who, Vector2(randf_range(-3.0, 3.0), -10.0) * TILE)
+	bag.position = pos
+	_bags.add_child(bag)
+	return bag
+
+
+func bags() -> Array[ItemBag]:
+	var out: Array[ItemBag] = []
+	for b in _bags.get_children():
+		if b is ItemBag and not b.is_queued_for_deletion():
+			out.append(b)
+	return out
+
+
+func bags_to_list() -> Array:
+	var out: Array = []
+	for b in bags():
+		if not b.inventory.is_all_empty():
+			out.append(b.to_dict())
+	return out
+
+
 ## Moves the player instantly (spawn, respawn, rewrapping x later). Use this, not
 ## `player.position =`: with physics interpolation on, a raw jump would be drawn as a
 ## one-tick slide across the screen, and the smoothed camera would pan the whole way.
 func teleport_player(pos: Vector2) -> void:
 	player.global_position = pos
 	player.velocity = Vector2.ZERO
+	player.reset_fall()
 	player.reset_physics_interpolation()  # Propagates to the sprite and camera.
 	var cam := player.get_node_or_null(^"Camera") as Camera2D
 	if cam:

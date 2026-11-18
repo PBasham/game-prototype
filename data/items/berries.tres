@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_1nhuj"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_54pky"]
+[ext_resource type="Texture2D" path="res://assets/items/held/berries.png" id="3_bpyva"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/berries.png" id="4_84fhc"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_w65ib"]
+
+[sub_resource type="Resource" id="Resource_amejv"]
+script = ExtResource("2_54pky")
+id = &"berries"
+texture = ExtResource("3_bpyva")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_w65ib")
+kind = 11
+icon = ExtResource("4_84fhc")
+held = SubResource("Resource_amejv")
+impact_at = 0.2
+food_value = 10.0
+heal_value = 2.0
+id = &"berries"
+display_name = "Berries"
+description = "Picked from berry bushes. Left click to eat: +10 hunger, +2 health."
