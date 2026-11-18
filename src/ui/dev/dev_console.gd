@@ -183,6 +183,7 @@ func _register() -> void:
 		_fill(a, false))
 	_add("fillwall", "fillwall <wall|air> <w> <h>", "Fill a box with a background wall at the cursor.", func(a: PackedStringArray) -> void:
 		_fill(a, true))
+	_add("cursor", "cursor <dx> <dy> | cursor off", "Pin the cursor to a tile offset from your feet (for scripted building), or let it follow the mouse again.", _cursor)
 	_add("dig", "dig <w> <h>", "Clear a box of blocks (keeps walls) centered on the cursor.", _dig)
 	_add("place", "place <object>", "Place a tile object (torch, rope, workbench, chest...) at the cursor, no item needed.", _place)
 	_add("use", "use", "Use what's at the cursor (like a right click: open a station, chest or door).", func(_a: PackedStringArray) -> void:
@@ -305,6 +306,19 @@ func _fill(a: PackedStringArray, wall: bool) -> void:
 			else:
 				world.request_set_block(start + Vector2i(x, y), id)
 	_print("Filled %dx%d with %s." % [size.x, size.y, a[0]])
+
+
+func _cursor(a: PackedStringArray) -> void:
+	if a.size() == 1 and a[0] == "off":
+		world.item_user.cursor_override = Vector2.INF
+		_print("Cursor follows the mouse.")
+		return
+	if a.size() != 2 or not a[0].is_valid_int() or not a[1].is_valid_int():
+		_print("Usage: cursor <dx> <dy> (tiles from your feet) | cursor off")
+		return
+	var t := world.world_to_tile(world.player.global_position) + Vector2i(int(a[0]), int(a[1]))
+	world.item_user.cursor_override = world.tile_to_world(t) + Vector2(World.TILE, World.TILE) * 0.5
+	_print("Cursor at %d, %d." % [t.x, t.y])
 
 
 func _dig(a: PackedStringArray) -> void:
