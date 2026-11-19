@@ -141,7 +141,7 @@ func test_trees_fall_and_drop_wood_and_seeds() -> void:
 	plants.request_hit_tree(g, 25.0, w.player.global_position.x)
 	assert_null(plants.plant_at(g), "felled")
 	await wait_seconds(plants.fall_time + 0.3)
-	assert_gt(w.drop_count(), drops + plants.log_min, "logs and seeds dropped")
+	assert_gt(w.drop_count(), drops + plants.logs_for(14.0), "logs and seeds dropped")
 
 
 func test_removing_the_ground_breaks_a_plant() -> void:

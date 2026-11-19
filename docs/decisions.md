@@ -69,7 +69,7 @@ Newest first. Each entry: what was decided, why, and what it affects.
   their own `Forage` node, with types as data (`data/forage/`, ForageData) so new
   forageables (mushrooms) are a file. Older saves move their loose items over on load.
   Breakable-but-walkable things like Terraria's crystal shards are a later brief.
-- **Logs and Wood, no flint (Patrick):** trees drop Logs (2 to 4); 1 Log = 4 Wood by
+- **Logs and Wood, no flint (Patrick):** trees drop Logs by size (one per 6 tiles of height: 2, 3 or 4); 1 Log = 4 Wood by
   hand, and a Log places as a log cabin block and back wall. Wood (the renamed planks)
   places the plank block and is the wood in every recipe; ground sticks give 1 Wood.
   Wood Planks and Sticks are gone; flint is gone too (stone tools are 3 stone + 2 wood).

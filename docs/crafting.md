@@ -12,7 +12,8 @@ The first things come off the ground:
 - **Bare hands don't break anything**, not even dirt. You need a tool. (They do punch
   enemies, see combat.md.)
 
-**Logs** are what trees drop (2 to 4, `log_min` / `log_max` on the `Plants` node). One
+**Logs** are what trees drop, by size: one per `tiles_per_log` (6) tiles of height on the
+`Plants` node, so small pines give 2, medium 3, large 4. One
 Log crafts into **4 Wood** by hand, or you build with it: a log cabin block (right click:
 a log back wall). **Wood** is the plank block (right click: a plank back wall) and the
 wood in every recipe; a stick on the ground gives 1 Wood. There are no separate planks
@@ -56,7 +57,7 @@ it as an item.
 | `surface_ground_chance` | 0.05 | Chance a bare surface dirt or stone tile has one |
 | `cave_chance` | 0.03 | Chance a cave floor tile has one |
 
-A felled tree drops 2 to 4 Logs (`log_min`, `log_max` on the `Plants` node).
+A felled tree drops 2 to 4 Logs by its size (`tiles_per_log` on the `Plants` node).
 
 **They come back over time** (random ticks, like grass spreading). A few times a second
 the game picks random floor tiles in the loaded area and gives each a small chance to get

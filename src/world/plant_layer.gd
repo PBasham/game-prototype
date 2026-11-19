@@ -25,9 +25,9 @@ const BUSH_GROWN := 1
 @export_group("Trees")
 ## Damage a tree takes before it falls. A copper axe does 25 per hit.
 @export var tree_health := 100.0
-## Logs dropped by a fallen tree (random in this range). 1 Log crafts into 4 Wood.
-@export var log_min := 2
-@export var log_max := 4
+## A fallen tree drops one Log per this many tiles of its height, rounded (small pines
+## about 14 tiles: 2, medium about 19: 3, large about 23: 4). 1 Log crafts into 4 Wood.
+@export var tiles_per_log := 6.0
 ## Seeds dropped: always 1, plus this chance of a second.
 @export_range(0.0, 1.0) var extra_seed_chance := 0.5
 ## Seconds a tree takes to fall over.
@@ -531,7 +531,7 @@ func _break(g: Vector2i, p: Plant) -> void:
 	var pos := ground_position(g, world.player.global_position if world.player else Vector2.ZERO) + Vector2(0, -4)
 	match p.kind:
 		Kind.TREE:
-			_drop_tree(pos, 0.0)
+			_drop_tree(pos, 0.0, _height_tiles(p))
 		Kind.SAPLING:
 			world.request_spawn_drop(&"tree_seed", 1, pos, _pop())
 		Kind.FLOWER:
@@ -543,25 +543,36 @@ func _break(g: Vector2i, p: Plant) -> void:
 	_remove(g)
 
 
+## Logs a tree this tall (tiles) drops.
+func logs_for(height_tiles: float) -> int:
+	return maxi(1, roundi(height_tiles / maxf(tiles_per_log, 0.5)))
+
+
+## A tree's height in tiles (its sprite).
+func _height_tiles(p: Plant) -> float:
+	return _trees[p.variant % _trees.size()].get_height() / float(TILE)
+
+
 func _fell(g: Vector2i, p: Plant, dir: float) -> void:
+	var height := _height_tiles(p)
 	var node := p.node
 	p.node = null
 	_remove(g)
 	if node == null:
-		_drop_tree(ground_position(g, world.player.global_position) + Vector2(0, -4), dir)
+		_drop_tree(ground_position(g, world.player.global_position) + Vector2(0, -4), dir, _height_tiles(p))
 		return
 	var tw := node.create_tween()
 	tw.tween_property(node, "rotation", dir * PI * 0.5, fall_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.parallel().tween_property(node, "modulate:a", 0.0, fall_time * 0.4).set_delay(fall_time * 0.75)
 	tw.tween_callback(func() -> void:
-		_drop_tree(node.global_position + Vector2(0, -4), dir)
+		_drop_tree(node.global_position + Vector2(0, -4), dir, height)
 		node.queue_free())
 
 
 ## Logs along where the trunk lay, and seeds.
-func _drop_tree(base: Vector2, dir: float) -> void:
-	var wood := randi_range(log_min, log_max)
-	var length := 10.0 * TILE
+func _drop_tree(base: Vector2, dir: float, height_tiles: float) -> void:
+	var wood := logs_for(height_tiles)
+	var length := height_tiles * 0.8 * TILE  # the trunk, not the tip
 	for i in wood:
 		var along := (i + 0.5) / wood * length * (dir if dir != 0.0 else 0.0)
 		var pos := base + Vector2(along, 0.0 if dir != 0.0 else float(-i * TILE))

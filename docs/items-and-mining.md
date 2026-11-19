@@ -370,8 +370,8 @@ Sticks and rocks lying around are the `Forage` node (crafting.md).
 - Natural trees and flowers come from the generator's decoration rules the first time a
   chunk loads. After that they're the world's: chopped trees stay chopped.
 - **Trees:** `tree_health` (100). Each axe hit rocks the tree (`wiggle_degrees`); at 0
-  it falls away from you over `fall_time` and breaks into `wood_min` to `wood_max` wood
-  and 1 seed (`extra_seed_chance` of a second). Removing the grass under a tree breaks
+  it falls away from you over `fall_time` and breaks into Logs along its trunk (one per
+  `tiles_per_log`, 6, tiles of height: 2 to 4) and 1 seed (`extra_seed_chance` of a second). Removing the grass under a tree breaks
   it on the spot.
 - **Saplings:** plant a tree seed on grass with `tree_spacing` (3) tiles to the next
   tree. It grows in `grow_min_seconds` to `grow_max_seconds` (60 to 150) while the
