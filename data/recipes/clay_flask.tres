@@ -6,7 +6,7 @@
 script = ExtResource("1_h5osc")
 station = &"furnace"
 inputs = Dictionary[StringName, int]({
-&"clay": 1
+&"clay": 2
 })
 output = &"clay_flask"
 id = &"clay_flask"

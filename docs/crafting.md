@@ -210,7 +210,7 @@ can't mine the floor under furniture.
 - **Campfire** (station `cooking`): right click it to cook. Recipes and effects are in
   [survival.md](survival.md).
 - **Clay** is a block found in patches in the dirt near the surface (world-generation.md).
-  1 Clay fires into a **Clay Flask** at the furnace.
+  2 Clay fire into a **Clay Flask** at the furnace.
 - **Alchemy Table** (5x3, station `alchemy`): workbench, 12 Wood + 3 Copper Bars + 2 Clay
   Flasks. Its window has tabs; a recipe picks its tab with `RecipeData.tab` (empty = the
   first tab). Tabs per station are `STATION_TABS` in `src/ui/hud/hud.gd`.

@@ -146,37 +146,37 @@ func _items() -> Array[ItemData]:
 	out[out.size() - 1].buff_seconds = 300.0
 	out[out.size() - 1].buff_health_regen = 0.5
 	out[out.size() - 1].buff_move_speed = 0.1
-	var heal := _small(&"healing_potion", "Healing Potion", "Drink: +60 health. Then 30 s before another.")
+	var heal := _small(&"healing_potion", "Healing Potion", "Drink: +30 health. Then 30 s before another.")
 	heal.kind = ItemData.Kind.FOOD
-	heal.heal_value = 60.0
+	heal.heal_value = 30.0
 	heal.sickness = &"healing"
 	heal.sickness_seconds = 30.0
 	heal.max_stack = 30
 	out.append(heal)
-	var manap := _small(&"mana_potion", "Mana Potion", "Drink: +80 mana. Then 10 s before another.")
+	var manap := _small(&"mana_potion", "Mana Potion", "Drink: +40 mana. Then 10 s before another.")
 	manap.kind = ItemData.Kind.FOOD
-	manap.mana_value = 80.0
+	manap.mana_value = 40.0
 	manap.sickness = &"mana"
 	manap.sickness_seconds = 10.0
 	manap.max_stack = 30
 	out.append(manap)
-	var coat := _small(&"poison_coating", "Poison Coating", "Rub it on your weapon: the next 20 melee hits poison (3 damage a second for 5 s).")
+	var coat := _small(&"poison_coating", "Poison Coating", "Rub it on your weapon: the next 10 melee hits poison (2 damage a second for 4 s).")
 	coat.kind = ItemData.Kind.FOOD
 	coat.buff_name = "Poison Coating"
 	coat.buff_description = "Melee hits poison what they hit."
 	coat.buff_seconds = 180.0
-	coat.buff_poison_hits = 20
-	coat.poison_dps = 3.0
-	coat.poison_seconds = 5.0
+	coat.buff_poison_hits = 10
+	coat.poison_dps = 2.0
+	coat.poison_seconds = 4.0
 	coat.max_stack = 30
 	out.append(coat)
-	var flask := _small(&"poison_flask", "Poison Flask", "Left click to throw. Shatters into a cloud that poisons enemies inside (4 damage a second).")
+	var flask := _small(&"poison_flask", "Poison Flask", "Left click to throw. Shatters into a cloud that poisons enemies inside (2 damage a second).")
 	flask.throw_speed = 22.0
 	flask.throw_effect = &"poison_cloud"
-	flask.poison_dps = 4.0
-	flask.poison_seconds = 4.0
-	flask.cloud_tiles = Vector2(6, 4)
-	flask.cloud_seconds = 5.0
+	flask.poison_dps = 2.0
+	flask.poison_seconds = 3.0
+	flask.cloud_tiles = Vector2(4, 3)
+	flask.cloud_seconds = 4.0
 	flask.max_stack = 30
 	out.append(flask)
 	var hammer := _small(&"hand_hammer", "Hand Hammer", "Needed in your inventory to build a Workbench.")
@@ -707,7 +707,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"wood_platform", &"", {&"wood": 1}, &"wood_platform", 2, []],
 		[&"campfire", &"", {&"wood": 5, &"stone": 3}, &"campfire", 1, []],
 		# Food & Alchemy.
-		[&"clay_flask", &"furnace", {&"clay": 1}, &"clay_flask", 1, []],
+		[&"clay_flask", &"furnace", {&"clay": 2}, &"clay_flask", 1, []],
 		[&"wooden_bowl", &"workbench", {&"wood": 2}, &"wooden_bowl", 2, []],
 		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
 		[&"roasted_berries", &"cooking", {&"berries": 3}, &"roasted_berries", 1, []],

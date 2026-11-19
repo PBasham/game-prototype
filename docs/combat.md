@@ -224,13 +224,13 @@ Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 wood.
 - **Enemies** can be poisoned (`Enemy.poison(dps, seconds)`): they take the damage once a
   second in green numbers and tint green. A stronger poison replaces a weaker one; the
   longer time wins.
-- **Poison Coating** (drink it like a potion): the next 20 melee hits within 3 minutes
-  poison for 3 per second over 5 s. Item fields `buff_poison_hits`, `poison_dps`,
+- **Poison Coating** (drink it like a potion): the next 10 melee hits within 3 minutes
+  poison for 2 per second over 4 s. Item fields `buff_poison_hits`, `poison_dps`,
   `poison_seconds`.
 - **Poison Flask**: left click throws it toward the cursor in an arc (`throw_speed`
   22 tiles/s, plus a small lift). It shatters on a block or an enemy into a green cloud
-  (`throw_effect` `poison_cloud`, `cloud_tiles` 6x4, `cloud_seconds` 5) that poisons
-  every enemy inside for 4 per second over 4 s, again every half second.
+  (`throw_effect` `poison_cloud`, `cloud_tiles` 4x3, `cloud_seconds` 4) that poisons
+  every enemy inside for 2 per second over 3 s, again every half second.
   `src/combat/thrown_item.gd`, `src/combat/poison_cloud.gd`.
 
 ## Slime uses

@@ -78,7 +78,7 @@ func test_potions_and_sickness() -> void:
 	_hold(&"healing_potion", 2)
 	p.health = 10.0
 	assert_true(w.item_user.eat_held())
-	assert_almost_eq(p.health, 70.0, 0.01)
+	assert_almost_eq(p.health, 40.0, 0.01)
 	assert_true(p.has_buff(&"sick_healing"))
 	p.health = 10.0
 	assert_false(w.item_user.eat_held(), "sick: can't drink another yet")
@@ -86,7 +86,7 @@ func test_potions_and_sickness() -> void:
 	_hold(&"mana_potion", 1)
 	p.mana = 0.0
 	assert_true(w.item_user.eat_held(), "different sickness")
-	assert_almost_eq(p.mana, minf(80.0, p.max_mana), 0.01)
+	assert_almost_eq(p.mana, minf(40.0, p.max_mana), 0.01)
 
 
 func test_stew_well_fed() -> void:
@@ -105,17 +105,17 @@ func test_poison_coating_poisons_on_hit() -> void:
 	var p := w.player
 	_hold(&"poison_coating", 1)
 	assert_true(w.item_user.eat_held(), "coating applied")
-	assert_eq(p.poison_hits, 20)
+	assert_eq(p.poison_hits, 10)
 	var e := w.request_spawn_enemy(_slime(), p.global_position + Vector2(20 * p.facing, 0))
 	e.health = 999.0
 	await wait_physics_frames(2)
 	w.item_user.cursor_override = p.chest() + Vector2(40 * p.facing, 0)
 	assert_eq(w.item_user.melee_hit(ItemData.find(&"wooden_sword")), 1)
 	assert_true(e.is_poisoned())
-	assert_eq(p.poison_hits, 19)
+	assert_eq(p.poison_hits, 9)
 	var before := e.health
 	e._tick_poison(1.0)
-	assert_almost_eq(e.health, before - 3.0, 0.01, "3 per second")
+	assert_almost_eq(e.health, before - 2.0, 0.01, "2 per second")
 
 
 func test_poison_flask_cloud() -> void:

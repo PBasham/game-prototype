@@ -100,7 +100,7 @@ guesses; the docs listed say where each tunable lives.
       only in caves; field mushroom and red cap are edible. `forage glowcap` places one.
 
 **Food and alchemy**
-- [ ] Clay patches just under the grass; dig some, fire Clay Flasks at the furnace.
+- [ ] Clay patches just under the grass; dig some, fire Clay Flasks at the furnace (2 Clay each).
 - [ ] Campfire right click opens Cooking: roasted berries, cooked mushroom, stew (needs a bowl).
 - [ ] Stew gives Well Fed (faster, more regen) for 5 minutes.
 - [ ] Alchemy Table tabs: Potions, Coatings, Flasks. Can you tell flasks apart at a glance?

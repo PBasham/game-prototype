@@ -111,8 +111,8 @@ cooked food is just much better.
 
 | Potion | Effect | Sickness |
 | --- | --- | --- |
-| Healing Potion | +60 health | 30 s (`healing`) |
-| Mana Potion | +80 mana | 10 s (`mana`) |
+| Healing Potion | +30 health | 30 s (`healing`) |
+| Mana Potion | +40 mana | 10 s (`mana`) |
 
 ## Dying and the magic bag
 

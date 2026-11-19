@@ -15,7 +15,11 @@ Newest first. Each entry: what was decided, why, and what it affects.
   than drawn by the UI, so it also shows on the held item, drops and tooltips.
 - **Potion sickness:** like Terraria's, so potions can't be chained; healing 30 s,
   mana 10 s, separate groups.
-- **Poison:** Duskcaps make a melee coating (20 hits) and a thrown flask that leaves a
+- **Starter strength (Patrick):** these are the lowest tier, so they were halved: Healing
+  Potion +30, Mana Potion +40, coating 10 hits at 2 per second, flask cloud 4x3 at 2 per
+  second. A Clay Flask takes 2 Clay. Empty flasks stay used up for now (returning them
+  after drinking is an option later).
+- **Poison:** Duskcaps make a melee coating and a thrown flask that leaves a
   cloud. Placeholder numbers, easy to tweak in the item files.
 
 ## 2026-11-19: Phase 9, underground
