@@ -38,7 +38,7 @@ guesses; the docs listed say where each tunable lives.
 
 **Enemies and spawning**
 - [ ] Slimes feel right: hop height, timing, damage, readable at night.
-- [ ] Spawn pace by day (about every 12 s, 4 max) and night (about every 6 s, 7 max).
+- [ ] Spawn pace by day (about every 30 s, 3 max) and night (about every 10 s, 6 max).
 - [ ] No Blue Slimes until you've killed a Green one; then about 1 in 9.
 - [ ] Nothing spawns underground (more than 20 tiles below the surface) or indoors.
 - [ ] Enemies far away (90 tiles) despawn.

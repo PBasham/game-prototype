@@ -54,8 +54,8 @@ One table per biome and layer. Only `forest_surface` exists so far.
 |---|---|---|
 | `biome`, `layer` | forest, SURFACE | Where it applies. |
 | `max_depth_tiles` | 20 | SURFACE: the player and each spawn spot must be no deeper than this below the world's natural surface. Deeper, nothing spawns (no underground tables yet). |
-| `day_seconds` / `night_seconds` | 12 / 6 | Average seconds between spawns. Lower = more often. |
-| `max_day` / `max_night` | 4 / 7 | Most enemies around the player before spawning stops. |
+| `day_seconds` / `night_seconds` | 30 / 10 | Average seconds between spawns. Lower = more often. |
+| `max_day` / `max_night` | 3 / 6 | Most enemies around the player before spawning stops. |
 | `entries` | | `SpawnEntry` list: `enemy`, `weight`, `day`, `night`, `conditions`. |
 
 **Which enemy:** each entry's chance is its weight divided by the total weight of the

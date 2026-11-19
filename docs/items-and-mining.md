@@ -110,8 +110,8 @@ Each item is an `ItemData` (`src/items/item_data.gd`). Open one in the Inspector
 | `mining_damage` | Damage to blocks per hit, or per second for a beam |
 | `axe_damage` | Damage to trees per hit |
 | `beam` | Mines continuously while held (the mining spell) |
-| `mining_area` | Area in tiles (2 = 2x2). Pickaxes have a fixed area. |
-| `mining_area_max` | Biggest area for the Ctrl + wheel toggle (0 = no toggle) |
+| `mining_area` | Area in tiles (2 = 2x2) a swing starts at. Ctrl + wheel can always go down to 1x1. |
+| `mining_area_max` | Biggest area for the Ctrl + wheel toggle (0 = no bigger than `mining_area`) |
 | `reach_tiles` | How far it reaches, measured from the chest |
 | `impact_at` | When in the swing the hit lands (0 to 1 through the animation) |
 | **Placing** | |

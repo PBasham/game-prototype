@@ -114,7 +114,7 @@ Current recipes:
 | Furnace | Copper Bar: 3 copper ore |
 | Anvil | Copper Pickaxe: 10 bars + 3 sticks; Copper Axe: 8 bars + 3 sticks |
 
-Stone tools: Stone Pickaxe 15 mining, Stone Axe 15 chopping, both reach 7 (the copper
+Stone tools: Stone Pickaxe 15 mining in a 2x2 area (Ctrl + wheel: 1x1), Stone Axe 15 chopping, both reach 7 (the copper
 ones are stronger).
 
 Defaults are written by `tools/make_items.gd` (items, spells, objects and recipes).

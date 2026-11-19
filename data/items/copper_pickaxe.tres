@@ -23,4 +23,4 @@ mining_damage = 25.0
 mining_area = 2
 id = &"copper_pickaxe"
 display_name = "Copper Pickaxe"
-description = "Mines a 2x2 area per swing."
+description = "Mines a 2x2 area per swing (Ctrl + wheel: 1x1)."

@@ -26,6 +26,9 @@ var _since_hit := 99.0
 var _was_on_floor := false
 ## Hop away from this x after being hit (no target: wander).
 var _angry := false
+## Sideways speed of the current hop (px/s), kept in the air so a wall it touches at
+## takeoff doesn't stop it (it slides up the wall and over a low step).
+var _hop_vx := 0.0
 
 
 func setup(w: World, d: EnemyData) -> void:
@@ -83,6 +86,7 @@ func knock_back(from: Vector2, strength: float) -> void:
 		return
 	var dir := signf(global_position.x - from.x)
 	velocity = Vector2((dir if dir != 0.0 else 1.0) * k * TILE, -k * 0.6 * TILE)
+	_hop_vx = 0.0
 	_wait = 0.25  # hop again soon
 
 
@@ -124,7 +128,11 @@ func _physics_process(delta: float) -> void:
 
 func _slime(delta: float) -> void:
 	if not is_on_floor():
+		if _hop_vx != 0.0:
+			velocity.x = _hop_vx
 		return
+	if velocity.y >= 0.0:
+		_hop_vx = 0.0  # landed
 	velocity.x = move_toward(velocity.x, 0.0, 60.0 * TILE * delta)
 	_wait -= delta
 	if _wait < 0.18 and _wait + delta >= 0.18:
@@ -139,6 +147,7 @@ func _slime(delta: float) -> void:
 			dir = signf(dx) if dx != 0.0 else dir
 	var launch := sqrt(2.0 * data.gravity * TILE * data.hop_tiles * TILE)
 	velocity = Vector2(dir * data.hop_speed * TILE, -launch)
+	_hop_vx = velocity.x
 	EventBus.sound_requested.emit(&"slime_hop", global_position)
 	_wait = randf_range(data.hop_wait_min, data.hop_wait_max)
 

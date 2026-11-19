@@ -339,3 +339,19 @@ func test_spawns_ahead_when_moving_and_despawn_waits() -> void:
 	e.far_for = sp.despawn_seconds
 	sp._despawn_far()
 	assert_true(e.is_queued_for_deletion(), "after a while")
+
+
+func test_slime_hops_over_a_one_block_step() -> void:
+	var p := w.player
+	p.invincible = true
+	var feet := w.world_to_tile(p.global_position)
+	var step_x := feet.x + 14
+	var stone := w.blocks.index_of(&"stone")
+	for dy in range(1, 3):
+		w.request_set_block(Vector2i(step_x, feet.y - dy), stone if dy == 1 else WorldData.AIR)
+	# Right next to the step, on the far side from the player (within aggro).
+	var start := w.tile_to_world(Vector2i(step_x + 3, feet.y - 1)) + Vector2(0, World.TILE)
+	var e := w.request_spawn_enemy(_slime(), start)
+	await wait_seconds(8.0)
+	assert_true(is_instance_valid(e))
+	assert_lt(e.global_position.x, float(step_x) * World.TILE, "got over the step toward the player")

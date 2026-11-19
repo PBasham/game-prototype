@@ -418,10 +418,10 @@ func area_size(item: ItemData) -> int:
 	var hi := 1
 	var start := 1
 	if item.mining_damage > 0.0:
-		# Fixed area (pickaxes) unless mining_area_max gives a range to toggle through.
+		# Starts at mining_area; the area toggle goes down to 1x1 and up to
+		# mining_area_max (if bigger).
 		hi = maxi(item.mining_area_max, item.mining_area)
-		lo = 1 if hi > item.mining_area else item.mining_area
-		start = item.mining_area
+		lo = 1
 		start = item.mining_area
 	elif _places(item):
 		var c := world.player.character

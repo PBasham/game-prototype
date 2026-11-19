@@ -59,6 +59,11 @@ Newest first. Each entry: what was decided, why, and what it affects.
   and layer spawn tables with weighted enemies (rarer = smaller weight). Forest surface:
   one every 12 s by day, 6 s at night on average, caps 4 / 7, catch-up when few are
   around. Off screen, never indoors, despawn when far.
+- **Slower spawns (Patrick's playtest: "way too fast"):** forest surface 30 s average and
+  3 max by day (was 12 s, 4), 10 s and 6 max at night (was 6 s, 7). Terraria's forest is
+  10 s / 5 by day on paper, but many of its spawn tries fail and its slimes wander.
+- **Stone Pickaxe 2x2:** 1x1 blocks were too small; every pickaxe can toggle down to 1x1
+  (Ctrl + wheel).
 - **Spawning while travelling (Patrick's playtest):** spawns favor the side you're moving
   toward, enemies get 6 s grace before despawning, and slimes notice you from 64 tiles
   (beyond the spawn distance) so they come to you.

@@ -135,7 +135,7 @@ func _items() -> Array[ItemData]:
 	grass.plants = &"grass"
 	out.append(grass)
 	# Tools.
-	var pick := _tool(&"copper_pickaxe", "Copper Pickaxe", "Mines a 2x2 area per swing.", &"tool")
+	var pick := _tool(&"copper_pickaxe", "Copper Pickaxe", "Mines a 2x2 area per swing (Ctrl + wheel: 1x1).", &"tool")
 	pick.mining_damage = 25.0
 	pick.mining_area = 2
 	pick.reach_tiles = 10.0
@@ -143,9 +143,9 @@ func _items() -> Array[ItemData]:
 	var axe := _tool(&"copper_axe", "Copper Axe", "Chops trees.", &"tool")
 	axe.axe_damage = 25.0
 	out.append(axe)
-	var stone_pick := _tool(&"stone_pickaxe", "Stone Pickaxe", "A flint pickaxe. Mines one block per swing.", &"tool")
+	var stone_pick := _tool(&"stone_pickaxe", "Stone Pickaxe", "A flint pickaxe. Mines a 2x2 area per swing (Ctrl + wheel: 1x1).", &"tool")
 	stone_pick.mining_damage = 15.0
-	stone_pick.mining_area = 1
+	stone_pick.mining_area = 2
 	stone_pick.reach_tiles = 7.0
 	out.append(stone_pick)
 	var stone_axe := _tool(&"stone_axe", "Stone Axe", "A flint axe. Chops trees, slowly.", &"tool")
@@ -554,10 +554,10 @@ func _spawns() -> Array[SpawnTable]:
 	forest.display_name = "Forest surface"
 	forest.biome = &"forest"
 	forest.layer = SpawnTable.Layer.SURFACE
-	forest.day_seconds = 12.0
-	forest.night_seconds = 6.0
-	forest.max_day = 4
-	forest.max_night = 7
+	forest.day_seconds = 30.0
+	forest.night_seconds = 10.0
+	forest.max_day = 3
+	forest.max_night = 6
 	forest.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/green_slime.tres") as EnemyData, 100.0))
 	forest.max_depth_tiles = 20
 	# Blue Slimes only once a Green Slime has been slain in this world.
