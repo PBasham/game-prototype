@@ -37,6 +37,9 @@ enum Style {
 @export var needs_floor := false
 ## Stops the player (a closed door).
 @export var blocks_movement := false
+## Blocks and back walls can be placed against it (doors): blocks next to it or on top,
+## walls next to it, on top or behind it.
+@export var anchors_building := false
 ## Right click / E swaps it for this object (a door opening or closing).
 @export var toggles_to: StringName = &""
 ## Used instead of toggles_to when the player is on the right (a door then swings open

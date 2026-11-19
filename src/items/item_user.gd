@@ -566,6 +566,8 @@ func _place_targets() -> void:
 func _anchored(t: Vector2i, walls: bool) -> bool:
 	if walls and world.data.get_block(t.x, t.y) > 0:
 		return true
+	if walls and _anchors(t):
+		return true  # behind a door
 	if not walls and world.data.get_wall(t.x, t.y) > 0:
 		return true
 	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
@@ -574,7 +576,15 @@ func _anchored(t: Vector2i, walls: bool) -> bool:
 			return true
 		if walls and world.data.get_wall(t.x + d.x, t.y + d.y) > 0:
 			return true
+		if _anchors(t + d):
+			return true  # next to or on top of a door
 	return false
+
+
+## True if the object at a tile is something to build against (a door).
+func _anchors(t: Vector2i) -> bool:
+	var def := world.object_def_at(t)
+	return def != null and def.anchors_building
 
 
 func _furniture_at(t: Vector2i) -> bool:

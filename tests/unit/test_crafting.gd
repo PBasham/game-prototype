@@ -367,3 +367,22 @@ func test_hover_outline_on_interactables_in_reach() -> void:
 	await wait_seconds(0.2)
 	assert_not_null(w.hover_outline.hovered(), "stick outlined")
 	w.item_user.cursor_override = Vector2.INF
+
+
+func test_build_against_a_door() -> void:
+	var a := _floor_spot(5)
+	assert_true(w.request_place_object(a, w.objects.index_of(&"door")))
+	var u := w.item_user
+	var top := a + Vector2i(0, -8)  # just above the door (a lintel)
+	var side := a + Vector2i(1, -4)  # beside it, mid height, nothing else around
+	for t in [top, side]:
+		assert_eq(w.data.get_block(t.x, t.y), WorldData.AIR)
+		assert_eq(w.data.get_wall(t.x, t.y), WorldData.AIR)
+	assert_true(u._anchored(top, false), "a block on top of the door")
+	assert_true(u._anchored(side, false), "a block next to the door")
+	assert_true(u._anchored(side, true), "a wall next to the door")
+	assert_true(u._anchored(a + Vector2i(0, -4), true), "a wall behind the door")
+	assert_false(u._anchored(a + Vector2i(3, -6), false), "not out in the open")
+	# Opened, it still counts.
+	assert_true(w.request_toggle_object(a))
+	assert_true(u._anchored(top, false))

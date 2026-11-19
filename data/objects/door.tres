@@ -10,6 +10,7 @@ style = 2
 height_tiles = 8
 needs_floor = true
 blocks_movement = true
+anchors_building = true
 toggles_to = &"door_open"
 toggles_to_left = &"door_open_left"
 health = 1.0

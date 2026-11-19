@@ -481,6 +481,7 @@ func _objects() -> Array[ObjectDef]:
 	out[2].light_color = Color(1.0, 0.6, 0.3)
 	out[4].container_slots = 40
 	out[5].blocks_movement = true
+	out[5].anchors_building = true  # build walls and a lintel against it (stays when opened)
 	out[5].toggles_to = &"door_open"
 	out[5].toggles_to_left = &"door_open_left"
 	# Open doors keep the 1x8 footprint (Starbound style): the door swings toward you,
