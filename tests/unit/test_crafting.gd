@@ -172,3 +172,72 @@ func test_mana_costs_and_runs_out() -> void:
 	assert_true(p.spend_mana(1000.0))
 	p.infinite_mana = false
 	assert_false(p.spend_mana(1000.0))
+
+
+## Open ground away from the player (off screen): grass, dirt or stone with air above,
+## no wall or object there, and room for a few neighbors on the same row.
+func _open_ground() -> Vector2i:
+	var feet := w.world_to_tile(w.player.global_position)
+	for dx in range(150, 600):
+		for dy in range(-30, 30):
+			var g := w.wrap_tile(Vector2i(feet.x + dx, feet.y + dy))
+			var ok := true
+			for i in range(-3, 6):
+				var t := g + Vector2i(i, 0)
+				var id := w.blocks.id_of(w.data.get_block(t.x, t.y))
+				if not id in [&"grass", &"dirt", &"stone"] or w.data.get_block(t.x, t.y - 1) != WorldData.AIR \
+						or w.data.get_wall(t.x, t.y - 1) != WorldData.AIR:
+					ok = false
+					break
+			if ok:
+				return g
+	return Vector2i.ZERO
+
+
+func test_loose_pickups_come_back_but_not_crowded_or_indoors() -> void:
+	var plants := w.plants
+	var g := _open_ground()
+	for p in plants._plants.keys():
+		if (plants._plants[p] as PlantLayer.Plant).kind == PlantLayer.Kind.PICKUP:
+			plants._remove(p)
+	assert_true(plants._try_regrow(g, 1.0), "open floor, sure chance: something appears")
+	assert_eq(plants.plant_at(g).kind, PlantLayer.Kind.PICKUP)
+	plants._remove(g)
+	# Crowded: crowd_cap items nearby block it.
+	var near: Array[Vector2i] = []
+	for i in plants.crowd_cap:
+		var t := w.wrap_tile(g + Vector2i(i - 3, 0))
+		if t != g:
+			plants._add(t, PlantLayer.Kind.PICKUP, 1)
+			near.append(t)
+	plants._add(w.wrap_tile(g + Vector2i(5, 0)), PlantLayer.Kind.PICKUP, 1)
+	near.append(w.wrap_tile(g + Vector2i(5, 0)))
+	for i in 20:
+		assert_false(plants._try_regrow(g, 1.0), "crowded")
+	for t in near:
+		plants._remove(t)
+	# Indoors: a background wall behind the spot.
+	var above := g + Vector2i.UP
+	w.data.set_wall(above.x, above.y, w.walls.index_of(&"wood_wall"))
+	assert_false(plants._try_regrow(g, 1.0), "not in houses")
+
+
+func test_pickups_regrow_off_screen_over_days() -> void:
+	var plants := w.plants
+	await wait_physics_frames(5)
+	assert_gt(plants.floor_tile_count(), 0)
+	for p in plants._plants.keys():
+		if (plants._plants[p] as PlantLayer.Plant).kind == PlantLayer.Kind.PICKUP:
+			plants._remove(p)
+	var before := plants.regrown_total
+	plants.regrow_for_days(30.0)
+	assert_gt(plants.regrown_total, before, "30 days bring some back")
+	var screen := plants._screen_tiles()
+	assert_gt(screen.size.x, 0, "a screen rect exists")
+	for c: Vector2i in plants._floor_spots:
+		var spots: PackedInt32Array = plants._floor_spots[c]
+		for i in range(0, spots.size(), 2):
+			var t := c * ChunkData.SIZE + Vector2i(spots[i], spots[i + 1])
+			if screen.has_point(t):
+				var p: PlantLayer.Plant = plants.plant_at(w.wrap_tile(t))
+				assert_true(p == null or p.kind != PlantLayer.Kind.PICKUP, "nothing appears on screen")

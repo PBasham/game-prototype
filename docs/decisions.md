@@ -64,6 +64,12 @@ Newest first. Each entry: what was decided, why, and what it affects.
   (beyond the spawn distance) so they come to you.
 - **More sticks:** bare grass gets pickups too (Patrick saw none in a new world).
 - **Loose pickups everywhere:** any exposed grass, dirt or stone can have one, by place: sticks only on surface grass, rocks and flint on surface ground and cave floors at any depth (Patrick).
+- **Loose pickups come back:** random ticks over the loaded area (about one item per 32
+  floor tiles every 2.5 days), never on screen or indoors, with a crowding brake and up to
+  3 days of catch-up for areas you were away from. Chosen over a per-chunk timer so items
+  don't restock evenly chunk by chunk (Patrick).
+- **Farming (later phase):** crops grow on fixed timers (3 days means 3 days), paused
+  when a condition fails (not watered). Not random ticks (Patrick).
 - **Second enemy:** Blue Slime, rare (about 11%), tougher, and only after the first Green
   Slime is slain in the world. Slimes are fine (many games use them).
 - **Spawn conditions:** per entry, all must be met. First kind: kills of an enemy in this

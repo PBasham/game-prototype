@@ -44,6 +44,30 @@ changed are re-seeded when a world loads, so new settings show up there.
 | `cave_flint_share` | 0.25 | Of those, the share that's flint |
 | `sticks_min`, `sticks_max` | 1, 3 | Sticks a felled tree drops |
 
+**They come back over time** (random ticks, like grass spreading). A few times a second
+the game picks random floor tiles in the loaded area and gives each a small chance to get
+a new item, by the same rules as above (sticks only on surface grass). New items are
+random, not fixed per tile, and are saved like anything else. Rules:
+
+- Never on screen: tiles you can see (plus 2 tiles) are skipped.
+- Never indoors: no item on a tile with a background wall or furniture above it.
+- Crowding brake: the chance drops with every item within `crowd_radius` tiles and is
+  zero at `crowd_cap`, so floors never fill up.
+- Areas you were away from catch up when they load again, up to `regrow_catch_up_days`.
+  Sleeping counts too.
+
+| Export | Default | What it does |
+| --- | --- | --- |
+| `regrow_days_per_item` | 2.5 | In-game days for one new item per `regrow_floor_tiles` of open floor, on average |
+| `regrow_floor_tiles` | 32 | About a chunk's width of ground |
+| `cave_regrow_scale` | 0.5 | Caves come back at this fraction of the surface rate |
+| `crowd_radius`, `crowd_cap` | 16, 6 | The crowding brake |
+| `regrow_checks_per_second` | 200 | Random tiles checked per second; only changes how evenly it trickles in, not the rate |
+| `regrow_catch_up_days` | 3 | Most time an area catches up on when it loads again |
+
+Console: `pickups` counts loose items and floor tiles in the loaded area and how many came
+back this session; `pickups <days>` lets that many days pass for them (off screen).
+
 Their sprites are sized like the thing (stick 12x5, rock 9x7, flint 7x6 px), from
 `tools/make_item_art.gd`.
 

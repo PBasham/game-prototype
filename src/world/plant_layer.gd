@@ -60,6 +60,24 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 ## has a rock or flint. No sticks underground.
 @export_range(0.0, 1.0) var cave_pickup_chance := 0.03
 @export_range(0.0, 1.0) var cave_flint_share := 0.25
+@export_group("Loose pickups coming back")
+## New sticks, rocks and flint appear on random floor tiles over time. On average one
+## new item per `regrow_floor_tiles` tiles of open floor (about a chunk's width of
+## ground) every this many in-game days.
+@export var regrow_days_per_item := 2.5
+@export var regrow_floor_tiles := 32
+## Caves get items back at this fraction of the surface rate.
+@export_range(0.0, 1.0) var cave_regrow_scale := 0.5
+## Crowding brake: the chance drops with every item already within `crowd_radius`
+## tiles and is zero at `crowd_cap`, so floors never fill up.
+@export var crowd_radius := 16
+@export var crowd_cap := 6
+## Random floor tiles checked per second (over the loaded area). More checks don't
+## change the rate, only how evenly it trickles in.
+@export var regrow_checks_per_second := 200.0
+## A chunk that comes back into view catches up on the time it was away, up to this
+## many in-game days.
+@export var regrow_catch_up_days := 3.0
 ## Sticks a felled tree drops (random in this range).
 @export var sticks_min := 1
 @export var sticks_max := 3
@@ -106,6 +124,17 @@ var _dirty: Dictionary[Vector2i, bool] = {}
 var _shown: Dictionary[Vector2i, Vector2i] = {}
 var _saplings: Array[Vector2i] = []
 var _grass_budget := 0.0
+var _regrow_budget := 0.0
+## Seconds the world has run (this session), for catch-up.
+var _now := 0.0
+## Shown chunk (unwrapped) -> floor tiles there (flat local x, y pairs).
+var _floor_spots: Dictionary[Vector2i, PackedInt32Array] = {}
+var _floor_total := 0
+## Wrapped chunk -> _now when it was last hidden.
+var _last_seen: Dictionary[Vector2i, float] = {}
+var _stone_id := -1
+## Loose pickups that came back over time (dev console `pickups`).
+var regrown_total := 0
 var _grass_id := -1
 var _dirt_id := -1
 var _trees: Array[Texture2D] = []
@@ -125,6 +154,7 @@ func setup(w: World) -> void:
 	z_index = -1
 	_grass_id = world.blocks.index_of(&"grass")
 	_dirt_id = world.blocks.index_of(&"dirt")
+	_stone_id = world.blocks.index_of(&"stone")
 	for kind: String in ["green", "olive", "teal", "gold"]:
 		for i in 3:
 			_trees.append(load("res://assets/trees/pine_%s_%d.png" % [kind, i]) as Texture2D)
@@ -290,13 +320,27 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array, floors: PackedInt32Ar
 	_shown[c] = wc
 	for g: Vector2i in _by_chunk.get(wc, []):
 		_make_node(g, _plants[g], c)
+	var mine := PackedInt32Array()
+	for i in range(0, spots.size(), 4):
+		mine.append_array([spots[i], spots[i + 1]])
+	for i in range(0, floors.size(), 3):
+		mine.append_array([floors[i], floors[i + 1]])
+	_floor_spots[c] = mine
+	_floor_total += mine.size() / 2
+	if _last_seen.has(wc):
+		_catch_up(c, minf(_now - _last_seen[wc], _days(regrow_catch_up_days)))
+		_last_seen.erase(wc)
 
 
 func _on_chunk_hidden(c: Vector2i) -> void:
 	var wc: Vector2i = _shown.get(c, NONE)
 	_shown.erase(c)
+	if _floor_spots.has(c):
+		_floor_total -= _floor_spots[c].size() / 2
+		_floor_spots.erase(c)
 	if wc == NONE:
 		return
+	_last_seen[wc] = _now
 	for g: Vector2i in _by_chunk.get(wc, []):
 		var p: Plant = _plants[g]
 		if p.node:
@@ -419,6 +463,8 @@ func nearest_pickup(feet: Vector2i, r: int) -> Vector2i:
 # --- per frame -----------------------------------------------------------------------
 
 func _process(delta: float) -> void:
+	_now += delta
+	_regrow_floors(delta)
 	_grow(delta)
 	_regrow(delta)
 	_grow_bushes(delta)
@@ -445,6 +491,9 @@ func _grow(delta: float) -> void:
 
 ## Time passes for every plant at once (sleeping through the night).
 func advance(seconds: float) -> void:
+	_now += seconds
+	for c: Vector2i in _floor_spots.keys():
+		_catch_up(c, minf(seconds, _days(regrow_catch_up_days)))
 	_grow(seconds)
 	_regrow(seconds)
 	_grow_bushes(seconds)
@@ -493,6 +542,138 @@ func grow_all() -> int:
 	for g in _young:
 		_plants[g].health = 0.001  # full grown next frame
 	return _saplings.size() + _regrowing.size() + _young.size()
+
+
+# --- loose pickups coming back ---------------------------------------------------------
+
+## Chance per second that one open floor tile gets a new item (surface rate).
+func _regrow_rate() -> float:
+	return 1.0 / (maxf(1.0, float(regrow_floor_tiles)) * maxf(0.001, _days(regrow_days_per_item)))
+
+
+## Random ticks: a few random floor tiles of the loaded area per frame, each with the
+## chance that gives regrow_days_per_item on average.
+func _regrow_floors(delta: float) -> void:
+	if not Game.is_authority() or _floor_total <= 0 or regrow_checks_per_second <= 0.0:
+		return
+	_regrow_budget += regrow_checks_per_second * delta
+	var n := int(_regrow_budget)
+	_regrow_budget -= n
+	if n <= 0:
+		return
+	# Each floor tile is checked checks/total times a second; this chance per check
+	# makes that come out to the rate.
+	var chance := _regrow_rate() * _floor_total / regrow_checks_per_second
+	var screen := _screen_tiles()
+	for i in n:
+		var pick := randi() % _floor_total
+		for c: Vector2i in _floor_spots:
+			var spots := _floor_spots[c]
+			var count := spots.size() / 2
+			if pick >= count:
+				pick -= count
+				continue
+			var t := c * SIZE + Vector2i(spots[pick * 2], spots[pick * 2 + 1])
+			if not screen.has_point(t):
+				_try_regrow(t, chance)
+			break
+
+
+## A chunk was away (or the world slept) for `seconds`: each of its floor tiles rolls
+## for that time at once.
+func _catch_up(c: Vector2i, seconds: float) -> void:
+	if not Game.is_authority() or seconds <= 0.0 or not _floor_spots.has(c):
+		return
+	var chance := _regrow_rate() * seconds
+	var screen := _screen_tiles()
+	var spots := _floor_spots[c]
+	for i in range(0, spots.size(), 2):
+		var t := c * SIZE + Vector2i(spots[i], spots[i + 1])
+		if not screen.has_point(t):
+			_try_regrow(t, chance)
+
+
+## Dev console: `days` in-game days pass for loose pickups in the loaded area (catch-up
+## cap ignored).
+func regrow_for_days(days: float) -> void:
+	for c: Vector2i in _floor_spots.keys():
+		_catch_up(c, _days(days))
+
+
+## Loose pickups in shown chunks.
+func loaded_pickup_count() -> int:
+	var n := 0
+	for c: Vector2i in _shown:
+		for g: Vector2i in _by_chunk.get(_shown[c], []):
+			if _plants[g].kind == Kind.PICKUP:
+				n += 1
+	return n
+
+
+func floor_tile_count() -> int:
+	return _floor_total
+
+
+## Rolls one floor tile (unwrapped ground tile): maybe a stick, rock or flint appears.
+func _try_regrow(t: Vector2i, chance: float) -> bool:
+	var g := world.wrap_tile(t)
+	if _plants.has(g):
+		return false
+	var id := world.data.get_block(g.x, g.y)
+	if id != _grass_id and id != _dirt_id and id != _stone_id:
+		return false
+	var above := g + Vector2i.UP
+	if world.data.get_block(above.x, above.y) != WorldData.AIR:
+		return false
+	# Not in houses: nothing on tiles with a background wall or furniture.
+	if world.data.get_wall(above.x, above.y) != WorldData.AIR or world.data.get_object(above.x, above.y) != WorldData.AIR:
+		return false
+	var cave := world.generator != null and g.y > world.generator.surface_at(g.x) + 3
+	if cave:
+		chance *= cave_regrow_scale
+	if randf() >= chance:
+		return false
+	var crowd := _pickups_near(g)
+	if crowd >= crowd_cap or randf() >= 1.0 - float(crowd) / float(maxi(1, crowd_cap)):
+		return false
+	var variant: int
+	if cave:
+		variant = _random_stone(cave_flint_share)
+	elif id == _grass_id:
+		var h := randf()
+		variant = 2 if h < flint_share else (0 if h < flint_share + grass_stick_share else 1)
+	else:
+		variant = _random_stone(ground_flint_share)
+	_add(g, Kind.PICKUP, variant)
+	regrown_total += 1
+	return true
+
+
+func _random_stone(flint: float) -> int:
+	return 2 if randf() < flint else 1
+
+
+## Loose pickups within crowd_radius tiles of g.
+func _pickups_near(g: Vector2i) -> int:
+	var n := 0
+	for dy in range(-crowd_radius, crowd_radius + 1):
+		for dx in range(-crowd_radius, crowd_radius + 1):
+			var p: Plant = _plants.get(world.wrap_tile(g + Vector2i(dx, dy)))
+			if p and p.kind == Kind.PICKUP:
+				n += 1
+	return n
+
+
+## The tiles on screen (plus a margin), unwrapped like the shown chunks. Nothing
+## appears where the player is looking.
+func _screen_tiles() -> Rect2i:
+	var vp := get_viewport()
+	if vp == null:
+		return Rect2i()
+	var r := vp.get_canvas_transform().affine_inverse() * vp.get_visible_rect()
+	var a := Vector2i(floori(r.position.x / TILE), floori(r.position.y / TILE)) - Vector2i(2, 2)
+	var b := Vector2i(ceili(r.end.x / TILE), ceili(r.end.y / TILE)) + Vector2i(3, 3)
+	return Rect2i(a, b - a)
 
 
 func _clear_above(g: Vector2i) -> bool:
