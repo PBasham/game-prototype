@@ -4,16 +4,17 @@ extends RefCounted
 ## run on a worker thread. LightMap captures the chunks' tile arrays on the main thread
 ## (copy-on-write, so later edits don't touch this copy) and uploads the result.
 ##
-## Open sky (no block, no wall) is fully lit. Light fades by `open_falloff` per tile
-## through air and walls. Sunlight soaks down into the ground by `solid_falloff` per
-## block, but going sideways or up into a block costs `solid_side_falloff`, and coming
-## out of a block into an enclosed space (a tile with a background wall: a room, a
-## cave) costs `indoors_falloff`. So the sun lights the top of the ground but doesn't
+## Like Terraria's: light is multiplied by `air_decay` for every tile it crosses through
+## air and walls and by `solid_decay` through blocks, so it fades smoothly and dies a few
+## blocks into the ground. Open sky (no block, no wall) is fully lit. Coming out of a
+## block into an enclosed space (a tile with a background wall: a room, a cave) keeps
+## only `indoors_factor` of it, so the sun lights the top of the ground but doesn't
 ## shine through a house's walls or roof. Objects that block movement (closed doors)
-## block light like blocks.
+## block light like blocks. Nothing lit = black (plus `ambient`).
 ## Light sources (torches: tile objects with a light_radius) add colored light that
-## fades to nothing at their radius through air, faster through blocks. The result is
-## RGB: white sky light plus the sources' colors.
+## fades the same way, scaled so it's down to about a tenth at its radius through air;
+## blocks eat it `source_solid_factor` times faster. The result is RGB: white sky light
+## plus the sources' colors.
 
 const SIZE := ChunkData.SIZE
 
@@ -27,18 +28,17 @@ var objects: Array[PackedInt32Array] = []
 ## Per object id: r, g, b, radius (radius 0 = gives no light).
 var emitters := PackedFloat32Array()
 ## Fraction of a source's reach used up per tile through solid blocks, relative to air.
-var source_solid_factor := 10.0
+var source_solid_factor := 6.0
 ## Moving light sources: [tile (relative to rect), radius, color].
 var extra: Array[Array] = []
 ## 1 where a block id is solid (index = block id).
 var solid := PackedByteArray()
-var ambient := 0.16
+var ambient := 0.0
 ## Sky light color and brightness (WorldClock.sun_light()): multiplies sunlight.
 var sky := Color.WHITE
-var open_falloff := 0.06
-var solid_falloff := 0.1
-var solid_side_falloff := 0.5
-var indoors_falloff := 1.0
+var air_decay := 0.965
+var solid_decay := 0.8
+var indoors_factor := 0.0
 ## Per object id that blocks light (closed doors): its footprint width and height in
 ## tiles (0 = doesn't block). The id is only stored on the object's anchor (bottom-left)
 ## tile; the rest of the footprint is "filler", so the whole footprint is marked here.
@@ -101,9 +101,12 @@ func run() -> void:
 			if walled[i] == 0:
 				light[i] = 0.0  # a closed door isn't open sky
 
-	# Sweep passes (left/up, then right/down), twice: close to a full flood fill. The
-	# cost of moving into a tile depends on direction (down into a block is cheap, sideways
-	# or up is not) and on leaving a block into a walled space.
+	# Sweep passes (left/up, then right/down), twice: close to a full flood fill. Each
+	# step multiplies by the decay of the tile it moves into.
+	var mult := PackedFloat32Array()
+	mult.resize(w * h)
+	for i in w * h:
+		mult[i] = solid_decay if solid_at[i] == 1 else air_decay
 	for _round in 2:
 		for y in h:
 			var row := y * w
@@ -111,9 +114,9 @@ func run() -> void:
 				var i := row + x
 				var v := light[i]
 				if x > 0:
-					v = maxf(v, light[i - 1] - _cost(solid_at, walled, i, i - 1, false))
+					v = maxf(v, light[i - 1] * _step(mult, solid_at, walled, i, i - 1))
 				if y > 0:
-					v = maxf(v, light[i - w] - _cost(solid_at, walled, i, i - w, true))
+					v = maxf(v, light[i - w] * _step(mult, solid_at, walled, i, i - w))
 				light[i] = v
 		for y in range(h - 1, -1, -1):
 			var row := y * w
@@ -121,9 +124,9 @@ func run() -> void:
 				var i := row + x
 				var v := light[i]
 				if x < w - 1:
-					v = maxf(v, light[i + 1] - _cost(solid_at, walled, i, i + 1, false))
+					v = maxf(v, light[i + 1] * _step(mult, solid_at, walled, i, i + 1))
 				if y < h - 1:
-					v = maxf(v, light[i + w] - _cost(solid_at, walled, i, i + w, false))
+					v = maxf(v, light[i + w] * _step(mult, solid_at, walled, i, i + w))
 				light[i] = v
 
 	var colored := _sources(w, h, cols, solid_at)
@@ -135,27 +138,24 @@ func run() -> void:
 			if not colored.is_empty():
 				l += (colored[ch] as PackedFloat32Array)[i]
 			l = clampf(l, 0.0, 1.0)
-			l = l * l * (3.0 - 2.0 * l)
 			bytes[i * 3 + ch] = int((ambient + (1.0 - ambient) * l) * 255.0 + 0.5)
 	usec = Time.get_ticks_usec() - t
 
 
-## Sunlight cost of moving from tile `from` into tile `to` (`down`: from above).
-func _cost(solid_at: PackedByteArray, walled: PackedByteArray, to: int, from: int, down: bool) -> float:
-	if solid_at[to] == 1:
-		return solid_falloff if down else solid_side_falloff
-	if walled[to] == 1 and solid_at[from] == 1:
-		return indoors_falloff
-	return open_falloff
+## How much sunlight survives moving from tile `from` into tile `to`.
+func _step(mult: PackedFloat32Array, solid_at: PackedByteArray, walled: PackedByteArray, to: int, from: int) -> float:
+	if walled[to] == 1 and solid_at[to] == 0 and solid_at[from] == 1:
+		return indoors_factor * mult[to]
+	return mult[to]
 
 
 ## Light from sources, one array per color channel (empty if there are none). Each
-## source seeds its radius at its tile and loses 1 per tile through air
-## (source_solid_factor per tile through solid blocks), so it reaches its radius; the
-## brightness that leaves is then tinted by the source's color. Sources are grouped by
-## color (one sweep per color), so mixed colors blend instead of splitting into rings.
+## source starts at full brightness and is multiplied per tile by a decay that leaves
+## about a tenth at its radius through air (that decay to the power source_solid_factor
+## through solid blocks), then tinted by the source's color. Sources are grouped by
+## radius and color (one sweep each), so mixed colors blend instead of splitting.
 func _sources(w: int, h: int, cols: int, solid_at: PackedByteArray) -> Array:
-	var by_color: Dictionary[Color, Array] = {}  # color -> [x, y, radius]
+	var groups: Dictionary[Vector4, Array] = {}  # (r, g, b, radius) -> tiles
 	for k in objects.size():
 		var co := objects[k]
 		if co.is_empty():
@@ -164,25 +164,21 @@ func _sources(w: int, h: int, cols: int, solid_at: PackedByteArray) -> Array:
 		for li in co.size():
 			var id := co[li]
 			if id > 0 and id * 4 + 3 < emitters.size() and emitters[id * 4 + 3] > 0.0:
-				var c := Color(emitters[id * 4], emitters[id * 4 + 1], emitters[id * 4 + 2])
-				if not by_color.has(c):
-					by_color[c] = []
-				by_color[c].append(Vector3(base.x + li % SIZE, base.y + li / SIZE, emitters[id * 4 + 3]))
+				var key := Vector4(emitters[id * 4], emitters[id * 4 + 1], emitters[id * 4 + 2], emitters[id * 4 + 3])
+				if not groups.has(key):
+					groups[key] = []
+				groups[key].append(base + Vector2i(li % SIZE, li / SIZE))
 	for l: Array in extra:
 		var t: Vector2i = l[0]
 		if t.x < 0 or t.y < 0 or t.x >= w or t.y >= h:
 			continue
 		var c: Color = l[2]
-		if not by_color.has(c):
-			by_color[c] = []
-		by_color[c].append(Vector3(t.x, t.y, float(l[1])))
-	if by_color.is_empty():
+		var key := Vector4(c.r, c.g, c.b, float(l[1]))
+		if not groups.has(key):
+			groups[key] = []
+		groups[key].append(t)
+	if groups.is_empty():
 		return []
-	# Cost per tile: 1 through air, more through solid blocks and closed doors.
-	var cost := PackedFloat32Array()
-	cost.resize(w * h)
-	for i in w * h:
-		cost[i] = source_solid_factor if solid_at[i] == 1 else 1.0
 	# (Packed arrays are values: fill local ones, then hand them out.)
 	var r := PackedFloat32Array()
 	var g := PackedFloat32Array()
@@ -190,48 +186,50 @@ func _sources(w: int, h: int, cols: int, solid_at: PackedByteArray) -> Array:
 	r.resize(w * h)
 	g.resize(w * h)
 	b2.resize(w * h)
-	for c: Color in by_color:
-		var reach := PackedFloat32Array()
-		reach.resize(w * h)
-		var max_r := 1.0
-		for sd: Vector3 in by_color[c]:
-			var i := int(sd.y) * w + int(sd.x)
-			reach[i] = maxf(reach[i], sd.z)
-			max_r = maxf(max_r, sd.z)
-		_sweep(reach, cost, w, h)
+	var mult := PackedFloat32Array()
+	mult.resize(w * h)
+	for key: Vector4 in groups:
+		var air := pow(0.1, 1.0 / maxf(key.w, 1.0))
+		var solid_m := pow(air, source_solid_factor)
 		for i in w * h:
-			if reach[i] <= 0.0:
+			mult[i] = solid_m if solid_at[i] == 1 else air
+		var v := PackedFloat32Array()
+		v.resize(w * h)
+		for t: Vector2i in groups[key]:
+			v[t.y * w + t.x] = 1.0
+		_sweep(v, mult, w, h)
+		for i in w * h:
+			var bright := v[i]
+			if bright <= 0.01:
 				continue
-			# Bright for the inner half, then fading out to the edge of the radius.
-			var b := clampf(reach[i] / (max_r * 0.55), 0.0, 1.0)
-			r[i] += b * c.r
-			g[i] += b * c.g
-			b2[i] += b * c.b
+			r[i] += bright * key.x
+			g[i] += bright * key.y
+			b2[i] += bright * key.z
 	return [r, g, b2]
 
 
-## Two-pass distance-style sweep (like the sky light), twice.
-func _sweep(v: PackedFloat32Array, cost: PackedFloat32Array, w: int, h: int) -> void:
+## Two-pass multiplicative sweep (like the sky light), twice.
+func _sweep(v: PackedFloat32Array, mult: PackedFloat32Array, w: int, h: int) -> void:
 	for _round in 2:
 		for y in h:
 			var row := y * w
 			for x in w:
 				var i := row + x
-				var c := cost[i]
+				var m := mult[i]
 				var best := v[i]
 				if x > 0:
-					best = maxf(best, v[i - 1] - c)
+					best = maxf(best, v[i - 1] * m)
 				if y > 0:
-					best = maxf(best, v[i - w] - c)
+					best = maxf(best, v[i - w] * m)
 				v[i] = best
 		for y in range(h - 1, -1, -1):
 			var row := y * w
 			for x in range(w - 1, -1, -1):
 				var i := row + x
-				var c := cost[i]
+				var m := mult[i]
 				var best := v[i]
 				if x < w - 1:
-					best = maxf(best, v[i + 1] - c)
+					best = maxf(best, v[i + 1] * m)
 				if y < h - 1:
-					best = maxf(best, v[i + w] - c)
+					best = maxf(best, v[i + w] * m)
 				v[i] = best

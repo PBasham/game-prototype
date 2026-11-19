@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ForageData" format=3]
+
+[ext_resource type="Script" path="res://src/world/forage_data.gd" id="1_1hpji"]
+[ext_resource type="Texture2D" path="res://assets/decor/pickup_red_cap.png" id="2_80mee"]
+
+[resource]
+script = ExtResource("1_1hpji")
+item = &"red_cap"
+texture = ExtResource("2_80mee")
+surface_grass_weight = 4.0
+cave_weight = 6.0
+id = &"red_cap"
+display_name = "Red Cap"
+description = "Lying on the ground. Picking it up gives 1 Red Cap."

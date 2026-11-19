@@ -15,7 +15,7 @@ extends SceneTree
 ##   --scale=N         upscale the image by N with nearest filtering (default 1)
 ##   --out=PATH        output file (default user://preview_<seed>.png)
 ##
-## Colors: sky, grass, dirt, stone, copper (orange), caves (dark), cave walls (darker
+## Colors: sky, grass, dirt, stone, copper (orange), iron (pale grey), caves (dark), cave walls (darker
 ## brown/gray), tree trunks (dark green ticks above the surface), flowers (pink dots).
 
 const COLORS := {
@@ -23,6 +23,8 @@ const COLORS := {
 	&"dirt": Color("7a5233"),
 	&"stone": Color("6b6b70"),
 	&"copper_ore": Color("e07a2c"),
+	&"iron_ore": Color("c8ccd8"),
+	&"log": Color("6a4a2a"),
 	&"wood_planks": Color("8a6a3a"),
 	&"wood_platform": Color("8a6a3a"),
 	&"rope": Color("c8b080"),

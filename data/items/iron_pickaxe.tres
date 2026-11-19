@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_7coen"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_vxhn2"]
+[ext_resource type="Texture2D" path="res://assets/items/held/iron_pickaxe.png" id="3_kcctd"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/iron_pickaxe.png" id="4_vll2x"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_1tjub"]
+
+[sub_resource type="Resource" id="Resource_ipy3i"]
+script = ExtResource("2_vxhn2")
+id = &"iron_pickaxe"
+texture = ExtResource("3_kcctd")
+type = &"tool"
+grip = Vector2(3, 12)
+
+[resource]
+script = ExtResource("5_1tjub")
+kind = 3
+icon = ExtResource("4_vll2x")
+max_stack = 1
+held = SubResource("Resource_ipy3i")
+mining_damage = 35.0
+mining_area = 2
+reach_tiles = 11.0
+mining_power = 50
+id = &"iron_pickaxe"
+display_name = "Iron Pickaxe"
+description = "Mines a 2x2 area per swing (Ctrl + wheel: 1x1). Faster and stronger than copper."

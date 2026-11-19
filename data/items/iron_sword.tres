@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_1adq7"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_qnia6"]
+[ext_resource type="Texture2D" path="res://assets/items/held/iron_sword.png" id="3_c48jb"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/iron_sword.png" id="4_7md4l"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_t3w4i"]
+
+[sub_resource type="Resource" id="Resource_3jnil"]
+script = ExtResource("2_qnia6")
+id = &"iron_sword"
+texture = ExtResource("3_c48jb")
+type = &"sword"
+grip = Vector2(2, 13)
+
+[resource]
+script = ExtResource("5_t3w4i")
+kind = 6
+icon = ExtResource("4_7md4l")
+max_stack = 1
+held = SubResource("Resource_3jnil")
+melee_damage = 18.0
+melee_reach = 4.75
+knockback = 15.0
+id = &"iron_sword"
+display_name = "Iron Sword"
+description = "Heavier and sharper than copper."

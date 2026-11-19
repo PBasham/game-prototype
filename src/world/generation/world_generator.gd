@@ -32,7 +32,7 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	width = world_width
 	height = world_height
 	seed = world_seed
-	for id: StringName in [&"dirt", &"grass", &"stone", &"copper_ore", &"wood_planks", &"wood_platform", &"rope"]:
+	for id: StringName in [&"dirt", &"grass", &"stone", &"copper_ore", &"iron_ore", &"wood_planks", &"wood_platform", &"rope"]:
 		_b[id] = tiles.index_of(id)
 	for id: StringName in [&"dirt_wall", &"stone_wall", &"wood_wall"]:
 		_w[id] = walls.index_of(id)

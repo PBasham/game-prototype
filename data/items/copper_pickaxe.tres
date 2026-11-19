@@ -20,6 +20,7 @@ icon = ExtResource("4_coouj")
 max_stack = 1
 held = SubResource("Resource_01m62")
 mining_damage = 25.0
+mining_power = 40
 mining_area = 2
 id = &"copper_pickaxe"
 display_name = "Copper Pickaxe"

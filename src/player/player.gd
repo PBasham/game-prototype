@@ -690,6 +690,7 @@ func has_mana(amount: float) -> bool:
 
 func _update_mana(delta: float) -> void:
 	_tick_buffs(delta)
+	_update_aura(delta)
 	_update_ritual(delta)
 	# A concentration spell drains while it's on; it ends when mana runs out.
 	if concentration and concentration.effect == &"mend":
@@ -831,7 +832,7 @@ func _update_health(delta: float) -> void:
 		return
 	_starve_timer = 0.0
 	if _since_hurt >= health_regen_delay:
-		heal(health_regen * delta)
+		heal((health_regen + aura_regen) * delta)
 
 
 ## Stops the current use (a beam that ran out of mana).
@@ -1426,6 +1427,40 @@ func add_buff(spell: SpellData) -> void:
 	buffs[spell.effect] = spell.duration
 	buff_spells[spell.effect] = spell
 	buff_started.emit(spell)
+
+
+## Extra health per second from an aura you're standing in (a campfire's Cozy).
+var aura_regen := 0.0
+var _aura_check := 0.0
+## Aura buff entries for the HUD (object id -> a SpellData that only carries the name,
+## description and icon).
+var _aura_buffs: Dictionary[StringName, SpellData] = {}
+
+
+## A few times a second: standing near an object with an aura (a campfire) keeps its
+## buff on. It shows in the buff bar without a timer and ends shortly after you leave.
+func _update_aura(delta: float) -> void:
+	_aura_check -= delta
+	if _aura_check > 0.0 or world == null:
+		return
+	_aura_check = 0.25
+	var def := world.aura_near(global_position + Vector2(0, -24))
+	aura_regen = def.aura_health_regen if def else 0.0
+	if def == null:
+		return
+	var key := StringName("aura_" + String(def.id))
+	if not _aura_buffs.has(key):
+		var s := SpellData.new()
+		s.id = key
+		s.effect = key
+		s.display_name = def.aura_name
+		s.description = def.aura_description
+		var item := ItemData.find(def.drop_item)
+		s.icon = item.icon if item else null
+		s.duration = 0.0  # no timer
+		_aura_buffs[key] = s
+	buffs[key] = 0.6
+	buff_spells[key] = _aura_buffs[key]
 
 
 func has_buff(effect: StringName) -> bool:

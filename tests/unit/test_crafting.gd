@@ -108,7 +108,7 @@ func test_stations_open_their_recipes() -> void:
 	var names: Array[StringName] = []
 	for r in w.hud.recipes():
 		names.append(r.id)
-	assert_eq(names, [&"copper_bar"] as Array[StringName], "the furnace's list")
+	assert_eq(names, [&"copper_bar", &"iron_bar"] as Array[StringName], "the furnace's list")
 	w.character.inventory.add(&"copper_ore", 7)
 	var before := w.character.inventory.count_of(&"copper_bar")
 	assert_eq(w.hud.craft(w.hud.recipes()[0], 10), 2, "7 ore makes 2 bars")
@@ -217,10 +217,13 @@ func _forage(id: StringName) -> ForageData:
 
 func test_forage_types_are_data_and_old_saves_move_over() -> void:
 	var f := w.forage
-	assert_eq(f.defs.size(), 2)
-	assert_eq(f._pick(ChunkBuildJob.FLOOR_CAVE, 0.0).id, &"rock", "sorted by id: rock, stick")
-	for i in 50:
+	assert_eq(f.defs.size(), 6)
+	assert_eq(f._pick(ChunkBuildJob.FLOOR_CAVE, 0.0).id, &"duskcap", "sorted by id")
+	for i in 200:
 		assert_ne(f._pick(ChunkBuildJob.FLOOR_CAVE, randf()).id, &"stick", "no sticks in caves")
+		var surface := f._pick(ChunkBuildJob.FLOOR_GRASS, randf()).id
+		assert_false(surface in [&"duskcap", &"glowcap"], "purple and glowing ones only underground")
+	assert_gt((Registry.get_def(&"forage", &"glowcap") as ForageData).light_radius, 0.0, "the glowcap glows")
 	# A pre-Forage save: plants held the sticks, rocks and flint.
 	var g := w.wrap_tile(_floor_spot(-6) + Vector2i.DOWN)
 	var wc := f._chunk_of(g)

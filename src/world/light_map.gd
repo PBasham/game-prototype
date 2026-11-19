@@ -2,25 +2,28 @@ class_name LightMap
 extends Sprite2D
 ## Tile-level lighting over the loaded area, drawn as a smooth multiply overlay.
 ##
-## Open sky (no block, no background wall) is fully lit. Light fades by `open_falloff`
-## per tile through air and walls and by `solid_falloff` per tile through blocks, so
-## sunlight soaks a few blocks into the ground and caves get dark. `ambient` keeps the
-## darkest areas faintly visible. Recomputed (on a worker thread, see LightJob) when
+## Like Terraria's: open sky (no block, no background wall) is fully lit, and light is
+## multiplied by `air_decay` per tile through air and walls and by `solid_decay` per
+## tile through blocks, so sunlight dies a few blocks into the ground and caves with no
+## light are black. Terraria's numbers are 0.91 and 0.56 per tile, but its tiles are
+## bigger next to the player (3 tall vs our 8), so ours are those to the power 3/8. Recomputed (on a worker thread, see LightJob) when
 ## chunks load or a block changes.
 ## Light sources (tile objects with a light_radius, like torches, and moving ones like
 ## the Light Orb, World.dynamic_lights) add colored light, so the overlay is RGB.
 
-@export var ambient := 0.16
-@export var open_falloff := 0.06
-## Sunlight lost per block going down into the ground (how far the surface soaks).
-@export var solid_falloff := 0.1
-## Light lost going sideways or up into a block (walls and roofs stop sunlight).
-@export var solid_side_falloff := 0.5
-## Light lost coming out of a block into a walled space (a room or cave): 1 = none.
-@export var indoors_falloff := 1.0
-## Light sources lose this many times more reach per tile through solid blocks than
-## through air.
-@export var source_solid_factor := 10.0
+## Brightness everything gets even with no light (0 = unlit caves are black).
+@export_range(0.0, 1.0) var ambient := 0.0
+## Share of light kept per tile through air and walls (Terraria 0.91 per its tile).
+@export_range(0.5, 1.0) var air_decay := 0.965
+## Share kept per tile through blocks (Terraria 0.56): sunlight lights about 3 blocks
+## down well and is gone by about 10.
+@export_range(0.0, 1.0) var solid_decay := 0.8
+## Share of light kept coming out of a block into a walled space (a room or a cave):
+## 0 = none, so the sun doesn't shine through a roof into a house.
+@export_range(0.0, 1.0) var indoors_factor := 0.0
+## Light sources fade this many times faster through blocks than through air
+## (Terraria's torch: about 42 tiles of air vs 7 of blocks).
+@export var source_solid_factor := 6.0
 ## Recompute when the sky light (day and night) changes by more than this.
 @export var sky_change := 0.012
 ## Minimum seconds between recomputes.
@@ -108,10 +111,9 @@ func _make_job() -> LightJob:
 	job.ambient = ambient
 	_last_sky = _sky()
 	job.sky = _last_sky
-	job.open_falloff = open_falloff
-	job.solid_falloff = solid_falloff
-	job.solid_side_falloff = solid_side_falloff
-	job.indoors_falloff = indoors_falloff
+	job.air_decay = air_decay
+	job.solid_decay = solid_decay
+	job.indoors_factor = indoors_factor
 	job.object_solid.resize(world.objects.size())
 	job.object_h.resize(world.objects.size())
 	for id in range(1, world.objects.size()):

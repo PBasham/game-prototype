@@ -23,6 +23,9 @@ enum Collision {
 ## Damage it takes to break. A copper pickaxe does 25 per hit, so 50 = two hits. Walls
 ## (the back layer) are mined with right click, by the same tools.
 @export var health: float = 50.0
+## The pickaxe power (ItemData.mining_power) needed to mine it at all. A pickaxe that's
+## strong enough but has less mining_damage just takes longer. 0 = anything mines it.
+@export var min_mining_power := 0
 ## Item dropped when broken (empty = the item with this tile's id, if one exists).
 ## Walls drop the block they're the back layer of (dirt_wall drops dirt).
 @export var drop_item: StringName = &""

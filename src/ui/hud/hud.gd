@@ -676,12 +676,13 @@ func _draw_buffs(g: Control) -> void:
 		var spell: SpellData = p.buff_spells.get(effect)
 		var r := Rect2(i * BUFF_STEP, 0, BUFF_STEP - 2, BUFF_STEP - 2)
 		UiSkin.slot(g, r, UiSkin.SlotLook.MAGIC)
+		var timed := spell == null or spell.duration > 0.0  # auras (Cozy) have no timer
 		if spell and spell.icon:
 			# Blinks in its last 10 seconds.
 			var left: float = p.buffs[effect]
-			var a := 1.0 if left > 10.0 or fmod(left, 0.5) > 0.2 else 0.35
+			var a := 1.0 if not timed or left > 10.0 or fmod(left, 0.5) > 0.2 else 0.35
 			g.draw_texture_rect(spell.icon, Rect2(r.position + Vector2(1, 1), Vector2(16, 16)), false, Color(1, 1, 1, a))
-		var text := _clock(p.buffs[effect])
+		var text := _clock(p.buffs[effect]) if timed else ""
 		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
 		g.draw_string_outline(font, r.position + Vector2((r.size.x - tw) * 0.5, r.size.y + 6), text,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.8))

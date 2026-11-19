@@ -79,13 +79,17 @@ extends GameData
 @export var tunnel_min_depth := 16
 ## Typical tunnel height, in tiles. The Scholar is 8 tall and 3 wide, so tunnels under
 ## about 10 are crawl spaces he can't walk through.
-@export var tunnel_width := 13.0
+@export var tunnel_width := 18.0
 ## Rough distance between neighboring tunnels.
 @export var tunnel_spacing := 240.0
 ## How much of the underground has tunnels: 0 = none, 1 = everywhere.
 @export_range(0.0, 1.0) var tunnel_coverage := 0.5
 ## Above 1, caves stretch sideways (wider than tall), like Terraria. 1 = no stretch.
 @export_range(0.5, 3.0) var cave_flatten := 1.5
+## Where a tunnel runs out (the edge of the tunnel coverage, or its first tiles of
+## depth) it narrows to this share of tunnel_width before it ends. Low = long crawl
+## spaces at tunnel ends; 1 = tunnels end at full height.
+@export_range(0.0, 1.0) var tunnel_taper := 0.6
 
 @export_group("Caves: caverns")
 ## Large open caverns start this deep.
@@ -127,6 +131,19 @@ extends GameData
 @export var copper_radius_max := 1.9
 ## Copper can replace dirt too (true) or only stone (false).
 @export var copper_in_dirt := true
+
+@export_group("Iron")
+## Like Terraria's spread: rare where it starts (below the dirt layer), denser deeper.
+## Only in stone. Iron wins where an iron and a copper blob overlap.
+@export var iron_min_depth := 40
+## Chance per 8x8 area of holding an iron blob at iron_min_depth...
+@export_range(0.0, 1.0) var iron_chance_shallow := 0.02
+## ...and at iron_full_depth and below.
+@export_range(0.0, 1.0) var iron_chance_deep := 0.1
+@export var iron_full_depth := 250
+## Blob radius range (a bit smaller than copper's).
+@export var iron_radius_min := 1.0
+@export var iron_radius_max := 1.6
 
 @export_group("Trees and flowers")
 ## One tree spot every this many columns (also the minimum spacing between trees).

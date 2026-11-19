@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/campfire.png" id="1_q6abc"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_bd2kx"]
+
+[resource]
+script = ExtResource("2_bd2kx")
+frames = ExtResource("1_q6abc")
+style = 2
+height_tiles = 3
+width_tiles = 4
+needs_floor = true
+light_color = Color(1, 0.68, 0.38, 1)
+light_radius = 48.0
+aura_radius = 12.0
+aura_health_regen = 1.5
+aura_name = "Cozy"
+aura_description = "Near a campfire: health refills faster."
+health = 1.0
+drop_item = &"campfire"
+id = &"campfire"
+display_name = "Campfire"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ForageData" format=3]
+
+[ext_resource type="Script" path="res://src/world/forage_data.gd" id="1_ylrj1"]
+[ext_resource type="Texture2D" path="res://assets/decor/pickup_field_mushroom.png" id="2_xwacu"]
+
+[resource]
+script = ExtResource("1_ylrj1")
+item = &"field_mushroom"
+texture = ExtResource("2_xwacu")
+surface_grass_weight = 8.0
+cave_weight = 10.0
+id = &"field_mushroom"
+display_name = "Field Mushroom"
+description = "Lying on the ground. Picking it up gives 1 Field Mushroom."

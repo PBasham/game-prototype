@@ -67,6 +67,9 @@ const SPELL_PREFIX := "spell:"
 @export var melee_damage := 0.0
 ## How far the swing reaches, in tiles from your chest.
 @export var melee_reach := 4.5
+## Mining tools and spells: the hardest blocks they can mine at all (a block needs
+## TileDef.min_mining_power). How fast they mine is mining_damage.
+@export var mining_power := 0
 ## Hits along a line toward the cursor (punches, spears later) instead of sweeping an
 ## arc in front (swords). ItemUser.aimed_hit_limit_degrees caps how far up or down.
 @export var melee_aims := false

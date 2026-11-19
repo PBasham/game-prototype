@@ -134,7 +134,7 @@ enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT, BUFF, CHARGED, ZONE, W
 @export_group("Light")
 ## Light Orb and Wisp: light radius (tiles) and color. `duration`: seconds a light or a
 ## BUFF lasts.
-@export var light_radius := 10.0
+@export var light_radius := 36.0
 @export var light_color := Color(1.0, 0.92, 0.75)
 @export var duration := 180.0
 ## Wisp: hold the button to steer the light with the cursor, let go to leave it there

@@ -628,3 +628,55 @@ func test_tall_torches_need_room_above() -> void:
 	assert_true(w.request_set_object(t, w.objects.index_of(&"torch")))
 	w.request_set_block(t + Vector2i.UP, w.blocks.index_of(&"stone"))
 	assert_eq(w.data.get_object(t.x, t.y), WorldData.AIR, "popped off")
+
+
+func test_mining_power_gates_hard_blocks() -> void:
+	var u := w.item_user
+	var t := _ground_tile() + Vector2i(-1, -1)  # in the stone pickaxe's shorter reach
+	for dx in 2:
+		for dy in 2:
+			w.data.set_block(t.x + dx, t.y + dy, w.blocks.index_of(&"iron_ore"))
+	var iron := w.blocks.def(w.blocks.index_of(&"iron_ore"))
+	assert_gt(iron.min_mining_power, 0, "iron ore needs some mining power")
+	assert_gt(iron.health, w.blocks.def(w.blocks.index_of(&"copper_ore")).health, "and takes longer than copper")
+	var cursor := Vector2(t * World.TILE) + Vector2(World.TILE, World.TILE)
+	# The stone pickaxe is strong enough (just slow).
+	var stone_pick := ItemData.find(&"stone_pickaxe")
+	w.character.inventory.set_slot(5, &"stone_pickaxe", 1)
+	w.player.select_slot(5)
+	u.update_target(cursor)
+	assert_gt(u.valid.size(), 0, "stone pickaxe mines iron")
+	assert_eq(u.problem, "")
+	# A weaker one can't.
+	var was := stone_pick.mining_power
+	stone_pick.mining_power = iron.min_mining_power - 1
+	u.update_target(cursor)
+	stone_pick.mining_power = was
+	assert_eq(u.valid.size(), 0)
+	assert_string_contains(u.problem, "Too hard")
+	# The iron pickaxe exists, is stronger and faster than copper.
+	var ip := ItemData.find(&"iron_pickaxe")
+	var cp := ItemData.find(&"copper_pickaxe")
+	assert_gt(ip.mining_power, cp.mining_power)
+	assert_gt(ip.mining_damage, cp.mining_damage)
+
+
+func test_iron_generates_deeper_than_copper() -> void:
+	var gen := w.generator as ForestGenerator
+	if gen == null:
+		var registry_blocks := w.blocks
+		var settings := load("res://data/worldgen/forest.tres") as ForestGenSettings
+		gen = ForestGenerator.new(registry_blocks, w.walls, 2048, 1024, 42, settings)
+	var iron := w.blocks.index_of(&"iron_ore")
+	var shallow := 0
+	var deep := 0
+	for x in range(0, 600):
+		var top := gen.surface_at(x)
+		for d in range(0, 40):
+			if gen.block_at(x, top + d) == iron:
+				shallow += 1
+		for d in range(150, 250):
+			if gen.block_at(x, top + d) == iron:
+				deep += 1
+	assert_eq(shallow, 0, "none in the first 40 tiles")
+	assert_gt(deep, 20, "some deeper down")

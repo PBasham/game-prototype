@@ -591,6 +591,32 @@ func _ground_under(at: Vector2, max_tiles: int) -> Vector2:
 	return Vector2.INF
 
 
+## The object with an aura (a campfire) whose radius reaches `pos`, or null.
+func aura_near(pos: Vector2) -> ObjectDef:
+	var r := 0
+	for id in range(1, objects.size()):
+		var od := objects.def(id) as ObjectDef
+		if od and od.aura_radius > 0.0:
+			r = maxi(r, ceili(od.aura_radius) + 4)
+	if r == 0:
+		return null
+	var t := world_to_tile(pos)
+	for dy in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			var tile := t + Vector2i(dx, dy)
+			var id := data.get_object(tile.x, tile.y)
+			if id <= 0:
+				continue
+			var od := objects.def(id) as ObjectDef
+			if od == null or od.aura_radius <= 0.0:
+				continue
+			# Measured from the middle of the object.
+			var mid := Vector2(tile * TILE) + Vector2(od.width_tiles * TILE * 0.5, -od.height_tiles * TILE * 0.5 + TILE)
+			if mid.distance_to(pos) <= od.aura_radius * TILE:
+				return od
+	return null
+
+
 ## Moving light sources (Light Orb): [tile, radius, color] for the light map.
 func dynamic_lights() -> Array[Array]:
 	var out: Array[Array] = []

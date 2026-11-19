@@ -87,7 +87,7 @@ func test_no_caves_open_near_spawn() -> void:
 func test_only_forest_blocks() -> void:
 	var g := _gen(3)
 	var allowed := [WorldData.AIR]
-	for id: StringName in [&"dirt", &"grass", &"stone", &"copper_ore"]:
+	for id: StringName in [&"dirt", &"grass", &"stone", &"copper_ore", &"iron_ore"]:
 		allowed.append(blocks.index_of(id))
 	for x in range(0, W, 37):
 		for y in range(0, H, 11):

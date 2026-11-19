@@ -77,4 +77,10 @@ enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 @export var light_color := Color(1.0, 0.75, 0.45)
 ## Tiles the light reaches through open air (less through blocks).
 @export var light_radius := 0.0
+## A buff while the player is within this many tiles (0 = none): the campfire's Cozy.
+@export var aura_radius := 0.0
+## Extra health per second the aura gives (added to the regular refill).
+@export var aura_health_regen := 0.0
+@export var aura_name := ""
+@export_multiline var aura_description := ""
 @export_group("")

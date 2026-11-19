@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_xcswf"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_lps8l"]
+[ext_resource type="Texture2D" path="res://assets/items/held/iron_axe.png" id="3_d0oxr"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/iron_axe.png" id="4_t542a"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_xny4o"]
+
+[sub_resource type="Resource" id="Resource_lskhb"]
+script = ExtResource("2_lps8l")
+id = &"iron_axe"
+texture = ExtResource("3_d0oxr")
+type = &"tool"
+grip = Vector2(3, 12)
+
+[resource]
+script = ExtResource("5_xny4o")
+kind = 3
+icon = ExtResource("4_t542a")
+max_stack = 1
+held = SubResource("Resource_lskhb")
+axe_damage = 35.0
+id = &"iron_axe"
+display_name = "Iron Axe"
+description = "Chops trees, faster than copper."

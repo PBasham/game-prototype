@@ -195,6 +195,9 @@ func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloa
 		block = _b[&"stone"]
 		if _dirt_pockets.get_noise_3d(px, py, yy) > _dirt_pocket_t:
 			block = _b[&"dirt"]
+	if block == _b[&"stone"] and _ore(x, y, depth, s.iron_min_depth, s.iron_chance_shallow,
+			s.iron_chance_deep, s.iron_full_depth, s.iron_radius_min, s.iron_radius_max, 201):
+		return _b[&"iron_ore"]
 	if (block == _b[&"stone"] or s.copper_in_dirt) and _copper(x, y, depth):
 		return _b[&"copper_ore"]
 	return block
@@ -226,9 +229,11 @@ func _carved(x: int, y: int, depth: int, col: PackedFloat32Array, entrances: Arr
 	# Tunnels: thin ribbons where the noise crosses zero, only inside the coverage mask.
 	var cover := smoothstep(_tunnel_mask_t, _tunnel_mask_t + 0.15, _tunnel_mask.get_noise_3d(px, py, yy * 0.5))
 	if cover > 0.0:
-		# Tunnels fade in over their first few tiles of depth.
-		var fade := clampf((depth - s.tunnel_min_depth) / 6.0, 0.35, 1.0)
-		if absf(_tunnels.get_noise_3d(px, py, yy)) < _tunnel_t * cover * fade:
+		# Tunnels fade in over their first few tiles of depth, and narrow (to
+		# tunnel_taper of their height) where the coverage runs out, then end.
+		var fade := clampf((depth - s.tunnel_min_depth) / 6.0, s.tunnel_taper, 1.0)
+		var thick := lerpf(s.tunnel_taper, 1.0, cover) if cover > 0.15 else cover / 0.15 * s.tunnel_taper
+		if absf(_tunnels.get_noise_3d(px, py, yy)) < _tunnel_t * thick * fade:
 			return true
 	# Caverns: big blobs, more common the deeper you go.
 	if depth >= s.cavern_min_depth:
@@ -284,10 +289,18 @@ func _in_entrance(x: int, depth: int, e: PackedFloat32Array) -> bool:
 ## more often deeper down. A tile is copper if it's inside any nearby cell's blob.
 func _copper(x: int, y: int, depth: int) -> bool:
 	var s := settings
-	if depth < s.copper_min_depth:
+	return _ore(x, y, depth, s.copper_min_depth, s.copper_chance_shallow, s.copper_chance_deep,
+		s.copper_full_depth, s.copper_radius_min, s.copper_radius_max, 101)
+
+
+## Ore blobs (copper, iron): one possible blob per 8x8 cell, the chance ramping from
+## `shallow` at `min_depth` to `deep` at `full_depth`. `salt` keeps ores apart.
+func _ore(x: int, y: int, depth: int, min_depth: int, shallow: float, deep: float, full_depth: int,
+		r_min: float, r_max: float, salt: int) -> bool:
+	if depth < min_depth:
 		return false
-	var ramp := clampf(float(depth - s.copper_min_depth) / maxf(s.copper_full_depth - s.copper_min_depth, 1), 0.0, 1.0)
-	var chance := lerpf(s.copper_chance_shallow, s.copper_chance_deep, ramp)
+	var ramp := clampf(float(depth - min_depth) / maxf(full_depth - min_depth, 1), 0.0, 1.0)
+	var chance := lerpf(shallow, deep, ramp)
 	const CELL := 8
 	var cells_x := width / CELL
 	var cx := floori(x / float(CELL))
@@ -296,12 +309,12 @@ func _copper(x: int, y: int, depth: int) -> bool:
 		for ox in range(-1, 2):
 			var kx := posmod(cx + ox, cells_x)
 			var ky := cy + oy
-			if GenUtil.hash01(kx, ky, seed + 101) >= chance:
+			if GenUtil.hash01(kx, ky, seed + salt) >= chance:
 				continue
-			var bx := (cx + ox) * CELL + GenUtil.hash01(kx, ky, seed + 102) * CELL
-			var by := ky * CELL + GenUtil.hash01(kx, ky, seed + 103) * CELL
-			var r := lerpf(s.copper_radius_min, s.copper_radius_max, GenUtil.hash01(kx, ky, seed + 104))
-			var stretch := lerpf(0.7, 1.4, GenUtil.hash01(kx, ky, seed + 105))
+			var bx := (cx + ox) * CELL + GenUtil.hash01(kx, ky, seed + salt + 1) * CELL
+			var by := ky * CELL + GenUtil.hash01(kx, ky, seed + salt + 2) * CELL
+			var r := lerpf(r_min, r_max, GenUtil.hash01(kx, ky, seed + salt + 3))
+			var stretch := lerpf(0.7, 1.4, GenUtil.hash01(kx, ky, seed + salt + 4))
 			var dx := (x + 0.5 - bx) / (r * stretch)
 			var dy := (y + 0.5 - by) * stretch / r
 			if dx * dx + dy * dy < 1.0:

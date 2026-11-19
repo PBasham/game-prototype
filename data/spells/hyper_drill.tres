@@ -15,6 +15,7 @@ kind = 4
 icon = ExtResource("1_20be8")
 max_stack = 1
 mining_damage = 400.0
+mining_power = 55
 beam = true
 mining_area = 11
 mining_round = true

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_dirp1"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_3lttp"]
+[ext_resource type="Texture2D" path="res://assets/items/held/iron_ore.png" id="3_1u0bo"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/iron_ore.png" id="4_j8m5j"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_5ssvn"]
+
+[sub_resource type="Resource" id="Resource_om07j"]
+script = ExtResource("2_3lttp")
+id = &"iron_ore"
+texture = ExtResource("3_1u0bo")
+type = &"block"
+grip = Vector2(3, 5)
+
+[resource]
+script = ExtResource("5_5ssvn")
+kind = 1
+icon = ExtResource("4_j8m5j")
+held = SubResource("Resource_om07j")
+impact_at = 0.2
+places_block = &"iron_ore"
+id = &"iron_ore"
+display_name = "Iron Ore"
+description = "Deeper than copper. Smelts into iron bars in a Furnace."

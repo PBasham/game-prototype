@@ -171,3 +171,22 @@ func test_world_options_save() -> void:
 	var old := WorldInfo.from_dict({"name": "old"})
 	assert_true(old.hunger, "older worlds: hunger on")
 	assert_eq(old.death_drop, WorldInfo.DeathDrop.BAG)
+
+
+func test_campfire_lights_and_makes_you_cozy() -> void:
+	var p := w.player
+	var def := Registry.get_def(&"objects", &"campfire") as ObjectDef
+	assert_gt(def.light_radius, (Registry.get_def(&"objects", &"torch") as ObjectDef).light_radius, "bigger than a torch")
+	var feet := w.world_to_tile(p.global_position)
+	var a := feet + Vector2i(6, -1)  # on the floor next to you
+	assert_true(w.request_place_object(a, w.objects.index_of(&"campfire")))
+	await wait_seconds(0.4)
+	assert_true(p.has_buff(&"aura_campfire"), "Cozy while near")
+	assert_eq(p.aura_regen, def.aura_health_regen)
+	var r := Registry.get_def(&"recipes", &"campfire") as RecipeData
+	assert_eq(r.inputs, {&"wood": 5, &"stone": 3} as Dictionary[StringName, int])
+	# Walk away (teleport): it ends.
+	p.global_position += Vector2(60 * World.TILE, 0)
+	await wait_seconds(1.0)
+	assert_false(p.has_buff(&"aura_campfire"), "gone once you leave")
+	assert_eq(p.aura_regen, 0.0)

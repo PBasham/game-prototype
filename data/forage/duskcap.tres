@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ForageData" format=3]
+
+[ext_resource type="Script" path="res://src/world/forage_data.gd" id="1_kw60l"]
+[ext_resource type="Texture2D" path="res://assets/decor/pickup_duskcap.png" id="2_41acc"]
+
+[resource]
+script = ExtResource("1_kw60l")
+item = &"duskcap"
+texture = ExtResource("2_41acc")
+cave_weight = 14.0
+id = &"duskcap"
+display_name = "Duskcap"
+description = "Lying on the ground. Picking it up gives 1 Duskcap."

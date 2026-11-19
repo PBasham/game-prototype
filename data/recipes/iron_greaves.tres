@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_0n3ex"]
+
+[resource]
+script = ExtResource("1_0n3ex")
+station = &"anvil"
+inputs = Dictionary[StringName, int]({
+&"iron_bar": 15
+})
+output = &"iron_greaves"
+id = &"iron_greaves"
+display_name = "Iron Greaves"

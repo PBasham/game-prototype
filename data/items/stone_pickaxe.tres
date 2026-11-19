@@ -20,6 +20,7 @@ icon = ExtResource("4_bjicp")
 max_stack = 1
 held = SubResource("Resource_w4o55")
 mining_damage = 15.0
+mining_power = 35
 mining_area = 2
 reach_tiles = 7.0
 id = &"stone_pickaxe"

@@ -331,6 +331,19 @@ func _register() -> void:
 	_add("cursor", "cursor <dx> <dy> | cursor off", "Pin the cursor to a tile offset from your feet (for scripted building), or let it follow the mouse again.", _cursor)
 	_add("dig", "dig <w> <h>", "Clear a box of blocks (keeps walls) centered on the cursor.", _dig)
 	_add("place", "place <object>", "Place a tile object (torch, rope, workbench, chest...) at the cursor, no item needed.", _place)
+	_add("forage", "forage <type>", "Put a forageable (stick, rock, field_mushroom, red_cap, duskcap, glowcap) on the ground under the cursor.", func(a: PackedStringArray) -> void:
+		var def := Registry.get_def(&"forage", StringName(" ".join(a))) as ForageData
+		if def == null:
+			_print("No forageable %s." % " ".join(a))
+			return
+		var t := world.world_to_tile(world.item_user.cursor())
+		for dy in 12:  # down to the first ground with air above
+			var g := t + Vector2i(0, dy)
+			if world.is_solid(g) and not world.is_solid(g + Vector2i.UP):
+				world.forage._add(world.wrap_tile(g), def)
+				_print("%s placed." % def.display_name)
+				return
+		_print("No ground under the cursor."))
 	_add("use", "use", "Use what's at the cursor (like a right click: open a station, chest or door).", func(_a: PackedStringArray) -> void:
 		_print("Used." if world.try_interact_at(world.item_user.cursor(), world.player) else "Nothing to use there (or too far)."))
 	_add("dummy", "dummy | dummy clear", "Spawn a training dummy at the cursor (to test damage spells).", _dummy)

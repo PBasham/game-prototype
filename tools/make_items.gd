@@ -82,7 +82,8 @@ func _items() -> Array[ItemData]:
 	# Right click places a block as the back layer (places_wall), when it has one.
 	out.append(_block(&"dirt", "Dirt", "Soft ground. Grass spreads onto it.", &"dirt_wall"))
 	out.append(_block(&"stone", "Stone", "Hard rock.", &"stone_wall"))
-	out.append(_block(&"copper_ore", "Copper Ore", "Smelts into copper (crafting comes later)."))
+	out.append(_block(&"copper_ore", "Copper Ore", "Smelts into copper bars in a Furnace."))
+	out.append(_block(&"iron_ore", "Iron Ore", "Deeper than copper. Smelts into iron bars in a Furnace."))
 	# Wood is the building block too (like Terraria): it places the plank block.
 	var wood := _block(&"wood", "Wood", "From logs (1 log = 4 wood) and sticks. A building block (right click places it as a back wall), and the wood in tools, torches and furniture.", &"wood_wall")
 	wood.places_block = &"wood_planks"
@@ -109,11 +110,24 @@ func _items() -> Array[ItemData]:
 	out.append(torch)
 	# Materials and seeds.
 	out.append(_small(&"copper_bar", "Copper Bar", "Smelted from copper ore in a Furnace."))
+	out.append(_small(&"iron_bar", "Iron Bar", "Smelted from iron ore in a Furnace."))
 	var berries := _small(&"berries", "Berries", "Picked from berry bushes. Left click to eat: +10 hunger, +2 health.")
 	berries.kind = ItemData.Kind.FOOD
 	berries.food_value = 10.0
 	berries.heal_value = 2.0
 	out.append(berries)
+	# Mushrooms (forageables): food, and ingredients for potions and poisons later.
+	var field := _small(&"field_mushroom", "Field Mushroom", "A plain, filling mushroom. Left click to eat: +8 hunger, +1 health. For cooking later.")
+	field.kind = ItemData.Kind.FOOD
+	field.food_value = 8.0
+	field.heal_value = 1.0
+	out.append(field)
+	var red := _small(&"red_cap", "Red Cap", "Red with white spots. Barely food (+2 hunger), but a potion ingredient later.")
+	red.kind = ItemData.Kind.FOOD
+	red.food_value = 2.0
+	out.append(red)
+	out.append(_small(&"duskcap", "Duskcap", "A purple cave mushroom. Toxic: for poisons later (weapon coatings, poison flasks, spells)."))
+	out.append(_small(&"glowcap", "Glowcap", "Glows in dark caves. For mana potions and more later."))
 	var hammer := _small(&"hand_hammer", "Hand Hammer", "Needed in your inventory to build a Workbench.")
 	hammer.max_stack = 1
 	out.append(hammer)
@@ -123,7 +137,8 @@ func _items() -> Array[ItemData]:
 			[&"copper_anvil", "Copper Anvil", "A crafting station: copper tools."],
 			[&"chest", "Chest", "Stores 40 stacks. Right click or E to open."],
 			[&"door", "Door", "Right click or E to open and close."],
-			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: writes spells onto blank scrolls."]]:
+			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: writes spells onto blank scrolls."],
+			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy)."]]:
 		var furn := _small(f[0], f[1], f[2])
 		furn.kind = ItemData.Kind.FURNITURE
 		furn.places_object = f[0]
@@ -142,14 +157,25 @@ func _items() -> Array[ItemData]:
 	# Tools.
 	var pick := _tool(&"copper_pickaxe", "Copper Pickaxe", "Mines a 2x2 area per swing (Ctrl + wheel: 1x1).", &"tool")
 	pick.mining_damage = 25.0
+	pick.mining_power = 40
 	pick.mining_area = 2
 	pick.reach_tiles = 10.0
 	out.append(pick)
+	var ipick := _tool(&"iron_pickaxe", "Iron Pickaxe", "Mines a 2x2 area per swing (Ctrl + wheel: 1x1). Faster and stronger than copper.", &"tool")
+	ipick.mining_damage = 35.0
+	ipick.mining_power = 50
+	ipick.mining_area = 2
+	ipick.reach_tiles = 11.0
+	out.append(ipick)
+	var iaxe := _tool(&"iron_axe", "Iron Axe", "Chops trees, faster than copper.", &"tool")
+	iaxe.axe_damage = 35.0
+	out.append(iaxe)
 	var axe := _tool(&"copper_axe", "Copper Axe", "Chops trees.", &"tool")
 	axe.axe_damage = 25.0
 	out.append(axe)
 	var stone_pick := _tool(&"stone_pickaxe", "Stone Pickaxe", "A stone pickaxe. Mines a 2x2 area per swing (Ctrl + wheel: 1x1).", &"tool")
 	stone_pick.mining_damage = 15.0
+	stone_pick.mining_power = 35
 	stone_pick.mining_area = 2
 	stone_pick.reach_tiles = 7.0
 	out.append(stone_pick)
@@ -169,8 +195,14 @@ func _items() -> Array[ItemData]:
 	csword.melee_reach = 4.5
 	csword.knockback = 13.0
 	out.append(csword)
+	var isword := _weapon(&"iron_sword", "Iron Sword", "Heavier and sharper than copper.")
+	isword.melee_damage = 18.0
+	isword.melee_reach = 4.75
+	isword.knockback = 15.0
+	out.append(isword)
 	for a: Array in [[&"copper_helmet", "Copper Helmet", &"head", 1], [&"copper_chestplate", "Copper Chestplate", &"chest", 2],
-			[&"copper_greaves", "Copper Greaves", &"legs", 1]]:
+			[&"copper_greaves", "Copper Greaves", &"legs", 1], [&"iron_helmet", "Iron Helmet", &"head", 2],
+			[&"iron_chestplate", "Iron Chestplate", &"chest", 3], [&"iron_greaves", "Iron Greaves", &"legs", 2]]:
 		var armor := _small(a[0], a[1], "Armor (%s). Defense %d." % [String(a[2]), a[3]])
 		armor.kind = ItemData.Kind.ARMOR
 		armor.max_stack = 1
@@ -213,6 +245,7 @@ func _spells() -> Array[ItemData]:
 	mining.max_stack = 1
 	mining.beam = true
 	mining.mining_damage = 55.0  # per second, on every tile in the area
+	mining.mining_power = 40
 	mining.mining_area = 2
 	mining.mining_area_max = 3
 	mining.reach_tiles = 12.0
@@ -256,6 +289,7 @@ func _spells() -> Array[ItemData]:
 	var drill := _spell(&"hyper_drill", "Hyper Drill", "Hold for a huge drilling beam that tears through a round area. Very mana hungry. Right click: back walls.")
 	drill.beam = true
 	drill.mining_damage = 400.0  # per second, on every tile in the circle
+	drill.mining_power = 55
 	drill.mining_area = 11  # 5 tiles each way from the center
 	drill.mining_round = true
 	drill.reach_tiles = 24.0
@@ -288,7 +322,7 @@ func _spells() -> Array[ItemData]:
 
 	var orb := _spell(&"light_orb", "Light Orb", "A glowing orb follows you and lights the way for 3 minutes. Cast again to refresh it.")
 	orb.cast = SpellData.Cast.LIGHT
-	orb.light_radius = 10.0
+	orb.light_radius = 36.0
 	orb.light_color = Color(1.0, 0.92, 0.75)
 	orb.duration = 180.0
 	orb.mana_cost = 10.0
@@ -300,7 +334,7 @@ func _spells() -> Array[ItemData]:
 	wisp.cast = SpellData.Cast.LIGHT
 	wisp.light_placed = true
 	wisp.light_max = 3
-	wisp.light_radius = 9.0
+	wisp.light_radius = 26.0
 	wisp.light_color = Color(0.75, 0.9, 1.0)
 	wisp.duration = 300.0
 	wisp.mana_cost = 12.0
@@ -464,7 +498,8 @@ func _objects() -> Array[ObjectDef]:
 	# [id, name, w, h, station, frames file]
 	for f: Array in [[&"workbench", "Workbench", 5, 4, &"workbench"], [&"furnace", "Furnace", 4, 5, &"furnace"],
 			[&"copper_anvil", "Copper Anvil", 3, 3, &"anvil"], [&"chest", "Chest", 3, 3, &""],
-			[&"door", "Door", 1, 8, &""], [&"spell_weaving_table", "Spell Weaving Table", 6, 3, &"spell_weaving"]]:
+			[&"door", "Door", 1, 8, &""], [&"spell_weaving_table", "Spell Weaving Table", 6, 3, &"spell_weaving"],
+			[&"campfire", "Campfire", 4, 3, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -477,7 +512,14 @@ func _objects() -> Array[ObjectDef]:
 		o.drop_item = f[0]
 		o.frames = load("res://assets/objects/%s.png" % f[0]) as Texture2D
 		out.append(o)
-	out[2].light_radius = 6.0  # the furnace glows
+	out[2].light_radius = 16.0  # the furnace glows
+	# The campfire: a big warm light, and Cozy (faster health refill) nearby.
+	out[7].light_radius = 48.0
+	out[7].light_color = Color(1.0, 0.68, 0.38)
+	out[7].aura_radius = 12.0
+	out[7].aura_health_regen = 1.5
+	out[7].aura_name = "Cozy"
+	out[7].aura_description = "Near a campfire: health refills faster."
 	out[2].light_color = Color(1.0, 0.6, 0.3)
 	out[4].container_slots = 40
 	out[5].blocks_movement = true
@@ -579,16 +621,24 @@ func _spawns() -> Array[SpawnTable]:
 ## Stone.
 func _forage() -> Array[ForageData]:
 	var out: Array[ForageData] = []
-	for row: Array in [[&"stick", "Stick", 45.0, 0.0, 0.0], [&"rock", "Rock", 55.0, 100.0, 100.0]]:
+	# [id, name, surface grass, surface ground, caves, item]
+	for row: Array in [[&"stick", "Stick", 45.0, 0.0, 0.0, &"wood"], [&"rock", "Rock", 55.0, 100.0, 100.0, &"stone"],
+			[&"field_mushroom", "Field Mushroom", 8.0, 0.0, 10.0, &"field_mushroom"],
+			[&"red_cap", "Red Cap", 4.0, 0.0, 6.0, &"red_cap"],
+			[&"duskcap", "Duskcap", 0.0, 0.0, 14.0, &"duskcap"],
+			[&"glowcap", "Glowcap", 0.0, 0.0, 12.0, &"glowcap"]]:
 		var f := ForageData.new()
 		f.id = row[0]
 		f.display_name = row[1]
-		f.item = &"stone" if row[0] == &"rock" else &"wood"
-		f.description = "A %s on the ground. Picking it up gives 1 %s." % [String(row[1]).to_lower(), "Stone" if f.item == &"stone" else "Wood"]
+		f.item = row[5]
+		f.description = "Lying on the ground. Picking it up gives 1 %s." % ("Wood" if f.item == &"wood" else ("Stone" if f.item == &"stone" else row[1]))
 		f.texture = load("res://assets/decor/pickup_%s.png" % row[0]) as Texture2D
 		f.surface_grass_weight = row[2]
 		f.surface_ground_weight = row[3]
 		f.cave_weight = row[4]
+		if f.id == &"glowcap":
+			f.light_radius = 14.0
+			f.light_color = Color(0.45, 0.95, 1.0)
 		out.append(f)
 	return out
 
@@ -603,6 +653,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"stone_axe", &"", {&"stone": 3, &"wood": 2}, &"stone_axe", 1, []],
 		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
 		[&"wood_platform", &"", {&"wood": 1}, &"wood_platform", 2, []],
+		[&"campfire", &"", {&"wood": 5, &"stone": 3}, &"campfire", 1, []],
 		[&"workbench", &"", {&"wood": 10}, &"workbench", 1, [&"hand_hammer"]],
 		# Workbench.
 		[&"chest", &"workbench", {&"wood": 8, &"copper_bar": 2}, &"chest", 1, []],
@@ -622,6 +673,13 @@ func _recipes() -> Array[RecipeData]:
 		[&"copper_helmet", &"anvil", {&"copper_bar": 10}, &"copper_helmet", 1, []],
 		[&"copper_chestplate", &"anvil", {&"copper_bar": 16}, &"copper_chestplate", 1, []],
 		[&"copper_greaves", &"anvil", {&"copper_bar": 12}, &"copper_greaves", 1, []],
+		[&"iron_bar", &"furnace", {&"iron_ore": 3}, &"iron_bar", 1, []],
+		[&"iron_pickaxe", &"anvil", {&"iron_bar": 12, &"wood": 3}, &"iron_pickaxe", 1, []],
+		[&"iron_axe", &"anvil", {&"iron_bar": 10, &"wood": 3}, &"iron_axe", 1, []],
+		[&"iron_sword", &"anvil", {&"iron_bar": 10, &"wood": 2}, &"iron_sword", 1, []],
+		[&"iron_helmet", &"anvil", {&"iron_bar": 12}, &"iron_helmet", 1, []],
+		[&"iron_chestplate", &"anvil", {&"iron_bar": 20}, &"iron_chestplate", 1, []],
+		[&"iron_greaves", &"anvil", {&"iron_bar": 15}, &"iron_greaves", 1, []],
 		# Spell scrolls (placeholder chain, will change).
 		[&"paper", &"workbench", {&"wood": 1}, &"paper", 3, []],
 		[&"blank_scroll", &"workbench", {&"paper": 3, &"slime": 1}, &"blank_scroll", 1, []],

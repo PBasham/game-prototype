@@ -437,6 +437,8 @@ func _remove(g: Vector2i, dirty: bool = true) -> void:
 		return
 	if f.node:
 		f.node.queue_free()
+		if f.def.light_radius > 0.0 and world.lights:
+			world.lights.mark_dirty()
 	_items.erase(g)
 	var wc := _chunk_of(g)
 	(_by_chunk[wc] as Array).erase(g)
@@ -448,7 +450,14 @@ func _make_node(g: Vector2i, f: Forage, shown_chunk: Vector2i) -> void:
 	if f.node:
 		f.node.queue_free()
 	var local := g - _chunk_of(g) * SIZE
-	var node := Node2D.new()
+	var node: Node2D
+	if f.def.light_radius > 0.0:
+		var glow := ForageGlow.new()
+		glow.radius = f.def.light_radius
+		glow.color = f.def.light_color
+		node = glow
+	else:
+		node = Node2D.new()
 	node.position = Vector2((shown_chunk * SIZE + local) * TILE) + Vector2(TILE * 0.5, 0)
 	var s := Sprite2D.new()
 	s.texture = f.def.texture
@@ -457,6 +466,8 @@ func _make_node(g: Vector2i, f: Forage, shown_chunk: Vector2i) -> void:
 	node.add_child(s)
 	add_child(node)
 	f.node = node
+	if f.def.light_radius > 0.0 and world.lights:
+		world.lights.mark_dirty()
 
 
 func _chunk_of(g: Vector2i) -> Vector2i:

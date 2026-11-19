@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_bj0qe"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_b2slg"]
+[ext_resource type="Texture2D" path="res://assets/items/held/iron_greaves.png" id="3_j38ee"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/iron_greaves.png" id="4_kccej"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_ekg3v"]
+[ext_resource type="Texture2D" path="res://assets/armor/iron_greaves_front_leg_upper.png" id="6_r31gp"]
+[ext_resource type="Texture2D" path="res://assets/armor/iron_greaves_back_leg_upper.png" id="7_35s7h"]
+[ext_resource type="Texture2D" path="res://assets/armor/iron_greaves_front_leg_lower.png" id="8_n5y3l"]
+[ext_resource type="Texture2D" path="res://assets/armor/iron_greaves_back_leg_lower.png" id="9_depug"]
+
+[sub_resource type="Resource" id="Resource_w5maa"]
+script = ExtResource("2_b2slg")
+id = &"iron_greaves"
+texture = ExtResource("3_j38ee")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_ekg3v")
+kind = 12
+icon = ExtResource("4_kccej")
+max_stack = 1
+held = SubResource("Resource_w5maa")
+impact_at = 0.2
+equip_slot = &"legs"
+defense = 2
+wear = Dictionary[String, Texture2D]({
+"Back Leg Lower": ExtResource("9_depug"),
+"Back Leg Upper": ExtResource("7_35s7h"),
+"Front Leg Lower": ExtResource("8_n5y3l"),
+"Front Leg Upper": ExtResource("6_r31gp")
+})
+id = &"iron_greaves"
+display_name = "Iron Greaves"
+description = "Armor (legs). Defense 2."

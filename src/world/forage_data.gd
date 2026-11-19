@@ -9,6 +9,9 @@ extends GameData
 @export var count := 1
 ## Sprite lying on the ground (bottom center sits on the tile).
 @export var texture: Texture2D
+## Gives off light where it lies (0 = none): the Glowcap.
+@export var light_radius := 0.0
+@export var light_color := Color(0.5, 1.0, 0.95)
 
 @export_group("Where it lies")
 ## Relative weights per kind of floor (0 = never there). On each kind of floor the

@@ -188,13 +188,19 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 			if problem != "":
 				return
 			var types := world.walls if back else world.blocks
+			var too_hard := false
 			for t in _tiles():
 				var id := world.data.get_wall(t.x, t.y) if back else world.data.get_block(t.x, t.y)
 				var def := types.def(id) if id > 0 else null
+				if def and def.min_mining_power > _item.mining_power:
+					too_hard = true
+					continue
 				var obj := not back and world.data.get_object(t.x, t.y) > 0 and not world.is_solid(t)
 				if (obj or (def and not def.unbreakable and def.health > 0.0 and t.y < world.data.height - 1
 						and (back or not world.is_protected(t)))) and _in_reach(t):
 					valid.append(t)
+			if too_hard and valid.is_empty():
+				problem = "Too hard: needs a stronger pickaxe"
 		Mode.CHOP:
 			var g := world.plants.tree_at_point(at)
 			if g != PlantLayer.NONE:

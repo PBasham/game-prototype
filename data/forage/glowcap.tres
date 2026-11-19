@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ForageData" format=3]
+
+[ext_resource type="Script" path="res://src/world/forage_data.gd" id="1_8rko3"]
+[ext_resource type="Texture2D" path="res://assets/decor/pickup_glowcap.png" id="2_xm5cm"]
+
+[resource]
+script = ExtResource("1_8rko3")
+item = &"glowcap"
+texture = ExtResource("2_xm5cm")
+light_radius = 14.0
+light_color = Color(0.45, 0.95, 1, 1)
+cave_weight = 12.0
+id = &"glowcap"
+display_name = "Glowcap"
+description = "Lying on the ground. Picking it up gives 1 Glowcap."

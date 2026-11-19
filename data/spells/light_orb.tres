@@ -18,3 +18,4 @@ impact_at = 0.3
 id = &"light_orb"
 display_name = "Light Orb"
 description = "A glowing orb follows you and lights the way for 3 minutes. Cast again to refresh it."
+light_radius = 36.0
