@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_7enip")
 inputs = Dictionary[StringName, int]({
-&"flint": 3,
-&"stick": 2
+&"stone": 3,
+&"wood": 2
 })
 output = &"stone_axe"
 id = &"stone_axe"

@@ -7,7 +7,7 @@ script = ExtResource("1_4okdd")
 station = &"anvil"
 inputs = Dictionary[StringName, int]({
 &"copper_bar": 10,
-&"stick": 3
+&"wood": 3
 })
 output = &"copper_pickaxe"
 id = &"copper_pickaxe"

@@ -108,9 +108,10 @@ func test_hand_crafting_window_and_buttons() -> void:
 	assert_true(w.hud.open)
 	assert_true(w.hud._craft.visible)
 	var list := w.hud.recipes()
-	var planks := list.find(list.filter(func(r: RecipeData) -> bool: return r.id == &"wood_planks")[0])
+	var planks := list.find(list.filter(func(r: RecipeData) -> bool: return r.id == &"wood_platform")[0])
+	w.character.inventory.remove(&"wood", w.character.inventory.count_of(&"wood"))
 	w.character.inventory.add(&"wood", 5)
-	var before := w.character.inventory.count_of(&"wood_planks")
+	var before := w.character.inventory.count_of(&"wood_platform")
 	w.hud.selected_recipe = planks
 	# Ctrl + click Craft: as many as you can.
 	var b := w.hud._craft_button_rects()
@@ -121,7 +122,7 @@ func test_hand_crafting_window_and_buttons() -> void:
 	click.position = b[Hud.CraftBtn.CRAFT].get_center()
 	w.hud._crafting_input(w.hud._craft, click)
 	assert_eq(w.character.inventory.count_of(&"wood"), 0)
-	assert_eq(w.character.inventory.count_of(&"wood_planks"), before + 10)
+	assert_eq(w.character.inventory.count_of(&"wood_platform"), before + 10)
 	w.hud.toggle_crafting()
 	assert_false(w.hud.crafting)
 
@@ -175,7 +176,7 @@ func test_doors_open_in_place_away_from_the_player() -> void:
 
 
 func test_drops_are_sized_by_item() -> void:
-	var stick := ItemData.find(&"stick")
+	var stick := ItemData.find(&"torch")
 	var axe := ItemData.find(&"stone_axe")
 	var bench := ItemData.find(&"workbench")
 	assert_lt(stick.drop_pixels(), axe.drop_pixels())

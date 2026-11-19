@@ -133,8 +133,9 @@ in it is hit once per swing.
 
 | Item | Damage | Reach | Recipe |
 |---|---|---|---|
-| Wooden Sword | 8 | 4 | Workbench: 10 planks |
-| Copper Sword | 13 | 4.5 | Anvil: 8 copper bars, 2 planks |
+| Wooden Sword | 8 | 4 | Workbench: 10 wood |
+| Copper Sword | 13 | 4.5 | Anvil: 8 copper bars, 2 wood |
+| Fists (empty hands) | 3 | 3 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player |
 
 ## Spells against enemies
 
@@ -192,7 +193,7 @@ The equipment window lists Defense and every non-zero stat.
 
 ## Beds
 
-Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 planks.
+Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 wood.
 
 - Right click by day: sets your spawn point ("Spawn point set. You can only sleep at
   night.").
@@ -205,7 +206,7 @@ Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 planks.
 
 ## Slime uses
 
-- Hand recipe: 1 Slime + 1 Stick = 5 Torches.
+- Hand recipe: 1 Slime + 1 Wood = 5 Torches.
 
 ## Dev console
 

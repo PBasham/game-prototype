@@ -23,4 +23,4 @@ axe_damage = 15.0
 reach_tiles = 7.0
 id = &"stone_axe"
 display_name = "Stone Axe"
-description = "A flint axe. Chops trees, slowly."
+description = "A stone axe. Chops trees, slowly."

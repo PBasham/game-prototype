@@ -8,6 +8,7 @@ atlas_row = 4
 collision = 1
 climbable = false
 health = 50.0
+drop_item = &"wood"
 terrain = "planks"
 built = true
 id = &"wood_planks"

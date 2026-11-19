@@ -140,7 +140,7 @@ F3 shows the current animation, frame, "rev" when reversed, and the arm mode.
 ## Holding items
 
 The hotbar (top left, 1 to 0 or the mouse wheel) picks what's in your hands. Left click
-uses it, H puts it away, and an empty slot means bare hands (jab, cross, uppercut).
+uses it, H puts it away, and an empty slot means bare hands (jab, cross, uppercut; a punch does 3 damage).
 Items, the inventory (I or Tab), front and back layers, mining, placing, magic, trees
 and grass are all in [items-and-mining.md](items-and-mining.md).
 
@@ -245,7 +245,7 @@ Debug builds only (running from the editor counts).
 | **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |
 | **F7** (in game) | Reload item types (`data/item_types/*.tres`) after editing them. The Doll Viewer has a Reload button for the same. |
-| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `book <slot> <spell>`, `spellopt [option] [on|off]` (spell control options), `cast <spell>` (cast at the cursor, free), `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `god`, `hurt <n>`, `kill`, `heal`, `hunger <n>`, `bush` (see survival.md), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `cursor <dx> <dy>` / `cursor off` (pin the cursor to a tile offset from your feet, for scripted building in `--console` runs), `color <group> <hex|reset>` (recolor your character, saved), `dummy` / `dummy clear` (a training dummy for damage spells), `summon <enemy> [n]` (at the cursor), `peaceful` (toggle enemy spawns), `butcher` (kill all enemies, with loot), `spawns` (spawn table, rate and cap here), `kills` (enemies slain in this world), see combat.md, `pickups [days]` (loose sticks, rocks and flint here; with days, let that time pass for them, see crafting.md), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
+| **`** (the ~ key) | Dev console. `help` lists the commands: `give <item> [count]`, `spawn <item> [count]` (at the cursor), `items`, `spells`, `learn`, `forget`, `book <slot> <spell>`, `spellopt [option] [on|off]` (spell control options), `cast <spell>` (cast at the cursor, free), `equip`, `ready <spell>`, `fly`, `clear`, `devkit` (the dev starting kit and spells), `god`, `hurt <n>`, `kill`, `heal`, `hunger <n>`, `bush` (see survival.md), `mana` (infinite mana on / off), `tp <x> <y>` / `tp spawn`, `pos`, `dig <w> <h>` (clear a box of blocks at the cursor), `fill <block|air> <w> <h>` and `fillwall <wall|air> <w> <h>` (fill a box at the cursor), `reach` (unlimited mining / placing reach), `place <object>` (a torch, rope or furniture at the cursor), `use` (right click what's at the cursor), `cursor <dx> <dy>` / `cursor off` (pin the cursor to a tile offset from your feet, for scripted building in `--console` runs), `color <group> <hex|reset>` (recolor your character, saved), `dummy` / `dummy clear` (a training dummy for damage spells), `summon <enemy> [n]` (at the cursor), `peaceful` (toggle enemy spawns), `butcher` (kill all enemies, with loot), `spawns` (spawn table, rate and cap here), `kills` (enemies slain in this world), see combat.md, `pickups [days]` (loose sticks and rocks here; with days, let that time pass for them, see crafting.md), `grow`, `regen`, `cls`. The log scrolls with the mouse wheel or Page Up / Page Down. Items by id or name (any case, or a unique start). Up / Down for history, Tab completes. |
 | **Esc** | Pause menu. |
 | `tools/preview_world.gd` | Whole-world map PNG (see world-generation.md). |
 
@@ -317,7 +317,7 @@ exports `window_right` and `window_top`.
 
 **Hover outline** (`HoverOutline` node, `src/world/hover_outline.gd`): with the cursor on
 something right click or E would use, in reach, a soft light outline pulses around it:
-doors, chests, stations, beds, forageables (sticks, rocks, flint), ripe berry bushes and
+doors, chests, stations, beds, forageables (sticks, rocks), ripe berry bushes and
 the magic bag. Hidden while the mouse is over a window. Exports: `outline_color` (its
 alpha is the brightest point of the pulse), `outline_alpha_min`, `pulse_speed`.
 

@@ -24,4 +24,4 @@ mining_area = 2
 reach_tiles = 7.0
 id = &"stone_pickaxe"
 display_name = "Stone Pickaxe"
-description = "A flint pickaxe. Mines a 2x2 area per swing (Ctrl + wheel: 1x1)."
+description = "A stone pickaxe. Mines a 2x2 area per swing (Ctrl + wheel: 1x1)."

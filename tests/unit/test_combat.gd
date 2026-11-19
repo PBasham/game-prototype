@@ -383,3 +383,27 @@ func test_slimes_wander_by_day_and_chase_at_night_or_when_hit() -> void:
 	w.clock.time = 0.0  # midnight
 	assert_true(w.spawner.is_night())
 	assert_eq(e._target_dir(), -1.0, "at night it comes at you")
+
+
+func test_fists_do_damage() -> void:
+	var p := w.player
+	var e := w.request_spawn_enemy(_slime(), p.global_position + Vector2(14 * p.facing, 0))
+	await wait_physics_frames(2)
+	w.item_user.cursor_override = p.chest() + Vector2(40 * p.facing, 0)
+	# A punch with empty hands lands at fist_impact_at and hits like a weak sword.
+	var empty := -1
+	for i in Inventory.HOTBAR:
+		if p.character.inventory.is_empty(i):
+			empty = i
+	if empty < 0:
+		p.character.inventory.clear(Inventory.HOTBAR - 1)
+		empty = Inventory.HOTBAR - 1
+	p.select_slot(empty)
+	assert_null(p.held_item)
+	Input.action_press("use_primary")
+	await wait_seconds(0.4)
+	Input.action_release("use_primary")
+	await wait_physics_frames(2)
+	assert_lt(e.health, _slime().max_health, "punched")
+	assert_eq(p.fist_item().melee_damage, p.fist_damage)
+	w.item_user.cursor_override = Vector2.INF

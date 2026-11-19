@@ -7,8 +7,8 @@
 script = ExtResource("1")
 id = &"stick"
 display_name = "Stick"
-description = "Lying on the ground. Right click or E picks it up."
-item = &"stick"
+description = "A stick on the ground. Picking it up gives 1 Wood."
+item = &"wood"
 texture = ExtResource("2")
 surface_grass_weight = 45.0
 surface_ground_weight = 0.0

@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_tiledef")
 health = 30.0
-drop_item = &"wood_planks"
+drop_item = &"wood"
 atlas_row = 2
 collision = 0
 terrain = "planks_wall"

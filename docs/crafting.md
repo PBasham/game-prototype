@@ -7,23 +7,26 @@ Phase 5. How you go from nothing to copper tools, and where every number lives.
 A new character starts with **no items and no spells** (they've lost their memory).
 The first things come off the ground:
 
-- **Sticks, rocks and flint** lie on the grass. Right click one (or press E near
-  it) to pick it up. A rock gives 1 **Stone**. Felled trees also drop 1 to 3 sticks.
-- **Bare hands don't break anything**, not even dirt. You need a tool.
-- **Stone** blocks sometimes drop **flint** too (10%, `bonus_drop_item` and
-  `bonus_drop_chance` on `data/tiles/stone.tres`).
+- **Sticks and rocks** lie on the grass. Right click one (or press E near it) to pick
+  it up: a stick gives 1 **Wood**, a rock 1 **Stone**.
+- **Bare hands don't break anything**, not even dirt. You need a tool. (They do punch
+  enemies, see combat.md.)
 
-The path: stone + stick = **Hand Hammer** (kept in your inventory, never used up), then
-flint and sticks for a **Stone Pickaxe** and **Stone Axe**, wood into planks, planks into
-a **Workbench**, then a **Furnace** for copper bars and an **Anvil** for copper tools.
+**Wood** is one item, like Terraria's: trees and sticks give it, it places as the plank
+block (right click: a back wall), and it's the wood in every recipe. There are no
+separate planks or sticks to craft.
+
+The path: stone + wood = **Hand Hammer** (kept in your inventory, never used up), then
+stone and wood for a **Stone Pickaxe** and **Stone Axe**, wood into a **Workbench**,
+then a **Furnace** for copper bars and an **Anvil** for copper tools.
 
 For testing, the console has `devkit` (the old starting kit plus all four spells) and
 `mana` (infinite mana on or off).
 
-### Forageables: sticks, rocks and flint (`Forage` node, `src/world/forage_layer.gd`)
+### Forageables: sticks and rocks (`Forage` node, `src/world/forage_layer.gd`)
 
 Things lying on the ground that right click or E picks up. Each type is a **ForageData**
-in `data/forage/` (`stick`, `rock`, `flint`; the rock gives Stone): the item it gives, its ground sprite, and a
+in `data/forage/` (`stick` gives Wood, `rock` gives Stone): the item it gives, its ground sprite, and a
 weight per kind of floor. New types (mushrooms, say) are a new file there.
 
 Where they lie:
@@ -36,10 +39,9 @@ Where they lie:
 | ForageData | Surface grass | Surface ground | Caves |
 | --- | --- | --- | --- |
 | Stick | 45 | 0 | 0 |
-| Rock | 40 | 75 | 75 |
-| Flint | 15 | 25 | 25 |
+| Rock | 55 | 100 | 100 |
 
-Weights compare across types on each kind of floor (45 / 40 / 15 = 45% / 40% / 15%);
+Weights compare across types on each kind of floor (45 / 55 = 45% / 55%);
 0 = never there. A tile's first roll is fixed by its position (the same spot always gives
 the same thing). Areas you haven't changed are re-seeded when a world loads, so new
 settings show up there. Digging out the ground under one, or putting a block on it, drops
@@ -52,7 +54,7 @@ it as an item.
 | `surface_ground_chance` | 0.05 | Chance a bare surface dirt or stone tile has one |
 | `cave_chance` | 0.03 | Chance a cave floor tile has one |
 
-Sticks also drop from felled trees (`sticks_min`, `sticks_max` on the `Plants` node, 1 to 3).
+A felled tree drops 5 to 9 Wood (`wood_min`, `wood_max` on the `Plants` node).
 
 **They come back over time** (random ticks, like grass spreading). A few times a second
 the game picks random floor tiles in the loaded area and gives each a small chance to get
@@ -78,7 +80,7 @@ like anything else. Rules:
 Console: `pickups` counts forageables and floor tiles in the loaded area and how many came
 back this session; `pickups <days>` lets that many days pass for them (off screen).
 
-Their sprites are sized like the thing (stick 12x5, rock 9x7, flint 7x6 px), from
+Their sprites are sized like the thing (stick 12x5, rock 9x7 px), from
 `tools/make_item_art.gd`.
 
 ## Crafting window
@@ -116,18 +118,17 @@ Current recipes:
 
 | Where | Recipe |
 | --- | --- |
-| Hand | Hand Hammer: 1 stone + 1 stick |
-| Hand | Stone Pickaxe, Stone Axe: 3 flint + 2 sticks each |
-| Hand | Wood Planks x2: 1 wood |
-| Hand | Wood Platform x2: 1 plank |
-| Hand | Torch x3: 1 stick + 1 wood |
-| Hand | Workbench: 10 planks (needs the hand hammer) |
-| Workbench | Chest: 8 planks + 2 copper bars |
-| Workbench | Door: 6 planks |
+| Hand | Hand Hammer: 1 stone + 1 wood |
+| Hand | Stone Pickaxe, Stone Axe: 3 stone + 2 wood each |
+| Hand | Wood Platform x2: 1 wood |
+| Hand | Torch x3: 2 wood |
+| Hand | Workbench: 10 wood (needs the hand hammer) |
+| Workbench | Chest: 8 wood + 2 copper bars |
+| Workbench | Door: 6 wood |
 | Workbench | Furnace: 20 stone + 4 wood + 3 torches |
 | Workbench | Copper Anvil: 6 copper bars |
 | Furnace | Copper Bar: 3 copper ore |
-| Anvil | Copper Pickaxe: 10 bars + 3 sticks; Copper Axe: 8 bars + 3 sticks |
+| Anvil | Copper Pickaxe: 10 bars + 3 wood; Copper Axe: 8 bars + 3 wood |
 
 Stone tools: Stone Pickaxe 15 mining in a 2x2 area (Ctrl + wheel: 1x1), Stone Axe 15 chopping, both reach 7 (the copper
 ones are stronger).
@@ -183,8 +184,8 @@ can't mine the floor under furniture.
 
 ## Phase 7 recipes and the bed
 
-Not playtested yet. Hand: 1 Slime + 1 Stick = 5 Torches. Workbench: Wooden Sword (10 planks),
-Bed (20 planks). Anvil: Copper Sword (8 bars, 2 planks), Copper Helmet (10 bars), Copper
+Not playtested yet. Hand: 1 Slime + 1 Wood = 5 Torches. Workbench: Wooden Sword (10 wood),
+Bed (20 wood). Anvil: Copper Sword (8 bars, 2 wood), Copper Helmet (10 bars), Copper
 Chestplate (16 bars), Copper Greaves (12 bars). The bed object is 9x3 with `needs_floor`
 and the new `ObjectDef.bed` flag; what it does is in [combat.md](combat.md).
 
@@ -196,7 +197,7 @@ Not playtested yet.
 |---|---|---|
 | 1 Wood | Workbench | 3 Paper |
 | 3 Paper + 1 Slime | Workbench | 1 Blank Scroll |
-| 20 Wood Planks + 5 Copper Bars + 4 Paper | Workbench | Spell Weaving Table (6x3, station `spell_weaving`) |
+| 20 Wood + 5 Copper Bars + 4 Paper | Workbench | Spell Weaving Table (6x3, station `spell_weaving`) |
 | 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table | Scroll: <spell>, one recipe per spell |
 | 1 Blank Scroll + 20 Slime | Spell Weaving Table | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
 | 1 Blank Scroll (and a big enough max mana) | Spell Weaving Table, **Copy** tab | **Copy: <spell>**, for any spell you know |

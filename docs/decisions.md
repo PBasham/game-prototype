@@ -69,6 +69,14 @@ Newest first. Each entry: what was decided, why, and what it affects.
   their own `Forage` node, with types as data (`data/forage/`, ForageData) so new
   forageables (mushrooms) are a file. Older saves move their loose items over on load.
   Breakable-but-walkable things like Terraria's crystal shards are a later brief.
+- **One Wood, no flint (Patrick):** like Terraria, Wood is the only wood item: trees
+  (5 to 9) and ground sticks give it, it places the plank block, and every recipe uses
+  it. Wood Planks and Sticks are gone; flint is gone too (stone tools are 3 stone + 2
+  wood). Torches: 2 wood, or wood + slime. Old saves load sticks and planks as Wood,
+  flint as Stone. Logs (a raw form that splits into wood) can come back if they get a
+  reason. Later: other woods per biome, and Reinforced Wood (iron + wood, a block and a
+  back wall, for higher stations and tools) once iron exists; needs a brief.
+- **Fists hurt:** a punch does 3 damage (Patrick).
 - **Lighter back walls:** `wall_shade` 0.62 to 0.75 (Patrick: plank walls too dark).
 - **Rocks give Stone (Patrick):** the Rock item only made the Hand Hammer, so a loose
   rock now gives 1 Stone (the sprite stays a rock). The Rock item and the Workbench's

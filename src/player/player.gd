@@ -74,6 +74,11 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export_range(0.1, 1.0) var backpedal_speed := 0.8
 ## Empty hands punch (data/item_types/unarmed.tres: jab, cross, uppercut) on click.
 @export var unarmed_attacks := true
+## A punch hits enemies for this much (the Wooden Sword does 8), this far (tiles).
+@export var fist_damage := 3.0
+@export var fist_reach_tiles := 3.0
+## Point in a punch (0..1 of the swing) where it lands.
+@export_range(0.0, 1.0) var fist_impact_at := 0.4
 
 @export_group("Mana")
 @export var max_mana := 100.0
@@ -444,6 +449,22 @@ func is_aiming() -> bool:
 		return true
 	var m := _hold_motion()
 	return m != null and m.aims
+
+
+var _fist: ItemData
+
+
+## What a punch counts as: a hidden item with fist_damage (not in the Registry).
+func fist_item() -> ItemData:
+	if _fist == null:
+		_fist = ItemData.new()
+		_fist.id = &"fists"
+		_fist.display_name = "Fists"
+		_fist.knockback = 6.0
+	_fist.melee_damage = fist_damage
+	_fist.melee_reach = fist_reach_tiles
+	_fist.impact_at = fist_impact_at
+	return _fist
 
 
 ## The item type whose attacks a click plays: the held item's, or unarmed (if enabled).
@@ -981,6 +1002,8 @@ func _update_use(delta: float) -> void:
 		var used := use_item()
 		if used and not stowed and t0 < used.impact_at and t1 >= used.impact_at:
 			use_impact.emit(used)
+		elif (used == null or stowed) and t0 < fist_impact_at and t1 >= fist_impact_at:
+			use_impact.emit(fist_item())  # a punch
 		# The impact can end the attack (placing the last block of a stack changes what's
 		# held, which cancels the attack), so check again.
 		if _attack == null:

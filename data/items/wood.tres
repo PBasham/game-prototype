@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_a4csb"]
 [ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_cjw8u"]
-[ext_resource type="Texture2D" path="res://assets/items/held/wood.png" id="3_0r2ht"]
-[ext_resource type="Texture2D" path="res://assets/items/icons/wood.png" id="4_p75ji"]
+[ext_resource type="Texture2D" path="res://assets/items/held/wood_planks.png" id="3_0r2ht"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/wood_planks.png" id="4_p75ji"]
 [ext_resource type="Script" path="res://src/items/item_data.gd" id="5_4ttww"]
 
 [sub_resource type="Resource" id="Resource_a213e"]
@@ -11,13 +11,16 @@ script = ExtResource("2_cjw8u")
 id = &"wood"
 texture = ExtResource("3_0r2ht")
 type = &"block"
-grip = Vector2(4, 6)
+grip = Vector2(3, 5)
 
 [resource]
 script = ExtResource("5_4ttww")
+kind = 1
 icon = ExtResource("4_p75ji")
 held = SubResource("Resource_a213e")
 impact_at = 0.2
+places_block = &"wood_planks"
+places_wall = &"wood_wall"
 id = &"wood"
 display_name = "Wood"
-description = "From trees. Craft into planks or torches."
+description = "From trees and sticks. A building block (right click places it as a back wall), and the wood in tools, torches and furniture."

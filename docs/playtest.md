@@ -20,7 +20,7 @@ guesses; the docs listed say where each tunable lives.
 
 ## Phase 5: crafting (crafting.md)
 
-- [ ] Start from nothing: sticks, rocks, flint from the ground; Hand Hammer, stone tools.
+- [ ] Start from nothing: sticks (Wood) and rocks (Stone) from the ground; Hand Hammer, stone tools.
 - [ ] Workbench, furnace, anvil: recipes show, crafting amounts work.
 - [ ] Chests hold items and save; doors open, close and block.
 - [ ] Mana drains while casting and refills.
@@ -90,7 +90,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Sounds: anything too loud, annoying or missing?
 
 **Playtest fixes (your notes)**
-- [ ] Sticks, rocks and flint on grass, cliffs and cave floors; they come back over time
+- [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time
       (`pickups 10` then walk a bit), never on screen or indoors.
 - [ ] Slimes: wander past you by day, chase at night or once hit; random hop sizes,
       slithers up 1-block steps, no more hopping in place.
@@ -99,6 +99,9 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Open doors close from any part of the face.
 - [ ] Craft row: [-] [n] [+] Craft, typing a number, Shift = 10, Ctrl = a stack.
 - [ ] Stone Pickaxe 2x2, Ctrl + wheel to 1x1.
+- [ ] One Wood item (no planks or sticks to craft); torches 2 wood or wood + slime;
+      no flint (stone tools are stone + wood). Old saves convert.
+- [ ] Punching a slime hurts it.
 
 ## Known
 

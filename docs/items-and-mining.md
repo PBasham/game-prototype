@@ -13,7 +13,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | --- | --- |
 | **1 to 0**, mouse wheel | Pick a hotbar slot |
 | **Left click** | Use the held item on the **front** layer: swing, mine, chop, place a block, plant. Hold to repeat. |
-| **Right click** | On something you can interact with (stations, chests, doors, sticks, rocks and flint on the ground): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
+| **Right click** | On something you can interact with (stations, chests, doors, sticks and rocks on the ground): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
 | **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest forageable or ripe berry bush) |
 | **I** or **Tab** | Open / close the inventory |
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
@@ -62,11 +62,11 @@ Items with no use (wood, books, conduits) are just held: clicking doesn't swing.
 ## Front and back layers (Starbound-style)
 
 Every tile has a front block and a back wall. One item covers both: Dirt, Stone and
-Wood Planks place a block with left click and a background wall with right click
+Wood (the plank block) place a block with left click and a background wall with right click
 (`places_wall` on the item). Mining works the same way: left click mines blocks, right
 click mines background walls, even behind blocks. A mined wall drops the block it came
 from (`drop_item` on `data/walls/*.tres`: dirt_wall drops dirt, stone_wall stone,
-wood_wall planks). No hammer.
+wood_wall wood). No hammer.
 
 Background walls have their own textures (`terrain` on each wall `.tres`), so a block
 and its wall can look different whenever you want them to.
@@ -137,11 +137,10 @@ Current items:
 | --- | --- |
 | Copper Pickaxe | 25 per hit, 2x2, reach 10 |
 | Copper Axe | 25 per hit on trees (a tree has 100), reach 10 |
-| Dirt, Stone, Wood Planks | Blocks; right click places them as background walls |
+| Dirt, Stone, Wood | Blocks (Wood places planks); right click places them as background walls |
 | Copper Ore, Wood Platform | Blocks (front only) |
 | Rope, Torch | Tile objects |
 | Basic Spellbook | The book used when the Book slot is empty: 4 slots, power x1 |
-| Wood | From trees; becomes planks when crafting exists |
 | Tree Seed | Plant on grass; grows into a tree |
 | Grass Seeds | Plant on dirt that touches air; turns it into grass |
 
@@ -286,7 +285,7 @@ play any world. A new character starts with **nothing**: no items, no spells (se
 [crafting.md](crafting.md) for how to get going).
 
 Console `devkit` gives the old starting kit: copper pickaxe and axe, a Mining Spell
-shortcut, 99 planks, 30 platforms, 30 rope, 20 torches, 5 tree seeds, 10 grass seeds,
+shortcut, 99 wood, 30 platforms, 30 rope, 20 torches, 5 tree seeds, 10 grass seeds,
 50 dirt, and teaches Mining, Chopping, Fly and Spark (put in the book). It's
 `DEV_KIT` / `DEV_SPELLS` in `src/items/character_data.gd`. Scripted runs (DevCli) start
 with it. In debug builds it also adds the placeholder weapons and test magic, which
@@ -366,7 +365,7 @@ saved with the world yet.
 
 ## Trees, saplings, flowers, grass (`Plants` node, `src/world/plant_layer.gd`)
 
-Sticks, rocks and flint lying around are the `Forage` node (crafting.md).
+Sticks and rocks lying around are the `Forage` node (crafting.md).
 
 - Natural trees and flowers come from the generator's decoration rules the first time a
   chunk loads. After that they're the world's: chopped trees stay chopped.

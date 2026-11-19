@@ -83,7 +83,12 @@ func _items() -> Array[ItemData]:
 	out.append(_block(&"dirt", "Dirt", "Soft ground. Grass spreads onto it.", &"dirt_wall"))
 	out.append(_block(&"stone", "Stone", "Hard rock.", &"stone_wall"))
 	out.append(_block(&"copper_ore", "Copper Ore", "Smelts into copper (crafting comes later)."))
-	out.append(_block(&"wood_planks", "Wood Planks", "A building block. Right click places it as a back wall.", &"wood_wall"))
+	# Wood is the building block too (like Terraria): it places the plank block.
+	var wood := _block(&"wood", "Wood", "From trees and sticks. A building block (right click places it as a back wall), and the wood in tools, torches and furniture.", &"wood_wall")
+	wood.places_block = &"wood_planks"
+	wood.icon = load("res://assets/items/icons/wood_planks.png") as Texture2D
+	wood.held = _look(&"wood_planks", &"block", Vector2(3, 5))
+	out.append(wood)
 	# Platforms and rope go one at a time (line placing may come later).
 	var platform := _block(&"wood_platform", "Wood Platform", "Stand on it; jump up through it, Down + Jump drops through.")
 	platform.place_area_max = 1
@@ -101,10 +106,6 @@ func _items() -> Array[ItemData]:
 	torch.held.grip = Vector2(3, 6)
 	out.append(torch)
 	# Materials and seeds.
-	var wood := _small(&"wood", "Wood", "From trees. Craft into planks or torches.")
-	out.append(wood)
-	out.append(_small(&"stick", "Stick", "Lies on the grass; trees drop some too. For tools and torches."))
-	out.append(_small(&"flint", "Flint", "A sharp stone for the first tools. Found on the grass, sometimes in stone."))
 	out.append(_small(&"copper_bar", "Copper Bar", "Smelted from copper ore in a Furnace."))
 	var berries := _small(&"berries", "Berries", "Picked from berry bushes. Left click to eat: +10 hunger, +2 health.")
 	berries.kind = ItemData.Kind.FOOD
@@ -145,12 +146,12 @@ func _items() -> Array[ItemData]:
 	var axe := _tool(&"copper_axe", "Copper Axe", "Chops trees.", &"tool")
 	axe.axe_damage = 25.0
 	out.append(axe)
-	var stone_pick := _tool(&"stone_pickaxe", "Stone Pickaxe", "A flint pickaxe. Mines a 2x2 area per swing (Ctrl + wheel: 1x1).", &"tool")
+	var stone_pick := _tool(&"stone_pickaxe", "Stone Pickaxe", "A stone pickaxe. Mines a 2x2 area per swing (Ctrl + wheel: 1x1).", &"tool")
 	stone_pick.mining_damage = 15.0
 	stone_pick.mining_area = 2
 	stone_pick.reach_tiles = 7.0
 	out.append(stone_pick)
-	var stone_axe := _tool(&"stone_axe", "Stone Axe", "A flint axe. Chops trees, slowly.", &"tool")
+	var stone_axe := _tool(&"stone_axe", "Stone Axe", "A stone axe. Chops trees, slowly.", &"tool")
 	stone_axe.axe_damage = 15.0
 	stone_axe.reach_tiles = 7.0
 	out.append(stone_axe)
@@ -570,18 +571,17 @@ func _spawns() -> Array[SpawnTable]:
 	return out
 
 
-## Recipes: [id, station, {inputs}, output, count, requires]. Station &"" = by hand.
 ## Things lying on the ground. Weights per kind of floor: surface grass, bare surface
-## dirt or stone, cave floors (sticks only on surface grass).
+## dirt or stone, cave floors (sticks only on surface grass). A stick gives Wood, a rock
+## Stone.
 func _forage() -> Array[ForageData]:
 	var out: Array[ForageData] = []
-	for row: Array in [[&"stick", "Stick", 45.0, 0.0, 0.0], [&"rock", "Rock", 40.0, 75.0, 75.0],
-			[&"flint", "Flint", 15.0, 25.0, 25.0]]:
+	for row: Array in [[&"stick", "Stick", 45.0, 0.0, 0.0], [&"rock", "Rock", 55.0, 100.0, 100.0]]:
 		var f := ForageData.new()
 		f.id = row[0]
 		f.display_name = row[1]
-		f.description = "Lying on the ground. Right click or E picks it up."
-		f.item = &"stone" if row[0] == &"rock" else row[0]  # a loose rock gives Stone
+		f.item = &"stone" if row[0] == &"rock" else &"wood"
+		f.description = "A %s on the ground. Picking it up gives 1 %s." % [String(row[1]).to_lower(), "Stone" if f.item == &"stone" else "Wood"]
 		f.texture = load("res://assets/decor/pickup_%s.png" % row[0]) as Texture2D
 		f.surface_grass_weight = row[2]
 		f.surface_ground_weight = row[3]
@@ -590,39 +590,39 @@ func _forage() -> Array[ForageData]:
 	return out
 
 
+## Recipes: [id, station, {inputs}, output, count, requires]. Station &"" = by hand.
 func _recipes() -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	var table: Array = [
 		# By hand.
-		[&"hand_hammer", &"", {&"stone": 1, &"stick": 1}, &"hand_hammer", 1, []],
-		[&"stone_pickaxe", &"", {&"flint": 3, &"stick": 2}, &"stone_pickaxe", 1, []],
-		[&"stone_axe", &"", {&"flint": 3, &"stick": 2}, &"stone_axe", 1, []],
-		[&"wood_planks", &"", {&"wood": 1}, &"wood_planks", 2, []],
-		[&"wood_platform", &"", {&"wood_planks": 1}, &"wood_platform", 2, []],
-		[&"torch", &"", {&"stick": 1, &"wood": 1}, &"torch", 3, []],
-		[&"workbench", &"", {&"wood_planks": 10}, &"workbench", 1, [&"hand_hammer"]],
+		[&"hand_hammer", &"", {&"stone": 1, &"wood": 1}, &"hand_hammer", 1, []],
+		[&"stone_pickaxe", &"", {&"stone": 3, &"wood": 2}, &"stone_pickaxe", 1, []],
+		[&"stone_axe", &"", {&"stone": 3, &"wood": 2}, &"stone_axe", 1, []],
+		[&"wood_platform", &"", {&"wood": 1}, &"wood_platform", 2, []],
+		[&"torch", &"", {&"wood": 2}, &"torch", 3, []],
+		[&"workbench", &"", {&"wood": 10}, &"workbench", 1, [&"hand_hammer"]],
 		# Workbench.
-		[&"chest", &"workbench", {&"wood_planks": 8, &"copper_bar": 2}, &"chest", 1, []],
-		[&"door", &"workbench", {&"wood_planks": 6}, &"door", 1, []],
+		[&"chest", &"workbench", {&"wood": 8, &"copper_bar": 2}, &"chest", 1, []],
+		[&"door", &"workbench", {&"wood": 6}, &"door", 1, []],
 		[&"furnace", &"workbench", {&"stone": 20, &"wood": 4, &"torch": 3}, &"furnace", 1, []],
 		[&"copper_anvil", &"workbench", {&"copper_bar": 6}, &"copper_anvil", 1, []],
 		# Furnace.
 		[&"copper_bar", &"furnace", {&"copper_ore": 3}, &"copper_bar", 1, []],
 		# Anvil.
-		[&"copper_pickaxe", &"anvil", {&"copper_bar": 10, &"stick": 3}, &"copper_pickaxe", 1, []],
-		[&"copper_axe", &"anvil", {&"copper_bar": 8, &"stick": 3}, &"copper_axe", 1, []],
+		[&"copper_pickaxe", &"anvil", {&"copper_bar": 10, &"wood": 3}, &"copper_pickaxe", 1, []],
+		[&"copper_axe", &"anvil", {&"copper_bar": 8, &"wood": 3}, &"copper_axe", 1, []],
 		# Phase 7: combat and beds.
-		[&"torch_from_slime", &"", {&"slime": 1, &"stick": 1}, &"torch", 5, []],
-		[&"wooden_sword", &"workbench", {&"wood_planks": 10}, &"wooden_sword", 1, []],
-		[&"bed", &"workbench", {&"wood_planks": 20}, &"bed", 1, []],
-		[&"copper_sword", &"anvil", {&"copper_bar": 8, &"wood_planks": 2}, &"copper_sword", 1, []],
+		[&"torch_from_slime", &"", {&"slime": 1, &"wood": 1}, &"torch", 5, []],
+		[&"wooden_sword", &"workbench", {&"wood": 10}, &"wooden_sword", 1, []],
+		[&"bed", &"workbench", {&"wood": 20}, &"bed", 1, []],
+		[&"copper_sword", &"anvil", {&"copper_bar": 8, &"wood": 2}, &"copper_sword", 1, []],
 		[&"copper_helmet", &"anvil", {&"copper_bar": 10}, &"copper_helmet", 1, []],
 		[&"copper_chestplate", &"anvil", {&"copper_bar": 16}, &"copper_chestplate", 1, []],
 		[&"copper_greaves", &"anvil", {&"copper_bar": 12}, &"copper_greaves", 1, []],
 		# Spell scrolls (placeholder chain, will change).
 		[&"paper", &"workbench", {&"wood": 1}, &"paper", 3, []],
 		[&"blank_scroll", &"workbench", {&"paper": 3, &"slime": 1}, &"blank_scroll", 1, []],
-		[&"spell_weaving_table", &"workbench", {&"wood_planks": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
+		[&"spell_weaving_table", &"workbench", {&"wood": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
 	]
 	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by
 	# tier (until scrolls come from loot). Known spells cost less, and the table's Copy tab

@@ -5,8 +5,7 @@
 [resource]
 script = ExtResource("1_n2iwy")
 inputs = Dictionary[StringName, int]({
-&"stick": 1,
-&"wood": 1
+&"wood": 2
 })
 output = &"torch"
 output_count = 3

@@ -7,7 +7,7 @@ script = ExtResource("1_isqma")
 station = &"workbench"
 inputs = Dictionary[StringName, int]({
 &"copper_bar": 2,
-&"wood_planks": 8
+&"wood": 8
 })
 output = &"chest"
 id = &"chest"

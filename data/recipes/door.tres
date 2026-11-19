@@ -6,7 +6,7 @@
 script = ExtResource("1_nfsvt")
 station = &"workbench"
 inputs = Dictionary[StringName, int]({
-&"wood_planks": 6
+&"wood": 6
 })
 output = &"door"
 id = &"door"

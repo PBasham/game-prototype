@@ -54,16 +54,17 @@ func test_hand_crafting_and_required_tools() -> void:
 	var bench := Registry.get_def(&"recipes", &"workbench") as RecipeData
 	assert_eq(Crafting.times_craftable(inv, hammer), 0)
 	inv.add(&"stone", 2)
-	inv.add(&"stick", 3)
+	inv.add(&"wood", 3)
 	assert_eq(Crafting.times_craftable(inv, hammer), 2)
 	assert_eq(Crafting.craft(inv, hammer, 1)[0], 1)
 	assert_eq(inv.count_of(&"hand_hammer"), 1)
 	assert_eq(inv.count_of(&"stone"), 1)
 	# Older saves: Rock items load as Stone.
 	var old := Inventory.new()
-	old.from_dict({"slots": [["rock", 4]]})
-	assert_eq(old.count_of(&"stone"), 4)
-	inv.add(&"wood_planks", 10)
+	old.from_dict({"slots": [["rock", 4], ["flint", 2], ["stick", 3], ["wood_planks", 5]]})
+	assert_eq(old.count_of(&"stone"), 6, "rocks and flint load as Stone")
+	assert_eq(old.count_of(&"wood"), 8, "sticks and planks load as Wood")
+	inv.add(&"wood", 10)
 	inv.remove(&"hand_hammer", 1)
 	assert_eq(Crafting.times_craftable(inv, bench), 0, "needs the Hand Hammer on you")
 	assert_true("Hand Hammer (not used up)" in Crafting.missing(inv, bench))
@@ -166,18 +167,18 @@ func test_chests_store_and_save() -> void:
 func test_picking_things_up_off_the_grass() -> void:
 	var forage := w.forage
 	var g := _floor_spot(5) + Vector2i.DOWN
-	forage._add(w.wrap_tile(g), _forage(&"flint"))
-	var before := w.character.inventory.count_of(&"flint")
+	forage._add(w.wrap_tile(g), _forage(&"stick"))
+	var before := w.character.inventory.count_of(&"wood")
 	assert_true(w.try_interact_at(w.tile_to_world(g + Vector2i.UP) + Vector2(4, 6), w.player))
-	assert_eq(w.character.inventory.count_of(&"flint"), before + 1)
+	assert_eq(w.character.inventory.count_of(&"wood"), before + 1, "a stick gives Wood")
 	assert_null(forage.at(g), "gone from the grass")
 	# E picks up the nearest one.
 	for t in forage._items.keys():
 		forage._remove(t)
 	forage._add(w.wrap_tile(g), _forage(&"stick"))
-	var sticks := w.character.inventory.count_of(&"stick")
+	var sticks := w.character.inventory.count_of(&"wood")
 	assert_true(w.try_interact_near(w.player))
-	assert_eq(w.character.inventory.count_of(&"stick"), sticks + 1)
+	assert_eq(w.character.inventory.count_of(&"wood"), sticks + 1)
 	# A loose rock gives Stone.
 	forage._add(w.wrap_tile(g), _forage(&"rock"))
 	var stone := w.character.inventory.count_of(&"stone")
@@ -195,16 +196,16 @@ func _forage(id: StringName) -> ForageData:
 
 func test_forage_types_are_data_and_old_saves_move_over() -> void:
 	var f := w.forage
-	assert_eq(f.defs.size(), 3)
-	assert_eq(f._pick(ChunkBuildJob.FLOOR_CAVE, 0.0).id, &"flint", "sorted by id: flint, rock, stick")
+	assert_eq(f.defs.size(), 2)
+	assert_eq(f._pick(ChunkBuildJob.FLOOR_CAVE, 0.0).id, &"rock", "sorted by id: rock, stick")
 	for i in 50:
 		assert_ne(f._pick(ChunkBuildJob.FLOOR_CAVE, randf()).id, &"stick", "no sticks in caves")
 	# A pre-Forage save: plants held the sticks, rocks and flint.
 	var g := w.wrap_tile(_floor_spot(-6) + Vector2i.DOWN)
 	var wc := f._chunk_of(g)
 	f._seeded.erase(wc)
-	w.plants.from_dict({"%d,%d" % [wc.x, wc.y]: [[g.x, g.y, PlantLayer.Kind.PICKUP, 1, 0.0, 0.0]]}, false)
-	assert_eq(f.at(g).id, &"rock", "moved to the Forage node")
+	w.plants.from_dict({"%d,%d" % [wc.x, wc.y]: [[g.x, g.y, PlantLayer.Kind.PICKUP, 2, 0.0, 0.0]]}, false)
+	assert_eq(f.at(g).id, &"rock", "moved to the Forage node (old flint is a rock now)")
 	assert_null(w.plants.plant_at(g))
 	assert_true(f._seeded.has(wc), "not seeded twice")
 	# Saved and loaded back.
@@ -303,19 +304,19 @@ func test_craft_amount_field_shift_and_ctrl() -> void:
 	hud.toggle_crafting()
 	var i := -1
 	for j in hud.recipes().size():
-		if hud.recipes()[j].output == &"wood_planks" and hud.recipes()[j].inputs.has(&"wood"):
+		if hud.recipes()[j].output == &"wood_platform":
 			i = j
-	assert_gt(i, -1, "planks are craftable by hand")
+	assert_gt(i, -1, "platforms are craftable by hand")
 	hud.selected_recipe = i
 	hud.set_craft_amount(3)
-	var before := w.character.inventory.count_of(&"wood_planks")
+	var before := w.character.inventory.count_of(&"wood_platform")
 	assert_eq(hud.craft_selected(), 3, "crafts the amount in the field")
 	assert_eq(hud.craft_selected(true), 10, "Shift: 10")
 	var r: RecipeData = hud.recipes()[i]
 	var left := hud._times(r)
 	var stack := ItemData.find(r.output).max_stack / r.output_count
 	assert_eq(hud.craft_selected(false, true), mini(left, stack), "Ctrl: as many as you can, up to a stack")
-	assert_gt(w.character.inventory.count_of(&"wood_planks") + 0, before)
+	assert_gt(w.character.inventory.count_of(&"wood_platform") + 0, before)
 	hud.set_craft_amount(0)
 	assert_eq(hud.craft_amount, 1, "never below 1")
 	# Typing into the field.

@@ -6,7 +6,7 @@
 script = ExtResource("1_kbmpf")
 station = &"workbench"
 inputs = Dictionary[StringName, int]({
-&"wood_planks": 10
+&"wood": 10
 })
 output = &"wooden_sword"
 id = &"wooden_sword"

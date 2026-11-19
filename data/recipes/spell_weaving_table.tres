@@ -8,7 +8,7 @@ station = &"workbench"
 inputs = Dictionary[StringName, int]({
 &"copper_bar": 5,
 &"paper": 4,
-&"wood_planks": 20
+&"wood": 20
 })
 output = &"spell_weaving_table"
 id = &"spell_weaving_table"

@@ -40,7 +40,7 @@ const DEFAULT_HAIR := &"short"
 ## [item id, count] in the dev kit. Hotbar order. "spell:<id>" is a hotbar shortcut
 ## to a spell.
 const DEV_KIT: Array = [
-	[&"copper_pickaxe", 1], [&"copper_axe", 1], [&"spell:mining_spell", 1], [&"wood_planks", 99],
+	[&"copper_pickaxe", 1], [&"copper_axe", 1], [&"spell:mining_spell", 1], [&"wood", 99],
 	[&"wood_platform", 30], [&"rope", 30], [&"torch", 20], [&"tree_seed", 5], [&"grass_seeds", 10],
 	[&"dirt", 50],
 ]

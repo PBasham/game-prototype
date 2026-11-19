@@ -90,7 +90,7 @@ func test_spell_area_toggle() -> void:
 
 func test_blocks_need_something_to_touch() -> void:
 	w.player.select_slot(3)
-	assert_eq(w.player.held_item.id, &"wood_planks")
+	assert_eq(w.player.held_item.id, &"wood")
 	var u := w.item_user
 	var feet := w.world_to_tile(w.player.global_position)
 	# Floating in the air above the player's head: nothing to touch.
@@ -314,7 +314,7 @@ func test_building_uses_the_spellbook_reach_and_shared_area() -> void:
 
 func test_placing_the_last_block_of_a_stack_doesnt_crash() -> void:
 	var inv := w.character.inventory
-	inv.set_slot(3, &"wood_planks", 1)
+	inv.set_slot(3, &"wood", 1)
 	w.player.select_slot(3)
 	var feet := w.world_to_tile(w.player.global_position)
 	var t := Vector2i(feet.x + 4, feet.y - 1)

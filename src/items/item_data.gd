@@ -121,7 +121,9 @@ const SPELL_PREFIX := "spell:"
 ## Looks up an item by id: data/items, spells ("spell:<id>", data/spells), plus
 ## runtime-only dev items in debug builds.
 ## Items that were merged into others: older saves load them as the new id.
-const RENAMED: Dictionary[StringName, StringName] = {&"rock": &"stone"}
+const RENAMED: Dictionary[StringName, StringName] = {
+	&"rock": &"stone", &"flint": &"stone", &"stick": &"wood", &"wood_planks": &"wood",
+}
 
 
 static func find(item_id: StringName) -> ItemData:

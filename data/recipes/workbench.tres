@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_cjdqg")
 inputs = Dictionary[StringName, int]({
-&"wood_planks": 10
+&"wood": 10
 })
 requires = Array[StringName]([&"hand_hammer"])
 output = &"workbench"

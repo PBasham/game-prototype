@@ -4,8 +4,6 @@
 
 [resource]
 script = ExtResource("1_tiledef")
-bonus_drop_item = &"flint"
-bonus_drop_chance = 0.1
 atlas_row = 2
 collision = 1
 climbable = false

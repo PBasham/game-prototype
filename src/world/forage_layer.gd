@@ -42,8 +42,10 @@ const NONE := Vector2i(0, -1000000)
 @export var regrow_catch_up_days := 3.0
 @export_group("")
 
-## Pre-Forage saves stored these as plant variants 0, 1, 2.
-const LEGACY_IDS: Array[StringName] = [&"stick", &"rock", &"flint"]
+## Pre-Forage saves stored these as plant variants 0, 1, 2 (flint is a rock now).
+const LEGACY_IDS: Array[StringName] = [&"stick", &"rock", &"rock"]
+## Forageables that were removed: saves load them as these.
+const RENAMED: Dictionary[StringName, StringName] = {&"flint": &"rock"}
 
 
 class Forage:
@@ -485,7 +487,8 @@ func from_dict(d: Dictionary) -> void:
 		_seeded[wc] = true
 		_dirty[wc] = true
 		for e: Array in d[key]:
-			var def := Registry.get_def(&"forage", StringName(e[2])) as ForageData
+			var fid := StringName(e[2])
+			var def := Registry.get_def(&"forage", RENAMED.get(fid, fid)) as ForageData
 			if def:
 				_add(Vector2i(int(e[0]), int(e[1])), def)
 

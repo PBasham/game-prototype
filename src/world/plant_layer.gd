@@ -26,17 +26,14 @@ const BUSH_GROWN := 1
 ## Damage a tree takes before it falls. A copper axe does 25 per hit.
 @export var tree_health := 100.0
 ## Wood dropped by a fallen tree (random in this range).
-@export var wood_min := 4
-@export var wood_max := 7
+@export var wood_min := 5
+@export var wood_max := 9
 ## Seeds dropped: always 1, plus this chance of a second.
 @export_range(0.0, 1.0) var extra_seed_chance := 0.5
 ## Seconds a tree takes to fall over.
 @export var fall_time := 0.9
 ## Degrees a tree rocks when hit.
 @export var wiggle_degrees := 4.0
-## Sticks a felled tree drops (random in this range).
-@export var sticks_min := 1
-@export var sticks_max := 3
 ## Trees need this many tiles between their trunks (planting).
 @export var tree_spacing := 3
 ## Tiles of clear space above the ground a sapling needs to grow.
@@ -569,9 +566,6 @@ func _drop_tree(base: Vector2, dir: float) -> void:
 		var along := (i + 0.5) / wood * length * (dir if dir != 0.0 else 0.0)
 		var pos := base + Vector2(along, 0.0 if dir != 0.0 else float(-i * TILE))
 		world.request_spawn_drop(&"wood", 1, pos, _pop())
-	var sticks := randi_range(sticks_min, sticks_max)
-	if sticks > 0:
-		world.request_spawn_drop(&"stick", sticks, base + Vector2(-dir * TILE, -TILE), _pop())
 	var seeds := 1 + (1 if randf() < extra_seed_chance else 0)
 	world.request_spawn_drop(&"tree_seed", seeds, base + Vector2(dir * length * 0.6, 0), _pop())
 
