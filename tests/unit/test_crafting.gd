@@ -108,10 +108,10 @@ func test_stations_open_their_recipes() -> void:
 	var names: Array[StringName] = []
 	for r in w.hud.recipes():
 		names.append(r.id)
-	assert_eq(names, [&"copper_bar", &"iron_bar"] as Array[StringName], "the furnace's list")
+	assert_eq(names, [&"clay_flask", &"copper_bar", &"iron_bar"] as Array[StringName], "the furnace's list")
 	w.character.inventory.add(&"copper_ore", 7)
 	var before := w.character.inventory.count_of(&"copper_bar")
-	assert_eq(w.hud.craft(w.hud.recipes()[0], 10), 2, "7 ore makes 2 bars")
+	assert_eq(w.hud.craft(w.hud.recipes()[1], 10), 2, "7 ore makes 2 bars")
 	assert_eq(w.character.inventory.count_of(&"copper_bar"), before + 2)
 	w.hud.set_open(false)
 	assert_eq(w.hud.station, World.NO_TILE)

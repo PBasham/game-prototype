@@ -764,6 +764,80 @@ func eat(food: float, heal_amount: float = 0.0) -> void:
 	heal(heal_amount)
 
 
+## Food and potion buffs running: buff key -> the item that gave it.
+var _item_buffs: Dictionary[StringName, ItemData] = {}
+## Melee hits left that poison (a coating), and the coating.
+var poison_hits := 0
+var _coating: ItemData
+
+
+## Why this food or potion can't be used now ("" = it can).
+func cant_consume(item: ItemData) -> String:
+	if item.sickness != &"" and has_buff(StringName("sick_" + String(item.sickness))):
+		return "Too soon for another %s" % item.display_name
+	var useful := item.buff_seconds > 0.0 or item.buff_poison_hits > 0 \
+		or (item.food_value > 0.0 and hunger < max_hunger) \
+		or (item.heal_value > 0.0 and health < max_health) \
+		or (item.mana_value > 0.0 and mana < max_mana)
+	return "" if useful else ("You're full" if item.food_value > 0.0 else "No need right now")
+
+
+## Eats or drinks an item (already taken from the inventory): hunger, health, mana, its
+## sickness and its buff.
+func consume(item: ItemData) -> void:
+	eat(item.food_value, item.heal_value)
+	mana = minf(mana + item.mana_value, max_mana)
+	if item.sickness != &"" and item.sickness_seconds > 0.0:
+		_timed_buff(StringName("sick_" + String(item.sickness)), "%s Sickness" % String(item.sickness).capitalize(),
+			"Can't use another %s potion yet." % String(item.sickness), item.sickness_seconds, item.icon)
+	if item.buff_seconds > 0.0:
+		var key := StringName("item_" + String(item.id))
+		_item_buffs[key] = item
+		_timed_buff(key, item.buff_name, item.buff_description, item.buff_seconds, item.icon)
+		if item.buff_poison_hits > 0:
+			poison_hits = item.buff_poison_hits
+			_coating = item
+		apply_stats()
+
+
+## Starts (or restarts) a timed buff that isn't a spell: a SpellData that only carries
+## the name, description and icon for the buff bar.
+func _timed_buff(key: StringName, title: String, text: String, seconds: float, icon: Texture2D) -> void:
+	var s := SpellData.new()
+	s.id = key
+	s.effect = key
+	s.display_name = title
+	s.description = text
+	s.icon = icon
+	s.duration = seconds
+	buffs[key] = seconds
+	buff_spells[key] = s
+
+
+## A melee hit landed: if a coating is on, uses one of its hits and returns it.
+func use_poison_hit() -> ItemData:
+	if poison_hits <= 0 or _coating == null:
+		return null
+	var key := StringName("item_" + String(_coating.id))
+	if not has_buff(key):
+		poison_hits = 0
+		return null
+	poison_hits -= 1
+	var c := _coating
+	if poison_hits <= 0:
+		buffs[key] = 0.0  # used up: ends with the next tick
+	return c
+
+
+## Extra health per second from food buffs.
+func _food_regen() -> float:
+	var r := 0.0
+	for key: StringName in _item_buffs:
+		if has_buff(key):
+			r += _item_buffs[key].buff_health_regen
+	return r
+
+
 func _day_seconds() -> float:
 	return clock.days(1.0) if clock else 24.0 * 60.0
 
@@ -785,9 +859,14 @@ func apply_stats() -> void:
 		_doll.wear(character.worn_items() if character else [] as Array[ItemData])
 
 
-## An equipment bonus (0 when nothing raises it).
+## An equipment bonus (0 when nothing raises it), plus food buffs' move speed.
 func stat(stat_name: StringName) -> float:
-	return stat_bonus.get(stat_name, 0.0)
+	var v: float = stat_bonus.get(stat_name, 0.0)
+	if stat_name == &"move_speed":
+		for key: StringName in _item_buffs:
+			if has_buff(key):
+				v += _item_buffs[key].buff_move_speed
+	return v
 
 
 func _jump_height() -> float:
@@ -832,7 +911,7 @@ func _update_health(delta: float) -> void:
 		return
 	_starve_timer = 0.0
 	if _since_hurt >= health_regen_delay:
-		heal((health_regen + aura_regen) * delta)
+		heal((health_regen + aura_regen + _food_regen()) * delta)
 
 
 ## Stops the current use (a beam that ran out of mana).

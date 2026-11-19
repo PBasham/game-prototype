@@ -1794,6 +1794,7 @@ const GAME_BLOCKS := [
 	{"id": "rope", "base": Color("bf9a5e"), "kind": "rope"},
 	{"id": "log", "base": Color("8a5e34"), "kind": "planks"},
 	{"id": "iron_ore", "base": Color("757064"), "kind": "stone"},
+	{"id": "clay", "base": Color("a8664a"), "kind": "dirt"},
 ]
 
 const BD_W := 1280

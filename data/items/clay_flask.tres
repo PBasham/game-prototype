@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_4tmi6"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_viti4"]
+[ext_resource type="Texture2D" path="res://assets/items/held/clay_flask.png" id="3_3sikp"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/clay_flask.png" id="4_scg40"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_1j6jo"]
+
+[sub_resource type="Resource" id="Resource_0ncjv"]
+script = ExtResource("2_viti4")
+id = &"clay_flask"
+texture = ExtResource("3_3sikp")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_1j6jo")
+icon = ExtResource("4_scg40")
+held = SubResource("Resource_0ncjv")
+impact_at = 0.2
+id = &"clay_flask"
+display_name = "Clay Flask"
+description = "An empty flask of fired clay. Potions, coatings and thrown flasks start with one."

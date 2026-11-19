@@ -24,4 +24,4 @@ places_object = &"campfire"
 place_area_max = 1
 id = &"campfire"
 display_name = "Campfire"
-description = "A big warm light. Standing near it, health refills faster (Cozy)."
+description = "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_6xium"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_ug7ww"]
+[ext_resource type="Texture2D" path="res://assets/items/held/poison_coating.png" id="3_ek7lj"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/poison_coating.png" id="4_kwgs5"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_gbaix"]
+
+[sub_resource type="Resource" id="Resource_peivw"]
+script = ExtResource("2_ug7ww")
+id = &"poison_coating"
+texture = ExtResource("3_ek7lj")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_gbaix")
+kind = 11
+icon = ExtResource("4_kwgs5")
+max_stack = 30
+held = SubResource("Resource_peivw")
+impact_at = 0.2
+buff_name = "Poison Coating"
+buff_description = "Melee hits poison what they hit."
+buff_seconds = 180.0
+buff_poison_hits = 20
+poison_dps = 3.0
+poison_seconds = 5.0
+id = &"poison_coating"
+display_name = "Poison Coating"
+description = "Rub it on your weapon: the next 20 melee hits poison (3 damage a second for 5 s)."

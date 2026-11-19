@@ -49,7 +49,7 @@ const LIST_W := 134
 ## Stations whose window has tabs: station kind to tab names. The Spell Weaving Table:
 ## Craft (scroll recipes; known spells cost less) and Copy (any known spell into a
 ## scroll, for mana). Create and Empower come with Magic progression.
-const STATION_TABS := {&"spell_weaving": ["Craft", "Copy"]}
+const STATION_TABS := {&"spell_weaving": ["Craft", "Copy"], &"alchemy": ["Potions", "Coatings", "Flasks"]}
 const TAB_H := 14
 const ROW_H := 18
 ## Craft buttons: how many each makes (0 = as many as you can).
@@ -821,7 +821,12 @@ func recipes() -> Array[RecipeData]:
 	else:
 		var base := Crafting.recipes_for(def.station, def.station_tier) if def and def.station != &"" \
 			else Crafting.recipes_for(&"")
+		var tabs: Array = STATION_TABS.get(def.station, []) if def and def.station != &"spell_weaving" else []
 		for r in base:
+			if not tabs.is_empty():
+				var t := r.tab if r.tab != "" else String(tabs[0])
+				if t != String(tabs[craft_tab]):
+					continue
 			list.append(Crafting.for_crafter(r, c, world.known_scroll_discount))
 	_recipe_key = key
 	_recipe_cache = list

@@ -22,4 +22,4 @@ impact_at = 0.2
 food_value = 2.0
 id = &"red_cap"
 display_name = "Red Cap"
-description = "Red with white spots. Barely food (+2 hunger), but a potion ingredient later."
+description = "Red with white spots. Barely food (+2 hunger); brewed into Healing Potions."

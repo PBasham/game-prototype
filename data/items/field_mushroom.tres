@@ -23,4 +23,4 @@ food_value = 8.0
 heal_value = 1.0
 id = &"field_mushroom"
 display_name = "Field Mushroom"
-description = "A plain, filling mushroom. Left click to eat: +8 hunger, +1 health. For cooking later."
+description = "A plain, filling mushroom. Left click to eat: +8 hunger, +1 health. Better cooked at a campfire."

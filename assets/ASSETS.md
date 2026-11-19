@@ -218,3 +218,15 @@ or .ogg); the generator never overwrites without `--force`.
 | terrain/ore_iron.png | The copper ore overlay recolored |
 | tiles/blocks.png row 8 | Collision row for iron ore (copy of the copper ore row) |
 | decor/pickup_{field_mushroom,red_cap,duskcap,glowcap}.png, items/{icons,held}/ same names | Mushrooms (9x8 on the ground), hand-made placeholders |
+
+## Food and alchemy
+
+| File | What |
+| --- | --- |
+| terrain/clay.png | Clay block (64x64): the dirt texture recolored terracotta. Not made by generate_tiles.gd |
+| tiles/blocks.png row 9 | Collision row for clay (copy of the dirt row) |
+| items/{icons,held}/clay.png | Clay block icon |
+| items/{icons,held}/clay_flask.png | Empty clay flask (16x16) |
+| items/{icons,held}/{healing_potion,mana_potion,poison_coating,poison_flask}.png | The flask with a colored glaze band and a 5x5 badge in the bottom right corner (heart, star, drop, skull) |
+| items/{icons,held}/{wooden_bowl,mushroom_stew,roasted_berries,cooked_mushroom}.png | Food placeholders (16x16) |
+| objects/alchemy_table.png, items/{icons,held}/alchemy_table.png | Alchemy Table (40x24, 5x3 tiles): table, three flasks, a jar, mortar and pestle |

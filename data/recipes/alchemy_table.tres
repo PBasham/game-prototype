@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_o51i7"]
+
+[resource]
+script = ExtResource("1_o51i7")
+station = &"workbench"
+inputs = Dictionary[StringName, int]({
+&"clay_flask": 2,
+&"copper_bar": 3,
+&"wood": 12
+})
+output = &"alchemy_table"
+id = &"alchemy_table"
+display_name = "Alchemy Table"

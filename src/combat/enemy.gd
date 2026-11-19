@@ -71,6 +71,39 @@ func hit_rect() -> Rect2:
 	return Rect2(global_position + Vector2(-data.size.x * 0.5, -data.size.y), data.size)
 
 
+## Poisoned: loses `dps` health per second for `seconds` (a longer or stronger poison
+## replaces a weaker one). Shown as a green tint.
+var _poison_dps := 0.0
+var _poison_left := 0.0
+var _poison_tick := 0.0
+
+
+func poison(dps: float, seconds: float) -> void:
+	if health <= 0.0 or dps <= 0.0 or seconds <= 0.0:
+		return
+	_poison_dps = maxf(_poison_dps if _poison_left > 0.0 else 0.0, dps)
+	_poison_left = maxf(_poison_left, seconds)
+
+
+func is_poisoned() -> bool:
+	return _poison_left > 0.0
+
+
+func _tick_poison(delta: float) -> void:
+	if _poison_left <= 0.0:
+		return
+	_poison_left -= delta
+	_poison_tick += delta
+	if _poison_tick >= 1.0:
+		_poison_tick -= 1.0
+		var amount := _poison_dps
+		health -= amount
+		FloatingText.spawn(get_parent(), global_position + Vector2(randf_range(-4, 4), -data.size.y - 6),
+			str(roundi(amount)), Color("9be36b"))
+		if health <= 0.0:
+			_die()
+
+
 func take_damage(amount: float, from: Node) -> void:
 	EventBus.sound_requested.emit(&"enemy_hit", global_position)
 	if health <= 0.0:
@@ -119,6 +152,7 @@ func _die() -> void:
 
 func _physics_process(delta: float) -> void:
 	_flash = maxf(_flash - delta, 0.0)
+	_tick_poison(delta)
 	_since_hit += delta
 	_squash = maxf(_squash - delta, 0.0)
 	velocity.y = minf(velocity.y + data.gravity * TILE * delta, 90.0 * TILE)
@@ -248,6 +282,8 @@ func _update_look() -> void:
 	var f := data.frame_size
 	_sprite.position = Vector2(-f.x * 0.5 * _sprite.scale.x, -f.y * _sprite.scale.y)
 	_sprite.modulate = data.tint if _flash <= 0.0 else Color(2.0, 2.0, 2.0)
+	if _flash <= 0.0 and _poison_left > 0.0:
+		_sprite.modulate = data.tint * Color(0.7, 1.15, 0.6)  # poisoned: green
 
 
 func _draw() -> void:

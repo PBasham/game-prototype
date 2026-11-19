@@ -99,6 +99,14 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Mushrooms: field and red caps on the surface and in caves, duskcaps and glowcaps
       only in caves; field mushroom and red cap are edible. `forage glowcap` places one.
 
+**Food and alchemy**
+- [ ] Clay patches just under the grass; dig some, fire Clay Flasks at the furnace.
+- [ ] Campfire right click opens Cooking: roasted berries, cooked mushroom, stew (needs a bowl).
+- [ ] Stew gives Well Fed (faster, more regen) for 5 minutes.
+- [ ] Alchemy Table tabs: Potions, Coatings, Flasks. Can you tell flasks apart at a glance?
+- [ ] Healing / Mana Potions work, and you can't chug a second one until the sickness ends.
+- [ ] Poison Coating: sword hits poison slimes (green numbers). Poison Flask throws, shatters, cloud.
+
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time
       (`pickups 10` then walk a bit), never on screen or indoors.

@@ -81,6 +81,39 @@ Art: `assets/decor/berry_bush.png` / `berry_bush_bare.png` (full grown, 24x19) a
 `berry_bush_young.png` (14x12). Later: crops, and moving
 bushes with special tools (a brief first).
 
+## Cooking, potions and buffs
+
+Food and potions are items with these `ItemData` fields (group "Food and potions").
+Left click while holding one to eat or drink it. It's refused when it would do
+nothing ("You're full", "No need right now") or while its sickness is on.
+
+| Field | What it does |
+| --- | --- |
+| `food_value`, `heal_value`, `mana_value` | Hunger, health and mana restored |
+| `sickness`, `sickness_seconds` | A group (`healing`, `mana`): after drinking, no other item of that group for this long. Shows as a buff ("Healing Sickness"). |
+| `buff_name`, `buff_description`, `buff_seconds` | A timed buff, shown on the buff bar |
+| `buff_health_regen` | Extra health per second while the buff is on (adds to regen and Cozy) |
+| `buff_move_speed` | Extra walk speed while the buff is on (0.1 = 10%) |
+| `buff_poison_hits` | A weapon coating: the next this many melee hits poison (see combat.md) |
+
+**Cooking** happens at the **Campfire** (right click it: station `cooking`):
+
+| Recipe | Makes | Effect |
+| --- | --- | --- |
+| 3 Berries | Roasted Berries | +25 hunger, +5 health |
+| 1 Field Mushroom | Cooked Mushroom | +16 hunger, +4 health |
+| 2 Field Mushroom + 1 Red Cap + 1 Wooden Bowl | Mushroom Stew | +40 hunger, +8 health, Well Fed 5 min (+0.5 health/s, +10% speed) |
+
+Wooden Bowls: 2 Wood makes 2 at the workbench. Raw berries and mushrooms still work,
+cooked food is just much better.
+
+**Potions** come from the Alchemy Table (crafting.md):
+
+| Potion | Effect | Sickness |
+| --- | --- | --- |
+| Healing Potion | +60 health | 30 s (`healing`) |
+| Mana Potion | +80 mana | 10 s (`mana`) |
+
 ## Dying and the magic bag
 
 At 0 health you die. "You died" shows for `respawn_seconds` (3, on the `World`), then

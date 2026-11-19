@@ -2,6 +2,22 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-19: Food and alchemy (on phase-09-underground)
+
+- **Campfire cooks (Patrick):** right click it. Cooked food beats raw; the stew needs a
+  Wooden Bowl and gives Well Fed.
+- **Clay flasks (Patrick):** potions come in clay flasks fired from Clay, a new block in
+  patches near the surface like Terraria's. Sand, falling sand, hardened sand and glass
+  vials wait for a desert biome phase. No slime flask.
+- **Alchemy Table with tabs (Patrick):** Potions, Coatings, Flasks.
+- **Telling flasks apart (Patrick's idea, kept):** each filled flask has its own glaze
+  color plus a small badge in the icon's bottom right corner. Baked into the icon rather
+  than drawn by the UI, so it also shows on the held item, drops and tooltips.
+- **Potion sickness:** like Terraria's, so potions can't be chained; healing 30 s,
+  mana 10 s, separate groups.
+- **Poison:** Duskcaps make a melee coating (20 hits) and a thrown flask that leaves a
+  cloud. Placeholder numbers, easy to tweak in the item files.
+
 ## 2026-11-19: Phase 9, underground
 
 - **Lighting like Terraria (Patrick):** light multiplies per tile (0.965 through air,

@@ -20,4 +20,4 @@ held = SubResource("Resource_2xa3f")
 impact_at = 0.2
 id = &"duskcap"
 display_name = "Duskcap"
-description = "A purple cave mushroom. Toxic: for poisons later (weapon coatings, poison flasks, spells)."
+description = "A purple cave mushroom. Toxic: brewed into Poison Coatings and Poison Flasks."

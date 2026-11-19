@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_jgknm"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_1sjhn"]
+[ext_resource type="Texture2D" path="res://assets/items/held/wooden_bowl.png" id="3_8xsrb"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/wooden_bowl.png" id="4_htyjs"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_wby0f"]
+
+[sub_resource type="Resource" id="Resource_wjol4"]
+script = ExtResource("2_1sjhn")
+id = &"wooden_bowl"
+texture = ExtResource("3_8xsrb")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_wby0f")
+icon = ExtResource("4_htyjs")
+held = SubResource("Resource_wjol4")
+impact_at = 0.2
+id = &"wooden_bowl"
+display_name = "Wooden Bowl"
+description = "For stew."

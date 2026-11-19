@@ -98,11 +98,39 @@ const SPELL_PREFIX := "spell:"
 ## Left click on a concentration or held-beam spell: how long it runs free (seconds).
 ## 0 = the defaults (Player.scroll_concentration_seconds / scroll_beam_seconds).
 @export var scroll_seconds := 0.0
-@export_group("Food")
-## Eating it (left click while holding it) refills this much hunger...
+@export_group("Food and potions")
+## Eating or drinking it (left click while holding it) refills this much hunger...
 @export var food_value := 0.0
-## ...and heals this much health.
+## ...heals this much health...
 @export var heal_value := 0.0
+## ...and restores this much mana.
+@export var mana_value := 0.0
+## Potions: after drinking, no other item with the same sickness for this long
+## (Terraria's Potion Sickness). Empty = none.
+@export var sickness: StringName = &""
+@export var sickness_seconds := 0.0
+## A timed buff it gives (Well Fed, Poison Coating). 0 seconds = none.
+@export var buff_name := ""
+@export_multiline var buff_description := ""
+@export var buff_seconds := 0.0
+## While the buff lasts: extra health per second, and move speed (0.1 = +10%).
+@export var buff_health_regen := 0.0
+@export var buff_move_speed := 0.0
+## While the buff lasts: the next this many melee hits poison what they hit.
+@export var buff_poison_hits := 0
+@export_group("Poison")
+## Poison this item puts on enemies (coatings, the poison flask's cloud): damage per
+## second, for this many seconds.
+@export var poison_dps := 0.0
+@export var poison_seconds := 0.0
+@export_group("Throwing")
+## Left click throws one (it's used up): the Poison Flask. Speed in tiles per second.
+@export var throw_speed := 0.0
+## What happens where it lands: &"poison_cloud" (a cloud that poisons enemies inside).
+@export var throw_effect: StringName = &""
+## The cloud's size in tiles and how long it lasts.
+@export var cloud_tiles := Vector2(6, 4)
+@export var cloud_seconds := 5.0
 @export_group("Magic")
 ## Spellbooks: how many spells the book holds.
 @export var spell_slots := 0

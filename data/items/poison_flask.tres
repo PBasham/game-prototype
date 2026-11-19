@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_a5ucr"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_tue3h"]
+[ext_resource type="Texture2D" path="res://assets/items/held/poison_flask.png" id="3_d56ro"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/poison_flask.png" id="4_yrthj"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_ijbm3"]
+
+[sub_resource type="Resource" id="Resource_utawf"]
+script = ExtResource("2_tue3h")
+id = &"poison_flask"
+texture = ExtResource("3_d56ro")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_ijbm3")
+icon = ExtResource("4_yrthj")
+max_stack = 30
+held = SubResource("Resource_utawf")
+impact_at = 0.2
+poison_dps = 4.0
+poison_seconds = 4.0
+throw_speed = 22.0
+throw_effect = &"poison_cloud"
+id = &"poison_flask"
+display_name = "Poison Flask"
+description = "Left click to throw. Shatters into a cloud that poisons enemies inside (4 damage a second)."

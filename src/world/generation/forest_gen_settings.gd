@@ -145,6 +145,19 @@ extends GameData
 @export var iron_radius_min := 1.0
 @export var iron_radius_max := 1.6
 
+@export_group("Clay")
+## Clay patches in dirt, like Terraria's: common near the surface, rarer deeper.
+## Clay replaces dirt only (never stone, never the grass row).
+@export var clay_min_depth := 2
+## Chance per 8x8 area of holding a clay patch at clay_min_depth...
+@export_range(0.0, 1.0) var clay_chance_shallow := 0.12
+## ...and at clay_full_depth and below.
+@export_range(0.0, 1.0) var clay_chance_deep := 0.04
+@export var clay_full_depth := 60
+## Patch radius range (bigger than ore blobs).
+@export var clay_radius_min := 1.6
+@export var clay_radius_max := 2.6
+
 @export_group("Trees and flowers")
 ## One tree spot every this many columns (also the minimum spacing between trees).
 @export var tree_spacing := 9

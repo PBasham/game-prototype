@@ -9,6 +9,9 @@ extends GameData
 @export var station: StringName = &""
 ## Lowest station tier that can make it.
 @export var station_tier := 1
+## Which tab of the station's window it's under, for stations with tabs (Hud.STATION_TABS:
+## the Alchemy Table's "Potions", "Coatings", "Flasks"). Empty = the first tab.
+@export var tab := ""
 ## Item id -> count used up.
 @export var inputs: Dictionary[StringName, int] = {}
 ## Item ids that must be somewhere in your inventory but aren't used up (the Hand

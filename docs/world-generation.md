@@ -92,7 +92,9 @@ thickness**. Then for each tile in the column, top to bottom:
 4. The surface tile itself: **grass**.
 5. Within the dirt thickness: **dirt** (with occasional stone pockets).
 6. Below that: **stone** (with dirt pockets).
-7. If the tile is stone (or dirt, if allowed) and inside a **copper blob**: **copper**.
+7. If the tile is stone and inside an **iron blob**: **iron**.
+8. If the tile is stone (or dirt, if allowed) and inside a **copper blob**: **copper**.
+9. If the tile is still dirt and inside a **clay patch**: **clay**.
 
 Background **walls** are separate: none in the top 4 tiles below the surface (so the sky
 shows behind shallow holes), dirt wall in the dirt band, stone wall below. Walls are
@@ -240,6 +242,19 @@ Where an iron and a copper blob overlap, it's iron. Iron ore needs a pickaxe wit
 | `iron_chance_deep` | 0.1 | ...and at `iron_full_depth` and below. |
 | `iron_full_depth` | 250 | Depth where iron reaches its deep chance. |
 | `iron_radius_min` / `max` | 1.0 / 1.6 | Blob size (a bit smaller than copper's). |
+
+### Clay
+
+Patches in the dirt (never stone or the grass row), like Terraria's: common just under
+the surface, rarer deeper. Same blob method as the ores, bigger blobs.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `clay_min_depth` | 2 | Never shallower than this |
+| `clay_chance_shallow` | 0.12 | Chance per 8x8 cell at `clay_min_depth`... |
+| `clay_chance_deep` | 0.04 | ...and at `clay_full_depth` and below |
+| `clay_full_depth` | 60 | Depth where clay reaches its deep chance |
+| `clay_radius_min` / `max` | 1.6 / 2.6 | Patch size |
 
 ### How roomy are the caves? (`tools/cave_fit.gd`)
 

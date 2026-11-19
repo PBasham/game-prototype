@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_qyjbk"]
+
+[resource]
+script = ExtResource("1_qyjbk")
+station = &"alchemy"
+tab = "Coatings"
+inputs = Dictionary[StringName, int]({
+&"clay_flask": 1,
+&"duskcap": 2
+})
+output = &"poison_coating"
+id = &"poison_coating"
+display_name = "Poison Coating"

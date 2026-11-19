@@ -91,8 +91,8 @@ cooking each get their own brief later.
 | Mushroom | Where | Use now | Later |
 | --- | --- | --- | --- |
 | Field Mushroom | Surface grass, caves | Food: +8 hunger, +1 health | Cooking |
-| Red Cap (red, white spots) | Surface grass, caves | Barely food: +2 hunger | Potions |
-| Duskcap (purple) | Caves only | Ingredient | Poisons: weapon coatings, flasks, spells |
+| Red Cap (red, white spots) | Surface grass, caves | Barely food: +2 hunger | Healing Potions, Mushroom Stew |
+| Duskcap (purple) | Caves only | Ingredient | Poison Coatings, Poison Flasks (spells later) |
 | Glowcap | Caves only | Ingredient; glows (light radius 14, cyan) | Mana potions |
 
 Console: `forage <type>` puts one on the ground under the cursor. `pickups` counts forageables and floor tiles in the loaded area and how many came
@@ -203,7 +203,29 @@ can't mine the floor under furniture.
   of its list; it costs `upgrade_cost` and replaces the station in place with the next
   tier. Recipes with a higher `station_tier` only show at that tier. No station has an
   upgrade yet; the framework is ready for it.
-- Alchemy and enchanting stations come later, each with a design brief first.
+- Enchanting comes later, with a design brief first.
+
+## Cooking and alchemy
+
+- **Campfire** (station `cooking`): right click it to cook. Recipes and effects are in
+  [survival.md](survival.md).
+- **Clay** is a block found in patches in the dirt near the surface (world-generation.md).
+  1 Clay fires into a **Clay Flask** at the furnace.
+- **Alchemy Table** (5x3, station `alchemy`): workbench, 12 Wood + 3 Copper Bars + 2 Clay
+  Flasks. Its window has tabs; a recipe picks its tab with `RecipeData.tab` (empty = the
+  first tab). Tabs per station are `STATION_TABS` in `src/ui/hud/hud.gd`.
+
+| Tab | Recipe | Makes |
+| --- | --- | --- |
+| Potions | Clay Flask + 2 Red Cap | Healing Potion |
+| Potions | Clay Flask + 2 Glowcap | Mana Potion |
+| Coatings | Clay Flask + 2 Duskcap | Poison Coating |
+| Flasks | Clay Flask + 1 Duskcap + 1 Slime | 2 Poison Flasks |
+
+What's in a flask is shown by its glaze color and a small badge in the bottom right
+corner of the icon (heart: healing, star: mana, drop: coating, skull: thrown poison).
+Placeholder art; the flasks are emptied, not returned. A desert biome with sand and
+glass vials is planned as its own phase.
 
 ## Phase 7 recipes and the bed
 

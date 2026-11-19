@@ -19,7 +19,7 @@ extends Node2D
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT, LEARN,
-	CHARGE, SCROLL }
+	CHARGE, SCROLL, THROW }
 
 const TILE := World.TILE
 
@@ -280,6 +280,10 @@ func can_use(on_back: bool = false) -> bool:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				cast_scroll()
 			return false
+		Mode.THROW:
+			if not on_back and Input.is_action_just_pressed("use_primary"):
+				throw_held()
+			return false
 		Mode.CHARGE:
 			return false  # charged in _update_charge, no swing
 		Mode.NONE:
@@ -331,6 +335,9 @@ func melee_hit(item: ItemData) -> int:
 		node.call(&"take_damage", amount, p)
 		if node.has_method(&"knock_back"):
 			node.call(&"knock_back", p.chest(), item.knockback)
+		var coat := p.use_poison_hit()
+		if coat and node.has_method(&"poison"):
+			node.call(&"poison", coat.poison_dps, coat.poison_seconds)
 		hit += 1
 	return hit
 
@@ -419,21 +426,44 @@ func read_scroll() -> bool:
 	return true
 
 
-## Eats one of the held food (refills hunger and heals). Returns true if eaten.
+## Eats or drinks one of the held food or potion (hunger, health, mana, a buff).
+## Returns true if it was used up.
 func eat_held() -> bool:
 	var p := world.player
 	var item := p.held_item
 	if item == null or item.kind != ItemData.Kind.FOOD or p.selected < 0:
 		return false
-	if p.hunger >= p.max_hunger and p.health >= p.max_health:
-		EventBus.debug_message.emit("You're full")
+	var why := p.cant_consume(item)
+	if why != "":
+		EventBus.debug_message.emit(why)
 		return false
 	var inv := p.character.inventory
 	if inv.take(p.selected, 1) <= 0:
 		return false
-	p.eat(item.food_value, item.heal_value)
-	EventBus.debug_message.emit("Ate %s" % item.display_name)
+	p.consume(item)
+	var drink := item.mana_value > 0.0 or item.sickness != &"" or item.food_value <= 0.0
+	EventBus.debug_message.emit("%s %s" % ["Drank" if drink else "Ate", item.display_name])
 	EventBus.sound_requested.emit(&"eat", world.player.chest())
+	return true
+
+
+## Throws one of the held throwable (the Poison Flask) toward the cursor. Returns true
+## if thrown.
+func throw_held() -> bool:
+	var p := world.player
+	var item := p.held_item
+	if item == null or item.throw_speed <= 0.0 or p.selected < 0 or not Game.is_authority():
+		return false
+	if p.character.inventory.take(p.selected, 1) <= 0:
+		return false
+	var from := p.chest() + Vector2(p.facing * 6.0, -4.0)
+	var dir := (cursor() - from).normalized()
+	if dir == Vector2.ZERO:
+		dir = Vector2(p.facing, 0)
+	var t := ThrownItem.new()
+	world.add_child(t)
+	t.launch(world, item, from, dir * item.throw_speed * TILE + Vector2(0, -2.0 * TILE))
+	EventBus.sound_requested.emit(&"swing", from)
 	return true
 
 
@@ -491,6 +521,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.MINE
 	if item.kind == ItemData.Kind.FOOD:
 		return Mode.EAT if not on_back else Mode.NONE
+	if item.throw_speed > 0.0:
+		return Mode.THROW if not on_back else Mode.NONE
 	if item.teaches_spell != &"":
 		return Mode.LEARN if on_back else Mode.SCROLL
 	if on_back:

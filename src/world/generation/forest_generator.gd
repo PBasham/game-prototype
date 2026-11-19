@@ -200,6 +200,9 @@ func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloa
 		return _b[&"iron_ore"]
 	if (block == _b[&"stone"] or s.copper_in_dirt) and _copper(x, y, depth):
 		return _b[&"copper_ore"]
+	if block == _b[&"dirt"] and _ore(x, y, depth, s.clay_min_depth, s.clay_chance_shallow,
+			s.clay_chance_deep, s.clay_full_depth, s.clay_radius_min, s.clay_radius_max, 301):
+		return _b[&"clay"]
 	return block
 
 

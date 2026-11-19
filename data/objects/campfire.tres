@@ -10,6 +10,7 @@ style = 2
 height_tiles = 3
 width_tiles = 4
 needs_floor = true
+station = &"cooking"
 light_color = Color(1, 0.68, 0.38, 1)
 light_radius = 48.0
 aura_radius = 12.0

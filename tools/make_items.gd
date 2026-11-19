@@ -117,17 +117,68 @@ func _items() -> Array[ItemData]:
 	berries.heal_value = 2.0
 	out.append(berries)
 	# Mushrooms (forageables): food, and ingredients for potions and poisons later.
-	var field := _small(&"field_mushroom", "Field Mushroom", "A plain, filling mushroom. Left click to eat: +8 hunger, +1 health. For cooking later.")
+	var field := _small(&"field_mushroom", "Field Mushroom", "A plain, filling mushroom. Left click to eat: +8 hunger, +1 health. Better cooked at a campfire.")
 	field.kind = ItemData.Kind.FOOD
 	field.food_value = 8.0
 	field.heal_value = 1.0
 	out.append(field)
-	var red := _small(&"red_cap", "Red Cap", "Red with white spots. Barely food (+2 hunger), but a potion ingredient later.")
+	var red := _small(&"red_cap", "Red Cap", "Red with white spots. Barely food (+2 hunger); brewed into Healing Potions.")
 	red.kind = ItemData.Kind.FOOD
 	red.food_value = 2.0
 	out.append(red)
-	out.append(_small(&"duskcap", "Duskcap", "A purple cave mushroom. Toxic: for poisons later (weapon coatings, poison flasks, spells)."))
-	out.append(_small(&"glowcap", "Glowcap", "Glows in dark caves. For mana potions and more later."))
+	out.append(_small(&"duskcap", "Duskcap", "A purple cave mushroom. Toxic: brewed into Poison Coatings and Poison Flasks."))
+	out.append(_small(&"glowcap", "Glowcap", "Glows in dark caves. Brewed into Mana Potions."))
+	# Food & Alchemy.
+	out.append(_block(&"clay", "Clay", "Found in patches in the dirt. Fire it in a Furnace into Clay Flasks."))
+	out.append(_small(&"clay_flask", "Clay Flask", "An empty flask of fired clay. Potions, coatings and thrown flasks start with one."))
+	out.append(_small(&"wooden_bowl", "Wooden Bowl", "For stew."))
+	for row: Array in [
+			[&"roasted_berries", "Roasted Berries", "Warm and sweet. +25 hunger, +5 health.", 25.0, 5.0],
+			[&"cooked_mushroom", "Cooked Mushroom", "Seared on the campfire. +16 hunger, +4 health.", 16.0, 4.0],
+			[&"mushroom_stew", "Mushroom Stew", "A hearty bowl. +40 hunger, +8 health, and Well Fed for 5 minutes.", 40.0, 8.0]]:
+		var food := _small(row[0], row[1], row[2])
+		food.kind = ItemData.Kind.FOOD
+		food.food_value = row[3]
+		food.heal_value = row[4]
+		out.append(food)
+	out[out.size() - 1].buff_name = "Well Fed"
+	out[out.size() - 1].buff_description = "Health refills a little faster and you move 10% faster."
+	out[out.size() - 1].buff_seconds = 300.0
+	out[out.size() - 1].buff_health_regen = 0.5
+	out[out.size() - 1].buff_move_speed = 0.1
+	var heal := _small(&"healing_potion", "Healing Potion", "Drink: +60 health. Then 30 s before another.")
+	heal.kind = ItemData.Kind.FOOD
+	heal.heal_value = 60.0
+	heal.sickness = &"healing"
+	heal.sickness_seconds = 30.0
+	heal.max_stack = 30
+	out.append(heal)
+	var manap := _small(&"mana_potion", "Mana Potion", "Drink: +80 mana. Then 10 s before another.")
+	manap.kind = ItemData.Kind.FOOD
+	manap.mana_value = 80.0
+	manap.sickness = &"mana"
+	manap.sickness_seconds = 10.0
+	manap.max_stack = 30
+	out.append(manap)
+	var coat := _small(&"poison_coating", "Poison Coating", "Rub it on your weapon: the next 20 melee hits poison (3 damage a second for 5 s).")
+	coat.kind = ItemData.Kind.FOOD
+	coat.buff_name = "Poison Coating"
+	coat.buff_description = "Melee hits poison what they hit."
+	coat.buff_seconds = 180.0
+	coat.buff_poison_hits = 20
+	coat.poison_dps = 3.0
+	coat.poison_seconds = 5.0
+	coat.max_stack = 30
+	out.append(coat)
+	var flask := _small(&"poison_flask", "Poison Flask", "Left click to throw. Shatters into a cloud that poisons enemies inside (4 damage a second).")
+	flask.throw_speed = 22.0
+	flask.throw_effect = &"poison_cloud"
+	flask.poison_dps = 4.0
+	flask.poison_seconds = 4.0
+	flask.cloud_tiles = Vector2(6, 4)
+	flask.cloud_seconds = 5.0
+	flask.max_stack = 30
+	out.append(flask)
 	var hammer := _small(&"hand_hammer", "Hand Hammer", "Needed in your inventory to build a Workbench.")
 	hammer.max_stack = 1
 	out.append(hammer)
@@ -138,7 +189,8 @@ func _items() -> Array[ItemData]:
 			[&"chest", "Chest", "Stores 40 stacks. Right click or E to open."],
 			[&"door", "Door", "Right click or E to open and close."],
 			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: writes spells onto blank scrolls."],
-			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy)."]]:
+			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
+			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."]]:
 		var furn := _small(f[0], f[1], f[2])
 		furn.kind = ItemData.Kind.FURNITURE
 		furn.places_object = f[0]
@@ -499,7 +551,7 @@ func _objects() -> Array[ObjectDef]:
 	for f: Array in [[&"workbench", "Workbench", 5, 4, &"workbench"], [&"furnace", "Furnace", 4, 5, &"furnace"],
 			[&"copper_anvil", "Copper Anvil", 3, 3, &"anvil"], [&"chest", "Chest", 3, 3, &""],
 			[&"door", "Door", 1, 8, &""], [&"spell_weaving_table", "Spell Weaving Table", 6, 3, &"spell_weaving"],
-			[&"campfire", "Campfire", 4, 3, &""]]:
+			[&"campfire", "Campfire", 4, 3, &"cooking"], [&"alchemy_table", "Alchemy Table", 5, 3, &"alchemy"]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -654,6 +706,17 @@ func _recipes() -> Array[RecipeData]:
 		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
 		[&"wood_platform", &"", {&"wood": 1}, &"wood_platform", 2, []],
 		[&"campfire", &"", {&"wood": 5, &"stone": 3}, &"campfire", 1, []],
+		# Food & Alchemy.
+		[&"clay_flask", &"furnace", {&"clay": 1}, &"clay_flask", 1, []],
+		[&"wooden_bowl", &"workbench", {&"wood": 2}, &"wooden_bowl", 2, []],
+		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
+		[&"roasted_berries", &"cooking", {&"berries": 3}, &"roasted_berries", 1, []],
+		[&"cooked_mushroom", &"cooking", {&"field_mushroom": 1}, &"cooked_mushroom", 1, []],
+		[&"mushroom_stew", &"cooking", {&"field_mushroom": 2, &"red_cap": 1, &"wooden_bowl": 1}, &"mushroom_stew", 1, []],
+		[&"healing_potion", &"alchemy", {&"clay_flask": 1, &"red_cap": 2}, &"healing_potion", 1, []],
+		[&"mana_potion", &"alchemy", {&"clay_flask": 1, &"glowcap": 2}, &"mana_potion", 1, []],
+		[&"poison_coating", &"alchemy", {&"clay_flask": 1, &"duskcap": 2}, &"poison_coating", 1, []],
+		[&"poison_flask", &"alchemy", {&"clay_flask": 1, &"duskcap": 1, &"slime": 1}, &"poison_flask", 2, []],
 		[&"workbench", &"", {&"wood": 10}, &"workbench", 1, [&"hand_hammer"]],
 		# Workbench.
 		[&"chest", &"workbench", {&"wood": 8, &"copper_bar": 2}, &"chest", 1, []],
@@ -706,6 +769,7 @@ func _recipes() -> Array[RecipeData]:
 		for q: StringName in e[5]:
 			r.requires.append(q)
 		r.display_name = String(e[3]).capitalize()
+		r.tab = {&"poison_coating": "Coatings", &"poison_flask": "Flasks"}.get(r.id, "Potions" if r.station == &"alchemy" else "")
 		out.append(r)
 	return out
 
