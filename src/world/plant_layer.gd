@@ -25,9 +25,9 @@ const BUSH_GROWN := 1
 @export_group("Trees")
 ## Damage a tree takes before it falls. A copper axe does 25 per hit.
 @export var tree_health := 100.0
-## Wood dropped by a fallen tree (random in this range).
-@export var wood_min := 5
-@export var wood_max := 9
+## Logs dropped by a fallen tree (random in this range). 1 Log crafts into 4 Wood.
+@export var log_min := 2
+@export var log_max := 4
 ## Seeds dropped: always 1, plus this chance of a second.
 @export_range(0.0, 1.0) var extra_seed_chance := 0.5
 ## Seconds a tree takes to fall over.
@@ -558,14 +558,14 @@ func _fell(g: Vector2i, p: Plant, dir: float) -> void:
 		node.queue_free())
 
 
-## Wood along where the trunk lay, and seeds.
+## Logs along where the trunk lay, and seeds.
 func _drop_tree(base: Vector2, dir: float) -> void:
-	var wood := randi_range(wood_min, wood_max)
+	var wood := randi_range(log_min, log_max)
 	var length := 10.0 * TILE
 	for i in wood:
 		var along := (i + 0.5) / wood * length * (dir if dir != 0.0 else 0.0)
 		var pos := base + Vector2(along, 0.0 if dir != 0.0 else float(-i * TILE))
-		world.request_spawn_drop(&"wood", 1, pos, _pop())
+		world.request_spawn_drop(&"log", 1, pos, _pop())
 	var seeds := 1 + (1 if randf() < extra_seed_chance else 0)
 	world.request_spawn_drop(&"tree_seed", seeds, base + Vector2(dir * length * 0.6, 0), _pop())
 

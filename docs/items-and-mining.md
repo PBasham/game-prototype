@@ -66,7 +66,7 @@ Wood (the plank block) place a block with left click and a background wall with 
 (`places_wall` on the item). Mining works the same way: left click mines blocks, right
 click mines background walls, even behind blocks. A mined wall drops the block it came
 from (`drop_item` on `data/walls/*.tres`: dirt_wall drops dirt, stone_wall stone,
-wood_wall wood). No hammer.
+wood_wall wood, log_wall a log). No hammer.
 
 Background walls have their own textures (`terrain` on each wall `.tres`), so a block
 and its wall can look different whenever you want them to.
@@ -137,7 +137,7 @@ Current items:
 | --- | --- |
 | Copper Pickaxe | 25 per hit, 2x2, reach 10 |
 | Copper Axe | 25 per hit on trees (a tree has 100), reach 10 |
-| Dirt, Stone, Wood | Blocks (Wood places planks); right click places them as background walls |
+| Dirt, Stone, Wood, Log | Blocks (Wood places planks, Log a log cabin block); right click places them as background walls |
 | Copper Ore, Wood Platform | Blocks (front only) |
 | Rope, Torch | Tile objects |
 | Basic Spellbook | The book used when the Book slot is empty: 4 slots, power x1 |

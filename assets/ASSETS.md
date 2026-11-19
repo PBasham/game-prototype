@@ -200,3 +200,11 @@ or .ogg); the generator never overwrites without `--force`.
 | swing | A melee weapon swings |
 | mine_hit, block_break, block_place | Mining a tile, a block breaking, a block placed |
 | item_pickup, craft, eat, door | Picking something up, crafting, eating, a door opening or closing |
+
+## Log cabin (playtest round 3)
+
+| File | What |
+| --- | --- |
+| terrain/logs.png, terrain/logs_wall.png | Log cabin block and back wall (64x64, horizontal logs; the wall is the same darkened). Hand-made placeholders, not from generate_tiles.gd |
+| items/{icons,held}/log.png | Copies of the old wood (log) icon and held sprite |
+| tiles/blocks.png row 7 | Collision row for the log block (a copy of the planks row) |

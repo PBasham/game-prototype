@@ -141,7 +141,7 @@ func test_trees_fall_and_drop_wood_and_seeds() -> void:
 	plants.request_hit_tree(g, 25.0, w.player.global_position.x)
 	assert_null(plants.plant_at(g), "felled")
 	await wait_seconds(plants.fall_time + 0.3)
-	assert_gt(w.drop_count(), drops + plants.wood_min, "wood and seeds dropped")
+	assert_gt(w.drop_count(), drops + plants.log_min, "logs and seeds dropped")
 
 
 func test_removing_the_ground_breaks_a_plant() -> void:
@@ -583,9 +583,9 @@ func test_jumping_onto_a_platform_with_tucked_legs() -> void:
 
 func test_materials_dont_swing() -> void:
 	var inv := w.character.inventory
-	inv.set_slot(4, &"wood", 10)
+	inv.set_slot(4, &"copper_bar", 10)
 	w.player.select_slot(4)
-	assert_false(w.item_user.can_use(false), "wood has no use")
+	assert_false(w.item_user.can_use(false), "bars have no use")
 	w.player.select_slot(0)
 	assert_true(w.item_user.can_use(false), "the pickaxe swings")
 

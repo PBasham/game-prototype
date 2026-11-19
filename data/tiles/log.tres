@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TileDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/tile_def.gd" id="1_tiledef"]
+
+[resource]
+script = ExtResource("1_tiledef")
+atlas_row = 7
+collision = 1
+climbable = false
+health = 50.0
+terrain = "logs"
+built = true
+id = &"log"
+display_name = "Log"

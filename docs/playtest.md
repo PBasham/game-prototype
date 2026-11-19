@@ -99,8 +99,8 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Open doors close from any part of the face.
 - [ ] Craft row: [-] [n] [+] Craft, typing a number, Shift = 10, Ctrl = a stack.
 - [ ] Stone Pickaxe 2x2, Ctrl + wheel to 1x1.
-- [ ] One Wood item (no planks or sticks to craft); torches 2 wood or wood + slime;
-      no flint (stone tools are stone + wood). Old saves convert.
+- [ ] Trees drop Logs; 1 Log = 4 Wood; Logs build a log cabin (block and back wall);
+      torches need slime; no flint (stone tools are stone + wood). Old saves convert.
 - [ ] Punching a slime hurts it.
 
 ## Known

@@ -190,6 +190,23 @@ func test_picking_things_up_off_the_grass() -> void:
 	assert_null(forage.at(g), "dropped when its ground went away")
 
 
+func test_logs_make_wood_and_build_log_cabins() -> void:
+	var inv := Inventory.new()
+	var r := Registry.get_def(&"recipes", &"wood") as RecipeData
+	inv.add(&"log", 2)
+	assert_eq(Crafting.craft(inv, r, 2)[0], 2)
+	assert_eq(inv.count_of(&"wood"), 8, "1 log = 4 wood")
+	var log := ItemData.find(&"log")
+	assert_eq(log.places_block, &"log")
+	assert_eq(log.places_wall, &"log_wall")
+	assert_eq(w.blocks.def(w.blocks.index_of(&"log")).drop_item, &"", "a log block gives the log back")
+	assert_eq((w.walls.def(w.walls.index_of(&"log_wall")) as TileDef).drop_item, &"log")
+	# Torches need slime.
+	for t in Crafting.recipes_for(&""):
+		if t.output == &"torch":
+			assert_true(t.inputs.has(&"slime"), "%s needs slime" % t.id)
+
+
 func _forage(id: StringName) -> ForageData:
 	return Registry.get_def(&"forage", id) as ForageData
 

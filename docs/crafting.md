@@ -12,9 +12,11 @@ The first things come off the ground:
 - **Bare hands don't break anything**, not even dirt. You need a tool. (They do punch
   enemies, see combat.md.)
 
-**Wood** is one item, like Terraria's: trees and sticks give it, it places as the plank
-block (right click: a back wall), and it's the wood in every recipe. There are no
-separate planks or sticks to craft.
+**Logs** are what trees drop (2 to 4, `log_min` / `log_max` on the `Plants` node). One
+Log crafts into **4 Wood** by hand, or you build with it: a log cabin block (right click:
+a log back wall). **Wood** is the plank block (right click: a plank back wall) and the
+wood in every recipe; a stick on the ground gives 1 Wood. There are no separate planks
+or sticks.
 
 The path: stone + wood = **Hand Hammer** (kept in your inventory, never used up), then
 stone and wood for a **Stone Pickaxe** and **Stone Axe**, wood into a **Workbench**,
@@ -54,7 +56,7 @@ it as an item.
 | `surface_ground_chance` | 0.05 | Chance a bare surface dirt or stone tile has one |
 | `cave_chance` | 0.03 | Chance a cave floor tile has one |
 
-A felled tree drops 5 to 9 Wood (`wood_min`, `wood_max` on the `Plants` node).
+A felled tree drops 2 to 4 Logs (`log_min`, `log_max` on the `Plants` node).
 
 **They come back over time** (random ticks, like grass spreading). A few times a second
 the game picks random floor tiles in the loaded area and gives each a small chance to get
@@ -120,8 +122,9 @@ Current recipes:
 | --- | --- |
 | Hand | Hand Hammer: 1 stone + 1 wood |
 | Hand | Stone Pickaxe, Stone Axe: 3 stone + 2 wood each |
+| Hand | Wood x4: 1 log |
 | Hand | Wood Platform x2: 1 wood |
-| Hand | Torch x3: 2 wood |
+| Hand | Torch x5: 1 slime + 1 wood (the only torch recipe) |
 | Hand | Workbench: 10 wood (needs the hand hammer) |
 | Workbench | Chest: 8 wood + 2 copper bars |
 | Workbench | Door: 6 wood |

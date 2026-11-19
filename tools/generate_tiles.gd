@@ -1792,6 +1792,7 @@ const GAME_BLOCKS := [
 	{"id": "wood_planks", "base": Color("9a6a3a"), "kind": "planks"},
 	{"id": "wood_platform", "base": Color("9a6a3a"), "kind": "platform"},
 	{"id": "rope", "base": Color("bf9a5e"), "kind": "rope"},
+	{"id": "log", "base": Color("8a5e34"), "kind": "planks"},
 ]
 
 const BD_W := 1280

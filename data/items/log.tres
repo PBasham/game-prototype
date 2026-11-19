@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_pwdkm"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_osho0"]
+[ext_resource type="Texture2D" path="res://assets/items/held/log.png" id="3_a03ep"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/log.png" id="4_ug1t7"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_rbwf8"]
+
+[sub_resource type="Resource" id="Resource_v4puw"]
+script = ExtResource("2_osho0")
+id = &"log"
+texture = ExtResource("3_a03ep")
+type = &"block"
+grip = Vector2(3, 5)
+
+[resource]
+script = ExtResource("5_rbwf8")
+kind = 1
+icon = ExtResource("4_ug1t7")
+held = SubResource("Resource_v4puw")
+impact_at = 0.2
+places_block = &"log"
+places_wall = &"log_wall"
+id = &"log"
+display_name = "Log"
+description = "From trees. Craft into 4 Wood, or build with it: a log cabin block (right click: a log back wall)."

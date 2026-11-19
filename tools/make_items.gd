@@ -84,11 +84,13 @@ func _items() -> Array[ItemData]:
 	out.append(_block(&"stone", "Stone", "Hard rock.", &"stone_wall"))
 	out.append(_block(&"copper_ore", "Copper Ore", "Smelts into copper (crafting comes later)."))
 	# Wood is the building block too (like Terraria): it places the plank block.
-	var wood := _block(&"wood", "Wood", "From trees and sticks. A building block (right click places it as a back wall), and the wood in tools, torches and furniture.", &"wood_wall")
+	var wood := _block(&"wood", "Wood", "From logs (1 log = 4 wood) and sticks. A building block (right click places it as a back wall), and the wood in tools, torches and furniture.", &"wood_wall")
 	wood.places_block = &"wood_planks"
 	wood.icon = load("res://assets/items/icons/wood_planks.png") as Texture2D
 	wood.held = _look(&"wood_planks", &"block", Vector2(3, 5))
 	out.append(wood)
+	# Logs: what trees drop. Craft into 4 Wood, or build a log cabin with them.
+	out.append(_block(&"log", "Log", "From trees. Craft into 4 Wood, or build with it: a log cabin block (right click: a log back wall).", &"log_wall"))
 	# Platforms and rope go one at a time (line placing may come later).
 	var platform := _block(&"wood_platform", "Wood Platform", "Stand on it; jump up through it, Down + Jump drops through.")
 	platform.place_area_max = 1
@@ -598,8 +600,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"hand_hammer", &"", {&"stone": 1, &"wood": 1}, &"hand_hammer", 1, []],
 		[&"stone_pickaxe", &"", {&"stone": 3, &"wood": 2}, &"stone_pickaxe", 1, []],
 		[&"stone_axe", &"", {&"stone": 3, &"wood": 2}, &"stone_axe", 1, []],
+		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
 		[&"wood_platform", &"", {&"wood": 1}, &"wood_platform", 2, []],
-		[&"torch", &"", {&"wood": 2}, &"torch", 3, []],
 		[&"workbench", &"", {&"wood": 10}, &"workbench", 1, [&"hand_hammer"]],
 		# Workbench.
 		[&"chest", &"workbench", {&"wood": 8, &"copper_bar": 2}, &"chest", 1, []],
