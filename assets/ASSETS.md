@@ -230,3 +230,9 @@ or .ogg); the generator never overwrites without `--force`.
 | items/{icons,held}/{healing_potion,mana_potion,poison_coating,poison_flask}.png | The flask with a colored glaze band and a 5x5 badge in the bottom right corner (heart, star, drop, skull) |
 | items/{icons,held}/{wooden_bowl,mushroom_stew,roasted_berries,cooked_mushroom}.png | Food placeholders (16x16) |
 | objects/alchemy_table.png, items/{icons,held}/alchemy_table.png | Alchemy Table (40x24, 5x3 tiles): table, three flasks, a jar, mortar and pestle |
+
+## Concepts (not used in game yet)
+
+| File | What |
+| --- | --- |
+| art/concepts/flasks/{clay,glass}_{thin,regular,large}_{empty,healing,mana}.png | 32x32 flask concepts Patrick picked: clay (wax seal, glaze band, corner badge) and glass for the later desert tier, in three sizes. Made by `make_flasks.py` (Python, PIL). For when icons move to 32x32 (16 px tiles); the game's slots draw icons at 16x16 today |
