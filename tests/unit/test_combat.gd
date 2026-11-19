@@ -407,3 +407,27 @@ func test_fists_do_damage() -> void:
 	assert_lt(e.health, _slime().max_health, "punched")
 	assert_eq(p.fist_item().melee_damage, p.fist_damage)
 	w.item_user.cursor_override = Vector2.INF
+
+
+func test_swings_reach_downhill_and_punches_aim() -> void:
+	var p := w.player
+	var u := w.item_user
+	var feet := p.global_position
+	var side := float(p.facing)
+	# A slime-sized box 3 tiles out, sitting 2 tiles below your feet (downhill).
+	var below := Rect2(Vector2(feet.x + side * 3.0 * World.TILE - 15.0, feet.y + 2.0 * World.TILE - 20.0), Vector2(30, 20))
+	var sword := ItemData.find(&"copper_sword")
+	u.cursor_override = p.chest() + Vector2(side * 40.0, 0.0)
+	assert_true(u.melee_rect(sword).intersects(below), "the sword's arc reaches downhill")
+	# Punches: toward the cursor, capped at 60 degrees.
+	var fist := p.fist_item()
+	u.cursor_override = Vector2(below.get_center().x, below.get_center().y)
+	assert_true(u.melee_rect(fist).intersects(below), "punch aimed down the hill")
+	u.cursor_override = p.chest() + Vector2(side * 40.0, -200.0)
+	assert_false(u.melee_rect(fist).intersects(below), "punching up doesn't hit below")
+	u.cursor_override = p.chest() + Vector2(side * 5.0, 300.0)
+	var r := u.melee_rect(fist)
+	var reach := fist.melee_reach * World.TILE
+	var capped := p.chest().y + reach * sin(deg_to_rad(60.0)) + w.item_user.aimed_hit_width_tiles * 0.5 * World.TILE
+	assert_almost_eq(r.end.y, capped, 0.6, "straight down is capped at 60 degrees")
+	u.cursor_override = Vector2.INF

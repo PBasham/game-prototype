@@ -77,6 +77,8 @@ Newest first. Each entry: what was decided, why, and what it affects.
   flint as Stone. Later: other woods per biome, and Reinforced Wood (iron + wood, a block and a
   back wall, for higher stations and tools) once iron exists; needs a brief.
 - **Fists hurt:** a punch does 3 damage (Patrick).
+- **Hitting downhill (Patrick):** swings reach 3 tiles below your feet (Terraria's arc);
+  punches aim at the cursor (up to 60 degrees), arm included.
 - **Lighter back walls:** `wall_shade` 0.62 to 0.75 (Patrick: plank walls too dark).
 - **Rocks give Stone (Patrick):** the Rock item only made the Hand Hammer, so a loose
   rock now gives 1 Stone (the sprite stays a rock). The Rock item and the Workbench's

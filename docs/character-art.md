@@ -233,7 +233,7 @@ and drag points. The x axis is time through the motion (0 = start, 1 = end).
 | block | held small in your drawn arm (blocks, seeds, materials) | Place (a quick reach toward the cursor) | hidden |
 | spell | the equipped spellbook in the back hand, held still (like spell_book) | Channel (front arm straight at the cursor; loops while held) | hidden |
 
-Empty hands use the **unarmed** type: clicking punches (jab, cross, uppercut combo).
+Empty hands use the **unarmed** type: clicking punches (jab, cross, uppercut combo). The punches aim: the arm turns toward the cursor, up to 60 degrees up or down (`aim_limit_degrees` on each motion).
 `unarmed_attacks` on the Player turns it off; the debug brush (B) also takes over
 empty-hand clicks while it's on.
 

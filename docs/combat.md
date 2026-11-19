@@ -42,6 +42,17 @@ training dummy.
   then, a short slither that steps up 1-tile ledges. In the air it keeps its sideways
   speed, so it slides up a wall it touches at takeoff and over a low step.
 
+### Where melee hits (`ItemUser` exports, group Melee)
+
+- **Swings** (swords): an arc in front of you toward the cursor, from
+  `swing_above_chest_tiles` (6) above your chest to `swing_below_feet_tiles` (3) below
+  your feet, like Terraria's sweep, so they reach an enemy downhill.
+- **Aimed** (punches; `melee_aims` on the item): in front of you (head to knees) plus a
+  line toward the cursor, at most `aimed_hit_limit_degrees` (60) up or down,
+  `aimed_hit_width_tiles` (3) wide. The jab, cross and uppercut also turn the arm toward
+  the cursor (`aims` and `aim_limit_degrees` 60 on the motions in
+  `data/item_types/unarmed.tres`).
+
 A hurt enemy shows a small health bar. On death it pops ("*pop*") and rolls its loot
 into item drops.
 
@@ -135,7 +146,7 @@ in it is hit once per swing.
 |---|---|---|---|
 | Wooden Sword | 8 | 4 | Workbench: 10 wood |
 | Copper Sword | 13 | 4.5 | Anvil: 8 copper bars, 2 wood |
-| Fists (empty hands) | 3 | 3 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player |
+| Fists (empty hands) | 3 | 4 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player |
 
 ## Spells against enemies
 

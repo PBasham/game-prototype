@@ -67,6 +67,9 @@ const SPELL_PREFIX := "spell:"
 @export var melee_damage := 0.0
 ## How far the swing reaches, in tiles from your chest.
 @export var melee_reach := 4.5
+## Hits along a line toward the cursor (punches, spears later) instead of sweeping an
+## arc in front (swords). ItemUser.aimed_hit_limit_degrees caps how far up or down.
+@export var melee_aims := false
 ## How hard it knocks enemies back (tiles/s).
 @export var knockback := 12.0
 @export_group("Equipment")

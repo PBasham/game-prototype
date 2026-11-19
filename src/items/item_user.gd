@@ -23,6 +23,15 @@ enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE,
 
 const TILE := World.TILE
 
+@export_group("Melee")
+## Swings (swords) hit from this many tiles above your chest down to this many below
+## your feet, so they reach an enemy downhill.
+@export var swing_above_chest_tiles := 6.0
+@export var swing_below_feet_tiles := 3.0
+## Aimed attacks (punches): the most they turn up or down from straight ahead, and how
+## wide their line is (tiles).
+@export var aimed_hit_limit_degrees := 60.0
+@export var aimed_hit_width_tiles := 3.0
 @export_group("Indicators")
 @export var valid_color := Color(1, 1, 1, 0.85)
 ## Target box for the back layer (right click held).
@@ -275,17 +284,28 @@ func can_use(on_back: bool = false) -> bool:
 	return true
 
 
-## The area a melee swing hits: in front of the player, toward the cursor, from the
-## head to the knees.
+## The area a melee attack hits. A swing (swords) sweeps an arc in front, toward the
+## cursor, from above your head to below your feet (like Terraria's), so it reaches an
+## enemy downhill. An aimed attack (punches) hits in front of you (head to knees) and
+## along a line toward the cursor, so aiming down reaches a slime on a slope below.
 func melee_rect(item: ItemData) -> Rect2:
 	var p := world.player
 	var chest := p.chest()
-	var dir := signf(cursor().x - chest.x)
-	if dir == 0.0:
-		dir = float(p.facing)
+	var side := signf(cursor().x - chest.x)
+	if side == 0.0:
+		side = float(p.facing)
 	var reach_px := item.melee_reach * World.TILE
-	var x := chest.x if dir > 0.0 else chest.x - reach_px
-	return Rect2(x, chest.y - 5.0 * World.TILE, reach_px, 9.0 * World.TILE)
+	if item.melee_aims:
+		var a := (cursor() - chest).angle() if side > 0.0 else PI - (cursor() - chest).angle()
+		a = clampf(wrapf(a, -PI, PI), -deg_to_rad(aimed_hit_limit_degrees), deg_to_rad(aimed_hit_limit_degrees))
+		var end := chest + Vector2(cos(a) * side, sin(a)) * reach_px
+		var line := Rect2(chest, Vector2.ZERO).expand(end).grow(aimed_hit_width_tiles * 0.5 * World.TILE)
+		var front_x := chest.x if side > 0.0 else chest.x - reach_px
+		return line.merge(Rect2(front_x, chest.y - 5.0 * World.TILE, reach_px, 9.0 * World.TILE))
+	var feet_y := p.global_position.y
+	var top := chest.y - swing_above_chest_tiles * World.TILE
+	var x := chest.x if side > 0.0 else chest.x - reach_px
+	return Rect2(x, top, reach_px, feet_y + swing_below_feet_tiles * World.TILE - top)
 
 
 ## Hits everything damageable in the swing (once each). Returns how many were hit.

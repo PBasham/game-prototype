@@ -132,6 +132,10 @@ func _greatsword() -> ItemTypeData:
 		_attack("Rising", 0.5, _pose([[0, 40], [0.5, -60], [1, -150]], [[0, 0.95]]), _grip(),
 			[[0, 0]], [[0, 0], [0.5, 2], [1, 0]]),
 	]
+	# Punches go toward the cursor (up to 60 degrees up or down); so does their hit.
+	for m: ItemMotion in t.attacks:
+		m.aims = true
+		m.aim_limit_degrees = 60.0
 	return t
 
 
@@ -196,6 +200,10 @@ func _unarmed() -> ItemTypeData:
 		_attack("Uppercut", 0.3, _pose([[0, 60], [0.5, -60], [1, -40]], [[0, 0.5], [0.5, 0.9], [1, 0.6]]), null,
 			[[0, 0]], [[0, 0], [0.5, 2], [1, 0]]),
 	]
+	# Punches go toward the cursor (up to 60 degrees up or down); so does their hit.
+	for m: ItemMotion in t.attacks:
+		m.aims = true
+		m.aim_limit_degrees = 60.0
 	return t
 
 

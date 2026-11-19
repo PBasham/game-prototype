@@ -19,6 +19,9 @@ enum ItemAngle {
 @export var duration := 0.35
 ## Arm angles are relative to the direction of the cursor, and the body faces it.
 @export var aims := false
+## When it aims: the most it turns up or down from straight ahead (degrees). 180 = any
+## direction. Punches use 60, so they reach a slime downhill but not your own feet.
+@export_range(0.0, 180.0) var aim_limit_degrees := 180.0
 @export var front: ArmTrack
 @export var back: ArmTrack
 @export var item_angle_mode := ItemAngle.ARM

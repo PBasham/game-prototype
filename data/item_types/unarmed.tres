@@ -35,6 +35,8 @@ point_count = 3
 [sub_resource type="Resource" id="Resource_tjhsp"]
 script = ExtResource("1_2f2gb")
 name = "Jab"
+aims = true
+aim_limit_degrees = 60.0
 duration = 0.18
 front = SubResource("Resource_uyp6u")
 back = SubResource("Resource_5esju")
@@ -72,6 +74,8 @@ point_count = 3
 [sub_resource type="Resource" id="Resource_kycn4"]
 script = ExtResource("1_2f2gb")
 name = "Cross"
+aims = true
+aim_limit_degrees = 60.0
 duration = 0.22
 front = SubResource("Resource_ug0ld")
 back = SubResource("Resource_a2qgb")
@@ -109,6 +113,8 @@ point_count = 3
 [sub_resource type="Resource" id="Resource_fkyxm"]
 script = ExtResource("1_2f2gb")
 name = "Uppercut"
+aims = true
+aim_limit_degrees = 60.0
 duration = 0.3
 front = SubResource("Resource_5bxr4")
 back = SubResource("Resource_ws0dk")

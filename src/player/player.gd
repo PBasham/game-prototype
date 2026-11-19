@@ -76,7 +76,7 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var unarmed_attacks := true
 ## A punch hits enemies for this much (the Wooden Sword does 8), this far (tiles).
 @export var fist_damage := 3.0
-@export var fist_reach_tiles := 3.0
+@export var fist_reach_tiles := 4.0
 ## Point in a punch (0..1 of the swing) where it lands.
 @export_range(0.0, 1.0) var fist_impact_at := 0.4
 
@@ -461,6 +461,7 @@ func fist_item() -> ItemData:
 		_fist.id = &"fists"
 		_fist.display_name = "Fists"
 		_fist.knockback = 6.0
+		_fist.melee_aims = true  # punches go toward the cursor
 	_fist.melee_damage = fist_damage
 	_fist.melee_reach = fist_reach_tiles
 	_fist.impact_at = fist_impact_at

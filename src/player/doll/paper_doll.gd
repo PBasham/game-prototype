@@ -378,6 +378,9 @@ func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 	var aim_angle := 0.0
 	if m.aims:
 		aim_angle = (to_local(aim_global) - _shoulder(&"front", body_abs, shift)).angle()
+		if m.aim_limit_degrees < 180.0:
+			var lim := deg_to_rad(m.aim_limit_degrees)
+			aim_angle = clampf(wrapf(aim_angle, -PI, PI), -lim, lim)
 	for side: StringName in [holding, other]:
 		var track: ArmTrack = m.front if side == &"front" else m.back
 		var shoulder := _shoulder(side, body_abs, shift)

@@ -101,7 +101,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Stone Pickaxe 2x2, Ctrl + wheel to 1x1.
 - [ ] Trees drop Logs; 1 Log = 4 Wood; Logs build a log cabin (block and back wall);
       torches need slime; no flint (stone tools are stone + wood). Old saves convert.
-- [ ] Punching a slime hurts it.
+- [ ] Punching a slime hurts it; punches aim at the cursor (a slime downhill); sword swings reach downhill.
 
 ## Known
 
