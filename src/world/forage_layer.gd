@@ -87,7 +87,7 @@ func setup(w: World) -> void:
 	_stone_id = world.blocks.index_of(&"stone")
 	for d in Registry.get_all(&"forage"):
 		defs.append(d as ForageData)
-	defs.sort_custom(func(a: ForageData, b: ForageData) -> bool: return a.id < b.id)
+	defs.sort_custom(func(a: ForageData, b: ForageData) -> bool: return String(a.id) < String(b.id))
 	world.renderer.chunk_shown.connect(_on_chunk_shown)
 	world.renderer.chunk_hidden.connect(_on_chunk_hidden)
 	world.block_changed.connect(_on_block_changed)

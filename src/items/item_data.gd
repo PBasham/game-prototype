@@ -28,6 +28,8 @@ const SPELL_PREFIX := "spell:"
 ## Size (px) the item is drawn when it lies in the world as a drop. 0 = by kind: small
 ## things (materials, seeds) 10, blocks and books 11, tools and weapons 13, furniture 14.
 @export var drop_size := 0
+## Can be put on display (see can_display: small things only). Off to forbid it.
+@export var displayable := true
 
 @export_group("Mining")
 ## Damage to blocks per hit (swinging tools), or per second (beam).
@@ -211,6 +213,16 @@ func validate() -> PackedStringArray:
 
 
 ## Size (px) of the item as a drop in the world (see drop_size).
+## Whether it can be set down on display (tables, shelves, floors): small things only,
+## not tools, weapons, armor, spells, or anything that places blocks or furniture.
+func can_display() -> bool:
+	if not displayable or is_spell():
+		return false
+	if places_block != &"" or places_wall != &"" or places_object != &"":
+		return false
+	return kind in [Kind.MATERIAL, Kind.FOOD, Kind.SEED, Kind.SCROLL]
+
+
 func drop_pixels() -> float:
 	if drop_size > 0:
 		return float(drop_size)

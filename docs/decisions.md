@@ -14,6 +14,11 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Dirt and stone look the same (Patrick):** regenerated at 2x with the same recipes
   and layout, only the edges and details are 1 art pixel. The concept that redesigned
   them was rejected.
+- **Stations at 2x (Patrick):** every crafting station redrawn at 2x detail, same
+  footprint and look (the old art scaled up, then grain, grit and 1 pixel edges added).
+- **Items on display (Patrick, my defaults):** any small item can be set down on a floor,
+  table top or shelf (right click), one per tile, decoration only, right click to take
+  it back. Not on stations (Patrick). New Table (4x3) and Shelf (3x1, on a back wall).
 - **Flasks:** the starter tier is the thin clay vial (32x32, wax seal, glaze band).
   The contents badge moved out of the art into the inventory slot (top right, because
   the count is bottom right), so the bottle looks clean in hand and on the ground.

@@ -144,6 +144,8 @@ Current recipes:
 | Hand | Workbench: 10 wood (needs the hand hammer) |
 | Workbench | Chest: 8 wood + 2 copper bars |
 | Workbench | Door: 6 wood |
+| Workbench | Table: 8 wood |
+| Workbench | Shelf: 4 wood |
 | Workbench | Furnace: 20 stone + 4 wood + 3 torches |
 | Workbench | Copper Anvil: 6 copper bars |
 | Furnace | Copper Bar: 3 copper ore |
@@ -180,6 +182,9 @@ can't mine the floor under furniture.
 | `sprite_width_px` | Draw the sprite this wide (px) (an open door's face is 24 px from its 8 px doorway); 0 = footprint width |
 | `sprite_align` | Where a wider sprite sits: centered, starting at the footprint's left edge, or ending at its right edge (an open door starts at its hinge) |
 | `container_slots` | Makes it a chest with this many slots |
+| `display_surface` | Items can be put on display on its top (Table, Shelf; not stations) |
+| `needs_wall` | Every tile needs a back wall when placed (Shelf) |
+| `detail` | Art pixels per world pixel: 2 for detailed art (stations, Table, Shelf). See "Detailed art" in guide.md |
 | `station`, `station_tier` | Makes it a crafting station |
 | `upgrade_to`, `upgrade_cost` | Upgrade in place (see below) |
 
@@ -204,6 +209,27 @@ can't mine the floor under furniture.
   tier. Recipes with a higher `station_tier` only show at that tier. No station has an
   upgrade yet; the framework is ready for it.
 - Enchanting comes later, with a design brief first.
+
+## Items on display
+
+Hold a small item and **right click a free spot** on a floor, a **Table** top or a
+**Shelf** to set one down on display. **Right click it** to take it back (straight into
+your inventory). Displays are decoration: they don't do anything while displayed.
+
+- **Where:** any empty tile standing on a solid block, a platform, or the top of a
+  furniture piece with `display_surface` (Table, Shelf). Not on crafting stations.
+- **What:** small things: materials, food, potions, seeds, scrolls (`ItemData.can_display`).
+  Not tools, weapons, armor, spells, blocks or furniture. `displayable = false` on an
+  item forbids it.
+- **One item per tile**, drawn as the item at its size on the ground (a potion is
+  about 2 blocks tall), bottom-centered on the tile.
+- The block under a display can't be mined out from under it. Breaking the table or
+  shelf drops what was on it. Mining the display tile itself drops the item.
+- Saved with the world (`displays`, wrapped tile to item id). Code: `World.can_display_at`,
+  `request_place_display`, `request_take_display`; the tile holds the `display` object.
+- **Table** (4x3, workbench: 8 wood): on the floor. **Shelf** (3x1, workbench: 4 wood):
+  hangs on a back wall (every tile needs one when placed), not on the floor.
+- Console: `display <item>` puts one on display at the cursor, no item needed.
 
 ## Cooking and alchemy
 

@@ -246,3 +246,5 @@ or .ogg); the generator never overwrites without `--force`.
 | terrain/{dirt,stone,dirt_wall,stone_wall,clay}.png | 128x128 detailed versions (16 art pixels per block) from `generate_tiles.gd --export=terrain_hd`; same recipes as the 64x64 ones |
 | items/{icons,held}/{healing_potion,mana_potion,clay_flask}.png | 32x32 thin clay vials (detail 2) from `art/concepts/flasks/make_flasks.py` |
 | items/badges/{heal,mana}.png | 8x8 inventory badges (heart, star) |
+| objects/{workbench,furnace,copper_anvil,campfire,alchemy_table,spell_weaving_table}.png | Stations at 2x detail (`ObjectDef.detail = 2`): the 1x art through `art/concepts/stations/detail2x.py` (Scale2x, 1 px lit and shaded edges, wood grain, grit) |
+| objects/{table,shelf}.png, items/{icons,held}/{table,shelf}.png | Table (64x48, 4x3 tiles) and Shelf (48x16, 3x1, on a back wall), drawn at 1x in the workbench's wood colors by `art/concepts/stations/furn.py`, then the same 2x pass |

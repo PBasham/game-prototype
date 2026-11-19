@@ -112,6 +112,11 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Healing / Mana Potion and Clay Flask: thin clay vials in the slot, hand and on
       the ground; badge in the slot's top right corner.
 - [ ] Try a 1440p window if you can: detailed art is exactly 2 screen pixels there.
+- [ ] Stations (workbench, furnace, anvil, campfire, alchemy and spell weaving tables)
+      look like before, with wood grain and finer edges.
+- [ ] Table and Shelf (workbench). Hold a potion, mushroom or bar and right click the
+      floor, table top or shelf to display it; right click to take it back. Not on
+      stations. Breaking the table drops what's on it.
 
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time
@@ -129,6 +134,7 @@ guesses; the docs listed say where each tunable lives.
 
 ## Known
 
-- One test failed once in about 13 full runs and never again; possibly a timing
-  sensitive test. Not a known game bug.
+- `test_spawns_ahead_when_moving_and_despawn_waits` (test_combat.gd) fails now and
+  then: it rolls 40 spawns and wants more than 26 ahead of you, so bad luck can fail it.
+  Not a game bug; it passes when rerun.
 - Window positions reset when you quit. Accessories aren't drawn on the character.

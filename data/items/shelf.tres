@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_x204q"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_f7kbl"]
+[ext_resource type="Texture2D" path="res://assets/items/held/shelf.png" id="3_hpy6n"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/shelf.png" id="4_vae5h"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_jfu75"]
+
+[sub_resource type="Resource" id="Resource_bt4j0"]
+script = ExtResource("2_f7kbl")
+id = &"shelf"
+texture = ExtResource("3_hpy6n")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_jfu75")
+kind = 10
+icon = ExtResource("4_vae5h")
+max_stack = 99
+held = SubResource("Resource_bt4j0")
+impact_at = 0.2
+places_object = &"shelf"
+place_area_max = 1
+id = &"shelf"
+display_name = "Shelf"
+description = "Hangs on a back wall. Put things on display on it: hold an item and right click the shelf."

@@ -79,7 +79,7 @@ func test_inventory_size_is_data() -> void:
 func test_stations_are_hip_height() -> void:
 	var bench := Registry.get_def(&"objects", &"workbench") as ObjectDef
 	assert_eq(Vector2i(bench.width_tiles, bench.height_tiles), Vector2i(5, 4))
-	assert_eq(bench.frames.get_height(), 4 * World.TILE)
+	assert_eq(bench.frames.get_height(), 4 * World.TILE * bench.detail)
 	var furnace := Registry.get_def(&"objects", &"furnace") as ObjectDef
 	assert_eq(Vector2i(furnace.width_tiles, furnace.height_tiles), Vector2i(4, 5))
 

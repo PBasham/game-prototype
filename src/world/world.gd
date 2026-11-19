@@ -94,6 +94,9 @@ var _cracks: CrackOverlay
 ## Storage of placed containers (chests): wrapped anchor tile -> its items. Saved with
 ## the world (meta "containers").
 var containers: Dictionary[Vector2i, Inventory] = {}
+## Items on display (tables, shelves, floors): wrapped tile -> item id. Saved with the
+## world (meta "displays"). The tile holds the "display" object.
+var displays: Dictionary[Vector2i, StringName] = {}
 ## Damaged tiles: (x, y, layer 0 = block / 1 = wall) -> [damage, seconds until healed].
 var _damage: Dictionary[Vector3i, Array] = {}
 ## Debug builds only (B toggles it); null otherwise.
@@ -159,6 +162,7 @@ func _ready() -> void:
 		forage.from_dict(saved_forage)
 		plants.from_dict(WorldSave.read_extra(info.path, WorldSave.META_PLANTS), not saved_forage.is_empty())
 		_containers_from_dict(WorldSave.read_extra(info.path, WorldSave.META_CONTAINERS))
+		_displays_from_dict(WorldSave.read_extra(info.path, WorldSave.META_DISPLAYS))
 
 	character = Game.character
 	if character == null:
@@ -354,7 +358,7 @@ func save() -> Error:
 		coords.append(c.coord)
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
 		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_FORAGE: forage.to_dict(coords),
-			WorldSave.META_CONTAINERS: _containers_to_dict(),
+			WorldSave.META_CONTAINERS: _containers_to_dict(), WorldSave.META_DISPLAYS: _displays_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict()}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
@@ -863,6 +867,10 @@ func _can_place_furniture(anchor: Vector2i, def: ObjectDef) -> bool:
 			var b := data.get_block(below.x, below.y)
 			if not (is_solid(below) or (b > 0 and blocks.collision(b) == TileDef.Collision.PLATFORM)):
 				return false
+	if def.needs_wall:
+		for t in footprint(anchor, def):
+			if data.get_wall(t.x, t.y) <= 0:
+				return false
 	return true
 
 
@@ -900,6 +908,8 @@ func request_remove_object(tile: Vector2i) -> bool:
 	if store and not store.is_all_empty():
 		EventBus.debug_message.emit("Empty the %s first" % def.display_name.to_lower())
 		return false
+	if def.display:
+		return request_take_display(a, null)
 	if def.style == ObjectDef.Style.FURNITURE:
 		for t in footprint(a, def):
 			request_set_object(t, WorldData.AIR)
@@ -907,7 +917,104 @@ func request_remove_object(tile: Vector2i) -> bool:
 		request_set_object(a, WorldData.AIR)
 	containers.erase(a)
 	_drop_for(def, a)
+	if def.display_surface:
+		# What was on display on top falls off.
+		for dx in def.width_tiles:
+			var top := a + Vector2i(dx, -def.height_tiles)
+			if object_at(top) and object_at(top).display:
+				request_take_display(top, null)
 	return true
+
+
+# --- items on display ---------------------------------------------------------------
+
+## Whether an item can be put on display at a tile: the tile is empty (no block, no
+## object) and stands on a solid block, a platform, or the top of a table or shelf
+## (display_surface; not stations).
+func can_display_at(tile: Vector2i, item: ItemData) -> bool:
+	tile = wrap_tile(tile)
+	if item == null or not item.can_display() or not data.in_bounds_y(tile.y) or objects.index_of(&"display") <= 0:
+		return false
+	if data.get_block(tile.x, tile.y) != WorldData.AIR or data.get_object(tile.x, tile.y) > 0:
+		return false
+	var below := tile + Vector2i.DOWN
+	var b := data.get_block(below.x, below.y)
+	if is_solid(below) or (b > 0 and blocks.collision(b) == TileDef.Collision.PLATFORM):
+		return true
+	var under := object_def_at(below)
+	return under != null and under.display_surface
+
+
+## Puts one of `item_id` on display at a tile. The caller takes it from the inventory.
+func request_place_display(tile: Vector2i, item_id: StringName) -> bool:
+	if not Game.is_authority() or not can_display_at(tile, ItemData.find(item_id)):
+		return false
+	tile = wrap_tile(tile)
+	displays[tile] = item_id
+	request_set_object(tile, objects.index_of(&"display"))
+	EventBus.sound_requested.emit(&"block_place", tile_to_world(tile))
+	return true
+
+
+## Takes the item off display: into `who`'s inventory (dropped if it's full), or
+## dropped on the ground when `who` is null.
+func request_take_display(tile: Vector2i, who: Player) -> bool:
+	tile = wrap_tile(tile)
+	if not Game.is_authority() or not displays.has(tile):
+		return false
+	var id: StringName = displays[tile]
+	displays.erase(tile)
+	request_set_object(tile, WorldData.AIR)
+	EventBus.sound_requested.emit(&"item_pickup", tile_to_world(tile))
+	var left := 1
+	if who and who.character:
+		left = who.character.inventory.add(id, 1)
+		if left == 0:
+			EventBus.item_picked_up.emit(id, 1)
+	if left > 0:
+		request_spawn_drop(id, left, tile_to_world(tile) + Vector2(TILE * 0.5, TILE * 0.5), Vector2(0, -3.0) * TILE)
+	return true
+
+
+## The item on display at a tile, or null.
+func displayed_item(tile: Vector2i) -> ItemData:
+	return ItemData.find(displays.get(wrap_tile(tile), &""))
+
+
+## Right click with an item in hand on a free spot: puts one on display. False if the
+## spot can't take it (then the click does whatever else it would).
+func try_place_display(point: Vector2, who: Player) -> bool:
+	if who == null or who.held_item == null or who.stowed or who.selected < 0:
+		return false
+	if point.distance_to(who.chest()) > (interact_tiles + 2.0) * TILE:
+		return false
+	var item := who.held_item
+	var tile := world_to_tile(point)
+	if not can_display_at(tile, item):
+		return false
+	if who.character.inventory.take(who.selected, 1) <= 0:
+		return false
+	return request_place_display(tile, item.id)
+
+
+## Where an item on display is drawn (world px): bottom-centered on its tile, at its
+## size on the ground.
+func display_rect(tile: Vector2i, item: ItemData) -> Rect2:
+	var s := item.drop_pixels() if item else 10.0
+	return Rect2(Vector2((tile.x + 0.5) * TILE - s * 0.5, (tile.y + 1) * TILE - s), Vector2(s, s))
+
+
+func _displays_to_dict() -> Dictionary:
+	var out := {}
+	for t: Vector2i in displays:
+		out["%d,%d" % [t.x, t.y]] = String(displays[t])
+	return out
+
+
+func _displays_from_dict(d: Dictionary) -> void:
+	for key: String in d:
+		var parts := key.split(",")
+		displays[Vector2i(int(parts[0]), int(parts[1]))] = StringName(String(d[key]))
 
 
 ## Right click / E on a door: open or close it (not while standing in its doorway).
@@ -1245,14 +1352,16 @@ func try_interact_near(who: Player) -> bool:
 
 
 static func _usable(def: ObjectDef) -> bool:
-	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &"" or def.bed
+	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &"" or def.bed or def.display
 
 
 func _interact_object(anchor: Vector2i) -> bool:
 	var def := object_at(anchor)
 	if def == null or not _usable(def):
 		return false
-	if def.bed:
+	if def.display:
+		request_take_display(anchor, player)
+	elif def.bed:
 		use_bed(anchor)
 	elif def.toggles_to != &"":
 		if not request_toggle_object(anchor):

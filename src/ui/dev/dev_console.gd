@@ -344,6 +344,15 @@ func _register() -> void:
 				_print("%s placed." % def.display_name)
 				return
 		_print("No ground under the cursor."))
+	_add("display", "display <item>", "Put an item on display at the cursor (a floor, table top or shelf), no item needed.", func(a: PackedStringArray) -> void:
+		var id := StringName(_norm(" ".join(a)))
+		var t := world.world_to_tile(world.item_user.cursor())
+		if ItemData.find(id) == null:
+			_print("No item %s." % " ".join(a))
+		elif world.request_place_display(t, id):
+			_print("%s on display." % ItemData.find(id).display_name)
+		else:
+			_print("Can't display that there (needs a free spot on a floor, table or shelf; small items only)."))
 	_add("use", "use", "Use what's at the cursor (like a right click: open a station, chest or door).", func(_a: PackedStringArray) -> void:
 		_print("Used." if world.try_interact_at(world.item_user.cursor(), world.player) else "Nothing to use there (or too far)."))
 	_add("dummy", "dummy | dummy clear", "Spawn a training dummy at the cursor (to test damage spells).", _dummy)

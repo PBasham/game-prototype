@@ -27,6 +27,17 @@ enum Style {
 ## to it (a block, a platform, more rope, or a wall behind) to be placed, and then stays.
 @export var needs_support := false
 
+## Holds one item on display (see World.request_place_display): drawn as that item,
+## right click takes it back. The "display" object; no frames of its own.
+@export var display := false
+## Items can be put on display on its top (tables, shelves; not stations).
+@export var display_surface := false
+## Every tile of it needs a back wall when placed (wall shelves).
+@export var needs_wall := false
+
+## Art pixels per world pixel: 1 normal, 2 for double-detail art (a 5x4 tile workbench
+## is then 80x64 px instead of 40x32). sprite_width_px stays in world pixels.
+@export_range(1, 4) var detail := 1
 @export_group("Furniture")
 ## Tiles wide (furniture). The anchor is the bottom-left tile.
 @export var width_tiles := 1

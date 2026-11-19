@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="1_q0hvf"]
+
+[resource]
+script = ExtResource("1_q0hvf")
+display = true
+needs_floor = true
+health = 1.0
+id = &"display"
+display_name = "On display"

@@ -7,6 +7,7 @@
 script = ExtResource("2_xrn8u")
 frames = ExtResource("1_hlkxb")
 style = 2
+detail = 2
 height_tiles = 4
 width_tiles = 5
 needs_floor = true

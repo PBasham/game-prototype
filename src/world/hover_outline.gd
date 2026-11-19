@@ -14,11 +14,12 @@ const SHADER := """
 shader_type canvas_item;
 uniform vec4 region;  // the sprite's source rect in UV (x, y, w, h)
 uniform vec4 color : source_color;
+uniform float thick = 1.0;  // art pixels per world pixel: the outline stays 1 world pixel
 float inside(vec2 uv) {
 	return (uv.x < region.x || uv.y < region.y || uv.x > region.x + region.z || uv.y > region.y + region.w) ? 0.0 : 1.0;
 }
 void fragment() {
-	vec2 px = TEXTURE_PIXEL_SIZE;
+	vec2 px = TEXTURE_PIXEL_SIZE * thick;
 	vec2 r = UV + vec2(px.x, 0.0);
 	vec2 l = UV - vec2(px.x, 0.0);
 	vec2 d = UV + vec2(0.0, px.y);
@@ -36,6 +37,8 @@ var _mat: ShaderMaterial
 var _tex: Texture2D
 var _dest := Rect2()
 var _src := Rect2()
+## Art pixels per world pixel of the target (ObjectDef.detail).
+var _det := 1
 var _time := 0.0
 
 
@@ -57,6 +60,7 @@ func _process(delta: float) -> void:
 	if _tex:
 		var a := lerpf(outline_alpha_min, outline_color.a, 0.5 + 0.5 * sin(_time * TAU * pulse_speed))
 		_mat.set_shader_parameter("color", Color(outline_color, a))
+		_mat.set_shader_parameter("thick", float(_det))
 		var size := Vector2(_tex.get_size())
 		_mat.set_shader_parameter("region", Vector4(_src.position.x / size.x, _src.position.y / size.y,
 			_src.size.x / size.x, _src.size.y / size.y))
@@ -68,7 +72,7 @@ func _draw() -> void:
 	if _tex == null:
 		return
 	# One pixel bigger all around, so the outline has room outside the sprite.
-	draw_texture_rect_region(_tex, _dest.grow(1.0), _src.grow(1.0))
+	draw_texture_rect_region(_tex, _dest.grow(1.0), _src.grow(float(_det)))
 
 
 ## What the cursor is on (and the player could use), if anything.
@@ -95,6 +99,7 @@ func _find_target() -> void:
 				var s := c as Sprite2D
 				if s and s.texture:
 					_tex = s.texture
+					_det = 1
 					_src = Rect2(Vector2.ZERO, s.texture.get_size())
 					var top_left := s.global_position - (_src.size * 0.5 if s.centered else Vector2.ZERO)
 					_dest = Rect2(top_left + s.offset, _src.size)
@@ -106,6 +111,17 @@ func _object(tile: Vector2i) -> bool:
 	if a == World.NO_TILE:
 		return false
 	var def := world.object_at(a)
+	if def and def.display:
+		var item := world.displayed_item(a)
+		if item == null or item.icon == null:
+			return false
+		var wpx := world.data.width
+		a.x += roundi(float(tile.x - a.x) / wpx) * wpx
+		_tex = item.icon
+		_dest = world.display_rect(a, item)
+		_src = Rect2(Vector2.ZERO, item.icon.get_size())
+		_det = maxi(1, roundi(item.icon.get_width() / _dest.size.x))
+		return true
 	if def == null or def.frames == null or not World._usable(def):
 		return false
 	# The anchor next to the cursor (the world wraps sideways).
@@ -122,8 +138,9 @@ func _object(tile: Vector2i) -> bool:
 	elif def.sprite_align == ObjectDef.SpriteAlign.FROM_RIGHT:
 		x = a.x * World.TILE + w * World.TILE - sw
 	_tex = def.frames
+	_det = def.detail
 	_dest = Rect2(x, (a.y - h + 1) * World.TILE, sw, h * World.TILE)
-	_src = Rect2(frame * sw, 0, sw, h * World.TILE)
+	_src = Rect2(frame * sw * def.detail, 0, sw * def.detail, h * World.TILE * def.detail)
 	return true
 
 
@@ -134,6 +151,7 @@ func _plant(tile: Vector2i) -> bool:
 	if s == null or s.texture == null:
 		return false
 	_tex = s.texture
+	_det = 1
 	_src = Rect2(Vector2.ZERO, s.texture.get_size())
 	_dest = Rect2(s.global_position, _src.size)
 	return true

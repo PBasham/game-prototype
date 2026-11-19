@@ -1103,6 +1103,8 @@ func _update_use(delta: float) -> void:
 		if not clicked and _just("use_secondary"):
 			if world and world.try_interact_at(aim_point(), self):
 				return
+			if world and world.try_place_display(aim_point(), self):
+				return
 			if _offhand_cast():
 				return
 			back = held_item != null and not stowed

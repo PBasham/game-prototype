@@ -194,7 +194,9 @@ func _items() -> Array[ItemData]:
 			[&"door", "Door", "Right click or E to open and close."],
 			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: writes spells onto blank scrolls."],
 			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
-			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."]]:
+			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."],
+			[&"table", "Table", "Put things on display on top: hold an item and right click the table top."],
+			[&"shelf", "Shelf", "Hangs on a back wall. Put things on display on it: hold an item and right click the shelf."]]:
 		var furn := _small(f[0], f[1], f[2])
 		furn.kind = ItemData.Kind.FURNITURE
 		furn.places_object = f[0]
@@ -555,7 +557,8 @@ func _objects() -> Array[ObjectDef]:
 	for f: Array in [[&"workbench", "Workbench", 5, 4, &"workbench"], [&"furnace", "Furnace", 4, 5, &"furnace"],
 			[&"copper_anvil", "Copper Anvil", 3, 3, &"anvil"], [&"chest", "Chest", 3, 3, &""],
 			[&"door", "Door", 1, 8, &""], [&"spell_weaving_table", "Spell Weaving Table", 6, 3, &"spell_weaving"],
-			[&"campfire", "Campfire", 4, 3, &"cooking"], [&"alchemy_table", "Alchemy Table", 5, 3, &"alchemy"]]:
+			[&"campfire", "Campfire", 4, 3, &"cooking"], [&"alchemy_table", "Alchemy Table", 5, 3, &"alchemy"],
+			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -567,6 +570,7 @@ func _objects() -> Array[ObjectDef]:
 		o.health = 1.0
 		o.drop_item = f[0]
 		o.frames = load("res://assets/objects/%s.png" % f[0]) as Texture2D
+		o.detail = 2 if o.station != &"" else 1  # stations have detailed (2x) art
 		out.append(o)
 	out[2].light_radius = 16.0  # the furnace glows
 	# The campfire: a big warm light, and Cozy (faster health refill) nearby.
@@ -577,6 +581,20 @@ func _objects() -> Array[ObjectDef]:
 	out[7].aura_name = "Cozy"
 	out[7].aura_description = "Near a campfire: health refills faster."
 	out[2].light_color = Color(1.0, 0.6, 0.3)
+	# Table and shelf: things go on display on top (detailed art).
+	for i in [9, 10]:
+		out[i].display_surface = true
+		out[i].detail = 2
+	out[10].needs_floor = false
+	out[10].needs_wall = true
+	# What's on display (World.displays): drawn as the item itself.
+	var shown := ObjectDef.new()
+	shown.id = &"display"
+	shown.display_name = "On display"
+	shown.display = true
+	shown.needs_floor = true  # the block under it can't be mined out from under it
+	shown.health = 1.0
+	out.append(shown)
 	out[4].container_slots = 40
 	out[5].blocks_movement = true
 	out[5].anchors_building = true  # build walls and a lintel against it (stays when opened)
@@ -714,6 +732,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"clay_flask", &"furnace", {&"clay": 2}, &"clay_flask", 1, []],
 		[&"wooden_bowl", &"workbench", {&"wood": 2}, &"wooden_bowl", 2, []],
 		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
+		[&"table", &"workbench", {&"wood": 8}, &"table", 1, []],
+		[&"shelf", &"workbench", {&"wood": 4}, &"shelf", 1, []],
 		[&"roasted_berries", &"cooking", {&"berries": 3}, &"roasted_berries", 1, []],
 		[&"cooked_mushroom", &"cooking", {&"field_mushroom": 1}, &"cooked_mushroom", 1, []],
 		[&"mushroom_stew", &"cooking", {&"field_mushroom": 2, &"red_cap": 1, &"wooden_bowl": 1}, &"mushroom_stew", 1, []],

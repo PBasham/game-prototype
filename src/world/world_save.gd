@@ -24,6 +24,8 @@ const META_PLANTS := "plants"
 const META_FORAGE := "forage"
 ## Chest contents.
 const META_CONTAINERS := "containers"
+## Items on display: {"x,y": item id}.
+const META_DISPLAYS := "displays"
 ## Magic bags left where characters died: {"list": [ItemBag.to_dict()...]}.
 const META_BAGS := "bags"
 ## The clock: {"time": fraction of the day, "day": n}.

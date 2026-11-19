@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/shelf.png" id="1_m3hig"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_krddb"]
+
+[resource]
+script = ExtResource("2_krddb")
+frames = ExtResource("1_m3hig")
+style = 2
+display_surface = true
+needs_wall = true
+detail = 2
+width_tiles = 3
+health = 1.0
+drop_item = &"shelf"
+id = &"shelf"
+display_name = "Shelf"

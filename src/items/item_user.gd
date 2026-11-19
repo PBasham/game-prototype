@@ -933,8 +933,9 @@ func _draw() -> void:
 			# Furniture ghost: the object itself over its footprint.
 			var w := furn.width_tiles * TILE
 			var h := furn.height_tiles * TILE
+			var det := furn.detail
 			draw_texture_rect_region(furn.frames, Rect2(Vector2(rect.position * TILE), Vector2(w, h)),
-				Rect2(furn.frame * w, 0, w, h), Color(1, 1, 1, ghost_alpha if not valid.is_empty() else 0.25))
+				Rect2(furn.frame * w * det, 0, w * det, h * det), Color(1, 1, 1, ghost_alpha if not valid.is_empty() else 0.25))
 		for t in valid if not (furn and furn.style == ObjectDef.Style.FURNITURE) else []:
 			var r := Rect2(Vector2(t * TILE), Vector2(TILE, TILE))
 			if mode == Mode.PLANT_GRASS:

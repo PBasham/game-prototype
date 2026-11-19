@@ -387,6 +387,12 @@ with finer edges.
 - Detailed dirt, stone, walls and clay: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=terrain_hd`
   (same recipes and layout as the normal ones, details 1 art pixel). `--export=game`
   still writes the normal 64x64 versions; run `terrain_hd` after it.
+- Furniture: `ObjectDef.detail = 2` and the PNG at twice the footprint (a 5x4 workbench
+  is 80x64). The world, the hover outline and the placement ghost read it.
 - Detailed so far: Healing Potion, Mana Potion and Clay Flask (32x32, from
-  `art/concepts/flasks/make_flasks.py`). Not yet: the character (the paper doll would
-  need its rig scaled), weapons, tools and furniture.
+  `art/concepts/flasks/make_flasks.py`); the crafting stations (Workbench, Furnace,
+  Copper Anvil, Campfire, Alchemy Table, Spell Weaving Table), Table and Shelf.
+  Station art was made by `art/concepts/stations/detail2x.py`: the old art scaled 2x
+  with smoothed edges (Scale2x), 1 art pixel lit tops and shaded bottoms, wood grain
+  along each board, grit on metal and stone. Not yet: the character (the paper doll
+  would need its rig scaled), weapons, tools, chest, door, bed.

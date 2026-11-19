@@ -106,6 +106,12 @@ func draw_chunk(view: ChunkObjects) -> void:
 			if id <= 0:
 				continue
 			var def := world.objects.def(id) as ObjectDef
+			if def and def.display:
+				var item := world.displayed_item(origin + Vector2i(lx, ly))
+				if item and item.icon:
+					var r := world.display_rect(Vector2i(lx, ly), item)
+					view.draw_texture_rect(item.icon, r, false)
+				continue
 			if def == null or def.frames == null:
 				continue
 			var frame := frame_for(def, origin + Vector2i(lx, ly), id)
@@ -119,8 +125,9 @@ func draw_chunk(view: ChunkObjects) -> void:
 				x = lx * TILE
 			elif def.sprite_align == ObjectDef.SpriteAlign.FROM_RIGHT:
 				x = lx * TILE + w * TILE - sw
+			var d := def.detail
 			view.draw_texture_rect_region(def.frames, Rect2(x, (ly - h + 1) * TILE, sw, h * TILE),
-				Rect2(frame * sw, 0, sw, h * TILE))
+				Rect2(frame * sw * d, 0, sw * d, h * TILE * d))
 
 
 ## Which frame of the strip an object shows at a tile.
