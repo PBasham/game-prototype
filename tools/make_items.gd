@@ -104,7 +104,6 @@ func _items() -> Array[ItemData]:
 	var wood := _small(&"wood", "Wood", "From trees. Craft into planks or torches.")
 	out.append(wood)
 	out.append(_small(&"stick", "Stick", "Lies on the grass; trees drop some too. For tools and torches."))
-	out.append(_small(&"rock", "Rock", "Lies on the grass. A Workbench breaks stone into rocks."))
 	out.append(_small(&"flint", "Flint", "A sharp stone for the first tools. Found on the grass, sometimes in stone."))
 	out.append(_small(&"copper_bar", "Copper Bar", "Smelted from copper ore in a Furnace."))
 	var berries := _small(&"berries", "Berries", "Picked from berry bushes. Left click to eat: +10 hunger, +2 health.")
@@ -112,7 +111,7 @@ func _items() -> Array[ItemData]:
 	berries.food_value = 10.0
 	berries.heal_value = 2.0
 	out.append(berries)
-	var hammer := _small(&"hand_hammer", "Hand Hammer", "Needed in your inventory to build a Workbench and to break stone into rocks.")
+	var hammer := _small(&"hand_hammer", "Hand Hammer", "Needed in your inventory to build a Workbench.")
 	hammer.max_stack = 1
 	out.append(hammer)
 	# Furniture (crafting stations, storage, doors).
@@ -582,7 +581,7 @@ func _forage() -> Array[ForageData]:
 		f.id = row[0]
 		f.display_name = row[1]
 		f.description = "Lying on the ground. Right click or E picks it up."
-		f.item = row[0]
+		f.item = &"stone" if row[0] == &"rock" else row[0]  # a loose rock gives Stone
 		f.texture = load("res://assets/decor/pickup_%s.png" % row[0]) as Texture2D
 		f.surface_grass_weight = row[2]
 		f.surface_ground_weight = row[3]
@@ -595,7 +594,7 @@ func _recipes() -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	var table: Array = [
 		# By hand.
-		[&"hand_hammer", &"", {&"rock": 1, &"stick": 1}, &"hand_hammer", 1, []],
+		[&"hand_hammer", &"", {&"stone": 1, &"stick": 1}, &"hand_hammer", 1, []],
 		[&"stone_pickaxe", &"", {&"flint": 3, &"stick": 2}, &"stone_pickaxe", 1, []],
 		[&"stone_axe", &"", {&"flint": 3, &"stick": 2}, &"stone_axe", 1, []],
 		[&"wood_planks", &"", {&"wood": 1}, &"wood_planks", 2, []],
@@ -603,7 +602,6 @@ func _recipes() -> Array[RecipeData]:
 		[&"torch", &"", {&"stick": 1, &"wood": 1}, &"torch", 3, []],
 		[&"workbench", &"", {&"wood_planks": 10}, &"workbench", 1, [&"hand_hammer"]],
 		# Workbench.
-		[&"rocks_from_stone", &"workbench", {&"stone": 1}, &"rock", 3, [&"hand_hammer"]],
 		[&"chest", &"workbench", {&"wood_planks": 8, &"copper_bar": 2}, &"chest", 1, []],
 		[&"door", &"workbench", {&"wood_planks": 6}, &"door", 1, []],
 		[&"furnace", &"workbench", {&"stone": 20, &"wood": 4, &"torch": 3}, &"furnace", 1, []],

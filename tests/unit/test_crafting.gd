@@ -53,12 +53,16 @@ func test_hand_crafting_and_required_tools() -> void:
 	var hammer := Registry.get_def(&"recipes", &"hand_hammer") as RecipeData
 	var bench := Registry.get_def(&"recipes", &"workbench") as RecipeData
 	assert_eq(Crafting.times_craftable(inv, hammer), 0)
-	inv.add(&"rock", 2)
+	inv.add(&"stone", 2)
 	inv.add(&"stick", 3)
 	assert_eq(Crafting.times_craftable(inv, hammer), 2)
 	assert_eq(Crafting.craft(inv, hammer, 1)[0], 1)
 	assert_eq(inv.count_of(&"hand_hammer"), 1)
-	assert_eq(inv.count_of(&"rock"), 1)
+	assert_eq(inv.count_of(&"stone"), 1)
+	# Older saves: Rock items load as Stone.
+	var old := Inventory.new()
+	old.from_dict({"slots": [["rock", 4]]})
+	assert_eq(old.count_of(&"stone"), 4)
 	inv.add(&"wood_planks", 10)
 	inv.remove(&"hand_hammer", 1)
 	assert_eq(Crafting.times_craftable(inv, bench), 0, "needs the Hand Hammer on you")
@@ -174,6 +178,11 @@ func test_picking_things_up_off_the_grass() -> void:
 	var sticks := w.character.inventory.count_of(&"stick")
 	assert_true(w.try_interact_near(w.player))
 	assert_eq(w.character.inventory.count_of(&"stick"), sticks + 1)
+	# A loose rock gives Stone.
+	forage._add(w.wrap_tile(g), _forage(&"rock"))
+	var stone := w.character.inventory.count_of(&"stone")
+	assert_true(w.try_interact_near(w.player))
+	assert_eq(w.character.inventory.count_of(&"stone"), stone + 1)
 	# Digging out the ground under one drops it.
 	forage._add(w.wrap_tile(g), _forage(&"rock"))
 	w.request_set_block(g, WorldData.AIR)

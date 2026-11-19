@@ -94,7 +94,7 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | items/icons/torch.png, items/held/torch.png | torch item |
 | objects/rope.png | 32x8: 4 frames of 8x8: single, top, middle, bottom |
 | objects/torch.png | 32x16: 4 frames of 8x16 (2 tiles tall): standing, on a block to the left, to the right, on a back wall |
-| items/{icons,held}/{stick,rock,flint,copper_bar,hand_hammer,stone_pickaxe,stone_axe}.png | Phase 5 materials and stone tools |
+| items/{icons,held}/{stick,rock,flint,copper_bar,hand_hammer,stone_pickaxe,stone_axe}.png | Phase 5 materials and stone tools (rock is unused since rocks give Stone) |
 | items/{icons,held}/{workbench,furnace,copper_anvil,chest,door}.png | furniture items |
 | objects/workbench.png | 40x32 (5x4 tiles), top at hip height |
 | objects/furnace.png | 32x40 (4x5 tiles), glows orange in game |

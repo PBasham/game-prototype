@@ -21,4 +21,4 @@ held = SubResource("Resource_v27dv")
 impact_at = 0.2
 id = &"hand_hammer"
 display_name = "Hand Hammer"
-description = "Needed in your inventory to build a Workbench and to break stone into rocks."
+description = "Needed in your inventory to build a Workbench."

@@ -292,7 +292,7 @@ every asset, its size and layout.
   `tools/make_item_art.gd`. Replace the PNGs with yours (same names).
 
 **Background walls** are drawn darker and a little greyer than blocks so the front layer
-stands out: `wall_shade` (0.62) and `wall_desat` (0.2) on the `Chunks` node
+stands out: `wall_shade` (0.75) and `wall_desat` (0.2) on the `Chunks` node
 (ChunkRenderer).
 
 ## UI look

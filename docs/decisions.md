@@ -69,6 +69,10 @@ Newest first. Each entry: what was decided, why, and what it affects.
   their own `Forage` node, with types as data (`data/forage/`, ForageData) so new
   forageables (mushrooms) are a file. Older saves move their loose items over on load.
   Breakable-but-walkable things like Terraria's crystal shards are a later brief.
+- **Lighter back walls:** `wall_shade` 0.62 to 0.75 (Patrick: plank walls too dark).
+- **Rocks give Stone (Patrick):** the Rock item only made the Hand Hammer, so a loose
+  rock now gives 1 Stone (the sprite stays a rock). The Rock item and the Workbench's
+  Stone into Rocks recipe are gone; older saves load Rock items as Stone.
 - **Hover outline:** a soft pulsing outline on anything right click / E would use, in reach.
 - **Craft amount:** [-] [n] [+] Craft; Shift = 10, Ctrl = as many as you can up to a
   stack. Replaces the Craft / x10 / All buttons.

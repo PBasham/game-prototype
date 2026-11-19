@@ -25,7 +25,7 @@ uniform float built_slots[16];
 uniform float built_walls[16];
 // Background walls are drawn this much darker than blocks (and a little greyer), so
 // the front layer stands out. 1 = same as the art.
-uniform float wall_shade = 0.62;
+uniform float wall_shade = 0.75;
 uniform float wall_desat = 0.2;
 uniform vec3 grass_0 : source_color;
 uniform vec3 grass_1 : source_color;

@@ -155,6 +155,7 @@ func from_dict(d: Dictionary) -> void:
 		clear(i)
 		if i < slots.size() and (slots[i] as Array).size() == 2:
 			var item_id := StringName(slots[i][0])
+			item_id = ItemData.RENAMED.get(item_id, item_id)
 			if ItemData.find(item_id) == null:
 				push_warning("Inventory: unknown item '%s' dropped from slot %d" % [item_id, i])
 				continue

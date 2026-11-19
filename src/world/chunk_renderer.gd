@@ -43,7 +43,7 @@ class ChunkView:
 
 ## Background walls are drawn this much darker than blocks (1 = as drawn) and this
 ## much greyer, so blocks stand out from walls.
-@export_range(0.2, 1.0) var wall_shade := 0.62
+@export_range(0.2, 1.0) var wall_shade := 0.75
 @export_range(0.0, 1.0) var wall_desat := 0.2
 ## Chunks loaded around the camera, in each direction.
 var load_radius := Vector2i(2, 2)

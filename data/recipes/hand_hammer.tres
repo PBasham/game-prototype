@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_cf5bg")
 inputs = Dictionary[StringName, int]({
-&"rock": 1,
+&"stone": 1,
 &"stick": 1
 })
 output = &"hand_hammer"

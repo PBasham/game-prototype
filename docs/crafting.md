@@ -8,12 +8,12 @@ A new character starts with **no items and no spells** (they've lost their memor
 The first things come off the ground:
 
 - **Sticks, rocks and flint** lie on the grass. Right click one (or press E near
-  it) to pick it up. Felled trees also drop 1 to 3 sticks.
+  it) to pick it up. A rock gives 1 **Stone**. Felled trees also drop 1 to 3 sticks.
 - **Bare hands don't break anything**, not even dirt. You need a tool.
 - **Stone** blocks sometimes drop **flint** too (10%, `bonus_drop_item` and
   `bonus_drop_chance` on `data/tiles/stone.tres`).
 
-The path: rock + stick = **Hand Hammer** (kept in your inventory, never used up), then
+The path: stone + stick = **Hand Hammer** (kept in your inventory, never used up), then
 flint and sticks for a **Stone Pickaxe** and **Stone Axe**, wood into planks, planks into
 a **Workbench**, then a **Furnace** for copper bars and an **Anvil** for copper tools.
 
@@ -23,7 +23,7 @@ For testing, the console has `devkit` (the old starting kit plus all four spells
 ### Forageables: sticks, rocks and flint (`Forage` node, `src/world/forage_layer.gd`)
 
 Things lying on the ground that right click or E picks up. Each type is a **ForageData**
-in `data/forage/` (`stick`, `rock`, `flint`): the item it gives, its ground sprite, and a
+in `data/forage/` (`stick`, `rock`, `flint`; the rock gives Stone): the item it gives, its ground sprite, and a
 weight per kind of floor. New types (mushrooms, say) are a new file there.
 
 Where they lie:
@@ -116,13 +116,12 @@ Current recipes:
 
 | Where | Recipe |
 | --- | --- |
-| Hand | Hand Hammer: 1 rock + 1 stick |
+| Hand | Hand Hammer: 1 stone + 1 stick |
 | Hand | Stone Pickaxe, Stone Axe: 3 flint + 2 sticks each |
 | Hand | Wood Planks x2: 1 wood |
 | Hand | Wood Platform x2: 1 plank |
 | Hand | Torch x3: 1 stick + 1 wood |
 | Hand | Workbench: 10 planks (needs the hand hammer) |
-| Workbench | Rock x3: 1 stone (needs the hand hammer) |
 | Workbench | Chest: 8 planks + 2 copper bars |
 | Workbench | Door: 6 planks |
 | Workbench | Furnace: 20 stone + 4 wood + 3 torches |
