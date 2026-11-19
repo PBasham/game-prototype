@@ -16,10 +16,10 @@ enum Layer { SURFACE }
 
 @export_group("Rate")
 ## Average seconds between spawns. Lower = more often.
-@export var day_seconds := 30.0
-@export var night_seconds := 10.0
+@export var day_seconds := 10.0
+@export var night_seconds := 6.0
 ## Most enemies around the player before spawning stops.
-@export var max_day := 3
+@export var max_day := 5
 @export var max_night := 6
 
 @export_group("Enemies")

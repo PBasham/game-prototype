@@ -29,6 +29,13 @@ var _angry := false
 ## Sideways speed of the current hop (px/s), kept in the air so a wall it touches at
 ## takeoff doesn't stop it (it slides up the wall and over a low step).
 var _hop_vx := 0.0
+## Direction it's heading while wandering (-1 or 1).
+var _dir := 1.0
+## Seconds left in the current slither (0 = not slithering).
+var _slither := 0.0
+## x where the current move started, and moves in a row that got nowhere.
+var _move_from := 0.0
+var _stuck := 0
 
 
 func setup(w: World, d: EnemyData) -> void:
@@ -87,6 +94,7 @@ func knock_back(from: Vector2, strength: float) -> void:
 	var dir := signf(global_position.x - from.x)
 	velocity = Vector2((dir if dir != 0.0 else 1.0) * k * TILE, -k * 0.6 * TILE)
 	_hop_vx = 0.0
+	_slither = 0.0
 	_wait = 0.25  # hop again soon
 
 
@@ -131,25 +139,72 @@ func _slime(delta: float) -> void:
 		if _hop_vx != 0.0:
 			velocity.x = _hop_vx
 		return
-	if velocity.y >= 0.0:
+	if velocity.y >= 0.0 and _hop_vx != 0.0:
 		_hop_vx = 0.0  # landed
+		_moved()
+	if _slither > 0.0:
+		_slither -= delta
+		velocity.x = _dir * data.slither_speed * TILE
+		_step_up()
+		if _slither <= 0.0:
+			_moved()
+		return
 	velocity.x = move_toward(velocity.x, 0.0, 60.0 * TILE * delta)
 	_wait -= delta
 	if _wait < 0.18 and _wait + delta >= 0.18:
 		_squash = 0.18  # gathering itself before the hop
 	if _wait > 0.0:
 		return
-	var dir := float([-1, 1].pick_random())
-	var p := world.player
-	if p and not p.dead:
-		var dx := _wrapped_dx(p.global_position.x)
-		if absf(dx) <= data.aggro_tiles * TILE or _angry:
-			dir = signf(dx) if dx != 0.0 else dir
-	var launch := sqrt(2.0 * data.gravity * TILE * data.hop_tiles * TILE)
-	velocity = Vector2(dir * data.hop_speed * TILE, -launch)
+	_wait = randf_range(data.hop_wait_min, data.hop_wait_max)
+	_move_from = global_position.x
+	var target := _target_dir()
+	if target != 0.0:
+		_dir = target
+	elif _stuck >= 2 or randf() < data.turn_chance:
+		_dir = -_dir
+		_stuck = 0
+	if randf() < data.slither_chance and _stuck == 0:
+		_slither = randf_range(data.slither_seconds_min, data.slither_seconds_max)
+		return
+	# A big hop when the last moves got nowhere (a wall in the way), else random.
+	var height := data.hop_tiles if _stuck > 0 else randf_range(data.hop_tiles_min, data.hop_tiles)
+	var launch := sqrt(2.0 * data.gravity * TILE * height * TILE)
+	velocity = Vector2(_dir * data.hop_speed * TILE, -launch)
 	_hop_vx = velocity.x
 	EventBus.sound_requested.emit(&"slime_hop", global_position)
-	_wait = randf_range(data.hop_wait_min, data.hop_wait_max)
+
+
+## -1 or 1 toward the player if it's chasing them, 0 if it's wandering.
+func _target_dir() -> float:
+	var p := world.player
+	if p == null or p.dead:
+		return 0.0
+	var chasing := _angry or not data.wander_by_day or (world.spawner and world.spawner.is_night())
+	if not chasing and world.generator:
+		var tile := world.world_to_tile(global_position)
+		chasing = tile.y > world.generator.surface_at(tile.x) + 20  # underground
+	if not chasing:
+		return 0.0
+	var dx := _wrapped_dx(p.global_position.x)
+	if absf(dx) > data.aggro_tiles * TILE or dx == 0.0:
+		return 0.0
+	return signf(dx)
+
+
+## A hop or slither ended: count it as stuck if it got less than a tile.
+func _moved() -> void:
+	_stuck = _stuck + 1 if absf(global_position.x - _move_from) < TILE else 0
+
+
+## While slithering into a 1-tile ledge: pop up onto it if there's room.
+func _step_up() -> void:
+	var ahead := Vector2(_dir * 2.0, 0.0)
+	if not test_move(global_transform, ahead):
+		return
+	var up := global_transform.translated(Vector2(0.0, -TILE - 0.5))
+	if test_move(global_transform, Vector2(0.0, -TILE - 0.5)) or test_move(up, ahead):
+		return
+	global_position.y -= TILE + 0.5
 
 
 func _wrapped_dx(x: float) -> float:
@@ -181,6 +236,10 @@ func _update_look() -> void:
 	elif _squash > 0.0:
 		_set_frame(1)
 		_sprite.scale = Vector2(1.12, 0.85)
+	elif _slither > 0.0:
+		_set_frame(0)
+		var w := sin(Time.get_ticks_msec() * 0.025) * 0.07
+		_sprite.scale = Vector2(1.06 + w, 0.94 - w)  # a wobbling slither
 	else:
 		_set_frame(0)
 		var breathe := 1.0 + sin(Time.get_ticks_msec() * 0.004 + get_instance_id()) * 0.03

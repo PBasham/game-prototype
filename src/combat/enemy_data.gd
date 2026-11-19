@@ -29,13 +29,27 @@ enum AI { SLIME }
 
 @export_group("Movement")
 @export var ai := AI.SLIME
-## Sideways speed of a hop (tiles/s) and its height (tiles).
+## Sideways speed of a hop (tiles/s).
 @export var hop_speed := 9.0
+## Each hop's height is random between these (tiles): small hops and big ones.
+@export var hop_tiles_min := 2.0
 @export var hop_tiles := 5.0
-## Seconds it rests between hops (random in this range).
+## Seconds it rests between moves (random in this range).
 @export var hop_wait_min := 0.8
 @export var hop_wait_max := 2.2
-## Within this many tiles it hops toward you (otherwise it wanders).
+## Chance a move is a slither along the ground instead of a hop. Slithering steps up
+## ledges 1 tile high.
+@export_range(0.0, 1.0) var slither_chance := 0.3
+## Slither speed (tiles/s) and how long one lasts (seconds, random in range).
+@export var slither_speed := 3.5
+@export var slither_seconds_min := 0.5
+@export var slither_seconds_max := 1.2
+## By day on the surface, a slime that hasn't been hit wanders and ignores you (like
+## Terraria's). At night, underground, or once hit, it comes at you.
+@export var wander_by_day := true
+## While wandering: chance per move to turn around (it also turns when blocked).
+@export_range(0.0, 1.0) var turn_chance := 0.15
+## Within this many tiles it comes at you when it's chasing.
 @export var aggro_tiles := 64.0
 ## Gravity in tiles/s².
 @export var gravity := 110.0

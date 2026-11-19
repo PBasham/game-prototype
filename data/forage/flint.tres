@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ForageData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/world/forage_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/decor/pickup_flint.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"flint"
+display_name = "Flint"
+description = "Lying on the ground. Right click or E picks it up."
+item = &"flint"
+texture = ExtResource("2")
+surface_grass_weight = 15.0
+surface_ground_weight = 25.0
+cave_weight = 25.0

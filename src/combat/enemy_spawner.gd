@@ -18,6 +18,9 @@ extends Node
 @export var max_distance_tiles := 60.0
 ## Enemies farther than this (tiles) for despawn_seconds in a row are removed.
 @export var despawn_tiles := 90.0
+## Enemies never spawn inside the view: when zoomed out, spawn and despawn distances
+## grow to at least the edge of the screen plus this many tiles.
+@export var view_margin_tiles := 6.0
 @export var despawn_seconds := 6.0
 ## While you're moving sideways faster than ahead_speed_tiles (tiles/s), this share of
 ## spawns appear ahead of you instead of either side (so travelling isn't empty).
@@ -125,7 +128,9 @@ func find_spot(data: EnemyData) -> Vector2:
 		var side := 1 if randf() < 0.5 else -1
 		if moving:
 			side = ahead if randf() < ahead_bias else -ahead
-		var x := feet.x + side * randi_range(int(min_distance_tiles), int(max_distance_tiles))
+		var near := maxf(min_distance_tiles, view_half_tiles().x + view_margin_tiles)
+		var far := maxf(max_distance_tiles, near + (max_distance_tiles - min_distance_tiles))
+		var x := feet.x + side * randi_range(int(near), int(far))
 		# From well above, find the first solid ground with air above it.
 		for y in range(feet.y - 40, feet.y + 40):
 			var t := Vector2i(x, y)
@@ -137,20 +142,41 @@ func find_spot(data: EnemyData) -> Vector2:
 				if world.is_solid(above) or world.is_indoors(above):
 					room = false
 					break
-			if room:
+			if room and not _in_view(world.tile_to_world(t) + Vector2(4.0, 0.0), data):
 				return world.tile_to_world(world.wrap_tile(t)) + Vector2(4.0, 0.0)
 			break
 	return Vector2.INF
+
+
+## Half the visible area in tiles (bigger when zoomed out).
+func view_half_tiles() -> Vector2:
+	var vp := get_viewport()
+	if vp == null:
+		return Vector2.ZERO
+	var scale := vp.get_canvas_transform().get_scale()
+	return vp.get_visible_rect().size / (scale * 2.0 * World.TILE)
+
+
+## True if an enemy standing at `pos` (unwrapped px, feet) would be on screen (plus margin).
+func _in_view(pos: Vector2, data: EnemyData) -> bool:
+	var vp := get_viewport()
+	if vp == null:
+		return false
+	var r := vp.get_canvas_transform().affine_inverse() * vp.get_visible_rect()
+	r = r.grow(view_margin_tiles * World.TILE)
+	return r.intersects(Rect2(pos - Vector2(data.size.x * 0.5, data.size.y), data.size))
 
 
 ## Enemies that stay beyond despawn_tiles for despawn_seconds are removed (no loot).
 func _despawn_far() -> void:
 	var p := world.player
 	var delta := get_process_delta_time()
+	var view := view_half_tiles() + Vector2.ONE * view_margin_tiles
+	var lim := Vector2(maxf(despawn_tiles, view.x), maxf(despawn_tiles, view.y)) * World.TILE
 	for e in world.enemies():
 		var dx := absf(e._wrapped_dx(p.global_position.x))
 		var dy := absf(e.global_position.y - p.global_position.y)
-		if dx > despawn_tiles * 8.0 or dy > despawn_tiles * 8.0:
+		if dx > lim.x or dy > lim.y:
 			e.far_for += delta
 			if e.far_for >= despawn_seconds:
 				e.queue_free()

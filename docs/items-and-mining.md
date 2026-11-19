@@ -14,7 +14,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **1 to 0**, mouse wheel | Pick a hotbar slot |
 | **Left click** | Use the held item on the **front** layer: swing, mine, chop, place a block, plant. Hold to repeat. |
 | **Right click** | On something you can interact with (stations, chests, doors, sticks, rocks and flint on the ground): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
-| **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest pickup) |
+| **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest forageable or ripe berry bush) |
 | **I** or **Tab** | Open / close the inventory |
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
 | **P** | Equipment window (armor, accessories, book, conduit, stats, equipped spells); see [combat.md](combat.md) |
@@ -365,6 +365,8 @@ off), `thrown_pickup_delay` (1 s, so a thrown stack doesn't come straight back),
 saved with the world yet.
 
 ## Trees, saplings, flowers, grass (`Plants` node, `src/world/plant_layer.gd`)
+
+Sticks, rocks and flint lying around are the `Forage` node (crafting.md).
 
 - Natural trees and flowers come from the generator's decoration rules the first time a
   chunk loads. After that they're the world's: chopped trees stay chopped.

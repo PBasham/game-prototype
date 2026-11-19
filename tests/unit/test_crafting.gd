@@ -122,6 +122,18 @@ func test_doors_open_close_and_block() -> void:
 	assert_false(w.object_at(a).blocks_movement)
 	assert_true(w.request_toggle_object(a))
 	assert_eq(w.object_at(a).id, &"door")
+	# Open, any visible part of the swung face closes it with a click.
+	assert_true(w.request_toggle_object(a))
+	var open_at := w.object_anchor(a + Vector2i(0, -3))
+	var face := World.sprite_tiles(open_at, w.object_at(open_at))
+	assert_gt(face.size(), 0)
+	assert_eq(w.object_anchor_visual(face[0]), open_at)
+	var near := face[0]
+	for t in face:
+		if Vector2(t * World.TILE).distance_to(w.player.chest()) < Vector2(near * World.TILE).distance_to(w.player.chest()):
+			near = t
+	assert_true(w.try_interact_at(Vector2(near) * World.TILE + Vector2(4, 4), w.player))
+	assert_eq(w.object_def_at(a + Vector2i(0, -1)).id, &"door", "closed again")
 	# A closed door stops the player walking through it.
 	await wait_physics_frames(2)
 	Input.action_press("move_right")
@@ -148,13 +160,49 @@ func test_chests_store_and_save() -> void:
 
 
 func test_picking_things_up_off_the_grass() -> void:
-	var plants := w.plants
+	var forage := w.forage
 	var g := _floor_spot(5) + Vector2i.DOWN
-	plants._add(w.wrap_tile(g), PlantLayer.Kind.PICKUP, 2)  # flint
+	forage._add(w.wrap_tile(g), _forage(&"flint"))
 	var before := w.character.inventory.count_of(&"flint")
 	assert_true(w.try_interact_at(w.tile_to_world(g + Vector2i.UP) + Vector2(4, 6), w.player))
 	assert_eq(w.character.inventory.count_of(&"flint"), before + 1)
-	assert_null(plants.plant_at(g), "gone from the grass")
+	assert_null(forage.at(g), "gone from the grass")
+	# E picks up the nearest one.
+	for t in forage._items.keys():
+		forage._remove(t)
+	forage._add(w.wrap_tile(g), _forage(&"stick"))
+	var sticks := w.character.inventory.count_of(&"stick")
+	assert_true(w.try_interact_near(w.player))
+	assert_eq(w.character.inventory.count_of(&"stick"), sticks + 1)
+	# Digging out the ground under one drops it.
+	forage._add(w.wrap_tile(g), _forage(&"rock"))
+	w.request_set_block(g, WorldData.AIR)
+	assert_null(forage.at(g), "dropped when its ground went away")
+
+
+func _forage(id: StringName) -> ForageData:
+	return Registry.get_def(&"forage", id) as ForageData
+
+
+func test_forage_types_are_data_and_old_saves_move_over() -> void:
+	var f := w.forage
+	assert_eq(f.defs.size(), 3)
+	assert_eq(f._pick(ChunkBuildJob.FLOOR_CAVE, 0.0).id, &"flint", "sorted by id: flint, rock, stick")
+	for i in 50:
+		assert_ne(f._pick(ChunkBuildJob.FLOOR_CAVE, randf()).id, &"stick", "no sticks in caves")
+	# A pre-Forage save: plants held the sticks, rocks and flint.
+	var g := w.wrap_tile(_floor_spot(-6) + Vector2i.DOWN)
+	var wc := f._chunk_of(g)
+	f._seeded.erase(wc)
+	w.plants.from_dict({"%d,%d" % [wc.x, wc.y]: [[g.x, g.y, PlantLayer.Kind.PICKUP, 1, 0.0, 0.0]]}, false)
+	assert_eq(f.at(g).id, &"rock", "moved to the Forage node")
+	assert_null(w.plants.plant_at(g))
+	assert_true(f._seeded.has(wc), "not seeded twice")
+	# Saved and loaded back.
+	var d := f.to_dict([])
+	f._remove(g)
+	f.from_dict(d)
+	assert_eq(f.at(g).id, &"rock")
 
 
 func test_mana_costs_and_runs_out() -> void:
@@ -195,40 +243,38 @@ func _open_ground() -> Vector2i:
 
 
 func test_loose_pickups_come_back_but_not_crowded_or_indoors() -> void:
-	var plants := w.plants
+	var plants := w.forage
 	var g := _open_ground()
-	for p in plants._plants.keys():
-		if (plants._plants[p] as PlantLayer.Plant).kind == PlantLayer.Kind.PICKUP:
-			plants._remove(p)
-	assert_true(plants._try_regrow(g, 1.0), "open floor, sure chance: something appears")
-	assert_eq(plants.plant_at(g).kind, PlantLayer.Kind.PICKUP)
+	for p in plants._items.keys():
+		plants._remove(p)
+	assert_true(plants.try_regrow(g, 1.0), "open floor, sure chance: something appears")
+	assert_not_null(plants.at(g))
 	plants._remove(g)
 	# Crowded: crowd_cap items nearby block it.
 	var near: Array[Vector2i] = []
 	for i in plants.crowd_cap:
 		var t := w.wrap_tile(g + Vector2i(i - 3, 0))
 		if t != g:
-			plants._add(t, PlantLayer.Kind.PICKUP, 1)
+			plants._add(t, _forage(&"rock"))
 			near.append(t)
-	plants._add(w.wrap_tile(g + Vector2i(5, 0)), PlantLayer.Kind.PICKUP, 1)
+	plants._add(w.wrap_tile(g + Vector2i(5, 0)), _forage(&"rock"))
 	near.append(w.wrap_tile(g + Vector2i(5, 0)))
 	for i in 20:
-		assert_false(plants._try_regrow(g, 1.0), "crowded")
+		assert_false(plants.try_regrow(g, 1.0), "crowded")
 	for t in near:
 		plants._remove(t)
 	# Indoors: a background wall behind the spot.
 	var above := g + Vector2i.UP
 	w.data.set_wall(above.x, above.y, w.walls.index_of(&"wood_wall"))
-	assert_false(plants._try_regrow(g, 1.0), "not in houses")
+	assert_false(plants.try_regrow(g, 1.0), "not in houses")
 
 
 func test_pickups_regrow_off_screen_over_days() -> void:
-	var plants := w.plants
+	var plants := w.forage
 	await wait_physics_frames(5)
 	assert_gt(plants.floor_tile_count(), 0)
-	for p in plants._plants.keys():
-		if (plants._plants[p] as PlantLayer.Plant).kind == PlantLayer.Kind.PICKUP:
-			plants._remove(p)
+	for p in plants._items.keys():
+		plants._remove(p)
 	var before := plants.regrown_total
 	plants.regrow_for_days(30.0)
 	assert_gt(plants.regrown_total, before, "30 days bring some back")
@@ -239,5 +285,54 @@ func test_pickups_regrow_off_screen_over_days() -> void:
 		for i in range(0, spots.size(), 2):
 			var t := c * ChunkData.SIZE + Vector2i(spots[i], spots[i + 1])
 			if screen.has_point(t):
-				var p: PlantLayer.Plant = plants.plant_at(w.wrap_tile(t))
-				assert_true(p == null or p.kind != PlantLayer.Kind.PICKUP, "nothing appears on screen")
+				assert_null(plants.at(t), "nothing appears on screen")
+
+
+func test_craft_amount_field_shift_and_ctrl() -> void:
+	var hud := w.hud
+	w.character.inventory.add(&"wood", 200)
+	hud.toggle_crafting()
+	var i := -1
+	for j in hud.recipes().size():
+		if hud.recipes()[j].output == &"wood_planks" and hud.recipes()[j].inputs.has(&"wood"):
+			i = j
+	assert_gt(i, -1, "planks are craftable by hand")
+	hud.selected_recipe = i
+	hud.set_craft_amount(3)
+	var before := w.character.inventory.count_of(&"wood_planks")
+	assert_eq(hud.craft_selected(), 3, "crafts the amount in the field")
+	assert_eq(hud.craft_selected(true), 10, "Shift: 10")
+	var r: RecipeData = hud.recipes()[i]
+	var left := hud._times(r)
+	var stack := ItemData.find(r.output).max_stack / r.output_count
+	assert_eq(hud.craft_selected(false, true), mini(left, stack), "Ctrl: as many as you can, up to a stack")
+	assert_gt(w.character.inventory.count_of(&"wood_planks") + 0, before)
+	hud.set_craft_amount(0)
+	assert_eq(hud.craft_amount, 1, "never below 1")
+	# Typing into the field.
+	hud._amount_typing = true
+	hud._amount_fresh = true
+	for k in [KEY_4, KEY_2]:
+		var e := InputEventKey.new()
+		e.keycode = k
+		e.pressed = true
+		hud._amount_key(e)
+	assert_eq(hud.craft_amount, 42)
+
+
+func test_hover_outline_on_interactables_in_reach() -> void:
+	var a := _floor_spot(3)
+	assert_true(w.request_place_object(a, w.objects.index_of(&"chest")))
+	w.item_user.cursor_override = Vector2(a * World.TILE) + Vector2(4, -2)
+	await wait_seconds(0.2)
+	assert_not_null(w.hover_outline.hovered(), "chest outlined")
+	w.item_user.cursor_override = Vector2(_floor_spot(40) * World.TILE)
+	await wait_seconds(0.2)
+	assert_null(w.hover_outline.hovered(), "nothing usable there (or out of reach)")
+	# A stick lying on the grass.
+	var g := w.wrap_tile(_floor_spot(-3) + Vector2i.DOWN)
+	w.forage._add(g, _forage(&"stick"))
+	w.item_user.cursor_override = Vector2((g + Vector2i.UP) * World.TILE) + Vector2(4, 4)
+	await wait_seconds(0.2)
+	assert_not_null(w.hover_outline.hovered(), "stick outlined")
+	w.item_user.cursor_override = Vector2.INF

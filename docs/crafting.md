@@ -20,52 +20,62 @@ a **Workbench**, then a **Furnace** for copper bars and an **Anvil** for copper 
 For testing, the console has `devkit` (the old starting kit plus all four spells) and
 `mana` (infinite mana on or off).
 
-### Loose sticks, rocks and flint (`Plants` node, `src/world/plant_layer.gd`)
+### Forageables: sticks, rocks and flint (`Forage` node, `src/world/forage_layer.gd`)
 
-They're seeded on any grass, dirt or stone tile with open air above it, by where it is:
+Things lying on the ground that right click or E picks up. Each type is a **ForageData**
+in `data/forage/` (`stick`, `rock`, `flint`): the item it gives, its ground sprite, and a
+weight per kind of floor. New types (mushrooms, say) are a new file there.
 
-- **Surface grass:** sticks, rocks and flint. Some flower spots become one instead.
-- **Bare surface dirt or stone** (cliffs, dug ground): rocks and flint.
-- **Cave floors** (more than 3 tiles below the generated surface line, any depth): rocks
-  and flint, no sticks.
+Where they lie:
 
-Each tile rolls once (the same spot always gives the same thing). Areas you haven't
-changed are re-seeded when a world loads, so new settings show up there.
+- **Surface grass:** some flower spots, plus bare grass tiles.
+- **Bare surface dirt or stone** (cliffs, dug ground).
+- **Cave floors:** grass, dirt or stone with air above, more than 3 tiles below the
+  generated surface line, any depth.
 
-| Export | Default | What it does |
+| ForageData | Surface grass | Surface ground | Caves |
+| --- | --- | --- | --- |
+| Stick | 45 | 0 | 0 |
+| Rock | 40 | 75 | 75 |
+| Flint | 15 | 25 | 25 |
+
+Weights compare across types on each kind of floor (45 / 40 / 15 = 45% / 40% / 15%);
+0 = never there. A tile's first roll is fixed by its position (the same spot always gives
+the same thing). Areas you haven't changed are re-seeded when a world loads, so new
+settings show up there. Digging out the ground under one, or putting a block on it, drops
+it as an item.
+
+| `Forage` export | Default | What it does |
 | --- | --- | --- |
-| `pickup_share` | 0.4 | Share of flower spots that are a pickup instead |
-| `pickup_chance` | 0.06 | Chance a bare surface grass tile has a pickup: about one every 16 tiles |
-| `grass_stick_share` | 0.45 | On grass: share of sticks |
-| `flint_share` | 0.15 | On grass: share of flint (the rest are rocks) |
-| `ground_pickup_chance` | 0.05 | Chance a bare surface dirt or stone tile has a rock or flint |
-| `ground_flint_share` | 0.25 | Of those, the share that's flint |
-| `cave_pickup_chance` | 0.03 | Chance a cave floor tile has a rock or flint |
-| `cave_flint_share` | 0.25 | Of those, the share that's flint |
-| `sticks_min`, `sticks_max` | 1, 3 | Sticks a felled tree drops |
+| `flower_spot_share` | 0.4 | Share of flower spots that hold one instead of a flower |
+| `surface_grass_chance` | 0.06 | Chance a bare surface grass tile has one: about one every 16 tiles |
+| `surface_ground_chance` | 0.05 | Chance a bare surface dirt or stone tile has one |
+| `cave_chance` | 0.03 | Chance a cave floor tile has one |
+
+Sticks also drop from felled trees (`sticks_min`, `sticks_max` on the `Plants` node, 1 to 3).
 
 **They come back over time** (random ticks, like grass spreading). A few times a second
 the game picks random floor tiles in the loaded area and gives each a small chance to get
-a new item, by the same rules as above (sticks only on surface grass). New items are
-random, not fixed per tile, and are saved like anything else. Rules:
+a new one, by the same weights. New ones are random, not fixed per tile, and are saved
+like anything else. Rules:
 
 - Never on screen: tiles you can see (plus 2 tiles) are skipped.
-- Never indoors: no item on a tile with a background wall or furniture above it.
-- Crowding brake: the chance drops with every item within `crowd_radius` tiles and is
-  zero at `crowd_cap`, so floors never fill up.
+- Never indoors: none on a tile with a background wall or furniture above it.
+- Crowding brake: the chance drops with every forageable within `crowd_radius` tiles
+  and is zero at `crowd_cap`, so floors never fill up.
 - Areas you were away from catch up when they load again, up to `regrow_catch_up_days`.
   Sleeping counts too.
 
-| Export | Default | What it does |
+| `Forage` export | Default | What it does |
 | --- | --- | --- |
-| `regrow_days_per_item` | 2.5 | In-game days for one new item per `regrow_floor_tiles` of open floor, on average |
+| `regrow_days_per_item` | 2.5 | In-game days for one new forageable per `regrow_floor_tiles` of open floor, on average |
 | `regrow_floor_tiles` | 32 | About a chunk's width of ground |
 | `cave_regrow_scale` | 0.5 | Caves come back at this fraction of the surface rate |
 | `crowd_radius`, `crowd_cap` | 16, 6 | The crowding brake |
 | `regrow_checks_per_second` | 200 | Random tiles checked per second; only changes how evenly it trickles in, not the rate |
 | `regrow_catch_up_days` | 3 | Most time an area catches up on when it loads again |
 
-Console: `pickups` counts loose items and floor tiles in the loaded area and how many came
+Console: `pickups` counts forageables and floor tiles in the loaded area and how many came
 back this session; `pickups <days>` lets that many days pass for them (off screen).
 
 Their sprites are sized like the thing (stick 12x5, rock 9x7, flint 7x6 px), from
@@ -82,7 +92,13 @@ with its **x**, K, Esc, closing the inventory, or walking out of reach.
   how many you can make right now; rows you can't make are dimmed. Mouse wheel scrolls.
 - **Right:** the selected recipe: a big icon, the description, **Needs** (have / need,
   green or red) and **Tools (kept)** (required, not used up).
-- **Craft** makes 1, **x10** makes up to 10, **All (N)** makes as many as you can.
+- Bottom row: **[-] [amount] [+] Craft**. Craft makes the amount in the field (it
+  turns red when you can't make that many; Craft then makes as many as you can, up to
+  it). Click the field and type a number (Enter crafts, Esc stops typing), use the
+  wheel over it, or [-] / [+] (Shift or right click: by 10). The amount resets to 1 when
+  you pick another recipe.
+- **Shift + Craft** makes 10, **Ctrl + Craft** makes as many as you can, up to one full
+  stack of the item. "Can make N" above the row says how many you could.
   Double click a row to make 1. Anything that doesn't fit in your inventory drops at
   your feet.
 
@@ -150,7 +166,7 @@ can't mine the floor under furniture.
 | Furnace | 4x5 | Station `furnace`, gives orange light (radius 6) |
 | Copper Anvil | 3x3 | Station `anvil`, on a stump |
 | Chest | 3x3 | 40 slots |
-| Door | 1x8 | Right click opens and closes. Starbound style, two images, same 1x8 footprint: `door.png` closed (the wall runs across the screen, so the door is seen edge on: a thick slab with iron straps under a lintel) and `door_open.png` open (it swung toward you, so you see its face, drawn 3 tiles wide starting at its hinge, the doorway's edge: `sprite_width_px` 24, `sprite_align` from the hinge side). `door_open_left` is the mirror, used when you open it from the right. It only opens where it has room to swing: if a block or another object is in the way it opens the other way, and if both sides are blocked it stays shut ("Something's in the way"). Won't close on you. |
+| Door | 1x8 | Right click opens and closes. Starbound style, two images, same 1x8 footprint: `door.png` closed (the wall runs across the screen, so the door is seen edge on: a thick slab with iron straps under a lintel) and `door_open.png` open (it swung toward you, so you see its face, drawn 3 tiles wide starting at its hinge, the doorway's edge: `sprite_width_px` 24, `sprite_align` from the hinge side). `door_open_left` is the mirror, used when you open it from the right. It only opens where it has room to swing: if a block or another object is in the way it opens the other way, and if both sides are blocked it stays shut ("Something's in the way"). Won't close on you. Open, any visible part of it (the whole swung face) can be clicked to close it. |
 
 - **Chests:** right click opens the chest in its own window on the right (the inventory
   opens too). Click to move items like the inventory; Shift+click moves a whole stack

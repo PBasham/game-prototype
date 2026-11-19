@@ -112,12 +112,13 @@ func test_hand_crafting_window_and_buttons() -> void:
 	w.character.inventory.add(&"wood", 5)
 	var before := w.character.inventory.count_of(&"wood_planks")
 	w.hud.selected_recipe = planks
-	# Click "All" (the third craft button).
+	# Ctrl + click Craft: as many as you can.
 	var b := w.hud._craft_button_rects()
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = true
-	click.position = b[2].get_center()
+	click.ctrl_pressed = true
+	click.position = b[Hud.CraftBtn.CRAFT].get_center()
 	w.hud._crafting_input(w.hud._craft, click)
 	assert_eq(w.character.inventory.count_of(&"wood"), 0)
 	assert_eq(w.character.inventory.count_of(&"wood_planks"), before + 10)

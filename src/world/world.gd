@@ -70,7 +70,9 @@ var backdrop: Backdrop
 var clock: WorldClock
 var player: Player
 var plants: PlantLayer
+var forage: ForageLayer
 var object_layer: ObjectLayer
+var hover_outline: HoverOutline
 ## The character playing (inventory). From Game.character, or a throwaway one.
 var character: CharacterData
 var item_user: ItemUser
@@ -147,8 +149,15 @@ func _ready() -> void:
 	add_child(plants)
 	move_child(plants, renderer.get_index())  # behind the terrain
 	plants.setup(self)
+	forage = ForageLayer.new()
+	forage.name = "Forage"
+	add_child(forage)
+	move_child(forage, plants.get_index() + 1)
+	forage.setup(self)  # after the plants: trees, bushes and flowers keep their tiles
 	if not info.temporary and not info.path.is_empty():
-		plants.from_dict(WorldSave.read_extra(info.path, WorldSave.META_PLANTS))
+		var saved_forage := WorldSave.read_extra(info.path, WorldSave.META_FORAGE)
+		forage.from_dict(saved_forage)
+		plants.from_dict(WorldSave.read_extra(info.path, WorldSave.META_PLANTS), not saved_forage.is_empty())
 		_containers_from_dict(WorldSave.read_extra(info.path, WorldSave.META_CONTAINERS))
 
 	character = Game.character
@@ -189,6 +198,10 @@ func _ready() -> void:
 	_enemies = Node2D.new()
 	_enemies.name = "Enemies"
 	add_child(_enemies)
+	hover_outline = HoverOutline.new()
+	hover_outline.name = "HoverOutline"
+	add_child(hover_outline)
+	hover_outline.setup(self)
 	spawner = EnemySpawner.new()
 	spawner.name = "Spawner"
 	spawner.world = self
@@ -340,7 +353,8 @@ func save() -> Error:
 	for c in modified:
 		coords.append(c.coord)
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
-		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_CONTAINERS: _containers_to_dict(),
+		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_FORAGE: forage.to_dict(coords),
+			WorldSave.META_CONTAINERS: _containers_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict()}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
@@ -360,6 +374,7 @@ func regenerate() -> void:
 	renderer.clear()
 	data.discard_unmodified()
 	plants.reset_unchanged()
+	forage.reset_unchanged()
 	if info.kind == &"forest":
 		generator = ForestGenerator.new(blocks, walls, size.x, size.y, info.seed, ForestGenerator.default_settings(true))
 	else:
@@ -455,6 +470,7 @@ func sleep_until_morning() -> void:
 	var seconds := clock.days(hours / 24.0)
 	clock.advance(seconds / maxf(clock.speed, 0.0001))
 	plants.advance(seconds)
+	forage.advance(seconds)
 	if player.hunger_on:
 		var per_second := player.max_hunger / maxf(clock.days(player.hunger_full_days), 1.0)
 		player.hunger = maxf(player.hunger - per_second * seconds, 1.0)
@@ -780,6 +796,26 @@ func object_anchor(tile: Vector2i) -> Vector2i:
 			if def and not def.filler and def.style == ObjectDef.Style.FURNITURE \
 					and dx < def.width_tiles and dy < def.height_tiles:
 				return a
+	return NO_TILE
+
+
+## Like object_anchor, but also finds an object whose sprite reaches past its footprint
+## over this tile (an open door's face), so any visible part can be clicked.
+func object_anchor_visual(tile: Vector2i) -> Vector2i:
+	var a := object_anchor(tile)
+	if a != NO_TILE:
+		return a
+	tile = wrap_tile(tile)
+	for dy in MAX_FURNITURE.y:
+		for dx in range(-MAX_FURNITURE.x, MAX_FURNITURE.x + 1):
+			var b := object_anchor(tile + Vector2i(dx, dy))
+			if b == NO_TILE:
+				continue
+			var def := object_at(b)
+			if def and def.sprite_width_px > 0:
+				for t in sprite_tiles(b, def):
+					if wrap_tile(t) == tile:
+						return b
 	return NO_TILE
 
 
@@ -1125,8 +1161,10 @@ func try_interact_at(point: Vector2, who: Player) -> bool:
 	if who and point.distance_to(who.chest()) > (interact_tiles + 2.0) * TILE:
 		return false
 	var tile := world_to_tile(point)
-	var a := object_anchor(tile)
+	var a := object_anchor_visual(tile)
 	if a != NO_TILE and _interact_object(a):
+		return true
+	if forage and forage.request_pick_up(tile, who):
 		return true
 	if plants and plants.request_pick_up(tile, who):
 		return true
@@ -1158,9 +1196,14 @@ func try_interact_near(who: Player) -> bool:
 				best_d = d
 	if best != NO_TILE:
 		return _interact_object(best)
-	var pick := plants.nearest_pickup(world_to_tile(who.global_position), ceili(interact_tiles)) if plants else NO_TILE
-	if pick != NO_TILE:
-		return plants.request_pick_up(pick + Vector2i.UP, who)
+	var feet := world_to_tile(who.global_position)
+	var reach := ceili(interact_tiles)
+	var stick := forage.nearest(feet, reach) if forage else ForageLayer.NONE
+	var bush := plants.nearest_ripe_bush(feet, reach) if plants else PlantLayer.NONE
+	if stick != ForageLayer.NONE and (bush == PlantLayer.NONE or Vector2(stick - feet).length() <= Vector2(bush - feet).length()):
+		return forage.request_pick_up(stick + Vector2i.UP, who)
+	if bush != PlantLayer.NONE:
+		return plants.request_pick_up(bush + Vector2i.UP, who)
 	var best_node: Node = null
 	var node_d := interact_tiles * TILE
 	for node in get_tree().get_nodes_in_group(&"interactable"):

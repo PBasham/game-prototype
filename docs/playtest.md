@@ -21,7 +21,7 @@ guesses; the docs listed say where each tunable lives.
 ## Phase 5: crafting (crafting.md)
 
 - [ ] Start from nothing: sticks, rocks, flint from the ground; Hand Hammer, stone tools.
-- [ ] Workbench, furnace, anvil: recipes show, crafting x1 / x10 / All works.
+- [ ] Workbench, furnace, anvil: recipes show, crafting amounts work.
 - [ ] Chests hold items and save; doors open, close and block.
 - [ ] Mana drains while casting and refills.
 
@@ -38,7 +38,7 @@ guesses; the docs listed say where each tunable lives.
 
 **Enemies and spawning**
 - [ ] Slimes feel right: hop height, timing, damage, readable at night.
-- [ ] Spawn pace by day (about every 30 s, 3 max) and night (about every 10 s, 6 max).
+- [ ] Spawn pace by day (about every 10 s, 5 max) and night (about every 6 s, 6 max), never inside your view even zoomed out.
 - [ ] No Blue Slimes until you've killed a Green one; then about 1 in 9.
 - [ ] Nothing spawns underground (more than 20 tiles below the surface) or indoors.
 - [ ] Enemies far away (90 tiles) despawn.
@@ -88,6 +88,17 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Chain Spark jumps between slimes; Recall: stand still 3 s, moving cancels.
 - [ ] Seek Ore underground at night.
 - [ ] Sounds: anything too loud, annoying or missing?
+
+**Playtest fixes (your notes)**
+- [ ] Sticks, rocks and flint on grass, cliffs and cave floors; they come back over time
+      (`pickups 10` then walk a bit), never on screen or indoors.
+- [ ] Slimes: wander past you by day, chase at night or once hit; random hop sizes,
+      slithers up 1-block steps, no more hopping in place.
+- [ ] Spawn pace feels right (Terraria numbers), nothing pops in on screen when zoomed out.
+- [ ] Hover outline on doors, chests, stations, beds, sticks, ripe bushes.
+- [ ] Open doors close from any part of the face.
+- [ ] Craft row: [-] [n] [+] Craft, typing a number, Shift = 10, Ctrl = a stack.
+- [ ] Stone Pickaxe 2x2, Ctrl + wheel to 1x1.
 
 ## Known
 

@@ -315,6 +315,12 @@ health and hunger work. Mana shows "inf" with infinite mana. The
 windows gap from the screen edge is the `Hud`
 exports `window_right` and `window_top`.
 
+**Hover outline** (`HoverOutline` node, `src/world/hover_outline.gd`): with the cursor on
+something right click or E would use, in reach, a soft light outline pulses around it:
+doors, chests, stations, beds, forageables (sticks, rocks, flint), ripe berry bushes and
+the magic bag. Hidden while the mouse is over a window. Exports: `outline_color` (its
+alpha is the brightest point of the pulse), `outline_alpha_min`, `pulse_speed`.
+
 ## Content as data
 
 Every piece of content is a `.tres` resource under `data/<category>/` extending

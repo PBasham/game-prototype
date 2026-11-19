@@ -10,7 +10,7 @@ training dummy.
 
 | Field | Default | What it does |
 |---|---|---|
-| `ai` | `SLIME` | Behavior. Only the slime hop exists so far. |
+| `ai` | `SLIME` | Behavior. Only the slime exists so far (see "How slimes move" below). |
 | `texture`, `frame_size` | slime.png, 36x27 | Sheet with 3 frames: resting, squashed, in the air. Drawn pale; `tint` colors it. |
 | `tint` | | Color applied to the sheet (green slime: pale green). |
 | `size` | 30x20 px | Collision box. |
@@ -20,11 +20,27 @@ training dummy.
 | `knockback` | 10 | How hard it shoves the player on contact. |
 | `knockback_resist` | 0 | 0 = full knockback from hits, 1 = none. |
 | `hop_speed` | 9 | Horizontal speed of a hop, tiles/s. |
-| `hop_tiles` | 5 | Hop height in tiles. |
-| `hop_wait_min`, `hop_wait_max` | 0.8, 2.2 | Seconds resting between hops (random in range). |
-| `aggro_tiles` | 64 | Hops toward the player inside this range; wanders randomly outside it. Once hit, it chases regardless. Keep it above the spawner's `max_distance_tiles` so new enemies come to you. |
+| `hop_tiles_min`, `hop_tiles` | 2, 5 | Each hop's height is random in this range (tiles): small hops and big ones. A slime that got stuck hops the full `hop_tiles`. |
+| `hop_wait_min`, `hop_wait_max` | 0.8, 2.2 | Seconds resting between moves (random in range). |
+| `slither_chance` | 0.3 | Chance a move is a slither along the ground instead of a hop. Slithering steps up ledges 1 tile high. |
+| `slither_speed` | 3.5 | Tiles/s while slithering. |
+| `slither_seconds_min`, `slither_seconds_max` | 0.5, 1.2 | How long one slither lasts. |
+| `wander_by_day` | on | By day on the surface, a slime that hasn't been hit ignores you and wanders (like Terraria's). |
+| `turn_chance` | 0.15 | While wandering, chance per move to turn around. It also turns after 2 moves in a row that got nowhere. |
+| `aggro_tiles` | 64 | When it's chasing (night, underground, or once hit), it comes at you inside this range. |
 | `gravity` | 110 | Tiles/s². |
 | `loot` | | `LootDrop` list: `item`, `min_count`, `max_count`, `chance` (0 to 1). |
+
+### How slimes move
+
+- **By day on the surface, not hit:** it wanders. It keeps a direction for several moves,
+  turns around now and then (`turn_chance`) or after 2 moves that got nowhere (a wall),
+  and ignores you, so slimes sometimes hop right past.
+- **At night, underground (more than 20 tiles below the surface), or once hit:** it
+  heads toward you each move while you're within `aggro_tiles`.
+- **Each move** is a hop of random height (`hop_tiles_min` to `hop_tiles`) or, now and
+  then, a short slither that steps up 1-tile ledges. In the air it keeps its sideways
+  speed, so it slides up a wall it touches at takeoff and over a low step.
 
 A hurt enemy shows a small health bar. On death it pops ("*pop*") and rolls its loot
 into item drops.
@@ -54,8 +70,8 @@ One table per biome and layer. Only `forest_surface` exists so far.
 |---|---|---|
 | `biome`, `layer` | forest, SURFACE | Where it applies. |
 | `max_depth_tiles` | 20 | SURFACE: the player and each spawn spot must be no deeper than this below the world's natural surface. Deeper, nothing spawns (no underground tables yet). |
-| `day_seconds` / `night_seconds` | 30 / 10 | Average seconds between spawns. Lower = more often. |
-| `max_day` / `max_night` | 3 / 6 | Most enemies around the player before spawning stops. |
+| `day_seconds` / `night_seconds` | 10 / 6 | Average seconds between spawns. Lower = more often. |
+| `max_day` / `max_night` | 5 / 6 | Most enemies around the player before spawning stops. |
 | `entries` | | `SpawnEntry` list: `enemy`, `weight`, `day`, `night`, `conditions`. |
 
 **Which enemy:** each entry's chance is its weight divided by the total weight of the
@@ -94,6 +110,7 @@ Enemies more than `despawn_tiles` (90) away from you, sideways or up and down, f
 | `catch_up` | on | Spawn faster when few enemies are around: below 20% of the cap the average wait is x0.6, below 40% x0.7, below 60% x0.8 (Terraria's numbers). |
 | `min_distance_tiles` / `max_distance_tiles` | 44 / 60 tiles | Spawns off screen, on ground with room for the enemy. |
 | `despawn_tiles`, `despawn_seconds` | 90 tiles, 6 s | Enemies farther than this for 6 s in a row vanish (no loot). |
+| `view_margin_tiles` | 6 | Never spawn inside the view plus this margin; when zoomed out, spawn and despawn distances grow to the screen edge plus this. |
 | `ahead_bias`, `ahead_speed_tiles` | 0.8, 6 tiles/s | While you move sideways faster than this, 80% of spawns appear ahead of you, so travelling isn't empty. |
 | `peaceful` | false | No spawns. |
 

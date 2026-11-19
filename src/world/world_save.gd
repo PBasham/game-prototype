@@ -20,6 +20,8 @@ const META_WALLS := "walls"
 const META_OBJECTS := "objects"
 ## Extra world state saved in meta (plants).
 const META_PLANTS := "plants"
+## Sticks, rocks and flint lying around (ForageLayer), same layout.
+const META_FORAGE := "forage"
 ## Chest contents.
 const META_CONTAINERS := "containers"
 ## Magic bags left where characters died: {"list": [ItemBag.to_dict()...]}.

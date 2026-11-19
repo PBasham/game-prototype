@@ -59,9 +59,20 @@ Newest first. Each entry: what was decided, why, and what it affects.
   and layer spawn tables with weighted enemies (rarer = smaller weight). Forest surface:
   one every 12 s by day, 6 s at night on average, caps 4 / 7, catch-up when few are
   around. Off screen, never indoors, despawn when far.
-- **Slower spawns (Patrick's playtest: "way too fast"):** forest surface 30 s average and
-  3 max by day (was 12 s, 4), 10 s and 6 max at night (was 6 s, 7). Terraria's forest is
-  10 s / 5 by day on paper, but many of its spawn tries fail and its slimes wander.
+- **Terraria's spawn numbers (Patrick):** forest surface 10 s average and 5 max by day,
+  6 s and 6 max at night (Terraria's 1/600 and 1/360 per tick). Slimes wander by day, so
+  this doesn't swarm you. Never inside the view, even zoomed out (`view_margin_tiles`).
+- **Slimes move like Terraria's (Patrick):** by day on the surface an unhurt slime wanders
+  and ignores you; at night, underground or once hit it chases. Each hop is a random
+  height; now and then it slithers instead, stepping up 1-tile ledges.
+- **Forage node (Patrick):** sticks, rocks and flint moved out of the Plants node into
+  their own `Forage` node, with types as data (`data/forage/`, ForageData) so new
+  forageables (mushrooms) are a file. Older saves move their loose items over on load.
+  Breakable-but-walkable things like Terraria's crystal shards are a later brief.
+- **Hover outline:** a soft pulsing outline on anything right click / E would use, in reach.
+- **Craft amount:** [-] [n] [+] Craft; Shift = 10, Ctrl = as many as you can up to a
+  stack. Replaces the Craft / x10 / All buttons.
+- **Open doors:** any visible part of the swung face can be clicked.
 - **Stone Pickaxe 2x2:** 1x1 blocks were too small; every pickaxe can toggle down to 1x1
   (Ctrl + wheel).
 - **Spawning while travelling (Patrick's playtest):** spawns favor the side you're moving

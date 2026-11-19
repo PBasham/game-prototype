@@ -1,7 +1,7 @@
 extends SceneTree
 ## Writes the default items (data/items), spells (data/spells), tile objects
 ## (data/objects: furniture), recipes (data/recipes), enemies (data/enemies) and spawn
-## tables (data/spawns) from the tables below.
+## tables (data/spawns) and forageables (data/forage) from the tables below.
 ## --only takes a comma-separated list of ids.
 ##
 ##   godot --headless --path . --script res://tools/make_items.gd
@@ -17,6 +17,7 @@ const OBJECT_DIR := "res://data/objects"
 const RECIPE_DIR := "res://data/recipes"
 const ENEMY_DIR := "res://data/enemies"
 const SPAWN_DIR := "res://data/spawns"
+const FORAGE_DIR := "res://data/forage"
 
 var _force := false
 
@@ -37,6 +38,8 @@ func _init() -> void:
 		all.append([enemy, ENEMY_DIR])
 	for scroll in _scrolls():
 		all.append([scroll, DIR])
+	for f in _forage():
+		all.append([f, FORAGE_DIR])
 	for e: Array in all:
 		var res: GameData = e[0]
 		var dir: String = e[1]
@@ -538,6 +541,7 @@ func _enemies() -> Array[EnemyData]:
 	blue.contact_damage = 9.0
 	blue.knockback = 12.0
 	blue.hop_speed = 11.0
+	blue.hop_tiles_min = 3.0
 	blue.hop_tiles = 7.0
 	blue.hop_wait_min = 0.6
 	blue.hop_wait_max = 1.8
@@ -554,9 +558,9 @@ func _spawns() -> Array[SpawnTable]:
 	forest.display_name = "Forest surface"
 	forest.biome = &"forest"
 	forest.layer = SpawnTable.Layer.SURFACE
-	forest.day_seconds = 30.0
-	forest.night_seconds = 10.0
-	forest.max_day = 3
+	forest.day_seconds = 10.0
+	forest.night_seconds = 6.0
+	forest.max_day = 5
 	forest.max_night = 6
 	forest.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/green_slime.tres") as EnemyData, 100.0))
 	forest.max_depth_tiles = 20
@@ -568,6 +572,25 @@ func _spawns() -> Array[SpawnTable]:
 
 
 ## Recipes: [id, station, {inputs}, output, count, requires]. Station &"" = by hand.
+## Things lying on the ground. Weights per kind of floor: surface grass, bare surface
+## dirt or stone, cave floors (sticks only on surface grass).
+func _forage() -> Array[ForageData]:
+	var out: Array[ForageData] = []
+	for row: Array in [[&"stick", "Stick", 45.0, 0.0, 0.0], [&"rock", "Rock", 40.0, 75.0, 75.0],
+			[&"flint", "Flint", 15.0, 25.0, 25.0]]:
+		var f := ForageData.new()
+		f.id = row[0]
+		f.display_name = row[1]
+		f.description = "Lying on the ground. Right click or E picks it up."
+		f.item = row[0]
+		f.texture = load("res://assets/decor/pickup_%s.png" % row[0]) as Texture2D
+		f.surface_grass_weight = row[2]
+		f.surface_ground_weight = row[3]
+		f.cave_weight = row[4]
+		out.append(f)
+	return out
+
+
 func _recipes() -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	var table: Array = [

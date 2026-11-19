@@ -1,6 +1,7 @@
 class_name PlantLayer
 extends Node2D
-## Trees, saplings and flowers, plus grass spreading onto dirt.
+## Trees, saplings, flowers and berry bushes, plus grass spreading onto dirt. Things
+## lying on the ground (sticks, rocks, flint) are the Forage node (ForageLayer).
 ##
 ## Plants stand on a ground tile (grass) and are keyed by it (wrapped tile coords).
 ## Natural plants come from the world generator's decoration rules the first time a
@@ -14,13 +15,12 @@ const TILE := World.TILE
 const SIZE := ChunkData.SIZE
 const NONE := Vector2i(0, -1000000)
 
+## PICKUP: only in older saves (sticks, rocks and flint moved to the Forage node).
 enum Kind { TREE, SAPLING, FLOWER, PICKUP, BUSH }
 
-## Things lying on the grass (Kind.PICKUP variants), the item each gives.
 ## Berry bush variants.
 const BUSH_YOUNG := 0
 const BUSH_GROWN := 1
-const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 
 @export_group("Trees")
 ## Damage a tree takes before it falls. A copper axe does 25 per hit.
@@ -34,6 +34,9 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 @export var fall_time := 0.9
 ## Degrees a tree rocks when hit.
 @export var wiggle_degrees := 4.0
+## Sticks a felled tree drops (random in this range).
+@export var sticks_min := 1
+@export var sticks_max := 3
 ## Trees need this many tiles between their trunks (planting).
 @export var tree_spacing := 3
 ## Tiles of clear space above the ground a sapling needs to grow.
@@ -43,44 +46,6 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 ## world is running). A day is 24 real minutes (WorldClock.day_minutes).
 @export var grow_min_days := 1.0
 @export var grow_max_days := 2.0
-@export_group("Loose sticks, rocks and flint")
-## Share of the generator's flower spots that are sticks, rocks or flint instead.
-@export_range(0.0, 1.0) var pickup_share := 0.4
-## Chance a bare surface grass tile (no tree or flower) has a stick, rock or flint on
-## it. 0.06 is about one every 16 tiles of surface.
-@export_range(0.0, 1.0) var pickup_chance := 0.06
-## On grass: share of sticks and of flint (the rest are rocks).
-@export_range(0.0, 1.0) var grass_stick_share := 0.45
-@export_range(0.0, 1.0) var flint_share := 0.15
-## Chance an exposed surface dirt or stone tile (cliffs, dug ground) has a rock or flint.
-@export_range(0.0, 1.0) var ground_pickup_chance := 0.05
-## Of those, how many are flint (the rest are rocks).
-@export_range(0.0, 1.0) var ground_flint_share := 0.25
-## Chance a cave floor tile (grass, dirt or stone with air above, below the surface)
-## has a rock or flint. No sticks underground.
-@export_range(0.0, 1.0) var cave_pickup_chance := 0.03
-@export_range(0.0, 1.0) var cave_flint_share := 0.25
-@export_group("Loose pickups coming back")
-## New sticks, rocks and flint appear on random floor tiles over time. On average one
-## new item per `regrow_floor_tiles` tiles of open floor (about a chunk's width of
-## ground) every this many in-game days.
-@export var regrow_days_per_item := 2.5
-@export var regrow_floor_tiles := 32
-## Caves get items back at this fraction of the surface rate.
-@export_range(0.0, 1.0) var cave_regrow_scale := 0.5
-## Crowding brake: the chance drops with every item already within `crowd_radius`
-## tiles and is zero at `crowd_cap`, so floors never fill up.
-@export var crowd_radius := 16
-@export var crowd_cap := 6
-## Random floor tiles checked per second (over the loaded area). More checks don't
-## change the rate, only how evenly it trickles in.
-@export var regrow_checks_per_second := 200.0
-## A chunk that comes back into view catches up on the time it was away, up to this
-## many in-game days.
-@export var regrow_catch_up_days := 3.0
-## Sticks a felled tree drops (random in this range).
-@export var sticks_min := 1
-@export var sticks_max := 3
 @export_group("Berry bushes")
 ## Share of flower spots that are a berry bush instead.
 @export_range(0.0, 1.0) var bush_share := 0.06
@@ -124,23 +89,11 @@ var _dirty: Dictionary[Vector2i, bool] = {}
 var _shown: Dictionary[Vector2i, Vector2i] = {}
 var _saplings: Array[Vector2i] = []
 var _grass_budget := 0.0
-var _regrow_budget := 0.0
-## Seconds the world has run (this session), for catch-up.
-var _now := 0.0
-## Shown chunk (unwrapped) -> floor tiles there (flat local x, y pairs).
-var _floor_spots: Dictionary[Vector2i, PackedInt32Array] = {}
-var _floor_total := 0
-## Wrapped chunk -> _now when it was last hidden.
-var _last_seen: Dictionary[Vector2i, float] = {}
-var _stone_id := -1
-## Loose pickups that came back over time (dev console `pickups`).
-var regrown_total := 0
 var _grass_id := -1
 var _dirt_id := -1
 var _trees: Array[Texture2D] = []
 var _flowers: Array[Texture2D] = []
 var _sapling_tex: Texture2D
-var _pickup_tex: Array[Texture2D] = []
 ## [young, grown ripe, grown picked].
 var _bush_tex: Array[Texture2D] = []
 ## Young bushes growing up (their Plant.health counts down the seconds left).
@@ -154,7 +107,6 @@ func setup(w: World) -> void:
 	z_index = -1
 	_grass_id = world.blocks.index_of(&"grass")
 	_dirt_id = world.blocks.index_of(&"dirt")
-	_stone_id = world.blocks.index_of(&"stone")
 	for kind: String in ["green", "olive", "teal", "gold"]:
 		for i in 3:
 			_trees.append(load("res://assets/trees/pine_%s_%d.png" % [kind, i]) as Texture2D)
@@ -163,8 +115,6 @@ func setup(w: World) -> void:
 	_sapling_tex = load("res://assets/decor/sapling.png") as Texture2D
 	for f: String in ["berry_bush_young", "berry_bush", "berry_bush_bare"]:
 		_bush_tex.append(load("res://assets/decor/%s.png" % f) as Texture2D)
-	for kind: StringName in PICKUP_ITEMS:
-		_pickup_tex.append(load("res://assets/decor/pickup_%s.png" % kind) as Texture2D)
 	world.renderer.chunk_shown.connect(_on_chunk_shown)
 	world.renderer.chunk_hidden.connect(_on_chunk_hidden)
 	world.block_changed.connect(_on_block_changed)
@@ -221,7 +171,7 @@ func blocks_placement(tile: Vector2i) -> bool:
 func sapling_spot(tile: Vector2i) -> Vector2i:
 	for g: Vector2i in [tile, tile + Vector2i.DOWN]:
 		if world.data.get_block(g.x, g.y) == _grass_id and world.data.get_block(g.x, g.y - 1) == WorldData.AIR:
-			if _plants.has(world.wrap_tile(g)):
+			if _plants.has(world.wrap_tile(g)) or (world.forage and world.forage.at(g)):
 				return NONE
 			for dx in range(-tree_spacing + 1, tree_spacing):
 				for dy in range(-3, 4):
@@ -280,7 +230,7 @@ func request_cut_flowers(rect: Rect2i) -> int:
 
 # --- chunks --------------------------------------------------------------------------
 
-func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array, floors: PackedInt32Array) -> void:
+func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array, _floors: PackedInt32Array) -> void:
 	var wc := Vector2i(posmod(c.x, world.data.chunks_x), c.y)
 	if not _seeded.has(wc):
 		_seeded[wc] = true
@@ -290,57 +240,27 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array, floors: PackedInt32Ar
 				var p := _add(ground, Kind.TREE, spots[i + 2], false)
 				p.health = tree_health
 			elif spots[i + 3] < 0:
-				# Bare grass: now and then something to pick up.
-				if _hash(ground, 47) < pickup_chance:
-					_add(ground, Kind.PICKUP, _pickup_variant(ground), false)
+				continue  # bare grass (the Forage node may put something there)
 			elif _hash(ground, 31) < bush_share:
 				var young := _hash(ground, 37) >= bush_grown_share
 				var bush := _add(ground, Kind.BUSH, BUSH_YOUNG if young else BUSH_GROWN, false)
 				if young:
 					bush.health = _days(randf_range(bush_grow_min_days, bush_grow_max_days))
 					_young.append(ground)
-			elif _hash(ground, 11) < pickup_share:
-				_add(ground, Kind.PICKUP, _pickup_variant(ground), false)
+			elif world.forage and world.forage.claims_flower_spot(ground):
+				continue  # a stick, rock or flint lies there instead
 			else:
 				_add(ground, Kind.FLOWER, spots[i + 3], false)
-		for i in range(0, floors.size(), 3):
-			var ground := world.wrap_tile(wc * SIZE + Vector2i(floors[i], floors[i + 1]))
-			if _plants.has(ground):
-				continue
-			match floors[i + 2]:
-				ChunkBuildJob.FLOOR_GRASS:
-					if _hash(ground, 47) < pickup_chance:
-						_add(ground, Kind.PICKUP, _pickup_variant(ground), false)
-				ChunkBuildJob.FLOOR_GROUND:
-					if _hash(ground, 53) < ground_pickup_chance:
-						_add(ground, Kind.PICKUP, _stone_variant(ground, ground_flint_share), false)
-				ChunkBuildJob.FLOOR_CAVE:
-					if _hash(ground, 59) < cave_pickup_chance:
-						_add(ground, Kind.PICKUP, _stone_variant(ground, cave_flint_share), false)
 	_shown[c] = wc
 	for g: Vector2i in _by_chunk.get(wc, []):
 		_make_node(g, _plants[g], c)
-	var mine := PackedInt32Array()
-	for i in range(0, spots.size(), 4):
-		mine.append_array([spots[i], spots[i + 1]])
-	for i in range(0, floors.size(), 3):
-		mine.append_array([floors[i], floors[i + 1]])
-	_floor_spots[c] = mine
-	_floor_total += mine.size() / 2
-	if _last_seen.has(wc):
-		_catch_up(c, minf(_now - _last_seen[wc], _days(regrow_catch_up_days)))
-		_last_seen.erase(wc)
 
 
 func _on_chunk_hidden(c: Vector2i) -> void:
 	var wc: Vector2i = _shown.get(c, NONE)
 	_shown.erase(c)
-	if _floor_spots.has(c):
-		_floor_total -= _floor_spots[c].size() / 2
-		_floor_spots.erase(c)
 	if wc == NONE:
 		return
-	_last_seen[wc] = _now
 	for g: Vector2i in _by_chunk.get(wc, []):
 		var p: Plant = _plants[g]
 		if p.node:
@@ -357,45 +277,18 @@ func reset_unchanged() -> void:
 				_remove(g)
 
 
-## Which pickup lies on a grass tile: flint (flint_share), a stick (grass_stick_share)
-## or a rock.
-func _pickup_variant(ground: Vector2i) -> int:
-	var h := _hash(ground, 23)
-	if h < flint_share:
-		return 2
-	return 0 if h < flint_share + grass_stick_share else 1
-
-
-## Rock or flint (no sticks) on bare dirt, stone or a cave floor.
-func _stone_variant(ground: Vector2i, flint: float) -> int:
-	return 2 if _hash(ground, 29) < flint else 1
-
-
-## A steady 0..1 number per tile (so a spot is always the same kind of pickup).
+## A steady 0..1 number per tile (so a spot always rolls the same).
 static func _hash(t: Vector2i, salt: int) -> float:
 	var h := (t.x * 73856093) ^ (t.y * 19349663) ^ (salt * 83492791)
 	h = (h ^ (h >> 13)) * 1274126177
 	return float(h & 0xffff) / 65535.0
 
 
-## Right click on something lying on the grass (`tile` = where it lies): it goes into
-## the inventory. Returns true if there was something.
+## Right click on a berry bush (`tile` = a tile it covers): picks its berries if ripe.
+## Returns true if there were berries.
 func request_pick_up(tile: Vector2i, who: Player) -> bool:
-	if not Game.is_authority():
-		return false
 	var bush := _bush_near(tile)
-	if bush != NONE:
-		return request_pick_berries(bush, who)
-	var g := world.wrap_tile(tile + Vector2i.DOWN)
-	var p: Plant = _plants.get(g)
-	if p == null or p.kind != Kind.PICKUP or who == null or who.character == null:
-		return false
-	var item_id := PICKUP_ITEMS[p.variant % PICKUP_ITEMS.size()]
-	if who.character.inventory.add(item_id, 1) > 0:
-		return false  # no room
-	EventBus.item_picked_up.emit(item_id, 1)
-	_remove(g)
-	return true
+	return bush != NONE and request_pick_berries(bush, who)
 
 
 ## A ripe berry bush covering `tile` (bushes are about 2x2 tiles), or NONE.
@@ -406,6 +299,15 @@ func _bush_near(tile: Vector2i) -> Vector2i:
 		if p and p.kind == Kind.BUSH:
 			return g
 	return NONE
+
+
+## The sprite of a ripe bush covering `tile`, or null. For the hover outline.
+func hover_sprite(tile: Vector2i) -> Sprite2D:
+	var g := _bush_near(tile)
+	if g == NONE or not _ripe(_plants.get(g)):
+		return null
+	var node := (_plants[g] as Plant).node
+	return node.get_child(0) as Sprite2D if node and node.get_child_count() > 0 else null
 
 
 func is_ripe(ground: Vector2i) -> bool:
@@ -445,16 +347,15 @@ func _refresh_node(g: Vector2i, p: Plant) -> void:
 		s.texture = _texture(p)
 
 
-## The ground tile of the nearest pickup within `r` tiles of `feet`, or NONE.
-func nearest_pickup(feet: Vector2i, r: int) -> Vector2i:
+## The ground tile of the nearest ripe berry bush within `r` tiles of `feet`, or NONE.
+func nearest_ripe_bush(feet: Vector2i, r: int) -> Vector2i:
 	var best := NONE
 	var best_d := INF
 	for dy in range(-r, r + 1):
 		for dx in range(-r, r + 1):
 			var g := world.wrap_tile(feet + Vector2i(dx, dy))
 			var p: Plant = _plants.get(g)
-			var ripe := _ripe(p)
-			if p and (p.kind == Kind.PICKUP or ripe) and Vector2(dx, dy).length() < best_d:
+			if _ripe(p) and Vector2(dx, dy).length() < best_d:
 				best = feet + Vector2i(dx, dy)
 				best_d = Vector2(dx, dy).length()
 	return best
@@ -463,8 +364,6 @@ func nearest_pickup(feet: Vector2i, r: int) -> Vector2i:
 # --- per frame -----------------------------------------------------------------------
 
 func _process(delta: float) -> void:
-	_now += delta
-	_regrow_floors(delta)
 	_grow(delta)
 	_regrow(delta)
 	_grow_bushes(delta)
@@ -491,9 +390,6 @@ func _grow(delta: float) -> void:
 
 ## Time passes for every plant at once (sleeping through the night).
 func advance(seconds: float) -> void:
-	_now += seconds
-	for c: Vector2i in _floor_spots.keys():
-		_catch_up(c, minf(seconds, _days(regrow_catch_up_days)))
 	_grow(seconds)
 	_regrow(seconds)
 	_grow_bushes(seconds)
@@ -542,138 +438,6 @@ func grow_all() -> int:
 	for g in _young:
 		_plants[g].health = 0.001  # full grown next frame
 	return _saplings.size() + _regrowing.size() + _young.size()
-
-
-# --- loose pickups coming back ---------------------------------------------------------
-
-## Chance per second that one open floor tile gets a new item (surface rate).
-func _regrow_rate() -> float:
-	return 1.0 / (maxf(1.0, float(regrow_floor_tiles)) * maxf(0.001, _days(regrow_days_per_item)))
-
-
-## Random ticks: a few random floor tiles of the loaded area per frame, each with the
-## chance that gives regrow_days_per_item on average.
-func _regrow_floors(delta: float) -> void:
-	if not Game.is_authority() or _floor_total <= 0 or regrow_checks_per_second <= 0.0:
-		return
-	_regrow_budget += regrow_checks_per_second * delta
-	var n := int(_regrow_budget)
-	_regrow_budget -= n
-	if n <= 0:
-		return
-	# Each floor tile is checked checks/total times a second; this chance per check
-	# makes that come out to the rate.
-	var chance := _regrow_rate() * _floor_total / regrow_checks_per_second
-	var screen := _screen_tiles()
-	for i in n:
-		var pick := randi() % _floor_total
-		for c: Vector2i in _floor_spots:
-			var spots := _floor_spots[c]
-			var count := spots.size() / 2
-			if pick >= count:
-				pick -= count
-				continue
-			var t := c * SIZE + Vector2i(spots[pick * 2], spots[pick * 2 + 1])
-			if not screen.has_point(t):
-				_try_regrow(t, chance)
-			break
-
-
-## A chunk was away (or the world slept) for `seconds`: each of its floor tiles rolls
-## for that time at once.
-func _catch_up(c: Vector2i, seconds: float) -> void:
-	if not Game.is_authority() or seconds <= 0.0 or not _floor_spots.has(c):
-		return
-	var chance := _regrow_rate() * seconds
-	var screen := _screen_tiles()
-	var spots := _floor_spots[c]
-	for i in range(0, spots.size(), 2):
-		var t := c * SIZE + Vector2i(spots[i], spots[i + 1])
-		if not screen.has_point(t):
-			_try_regrow(t, chance)
-
-
-## Dev console: `days` in-game days pass for loose pickups in the loaded area (catch-up
-## cap ignored).
-func regrow_for_days(days: float) -> void:
-	for c: Vector2i in _floor_spots.keys():
-		_catch_up(c, _days(days))
-
-
-## Loose pickups in shown chunks.
-func loaded_pickup_count() -> int:
-	var n := 0
-	for c: Vector2i in _shown:
-		for g: Vector2i in _by_chunk.get(_shown[c], []):
-			if _plants[g].kind == Kind.PICKUP:
-				n += 1
-	return n
-
-
-func floor_tile_count() -> int:
-	return _floor_total
-
-
-## Rolls one floor tile (unwrapped ground tile): maybe a stick, rock or flint appears.
-func _try_regrow(t: Vector2i, chance: float) -> bool:
-	var g := world.wrap_tile(t)
-	if _plants.has(g):
-		return false
-	var id := world.data.get_block(g.x, g.y)
-	if id != _grass_id and id != _dirt_id and id != _stone_id:
-		return false
-	var above := g + Vector2i.UP
-	if world.data.get_block(above.x, above.y) != WorldData.AIR:
-		return false
-	# Not in houses: nothing on tiles with a background wall or furniture.
-	if world.data.get_wall(above.x, above.y) != WorldData.AIR or world.data.get_object(above.x, above.y) != WorldData.AIR:
-		return false
-	var cave := world.generator != null and g.y > world.generator.surface_at(g.x) + 3
-	if cave:
-		chance *= cave_regrow_scale
-	if randf() >= chance:
-		return false
-	var crowd := _pickups_near(g)
-	if crowd >= crowd_cap or randf() >= 1.0 - float(crowd) / float(maxi(1, crowd_cap)):
-		return false
-	var variant: int
-	if cave:
-		variant = _random_stone(cave_flint_share)
-	elif id == _grass_id:
-		var h := randf()
-		variant = 2 if h < flint_share else (0 if h < flint_share + grass_stick_share else 1)
-	else:
-		variant = _random_stone(ground_flint_share)
-	_add(g, Kind.PICKUP, variant)
-	regrown_total += 1
-	return true
-
-
-func _random_stone(flint: float) -> int:
-	return 2 if randf() < flint else 1
-
-
-## Loose pickups within crowd_radius tiles of g.
-func _pickups_near(g: Vector2i) -> int:
-	var n := 0
-	for dy in range(-crowd_radius, crowd_radius + 1):
-		for dx in range(-crowd_radius, crowd_radius + 1):
-			var p: Plant = _plants.get(world.wrap_tile(g + Vector2i(dx, dy)))
-			if p and p.kind == Kind.PICKUP:
-				n += 1
-	return n
-
-
-## The tiles on screen (plus a margin), unwrapped like the shown chunks. Nothing
-## appears where the player is looking.
-func _screen_tiles() -> Rect2i:
-	var vp := get_viewport()
-	if vp == null:
-		return Rect2i()
-	var r := vp.get_canvas_transform().affine_inverse() * vp.get_visible_rect()
-	var a := Vector2i(floori(r.position.x / TILE), floori(r.position.y / TILE)) - Vector2i(2, 2)
-	var b := Vector2i(ceili(r.end.x / TILE), ceili(r.end.y / TILE)) + Vector2i(3, 3)
-	return Rect2i(a, b - a)
 
 
 func _clear_above(g: Vector2i) -> bool:
@@ -725,7 +489,7 @@ func _on_block_changed(tile: Vector2i, _old: int, new_id: int) -> void:
 			world.request_set_block(under, _dirt_id)
 	# The ground under a plant went away (or stopped being grass/dirt): it breaks.
 	var p: Plant = _plants.get(tile)
-	if p and new_id != _grass_id and new_id != _dirt_id and not (p.kind == Kind.PICKUP and new_id > 0 and world.blocks.collision(new_id) == TileDef.Collision.SOLID):
+	if p and new_id != _grass_id and new_id != _dirt_id:
 		_break(tile, p)
 	# Something was put where a flower or sapling stood: it breaks.
 	var below := world.wrap_tile(tile + Vector2i.DOWN)
@@ -776,8 +540,6 @@ func _break(g: Vector2i, p: Plant) -> void:
 		Kind.FLOWER:
 			if randf() < grass_seed_chance:
 				world.request_spawn_drop(&"grass_seeds", 1, pos, _pop())
-		Kind.PICKUP:
-			world.request_spawn_drop(PICKUP_ITEMS[p.variant % PICKUP_ITEMS.size()], 1, pos, _pop())
 		Kind.BUSH:
 			if _ripe(p):
 				world.request_spawn_drop(&"berries", randi_range(berries_min, berries_max), pos, _pop())
@@ -840,8 +602,6 @@ func _make_node(g: Vector2i, p: Plant, shown_chunk: Vector2i) -> void:
 	var lift := 3 if p.kind == Kind.TREE else 1
 	s.position = Vector2(-floorf(s.texture.get_width() / 2.0), lift - s.texture.get_height())
 	node.add_child(s)
-	if p.kind == Kind.PICKUP:
-		node.z_index = 2  # in front of the grass blades, so sticks don't hide in them
 	add_child(node)
 	p.node = node
 
@@ -852,8 +612,6 @@ func _texture(p: Plant) -> Texture2D:
 			return _trees[p.variant % _trees.size()]
 		Kind.SAPLING:
 			return _sapling_tex
-		Kind.PICKUP:
-			return _pickup_tex[p.variant % _pickup_tex.size()]
 		Kind.BUSH:
 			if p.variant != BUSH_GROWN:
 				return _bush_tex[0]  # young: no berries yet
@@ -883,13 +641,21 @@ func to_dict(modified_chunks: Array[Vector2i]) -> Dictionary:
 	return out
 
 
-func from_dict(d: Dictionary) -> void:
+## `has_forage_save`: the world file has its own forage data (else older loose sticks,
+## rocks and flint saved with the plants move to the Forage node).
+func from_dict(d: Dictionary, has_forage_save: bool = true) -> void:
 	for key: String in d:
 		var parts := key.split(",")
 		var wc := Vector2i(int(parts[0]), int(parts[1]))
 		_seeded[wc] = true
 		_dirty[wc] = true
+		if world.forage and not has_forage_save:
+			world.forage.take_legacy_chunk(wc)
 		for e: Array in d[key]:
+			if int(e[2]) == Kind.PICKUP:
+				if world.forage and not has_forage_save:
+					world.forage.take_legacy(Vector2i(int(e[0]), int(e[1])), int(e[3]))
+				continue
 			var p := _add(Vector2i(int(e[0]), int(e[1])), int(e[2]), int(e[3]))
 			p.health = float(e[4])
 			p.grow_left = float(e[5])

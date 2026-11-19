@@ -351,7 +351,35 @@ func test_slime_hops_over_a_one_block_step() -> void:
 		w.request_set_block(Vector2i(step_x, feet.y - dy), stone if dy == 1 else WorldData.AIR)
 	# Right next to the step, on the far side from the player (within aggro).
 	var start := w.tile_to_world(Vector2i(step_x + 3, feet.y - 1)) + Vector2(0, World.TILE)
-	var e := w.request_spawn_enemy(_slime(), start)
+	var hopper := _slime().duplicate() as EnemyData
+	hopper.slither_chance = 0.0
+	var e := w.request_spawn_enemy(hopper, start)
+	e._angry = true  # chasing
 	await wait_seconds(8.0)
 	assert_true(is_instance_valid(e))
 	assert_lt(e.global_position.x, float(step_x) * World.TILE, "got over the step toward the player")
+	# A slither steps up a 1-tile ledge too.
+	var slider := _slime().duplicate() as EnemyData
+	slider.slither_chance = 1.0
+	slider.hop_wait_min = 0.1
+	slider.hop_wait_max = 0.2
+	e.queue_free()
+	var e2 := w.request_spawn_enemy(slider, start)
+	e2._angry = true
+	await wait_seconds(6.0)
+	assert_lt(e2.global_position.x, float(step_x) * World.TILE, "slithered up the ledge")
+
+
+func test_slimes_wander_by_day_and_chase_at_night_or_when_hit() -> void:
+	var p := w.player
+	p.invincible = true
+	var e := w.request_spawn_enemy(_slime(), p.global_position + Vector2(30 * World.TILE, -8))
+	await wait_physics_frames(2)
+	w.clock.time = 0.5  # noon
+	assert_eq(e._target_dir(), 0.0, "by day it ignores you")
+	e._angry = true
+	assert_eq(e._target_dir(), -1.0, "once hit it comes at you")
+	e._angry = false
+	w.clock.time = 0.0  # midnight
+	assert_true(w.spawner.is_night())
+	assert_eq(e._target_dir(), -1.0, "at night it comes at you")

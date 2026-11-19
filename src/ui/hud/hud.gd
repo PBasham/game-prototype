@@ -53,7 +53,8 @@ const STATION_TABS := {&"spell_weaving": ["Craft", "Copy"]}
 const TAB_H := 14
 const ROW_H := 18
 ## Craft buttons: how many each makes (0 = as many as you can).
-const CRAFT_AMOUNTS: Array[int] = [1, 10, 0]
+## Crafting window bottom row: [-] [amount] [+] [Craft].
+enum CraftBtn { MINUS, FIELD, PLUS, CRAFT }
 
 ## Radius (UI px) of the spell wheel.
 @export var wheel_radius := 44.0
@@ -91,6 +92,11 @@ var chest := World.NO_TILE
 var bag: ItemBag
 ## Selected crafting entry (an index into recipes(); recipes().size() = the upgrade).
 var selected_recipe := 0
+## How many times the Craft button crafts (the [-] [n] [+] field).
+var craft_amount := 1
+## The amount field is taking typed digits (clicked); the next digit replaces it.
+var _amount_typing := false
+var _amount_fresh := false
 ## Which tab of a station with tabs is shown (STATION_TABS).
 var craft_tab := 0
 var _recipe_cache: Array[RecipeData] = []
@@ -243,6 +249,9 @@ func _redraw() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _amount_typing and _amount_key(event):
+		get_viewport().set_input_as_handled()  # digits don't pick hotbar slots
+		return
 	if open and event.is_action_pressed("ui_cancel"):
 		set_open(false)
 		get_viewport().set_input_as_handled()
@@ -882,9 +891,12 @@ func _craft_button_rects() -> Array[Rect2]:
 	if selected_recipe >= recipes().size():
 		out.append(Rect2(d.position.x, d.end.y - 16, d.size.x, 16))  # Upgrade
 		return out
-	var w := (d.size.x - 8) / 3.0
-	for i in 3:
-		out.append(Rect2(d.position.x + i * (w + 4), d.end.y - 16, w, 16))
+	var y := d.end.y - 16
+	var x := d.position.x
+	out.append(Rect2(x, y, 14, 16))  # -
+	out.append(Rect2(x + 15, y, 26, 16))  # amount
+	out.append(Rect2(x + 42, y, 14, 16))  # +
+	out.append(Rect2(x + 60, y, d.size.x - 60, 16))  # Craft
 	return out
 
 
@@ -1024,11 +1036,23 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 			var has := inv.count_of(q) > 0
 			y = _ingredient_row(g, font, d, y, q, "have" if has else "missing", has)
 	var times := _times(r)
-	var labels := ["Craft", "x10", "All (%d)" % times]
 	var b := _craft_button_rects()
+	g.draw_string(font, Vector2(d.position.x, b[0].position.y - 3), "Can make %d.  Shift: 10  Ctrl: a stack" % times,
+		HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.DIM)
 	for i in b.size():
-		var state := UiSkin.Btn.DISABLED if times <= 0 else (UiSkin.Btn.HOT if hover[0] == Area.CRAFT and hover[1] == i else UiSkin.Btn.NORMAL)
-		UiSkin.button(g, b[i], labels[i], state)
+		var hot: bool = hover[0] == Area.CRAFT and hover[1] == i
+		match i:
+			CraftBtn.FIELD:
+				UiSkin.slot(g, b[i], UiSkin.SlotLook.SELECTED if _amount_typing else UiSkin.SlotLook.NORMAL)
+				var txt := str(craft_amount) + ("_" if _amount_typing and fmod(Time.get_ticks_msec() / 500.0, 2.0) < 1.0 else "")
+				var tw := font.get_string_size(str(craft_amount), HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+				g.draw_string(font, Vector2(b[i].get_center().x - tw * 0.5, b[i].position.y + 11), txt,
+					HORIZONTAL_ALIGNMENT_LEFT, -1, 8, UiSkin.TEXT if craft_amount <= times else UiSkin.BAD)
+			CraftBtn.MINUS, CraftBtn.PLUS:
+				UiSkin.button(g, b[i], "-" if i == CraftBtn.MINUS else "+", UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL)
+			_:
+				var state := UiSkin.Btn.DISABLED if times <= 0 else (UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL)
+				UiSkin.button(g, b[i], "Craft", state)
 
 
 ## One "icon name  have / need" line; returns the next y.
@@ -1152,12 +1176,23 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 		return
 	pane.accept_event()
 	if mb.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		var over := _craft_hit(mb.position)
+		if over[0] == Area.CRAFT and over[1] in [CraftBtn.MINUS, CraftBtn.FIELD, CraftBtn.PLUS]:
+			set_craft_amount(craft_amount + (1 if mb.button_index == MOUSE_BUTTON_WHEEL_UP else -1))
+			_redraw()
+			return
 		var most := maxi(_entry_count() - _rows_shown(), 0)
 		_craft_scroll = clampi(_craft_scroll + (1 if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1), 0, most)
 		return
+	var h := _craft_hit(mb.position)
+	if not (h[0] == Area.CRAFT and h[1] == CraftBtn.FIELD):
+		_amount_typing = false
+	if mb.button_index == MOUSE_BUTTON_RIGHT and h[0] == Area.CRAFT and h[1] in [CraftBtn.MINUS, CraftBtn.PLUS]:
+		set_craft_amount(craft_amount + (10 if h[1] == CraftBtn.PLUS else -10))
+		_redraw()
+		return
 	if mb.button_index != MOUSE_BUTTON_LEFT:
 		return
-	var h := _craft_hit(mb.position)
 	match h[0]:
 		Area.CLOSE:
 			close_window()
@@ -1166,6 +1201,8 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 			selected_recipe = 0
 			_craft_scroll = 0
 		Area.RECIPE:
+			if selected_recipe != h[1]:
+				craft_amount = 1
 			selected_recipe = h[1]
 			if mb.double_click and selected_recipe < recipes().size():
 				craft(recipes()[selected_recipe], 1)
@@ -1173,10 +1210,58 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 			if selected_recipe >= recipes().size():
 				upgrade_station()
 			else:
-				var r := recipes()[selected_recipe]
-				var amount := CRAFT_AMOUNTS[h[1]]
-				craft(r, amount if amount > 0 else _times(r))
+				match h[1]:
+					CraftBtn.MINUS, CraftBtn.PLUS:
+						var step := 10 if mb.shift_pressed else 1
+						set_craft_amount(craft_amount + (step if h[1] == CraftBtn.PLUS else -step))
+					CraftBtn.FIELD:
+						_amount_typing = true
+						_amount_fresh = true
+					_:
+						craft_selected(mb.shift_pressed, mb.ctrl_pressed or mb.meta_pressed)
 	_redraw()
+
+
+func set_craft_amount(n: int) -> void:
+	craft_amount = clampi(n, 1, 999)
+
+
+## The Craft button: craft_amount times, or 10 with Shift, or as many as you can up to
+## one stack of the output with Ctrl.
+func craft_selected(shift: bool = false, ctrl: bool = false) -> int:
+	if selected_recipe >= recipes().size():
+		return 0
+	var r := recipes()[selected_recipe]
+	var times := craft_amount
+	if ctrl:
+		var it := ItemData.find(r.output)
+		times = maxi(1, (it.max_stack if it else 999) / maxi(1, r.output_count))
+	elif shift:
+		times = 10
+	return craft(r, mini(times, _times(r)))
+
+
+## Typing a number into the amount field (after clicking it). Returns true if used.
+func _amount_key(event: InputEvent) -> bool:
+	var k := event as InputEventKey
+	if not _amount_typing or k == null or not k.pressed:
+		return false
+	if k.keycode >= KEY_0 and k.keycode <= KEY_9 or k.keycode >= KEY_KP_0 and k.keycode <= KEY_KP_9:
+		var digit := (k.keycode - KEY_0) if k.keycode <= KEY_9 else (k.keycode - KEY_KP_0)
+		set_craft_amount(digit if _amount_fresh else craft_amount * 10 + digit)
+		_amount_fresh = false
+	elif k.keycode == KEY_BACKSPACE:
+		craft_amount = maxi(1, craft_amount / 10)
+		_amount_fresh = false
+	elif k.keycode in [KEY_ENTER, KEY_KP_ENTER]:
+		_amount_typing = false
+		craft_selected()
+	elif k.keycode == KEY_ESCAPE:
+		_amount_typing = false
+	else:
+		return false
+	_redraw()
+	return true
 
 
 ## Crafts a recipe up to `times` times from the inventory; extra output drops at your
