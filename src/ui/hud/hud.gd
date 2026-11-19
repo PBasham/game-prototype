@@ -642,6 +642,11 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 	if item.icon:
 		g.draw_texture_rect(item.icon, Rect2(r.position + (r.size - Vector2(16, 16)) * 0.5, Vector2(16, 16)), false,
 			Color(1, 1, 1, alpha))
+	if item.badge:
+		# 8 art pixels in 16/3 units: 2 screen pixels each at 1080p.
+		var b := 16.0 / 3.0
+		g.draw_texture_rect(item.badge, Rect2(r.position + Vector2(r.size.x - b - 1.5, 1.5), Vector2(b, b)), false,
+			Color(1, 1, 1, alpha))
 	if item.is_spell():
 		# Spell shortcut: a small mark, and red when it can't be cast right now.
 		g.draw_rect(Rect2(r.position + Vector2(SLOT - 6, 2), Vector2(4, 4)), Color("7fd4ff"))

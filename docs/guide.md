@@ -193,6 +193,10 @@ per pixel from a small texture of tile ids:
   square, like placed blocks should.
 - Textures come from `assets/terrain/` (generated, see Art pipeline). Wood has three
   generated variants; B is in use, A and C are in `assets/terrain/alternates/`.
+- **Detailed art:** a terrain texture covers 8x8 blocks and can be 64x64 (8 art
+  pixels per block, normal) or 128x128 (16 per block, detailed). Dirt, stone, their
+  walls and clay are detailed; planks, logs and ore overlays are still 64x64. See
+  "Detailed art" below.
 - **Collision is still exactly the tile grid** (a hidden TileMapLayer). The smoothing
   is only visual. Platforms and ropes draw on a separate visible layer.
 
@@ -359,3 +363,30 @@ synthesized by `tools/make_sounds.gd` (keeps existing files unless `--force`; `-
 Exports: `min_gap` (0.07 s before the same sound plays again), `max_voices` (14),
 `max_distance` (720 px), `pitch_jitter` (0.06). Volume: Settings "audio" `master_volume`
 and `sfx_volume` (0.8). The list of sounds is in assets/ASSETS.md.
+
+## Detailed art (2 art pixels per world pixel)
+
+The game measures everything in **world pixels**: a block is 8, the Scholar about 24 wide
+and 64 tall. That never changes. Art can be drawn at **twice the detail**: twice as many
+pixels across, shown at the same size. You can mix: detailed and normal art sit side by
+side, so things can be redrawn one at a time.
+
+| What | Normal | Detailed | How |
+| --- | --- | --- | --- |
+| Terrain texture (8x8 blocks) | 64x64 | 128x128 | Just use the bigger PNG in `assets/terrain/`; the renderer scales 64x64 ones up to match |
+| Item icon | 16x16 | 32x32 | Just use the bigger PNG; slots, drops and thrown items draw it at the normal size |
+| Held item | any | 2x | Set `detail = 2` on the item's `HeldItemLook`; `grip` / `grip2` stay in texture pixels |
+| Inventory badge | | 8x8 | `ItemData.badge`, drawn in the slot's top right corner (what's in a flask) |
+
+On a 1080p screen each detailed art pixel is 1.5 screen pixels (a little uneven, like
+the squeezed icons); at 1440p it's exactly 2. The terrain shader draws in half world
+pixel steps (`DET` in `terrain.gdshader`, `DETAIL` in `chunk_renderer.gd`); rims, grass
+and the outline noise are still measured in world pixels, so they look as before, just
+with finer edges.
+
+- Detailed dirt, stone, walls and clay: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=terrain_hd`
+  (same recipes and layout as the normal ones, details 1 art pixel). `--export=game`
+  still writes the normal 64x64 versions; run `terrain_hd` after it.
+- Detailed so far: Healing Potion, Mana Potion and Clay Flask (32x32, from
+  `art/concepts/flasks/make_flasks.py`). Not yet: the character (the paper doll would
+  need its rig scaled), weapons, tools and furniture.

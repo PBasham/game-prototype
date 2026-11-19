@@ -175,6 +175,7 @@ An item's look (`HeldItemLook`, `held_item_look.gd`):
 | `type` | Item type id: how it's held and its attacks (below) |
 | `grip` | Pixel the holding hand holds |
 | `grip2` | Pixel the other hand holds (two-handed items, or a bow's string) |
+| `detail` | Art pixels per world pixel: 1 normal, 2 for double-detail art (a 32x32 sprite shown the size of a 16x16 one). Grips stay in texture pixels. See "Detailed art" in guide.md |
 | `hold_override`, `attacks_override` | This item only: replace the type's hold or attacks |
 
 **Item types** live in `data/item_types/<id>.tres` (`ItemTypeData`). Open one in the

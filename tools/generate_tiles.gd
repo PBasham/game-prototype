@@ -102,6 +102,10 @@ func _init() -> void:
 			_export_game()
 			quit()
 			return
+		elif arg == "--export=terrain_hd":
+			_export_terrain_hd()
+			quit()
+			return
 	if not STYLES.has(style_name):
 		push_error("unknown style %s (use %s)" % [style_name, ", ".join(STYLES.keys())])
 		quit(1)
@@ -1207,6 +1211,7 @@ const REF_PAL := {
 	"stone_soft": ["262626", "4a4a4a", "5f5f5f", "737373", "868686", "989898", "ababab"],
 	"stone_warm": ["29261f", "48443a", "5f5a4f", "757064", "8a8476", "9c9688", "b0aa9b"],
 	"dirt_wall_warm": ["120a05", "1c1108", "26170b", "2f1d0f", "3a2413", "442b18", "50361f"],
+	"clay": ["754b3b", "885846", "a76b54", "b6755d", "c37f65", "c68167", "d98e72"],
 }
 
 
@@ -1979,3 +1984,141 @@ func _tex_boards(img: Image, variant: String, seed: int) -> void:
 			used += len
 			k += 1
 		y0 += bh
+
+
+# --- high detail terrain (2 art pixels per world pixel) ---------------------------
+# godot --headless --path . --script res://tools/generate_tiles.gd -- --export=terrain_hd
+# Same recipes as the V5 ("t5") textures, same layout, at twice the resolution: the
+# lumps and cobbles sit where they always did, but their lit tops, shaded bottoms,
+# rounded corners, seams and streaks are 1 art pixel, so they come out finer.
+# Writes 128x128 textures (one covers 8x8 blocks, like the 64x64 ones did).
+
+const HD := 2
+
+
+func _export_terrain_hd() -> void:
+	style_name = "t5"
+	style = STYLES[style_name]
+	var root := "res://assets/terrain"
+	var dirt_pal := _pal(String(style.get("dirt_pal", "dirt")))
+	var stone_pal := _pal(String(style.get("stone_pal", "stone")))
+	var jobs := [["dirt", dirt_pal, 101, false], ["dirt_wall", _pal("dirt_wall"), 404, false],
+		["clay", _pal("clay"), 101, false], ["stone", stone_pal, 202, true], ["stone_wall", _pal("stone_wall"), 505, true]]
+	for job: Array in jobs:
+		var img := Image.create_empty(TEX * HD, TEX * HD, false, Image.FORMAT_RGBA8)
+		if job[3]:
+			_hd_cobbles(img, job[1], job[2], int(style.stone_cells), float(style.stone_soft))
+		else:
+			_hd_clod_strokes(img, job[1], job[2])
+		img.save_png(root.path_join(String(job[0]) + ".png"))
+		print("terrain_hd: %s" % job[0])
+
+
+## pnoise with its period at TEX * HD (cell sizes in art pixels).
+func _hd_pnoise(x: int, y: int, cell: int, s: int) -> float:
+	var n := TEX * HD / cell
+	var gx := floori(float(x) / cell)
+	var gy := floori(float(y) / cell)
+	var tx := smoothstep(0.0, 1.0, float(posmod(x, cell)) / cell)
+	var ty := smoothstep(0.0, 1.0, float(posmod(y, cell)) / cell)
+	var a := lerpf(h(posmod(gx, n), posmod(gy, n), s), h(posmod(gx + 1, n), posmod(gy, n), s), tx)
+	var b := lerpf(h(posmod(gx, n), posmod(gy + 1, n), s), h(posmod(gx + 1, n), posmod(gy + 1, n), s), tx)
+	return lerpf(a, b, ty)
+
+
+func _hd_fbm(x: int, y: int, s: int) -> float:
+	return _hd_pnoise(x, y, 32 * HD, s) * 0.35 + _hd_pnoise(x, y, 16 * HD, s + 3) * 0.3 \
+		+ _hd_pnoise(x, y, 8 * HD, s + 1) * 0.2 + _hd_pnoise(x, y, 4 * HD, s + 2) * 0.15
+
+
+## _tex_lumps + _tex_clod_strokes at HD: same lumps in the same places.
+func _hd_clod_strokes(img: Image, r: Array[Color], seed: int) -> void:
+	var n := TEX * HD
+	img.fill(r[1])
+	var rows := TEX / 3
+	for row in rows + 1:
+		var x := int(h(row, 0, seed) * TEX)
+		var used := 0
+		var k := 0
+		while used < TEX:
+			var lw := 3 + int(h(row, k, seed + 1) * 4.0)
+			var lh := 2 + (1 if h(row, k, seed + 5) > 0.45 else 0)
+			var dy := int(h(row, k, seed + 2) * 2.0)
+			var t := h(row, k, seed + 3)
+			var tone := 2 if t < 0.3 else (3 if t < 0.85 else 4)
+			var w := mini(lw, TEX - used) * HD
+			var hh := lh * HD
+			for i in w:
+				for j in hh:
+					var corner := (i == 0 or i == lw * HD - 1) and (j == 0 or j == hh - 1)
+					if corner:
+						continue
+					var c := r[tone]
+					if j == 0:
+						c = r[mini(tone + 1, 5)]
+					elif j == 1 and lh > 2 and i > 1 and i < lw * HD - 2:
+						c = r[tone].lerp(r[mini(tone + 1, 5)], 0.5)
+					elif j == hh - 1:
+						c = r[tone - 1]
+					img.set_pixel(posmod(x * HD + i, n), posmod((row * 3 + dy) * HD + j, n), c)
+			var gap := 1 if h(row, k, seed + 4) > 0.3 else 0
+			x += lw + gap
+			used += lw + gap
+			k += 1
+	for y in n:
+		for x in n:
+			var c := img.get_pixel(x, y)
+			var v := _hd_fbm(x, y, seed + 9)
+			if v < 0.34:
+				c = c.darkened(0.12)
+			elif v > 0.7:
+				c = c.lightened(0.05)
+			if c != r[1] and posmod(x + int(h(y / HD, x / (5 * HD), seed + 21) * 5.0 * HD), 6 * HD) == 0:
+				c = c.darkened(0.08)
+			img.set_pixel(x, y, c)
+
+
+## _tex_round_cobbles at HD: same cobbles, 1 art pixel seams.
+func _hd_cobbles(img: Image, r: Array[Color], seed: int, cells: int, soft: float) -> void:
+	var n := TEX * HD
+	var side := int(sqrt(float(cells)))
+	var step := float(TEX) / side
+	var pts: Array[Vector2] = []
+	for gy in side:
+		for gx in side:
+			var off := (gy % 2) * step * 0.5
+			pts.append(Vector2(fposmod(gx * step + off + (h(gx, gy, seed) - 0.5) * step * 0.5, TEX), gy * step + (h(gx, gy, seed + 1) - 0.5) * step * 0.5))
+	for y in n:
+		for x in n:
+			var p := Vector2((x + 0.5) / HD, (y + 0.5) / HD)
+			var d1 := 1e9
+			var d2 := 1e9
+			var best := Vector2.ZERO
+			var bi := 0
+			for i in pts.size():
+				var dx := absf(p.x - pts[i].x)
+				var dy := absf(p.y - pts[i].y)
+				dx = minf(dx, TEX - dx) * 0.85
+				dy = minf(dy, TEX - dy)
+				var d := sqrt(dx * dx + dy * dy)
+				if d < d1:
+					d2 = d1
+					d1 = d
+					best = pts[i]
+					bi = i
+				elif d < d2:
+					d2 = d
+			var gap := d2 - d1
+			if gap < 0.8:
+				img.set_pixel(x, y, r[2] if soft > 0.5 else r[1])
+				continue
+			var o := Vector2(p.x - best.x, p.y - best.y)
+			o.x -= roundf(o.x / TEX) * TEX
+			o.y -= roundf(o.y / TEX) * TEX
+			var rad := d1 + gap * 0.5
+			var lit := -(o.x * 0.7 + o.y) / maxf(rad, 1.0)
+			var base := 3.0 + (h(bi, 7, seed) - 0.5) * 0.9
+			var t := base + lit * (1.0 - soft * 0.4)
+			if gap < 1.6:
+				t -= 0.6
+			img.set_pixel(x, y, r[clampi(roundi(t), 1, 5)])

@@ -238,3 +238,11 @@ or .ogg); the generator never overwrites without `--force`.
 | art/concepts/flasks/{clay,glass}_{thin,regular,large}_{empty,healing,mana}.png | 32x32 flask concepts Patrick picked: clay (wax seal, glaze band, corner badge) and glass for the later desert tier, in three sizes. Made by `make_flasks.py` (Python, PIL). For when icons move to 32x32 (16 px tiles); the game's slots draw icons at 16x16 today |
 | art/concepts/flasks/icon_compare.png | The flasks at 16, 24 and 32 px in real inventory slots, at today's and other scales |
 | art/concepts/terrain16/ | 16x16-per-block dirt and stone concepts (128x128 seamless, 8x8 blocks each) and a side by side with today's 8x8 terrain. Made by `terrain16.py` |
+
+## Phase 10: detailed art
+
+| File | What |
+| --- | --- |
+| terrain/{dirt,stone,dirt_wall,stone_wall,clay}.png | 128x128 detailed versions (16 art pixels per block) from `generate_tiles.gd --export=terrain_hd`; same recipes as the 64x64 ones |
+| items/{icons,held}/{healing_potion,mana_potion,clay_flask}.png | 32x32 thin clay vials (detail 2) from `art/concepts/flasks/make_flasks.py` |
+| items/badges/{heal,mana}.png | 8x8 inventory badges (heart, star) |

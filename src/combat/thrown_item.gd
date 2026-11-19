@@ -57,4 +57,4 @@ func _shatter() -> void:
 
 func _draw() -> void:
 	if item and item.icon:
-		draw_texture(item.icon, -item.icon.get_size() * 0.5)
+		draw_texture_rect(item.icon, Rect2(-8, -8, 16, 16), false)  # detailed icons too

@@ -24,7 +24,12 @@ const TILE := 8
 const BORDER := 2
 const TEX_SIZE := ChunkData.SIZE + BORDER * 2
 const PIECES := 64
+## A terrain texture covers 8x8 blocks: 64x64 art pixels at normal detail. Art can be
+## drawn at DETAIL art pixels per world pixel (128x128 for 2); normal textures are
+## scaled up to match, so both kinds can be mixed.
 const MATERIAL_TEX := 64
+const DETAIL := 2
+const MATERIAL_CELL := MATERIAL_TEX * DETAIL
 const BLOCKS_ATLAS := "res://assets/tiles/blocks.png"
 const TERRAIN_DIR := "res://assets/terrain"
 const SHADER := preload("res://src/world/terrain.gdshader")
@@ -418,9 +423,10 @@ func _build_terrain_material() -> void:
 		_material.set_shader_parameter("grass_%d" % i, Color(GRASS_COLORS[i]))
 
 
-## Packs 64x64 textures side by side; an empty key leaves that cell transparent.
+## Packs terrain textures side by side, each in a MATERIAL_CELL square (64x64 ones are
+## scaled up, 128x128 ones go in as they are); an empty key leaves that cell transparent.
 func _strip(keys: Array[String], prefix: String) -> ImageTexture:
-	var img := Image.create_empty(maxi(keys.size(), 1) * MATERIAL_TEX, MATERIAL_TEX, false, Image.FORMAT_RGBA8)
+	var img := Image.create_empty(maxi(keys.size(), 1) * MATERIAL_CELL, MATERIAL_CELL, false, Image.FORMAT_RGBA8)
 	img.fill(Color.TRANSPARENT)
 	for i in keys.size():
 		if keys[i].is_empty():
@@ -428,7 +434,9 @@ func _strip(keys: Array[String], prefix: String) -> ImageTexture:
 		var tex := load(TERRAIN_DIR.path_join(prefix + keys[i] + ".png")) as Texture2D
 		var src := tex.get_image()
 		src.convert(Image.FORMAT_RGBA8)
-		img.blit_rect(src, Rect2i(0, 0, MATERIAL_TEX, MATERIAL_TEX), Vector2i(i * MATERIAL_TEX, 0))
+		if src.get_width() != MATERIAL_CELL:
+			src.resize(MATERIAL_CELL, MATERIAL_CELL, Image.INTERPOLATE_NEAREST)
+		img.blit_rect(src, Rect2i(0, 0, MATERIAL_CELL, MATERIAL_CELL), Vector2i(i * MATERIAL_CELL, 0))
 	return ImageTexture.create_from_image(img)
 
 

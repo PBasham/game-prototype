@@ -518,6 +518,7 @@ func _apply_item() -> void:
 	for s: Sprite2D in [_item_sprite, _stow_back, _stow_hip]:
 		s.texture = tex
 		s.offset = -item.grip if item else Vector2.ZERO
+		s.scale = Vector2.ONE / float(item.detail if item else 1)
 	_item_sprite.visible = item != null and not stowed
 	_stow_back.visible = item != null and stowed and stow == ItemTypeData.StowStyle.BACK
 	_stow_hip.visible = item != null and stowed and stow == ItemTypeData.StowStyle.HIP
@@ -546,7 +547,7 @@ func item_global_position() -> Vector2:
 
 ## A pixel of the item texture, in doll space, with the item where it is now.
 func _grip_point(texture_px: Vector2) -> Vector2:
-	return _item_sprite.position + (texture_px - item.grip).rotated(_item_sprite.rotation)
+	return _item_sprite.position + ((texture_px - item.grip) / float(item.detail)).rotated(_item_sprite.rotation)
 
 
 func _place_stowed(body_abs: int, shift: Vector2) -> void:

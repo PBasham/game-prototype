@@ -11,7 +11,8 @@ script = ExtResource("2_viti4")
 id = &"clay_flask"
 texture = ExtResource("3_3sikp")
 type = &"block"
-grip = Vector2(4, 6)
+grip = Vector2(12, 22)
+detail = 2
 
 [resource]
 script = ExtResource("5_1j6jo")

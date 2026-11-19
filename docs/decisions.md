@@ -2,6 +2,23 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-19: Phase 10, detailed art (branch phase-10-hires-art)
+
+- **More detail, same game (Patrick):** blocks stay 8 world pixels and everything that
+  plays (physics, reach, camera, how much world you see) stays the same. Art may be drawn
+  at 2 art pixels per world pixel (16 per block, 32x32 icons), shown at the same size.
+  Normal and detailed art mix, so things get redrawn one at a time.
+- **16 per block, not 12 (Patrick asked):** 12 is only crisp at 1080p; 16 is crisp at
+  1440p and 4K, doubles today's art cleanly, and is the common size. At 1080p it's 1.5
+  screen pixels per art pixel, which Patrick found fine on the squeezed icons.
+- **Dirt and stone look the same (Patrick):** regenerated at 2x with the same recipes
+  and layout, only the edges and details are 1 art pixel. The concept that redesigned
+  them was rejected.
+- **Flasks:** the starter tier is the thin clay vial (32x32, wax seal, glaze band).
+  The contents badge moved out of the art into the inventory slot (top right, because
+  the count is bottom right), so the bottle looks clean in hand and on the ground.
+  Glass and bigger bottles are concepts for later tiers.
+
 ## 2026-11-19: Food and alchemy (on phase-09-underground)
 
 - **Campfire cooks (Patrick):** right click it. Cooked food beats raw; the stew needs a

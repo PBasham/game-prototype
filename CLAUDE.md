@@ -52,7 +52,8 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Screenshots of menus: `-- --menu=characters` (or `new_character`, `worlds`, `new_world`); add
   `--overlay=off` to hide the F3 overlay.
 - Scripted runs can aim with `--aim=DX:DY` (offset from the chest) for mining shots.
-- Terrain, trees, backdrop: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game` (style V5 = "t5")
+- Terrain, trees, backdrop: `godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game` (style V5 = "t5"), then `-- --export=terrain_hd` for the detailed (128x128) dirt, stone, walls and clay
+- Detailed art: 2 art pixels per world pixel (32x32 icons, `HeldItemLook.detail = 2`, 128x128 terrain), see "Detailed art" in docs/guide.md
 - Tile size is 8 px (`World.TILE`). The Scholar is ~3 tiles wide, ~8 tall.
 
 ## Code conventions

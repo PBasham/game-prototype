@@ -58,7 +58,9 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = item.icon if item else null
 	_size = (item.drop_pixels() if item else 10.0) * drop_scale
-	_sprite.scale = Vector2.ONE * (_size / 16.0)  # icons are 16 px
+	# Icons are 16x16, or bigger for detailed art: shown the same size either way.
+	var icon_px := float(item.icon.get_width()) if item and item.icon else 16.0
+	_sprite.scale = Vector2.ONE * (_size / icon_px)
 	_sprite.position = Vector2(0, -_size * 0.5)
 	add_child(_sprite)
 	z_index = 2

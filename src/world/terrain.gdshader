@@ -13,7 +13,11 @@ render_mode unshaded;
 //   edge line and a lit top row, like hand-placed tiles.
 //
 // `tiles` holds the chunk plus a 2-tile border: R = block terrain slot, G = wall slot
-// (0 = none). Slot N uses the 64x64 strip cell at x = (N - 1) * 64 in each strip.
+// (0 = none). Slot N uses the CELL x CELL strip cell at x = (N - 1) * CELL in each strip.
+//
+// Detail: art is drawn at DET art pixels per world pixel (a block is 8 world pixels, so
+// 16 art pixels across). `p` steps in 1/DET world pixels; shapes, rims and grass are
+// still measured in world pixels, so they look the same, just finer.
 
 uniform sampler2D tiles : filter_nearest, repeat_disable;
 uniform sampler2D materials : filter_nearest, repeat_disable;
@@ -38,6 +42,8 @@ uniform vec2 origin;
 
 const float T = 8.0;
 const float TEXP = 64.0;
+const float DET = 2.0;
+const int CELL = 128;
 const int B = 2;
 const int SIZE = 36;
 
@@ -132,8 +138,8 @@ int wall_at(vec2 p) {
 }
 
 vec4 strip(sampler2D s, int slot, vec2 p) {
-	ivec2 q = ivec2(mod(p, TEXP));
-	return texelFetch(s, ivec2((slot - 1) * 64 + q.x, q.y), 0);
+	ivec2 q = ivec2(mod(floor(p * DET), float(CELL)));
+	return texelFetch(s, ivec2((slot - 1) * CELL + q.x, q.y), 0);
 }
 
 // Crisp square tile with a dark edge line where it meets open space. `cut` rounds an
@@ -144,19 +150,19 @@ vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bo
 		left = false;  // the run's end sticks out instead (overhang_px)
 		right = false;
 	}
-	if (cut && ((up && left && diag.x && lp.x < 0.5 && lp.y < 0.5) || (up && right && diag.y && lp.x > 6.5 && lp.y < 0.5)
-			|| (down && left && diag.z && lp.x < 0.5 && lp.y > 6.5) || (down && right && diag.w && lp.x > 6.5 && lp.y > 6.5))) {
+	if (cut && ((up && left && diag.x && lp.x < 1.0 && lp.y < 1.0) || (up && right && diag.y && lp.x >= 7.0 && lp.y < 1.0)
+			|| (down && left && diag.z && lp.x < 1.0 && lp.y >= 7.0) || (down && right && diag.w && lp.x >= 7.0 && lp.y >= 7.0))) {
 		return vec4(0.0);
 	}
 	vec3 c = strip(tex, slot, p).rgb;
-	bool edge = (up && lp.y < 0.5) || (down && lp.y > 6.5) || (left && lp.x < 0.5) || (right && lp.x > 6.5);
+	bool edge = (up && lp.y < 1.0) || (down && lp.y >= 7.0) || (left && lp.x < 1.0) || (right && lp.x >= 7.0);
 	if (edge) {
 		c *= edge_dark;
 	} else {
-		if (up && lp.y < 1.5) c = mix(c, min(c * 1.3, vec3(1.0)), 0.5);
-		if (down && lp.y > 5.5) c *= 0.8;
-		if (left && lp.x < 1.5) c *= 1.06;
-		if (right && lp.x > 5.5) c *= 0.88;
+		if (up && lp.y < 2.0) c = mix(c, min(c * 1.3, vec3(1.0)), 0.5);
+		if (down && lp.y >= 6.0) c *= 0.8;
+		if (left && lp.x < 2.0) c *= 1.06;
+		if (right && lp.x >= 6.0) c *= 0.88;
 	}
 	return vec4(c, 1.0);
 }
@@ -167,8 +173,8 @@ bool wall_open(ivec2 t) { return wal(t) == 0 && blk(t) == 0; }
 float hash(float x) { return fract(sin(x * 12.9898 + 78.233) * 43758.5453); }
 
 void fragment() {
-	vec2 p = floor((UV * float(SIZE) - float(B)) * T);
-	vec2 wp = origin + p;
+	vec2 p = floor((UV * float(SIZE) - float(B)) * T * DET) / DET;
+	vec2 wp = origin + floor(p);
 	vec4 col = vec4(0.0);
 	ivec2 here_t = tile_of(p);
 	int here = blk(here_t);
@@ -235,9 +241,9 @@ void fragment() {
 		float rn = is_built(rm) ? overhang_slots[rm] : 0.0;
 		int sm = 0;
 		bool tip = false;
-		if (lp.x < ln) { sm = lm; tip = lp.x > ln - 1.5; }
-		else if (lp.x > 7.5 - rn) { sm = rm; tip = lp.x < 8.5 - rn; }
-		if (sm > 0 && lp.y > 0.5 && lp.y < 6.5 && !(tip && (lp.y < 1.5 || lp.y > 5.5))) {
+		if (lp.x < ln) { sm = lm; tip = lp.x >= ln - 1.0; }
+		else if (lp.x >= 8.0 - rn) { sm = rm; tip = lp.x < 9.0 - rn; }
+		if (sm > 0 && lp.y >= 1.0 && lp.y < 7.0 && !(tip && (lp.y < 2.0 || lp.y >= 6.0))) {
 			vec3 c = strip(materials, sm, p).rgb;
 			col = vec4(tip ? c * 0.85 : c, 1.0);
 			drew = true;

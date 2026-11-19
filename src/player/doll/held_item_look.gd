@@ -16,6 +16,9 @@ extends Resource
 @export var grip := Vector2(3, 13)
 ## Pixel the other hand holds on two-handed items.
 @export var grip2 := Vector2(7, 9)
+## Art pixels per world pixel: 1 for normal art, 2 for art drawn at double detail (a
+## 32x32 sprite shown the size of a 16x16 one). Grips stay in texture pixels.
+@export_range(1, 4) var detail := 1
 ## Overrides for this item only (leave empty to use the type's).
 @export var hold_override: ItemMotion
 @export var attacks_override: Array[ItemMotion] = []

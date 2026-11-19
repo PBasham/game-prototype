@@ -130,7 +130,9 @@ func _items() -> Array[ItemData]:
 	out.append(_small(&"glowcap", "Glowcap", "Glows in dark caves. Brewed into Mana Potions."))
 	# Food & Alchemy.
 	out.append(_block(&"clay", "Clay", "Found in patches in the dirt. Fire it in a Furnace into Clay Flasks."))
-	out.append(_small(&"clay_flask", "Clay Flask", "An empty flask of fired clay. Potions, coatings and thrown flasks start with one."))
+	var flask_empty := _small(&"clay_flask", "Clay Flask", "An empty flask of fired clay. Potions, coatings and thrown flasks start with one.")
+	_detailed(flask_empty, &"")
+	out.append(flask_empty)
 	out.append(_small(&"wooden_bowl", "Wooden Bowl", "For stew."))
 	for row: Array in [
 			[&"roasted_berries", "Roasted Berries", "Warm and sweet. +25 hunger, +5 health.", 25.0, 5.0],
@@ -152,6 +154,7 @@ func _items() -> Array[ItemData]:
 	heal.sickness = &"healing"
 	heal.sickness_seconds = 30.0
 	heal.max_stack = 30
+	_detailed(heal, &"heal")
 	out.append(heal)
 	var manap := _small(&"mana_potion", "Mana Potion", "Drink: +40 mana. Then 10 s before another.")
 	manap.kind = ItemData.Kind.FOOD
@@ -159,6 +162,7 @@ func _items() -> Array[ItemData]:
 	manap.sickness = &"mana"
 	manap.sickness_seconds = 10.0
 	manap.max_stack = 30
+	_detailed(manap, &"mana")
 	out.append(manap)
 	var coat := _small(&"poison_coating", "Poison Coating", "Rub it on your weapon: the next 10 melee hits poison (2 damage a second for 4 s).")
 	coat.kind = ItemData.Kind.FOOD
@@ -836,6 +840,14 @@ func _block(item_id: StringName, label: String, text: String, wall: StringName =
 	item.impact_at = 0.2  # placed early in the quick Place reach
 	item.held = _look(item_id, &"block", Vector2(3, 5))
 	return item
+
+
+## The 32x32 flask art (detail 2): held by the body, with an inventory badge.
+func _detailed(item: ItemData, badge: StringName) -> void:
+	item.held.detail = 2
+	item.held.grip = Vector2(12, 22)
+	if badge != &"":
+		item.badge = load("res://assets/items/badges/%s.png" % badge) as Texture2D
 
 
 func _small(item_id: StringName, label: String, text: String) -> ItemData:

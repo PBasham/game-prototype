@@ -107,6 +107,12 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Healing / Mana Potions work, and you can't chug a second one until the sickness ends.
 - [ ] Poison Coating: sword hits poison slimes (green numbers). Poison Flask throws, shatters, cloud.
 
+**Phase 10: detailed art (branch phase-10-hires-art)**
+- [ ] Dirt, stone, their walls and clay look like before, just finer. Anything off?
+- [ ] Healing / Mana Potion and Clay Flask: thin clay vials in the slot, hand and on
+      the ground; badge in the slot's top right corner.
+- [ ] Try a 1440p window if you can: detailed art is exactly 2 screen pixels there.
+
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time
       (`pickups 10` then walk a bit), never on screen or indoors.
