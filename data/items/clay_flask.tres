@@ -17,6 +17,7 @@ detail = 2
 [resource]
 script = ExtResource("5_1j6jo")
 icon = ExtResource("4_scg40")
+drop_size = 16
 held = SubResource("Resource_0ncjv")
 impact_at = 0.2
 id = &"clay_flask"

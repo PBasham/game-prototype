@@ -19,6 +19,7 @@ detail = 2
 script = ExtResource("5_h4k21")
 kind = 11
 icon = ExtResource("4_yi2g3")
+drop_size = 16
 badge = ExtResource("6_badge")
 max_stack = 30
 held = SubResource("Resource_gvk5v")

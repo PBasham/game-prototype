@@ -846,6 +846,7 @@ func _block(item_id: StringName, label: String, text: String, wall: StringName =
 func _detailed(item: ItemData, badge: StringName) -> void:
 	item.held.detail = 2
 	item.held.grip = Vector2(12, 22)
+	item.drop_size = 16  # same size on the ground as in the hand
 	if badge != &"":
 		item.badge = load("res://assets/items/badges/%s.png" % badge) as Texture2D
 
