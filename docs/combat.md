@@ -146,6 +146,7 @@ in it is hit once per swing.
 |---|---|---|---|
 | Wooden Sword | 8 | 4 | Workbench: 10 wood |
 | Copper Sword | 13 | 4.5 | Anvil: 8 copper bars, 2 wood |
+| Iron Sword | 18 | 4.75 | Anvil: 10 iron bars, 2 wood |
 | Fists (empty hands) | 3 | 4 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player |
 
 ## Spells against enemies
@@ -200,6 +201,9 @@ The equipment window lists Defense and every non-zero stat.
 | Copper Helmet | head | 1 | 10 copper bars |
 | Copper Chestplate | chest | 2 | 16 copper bars |
 | Copper Greaves | legs | 1 | 12 copper bars |
+| Iron Helmet | head | 2 | 12 iron bars |
+| Iron Chestplate | chest | 3 | 20 iron bars |
+| Iron Greaves | legs | 2 | 15 iron bars |
 | Dev Ring (dev only) | accessory | 2 | +20 health, +20% speed, +15% jump, +25% magic damage |
 
 ## Beds

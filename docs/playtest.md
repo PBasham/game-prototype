@@ -1,7 +1,7 @@
-# Playtest checklist: Phases 5, 6 and 7
+# Playtest checklist: Phases 5 to 9
 
-Check out `phase-07-combat`: it contains main plus Phases 5 and 6, so it's the only
-branch to test. Nothing in Phases 5 to 7 has been playtested yet. Numbers are first
+Check out `phase-09-underground`: it contains main plus Phases 5 to 8, so it's the only
+branch to test. Phases 5 to 7 haven't been fully playtested yet. Numbers are first
 guesses; the docs listed say where each tunable lives.
 
 ## Handy console commands (the ~ key)
@@ -88,6 +88,16 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Chain Spark jumps between slimes; Recall: stand still 3 s, moving cancels.
 - [ ] Seek Ore underground at night.
 - [ ] Sounds: anything too loud, annoying or missing?
+
+**Phase 9: underground**
+- [ ] Caves with no light are black; torches, the campfire and glowcaps light them.
+      Sunlight fades a few blocks into the ground. Too dark or too bright?
+- [ ] Campfire (5 wood + 3 stone): big warm light, Cozy buff nearby, gone when you leave.
+- [ ] Caves roomier: most tunnels walkable, a few tight bits left.
+- [ ] Iron ore appears from about 40 tiles down, more deeper; stone and copper pickaxes
+      mine it slowly; iron bars, tools, sword and armor craft and work.
+- [ ] Mushrooms: field and red caps on the surface and in caves, duskcaps and glowcaps
+      only in caves; field mushroom and red cap are edible. `forage glowcap` places one.
 
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time

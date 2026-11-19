@@ -190,7 +190,8 @@ is a crawl space he can't walk through.
 | Setting | Default | What it does |
 | --- | --- | --- |
 | `tunnel_min_depth` | 16 | Tunnels start this deep. They narrow near the top so they rarely break the surface. |
-| `tunnel_width` | 13 | Typical tunnel height in tiles. |
+| `tunnel_width` | 18 | Typical tunnel height in tiles (was 13: too many crawl spaces for the 8-tall Scholar). |
+| `tunnel_taper` | 0.6 | Where a tunnel runs out (edge of its coverage, or its first tiles of depth) it narrows to this share of `tunnel_width` before ending. Low = long crawl spaces at tunnel ends. |
 | `tunnel_spacing` | 240 | Rough distance between neighboring tunnels. Smaller = denser network. |
 | `tunnel_coverage` | 0.5 | Fraction of the underground with tunnels (0 to 1). |
 | `cave_flatten` | 1.5 | Above 1, caves are wider than tall. |
@@ -225,6 +226,33 @@ cave walls naturally.
 | `copper_full_depth` | 150 | Depth where copper reaches its deep chance. |
 | `copper_radius_min` / `max` | 1.2 / 1.9 | Blob size. 1.2 is about 4 tiles of ore, 1.9 about 10. |
 | `copper_in_dirt` | true | Copper can replace dirt too, not only stone. |
+
+### Iron
+
+Same blobs as copper, only in stone, deeper and rarer at first (like Terraria's spread).
+Where an iron and a copper blob overlap, it's iron. Iron ore needs a pickaxe with
+`mining_power` 35 (the stone pickaxe and up; see items-and-mining.md).
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `iron_min_depth` | 40 | Never shallower than this (below the dirt layer). |
+| `iron_chance_shallow` | 0.02 | Chance per 8x8 cell at `iron_min_depth`... |
+| `iron_chance_deep` | 0.1 | ...and at `iron_full_depth` and below. |
+| `iron_full_depth` | 250 | Depth where iron reaches its deep chance. |
+| `iron_radius_min` / `max` | 1.0 / 1.6 | Blob size (a bit smaller than copper's). |
+
+### How roomy are the caves? (`tools/cave_fit.gd`)
+
+Measures the share of cave floor tiles where the Scholar fits standing (3 wide, 8 tall
+of open air above), overall and by depth. Any setting can be overridden to compare:
+
+```
+godot --headless --path . --script res://tools/cave_fit.gd -- --seed=42
+godot --headless --path . --script res://tools/cave_fit.gd -- --seed=42 --tunnel_width=20.0
+```
+
+Before Phase 9 (`tunnel_width` 13): 64 to 75% fit (seeds 42, 7, 99). Now (18, taper
+0.6): 79 to 83%, with the tightest bits in the first 50 tiles below the surface.
 
 *Rarer and deeper* (so it feels earned): `copper_min_depth 25`,
 `copper_chance_shallow 0.02`, `copper_chance_deep 0.1`. *Bigger veins*:

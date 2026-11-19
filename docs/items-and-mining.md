@@ -297,8 +297,13 @@ before character select is called "default" and shows up in the list like any ot
 ## Mining
 
 - Blocks have health (`health` in `data/tiles/*.tres` and `data/walls/*.tres`): dirt
-  and grass 40, stone 80, copper ore 110, planks 50, platforms 20, rope 15, background
-  walls 30. A copper pickaxe breaks dirt in 2 hits and stone in 4.
+  and grass 40, stone 80, copper ore 110, iron ore 160, planks and logs 50, platforms
+  20, rope 15, background walls 30. A copper pickaxe breaks dirt in 2 hits and stone in 4.
+- **Mining power** (like Terraria's pickaxe power): a block's `min_mining_power` is the
+  `mining_power` a pickaxe (or mining spell) needs to mine it at all; below that the box
+  goes red with "Too hard". A strong enough but weaker tool just takes longer (its
+  `mining_damage`). Iron ore needs 35. Tools: Stone Pickaxe 35, Copper Pickaxe 40, Iron
+  Pickaxe 50, Mining Spell 40, Hyper Drill 55.
 - Damaged blocks show cracks in 4 stages (`assets/fx/cracks.png`) and heal after
   `block_heal_seconds` (5) without a hit (`World` node).
 - Broken blocks drop their item (`drop_item`, empty = the item with the tile's id;

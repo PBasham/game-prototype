@@ -2,7 +2,27 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-19: Phase 9, underground
 
+- **Lighting like Terraria (Patrick):** light multiplies per tile (0.965 through air,
+  0.8 through blocks: Terraria's 0.91 and 0.56 scaled to our smaller tiles), no
+  minimum brightness, so unlit caves are black and sunlight dies a few blocks down.
+  Light radii raised to match (torch 32, Light Orb 36, furnace 16).
+- **Campfire (Patrick):** a stationary light bigger than a torch (radius 48) and Cozy
+  (+1.5 health per second) within 12 tiles. Hand: 5 Wood + 3 Stone. Torches still need
+  slime (slimes are on the surface, so it's not a blocker).
+- **Roomier caves (Patrick):** `tunnel_width` 13 to 18, and tunnels taper to 60% before
+  ending instead of to nothing (`tunnel_taper`). Scholar-fit floor share went from 64 to
+  75% to 79 to 83% (`tools/cave_fit.gd`). Some tight bits stay on purpose.
+- **Mining power (Patrick):** each block has a minimum pickaxe power; a strong enough
+  but weaker pickaxe is just slower. Iron ore needs 35, so stone and copper pickaxes mine
+  it (slowly).
+- **Iron (Patrick):** deeper than copper (from 40 tiles down, 2% per cell rising to 10%
+  by 250), stone only. Iron Bar, Iron Pickaxe, Axe, Sword, Helmet, Chestplate, Greaves at
+  the furnace and anvil. Placeholder art is the copper art recolored.
+- **Mushrooms (Patrick):** Field Mushroom (food), Red Cap (potions later), Duskcap
+  (underground, poisons later), Glowcap (underground, glows, mana potions later).
+  Potions, coatings, flasks and cooking are later briefs.
 
 ## 2026-11-18: Phase 8, spell types (branch phase-08-spell-types)
 

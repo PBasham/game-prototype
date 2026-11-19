@@ -199,27 +199,39 @@ per pixel from a small texture of tile ids:
 ## Lighting
 
 `src/world/light_map.gd` (node `Lights` in the running game). A tile-level, colored
-(RGB) light map over the loaded area, drawn as a smooth multiply overlay.
+(RGB) light map over the loaded area, drawn as a smooth multiply overlay. It works like
+Terraria's: light is multiplied by a share per tile it crosses, so it fades smoothly,
+dies a few blocks into the ground, and caves with no light are black. Terraria keeps
+0.91 per tile through air and 0.56 through blocks; its tiles are bigger next to the
+player (3 tall vs our 8), so ours are those to the power 3/8.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `ambient` | 0.16 | Darkest anything gets (so caves aren't pure black). |
-| `open_falloff` | 0.06 | Light lost per tile through air and walls. |
-| `solid_falloff` | 0.1 | Sunlight lost per block going down into the ground (how far the surface soaks). |
-| `solid_side_falloff` | 0.5 | Light lost going sideways or up into a block, so walls and roofs stop sunlight. |
-| `indoors_falloff` | 1.0 | Light lost coming out of a block into a walled space (a room, a cave): 1 = none gets in. Rooms get light through open doors, gaps and torches. |
+| `ambient` | 0 | Brightness everything gets with no light (0: unlit caves are black). |
+| `air_decay` | 0.965 | Share of light kept per tile through air and walls. |
+| `solid_decay` | 0.8 | Share kept per tile through blocks: the surface is well lit about 3 blocks down and dark by about 10. |
+| `indoors_factor` | 0 | Share kept coming out of a block into a walled space (a room, a cave): 0 = the sun doesn't shine through a roof. Rooms get light through open doors, gaps and torches. |
 | `min_interval` | 0.12 | Minimum seconds between recomputes. |
-| `source_solid_factor` | 10 | Light sources (torches) lose this many times more reach per tile through blocks than through air, so a torch doesn't light the other side of a wall. Closed doors block light like blocks. |
+| `source_solid_factor` | 6 | Light sources fade this many times faster through blocks than through air (Terraria's torch: about 42 tiles of air vs 7 of blocks). Closed doors block light like blocks. |
 
 Open sky (no block and no wall) is the light source. The spread runs on a background
 thread (`LightJob`), so editing tiles never stalls the game; light catches up a fraction
 of a second later.
 
 **Light sources** are tile objects with a `light_radius` (`data/objects/*.tres`, group
-Light): torches now. A source is bright for about the inner half of its radius and
-fades to nothing at it, tinted by its `light_color` (torch: warm, radius 11). Sources
-of the same color are spread in one pass, so many torches cost about the same as one.
+Light), moving lights (the Light Orb and Wisp spells) and glowing forageables (the
+Glowcap). A source starts at full brightness and fades the same way, scaled so it's
+down to about a tenth at its radius, tinted by its `light_color`. Radii: torch 32,
+furnace 16, campfire 48, Light Orb 36, Wisp 26, Glowcap 14. Sources with the same
+color and radius spread in one pass, so many torches cost about the same as one.
 Sunlight is white; the two add up.
+
+**Campfire** (hand: 5 Wood + 3 Stone, 4x3 tiles, needs a floor): the biggest light,
+warm, and the **Cozy** buff while you're within its `aura_radius` (12 tiles): health
+refills `aura_health_regen` (1.5) per second faster, on top of the normal refill. Cozy
+shows in the buff bar without a timer and ends shortly after you walk away. Any object
+can have an aura (`aura_radius`, `aura_health_regen`, `aura_name`, `aura_description`
+on the ObjectDef).
 
 ## Backdrop
 

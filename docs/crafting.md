@@ -43,8 +43,13 @@ Where they lie:
 | --- | --- | --- | --- |
 | Stick | 45 | 0 | 0 |
 | Rock | 55 | 100 | 100 |
+| Field Mushroom | 8 | 0 | 10 |
+| Red Cap | 4 | 0 | 6 |
+| Duskcap | 0 | 0 | 14 |
+| Glowcap | 0 | 0 | 12 |
 
-Weights compare across types on each kind of floor (45 / 55 = 45% / 55%);
+Weights compare across types on each kind of floor (on surface grass 45 / 55 / 8 / 4 out
+of 112);
 0 = never there. A tile's first roll is fixed by its position (the same spot always gives
 the same thing). Areas you haven't changed are re-seeded when a world loads, so new
 settings show up there. Digging out the ground under one, or putting a block on it, drops
@@ -80,7 +85,17 @@ like anything else. Rules:
 | `regrow_checks_per_second` | 200 | Random tiles checked per second; only changes how evenly it trickles in, not the rate |
 | `regrow_catch_up_days` | 3 | Most time an area catches up on when it loads again |
 
-Console: `pickups` counts forageables and floor tiles in the loaded area and how many came
+**Mushrooms** (Phase 9). For now they're food or ingredients; potions, poisons and
+cooking each get their own brief later.
+
+| Mushroom | Where | Use now | Later |
+| --- | --- | --- | --- |
+| Field Mushroom | Surface grass, caves | Food: +8 hunger, +1 health | Cooking |
+| Red Cap (red, white spots) | Surface grass, caves | Barely food: +2 hunger | Potions |
+| Duskcap (purple) | Caves only | Ingredient | Poisons: weapon coatings, flasks, spells |
+| Glowcap | Caves only | Ingredient; glows (light radius 14, cyan) | Mana potions |
+
+Console: `forage <type>` puts one on the ground under the cursor. `pickups` counts forageables and floor tiles in the loaded area and how many came
 back this session; `pickups <days>` lets that many days pass for them (off screen).
 
 Their sprites are sized like the thing (stick 12x5, rock 9x7 px), from
@@ -133,6 +148,10 @@ Current recipes:
 | Workbench | Copper Anvil: 6 copper bars |
 | Furnace | Copper Bar: 3 copper ore |
 | Anvil | Copper Pickaxe: 10 bars + 3 wood; Copper Axe: 8 bars + 3 wood |
+| Furnace | Iron Bar: 3 iron ore |
+| Anvil | Iron Pickaxe: 12 iron bars + 3 wood; Iron Axe: 10 + 3 wood; Iron Sword: 10 + 2 wood |
+| Anvil | Iron Helmet 12, Iron Chestplate 20, Iron Greaves 15 iron bars |
+| Hand | Campfire: 5 wood + 3 stone |
 
 Stone tools: Stone Pickaxe 15 mining in a 2x2 area (Ctrl + wheel: 1x1), Stone Axe 15 chopping, both reach 7 (the copper
 ones are stronger).

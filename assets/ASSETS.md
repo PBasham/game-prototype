@@ -208,3 +208,13 @@ or .ogg); the generator never overwrites without `--force`.
 | terrain/logs.png, terrain/logs_wall.png | Log cabin block and back wall (64x64, rounded horizontal logs, style B2; the wall is the same darkened). Hand-made placeholders, not from generate_tiles.gd. The block ends sticking out 2 px are drawn by the terrain shader (`overhang_px` on the tile) |
 | items/{icons,held}/log.png | Copies of the old wood (log) icon and held sprite |
 | tiles/blocks.png row 7 | Collision row for the log block (a copy of the planks row) |
+
+## Phase 9: underground
+
+| File | What |
+| --- | --- |
+| objects/campfire.png, items/{icons,held}/campfire.png | Campfire (32x24, 4x3 tiles): stone ring, crossed logs, flames. Hand-drawn placeholder |
+| items/{icons,held}/iron_{ore,bar,pickaxe,axe,sword,helmet,chestplate,greaves}.png, armor/iron_*.png | The copper versions recolored grey (wood kept) |
+| terrain/ore_iron.png | The copper ore overlay recolored |
+| tiles/blocks.png row 8 | Collision row for iron ore (copy of the copper ore row) |
+| decor/pickup_{field_mushroom,red_cap,duskcap,glowcap}.png, items/{icons,held}/ same names | Mushrooms (9x8 on the ground), hand-made placeholders |
