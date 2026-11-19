@@ -87,6 +87,9 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Craft amount:** [-] [n] [+] Craft; Shift = 10, Ctrl = as many as you can up to a
   stack. Replaces the Craft / x10 / All buttons.
 - **Open doors:** any visible part of the swung face can be clicked.
+- **Log cabin look (Patrick, style B2, placeholder):** rounded horizontal logs; where a run
+  ends, the log sticks out 2 px with rounded tips (`overhang_px`, drawn by the terrain
+  shader, no collision). Back wall: the same logs, darker.
 - **Build against doors (Patrick):** a door anchors blocks (next to it, on top) and back
   walls (next to, on top, behind), open or closed (`anchors_building` on ObjectDef).
 - **Stone Pickaxe 2x2:** 1x1 blocks were too small; every pickaxe can toggle down to 1x1

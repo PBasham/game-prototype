@@ -205,6 +205,6 @@ or .ogg); the generator never overwrites without `--force`.
 
 | File | What |
 | --- | --- |
-| terrain/logs.png, terrain/logs_wall.png | Log cabin block and back wall (64x64, horizontal logs; the wall is the same darkened). Hand-made placeholders, not from generate_tiles.gd |
+| terrain/logs.png, terrain/logs_wall.png | Log cabin block and back wall (64x64, rounded horizontal logs, style B2; the wall is the same darkened). Hand-made placeholders, not from generate_tiles.gd. The block ends sticking out 2 px are drawn by the terrain shader (`overhang_px` on the tile) |
 | items/{icons,held}/log.png | Copies of the old wood (log) icon and held sprite |
 | tiles/blocks.png row 7 | Collision row for the log block (a copy of the planks row) |

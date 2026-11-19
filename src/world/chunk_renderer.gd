@@ -378,6 +378,8 @@ func _build_terrain_material() -> void:
 	built.resize(16)
 	var built_walls := PackedFloat32Array()
 	built_walls.resize(16)
+	var overhang := PackedFloat32Array()
+	overhang.resize(16)
 	_block_slot.resize(blocks.size())
 	for i in range(1, blocks.size()):
 		var def := blocks.def(i)
@@ -388,6 +390,7 @@ func _build_terrain_material() -> void:
 		_block_slot[i] = keys.size()
 		grass[keys.size()] = 1.0 if def.grass_cover else 0.0
 		built[keys.size()] = 1.0 if def.built else 0.0
+		overhang[keys.size()] = float(def.overhang_px) if def.built else 0.0
 		if def.id == &"stone":
 			_stone_slot = keys.size()
 	var wall_keys: Array[String] = []
@@ -408,6 +411,7 @@ func _build_terrain_material() -> void:
 	_material.set_shader_parameter("grass_slots", grass)
 	_material.set_shader_parameter("built_slots", built)
 	_material.set_shader_parameter("built_walls", built_walls)
+	_material.set_shader_parameter("overhang_slots", overhang)
 	_material.set_shader_parameter("wall_shade", wall_shade)
 	_material.set_shader_parameter("wall_desat", wall_desat)
 	for i in GRASS_COLORS.size():

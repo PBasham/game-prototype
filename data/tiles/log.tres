@@ -10,5 +10,6 @@ climbable = false
 health = 50.0
 terrain = "logs"
 built = true
+overhang_px = 2
 id = &"log"
 display_name = "Log"

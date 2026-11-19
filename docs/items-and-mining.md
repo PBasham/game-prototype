@@ -137,7 +137,7 @@ Current items:
 | --- | --- |
 | Copper Pickaxe | 25 per hit, 2x2, reach 10 |
 | Copper Axe | 25 per hit on trees (a tree has 100), reach 10 |
-| Dirt, Stone, Wood, Log | Blocks (Wood places planks, Log a log cabin block); right click places them as background walls |
+| Dirt, Stone, Wood, Log | Blocks (Wood places planks, Log a log cabin block whose run ends stick out 2 px, `overhang_px` on the tile); right click places them as background walls |
 | Copper Ore, Wood Platform | Blocks (front only) |
 | Rope, Torch | Tile objects |
 | Basic Spellbook | The book used when the Book slot is empty: 4 slots, power x1 |

@@ -23,6 +23,7 @@ uniform sampler2D noise_tex : filter_nearest, repeat_enable;
 uniform float grass_slots[16];
 uniform float built_slots[16];
 uniform float built_walls[16];
+uniform float overhang_slots[16];
 // Background walls are drawn this much darker than blocks (and a little greyer), so
 // the front layer stands out. 1 = same as the art.
 uniform float wall_shade = 0.75;
@@ -139,6 +140,10 @@ vec4 strip(sampler2D s, int slot, vec2 p) {
 // outer corner by one pixel, only where the diagonal neighbor is open too.
 vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bool right, float edge_dark, bool cut, bvec4 diag) {
 	vec2 lp = p - floor(p / T) * T;
+	if (overhang_slots[slot] > 0.5 && edge_dark < 0.5) {
+		left = false;  // the run's end sticks out instead (overhang_px)
+		right = false;
+	}
 	if (cut && ((up && left && diag.x && lp.x < 0.5 && lp.y < 0.5) || (up && right && diag.y && lp.x > 6.5 && lp.y < 0.5)
 			|| (down && left && diag.z && lp.x < 0.5 && lp.y > 6.5) || (down && right && diag.w && lp.x > 6.5 && lp.y > 6.5))) {
 		return vec4(0.0);
@@ -220,6 +225,23 @@ void fragment() {
 			c = mix(c, c * 0.8, 0.2);
 		}
 		col = vec4(c, 1.0);
+	}
+	// A built block's end sticking out into this open tile (log cabin corners).
+	if (!drew && here == 0) {
+		vec2 lp = p - floor(p / T) * T;
+		int lm = blk(here_t + ivec2(-1, 0));
+		int rm = blk(here_t + ivec2(1, 0));
+		float ln = is_built(lm) ? overhang_slots[lm] : 0.0;
+		float rn = is_built(rm) ? overhang_slots[rm] : 0.0;
+		int sm = 0;
+		bool tip = false;
+		if (lp.x < ln) { sm = lm; tip = lp.x > ln - 1.5; }
+		else if (lp.x > 7.5 - rn) { sm = rm; tip = lp.x < 8.5 - rn; }
+		if (sm > 0 && lp.y > 0.5 && lp.y < 6.5 && !(tip && (lp.y < 1.5 || lp.y > 5.5))) {
+			vec3 c = strip(materials, sm, p).rgb;
+			col = vec4(tip ? c * 0.85 : c, 1.0);
+			drew = true;
+		}
 	}
 	if (!drew) {
 		bool done = false;

@@ -45,6 +45,10 @@ enum Collision {
 ## Built block (planks, bricks): crisp square edges with a dark edge line instead of the
 ## smooth, blended edges natural ground gets.
 @export var built: bool = false
+## Built blocks only: where a run of them ends (open on the left or right), the end
+## sticks out this many pixels into the open tile, with rounded tips (log cabin
+## corners). Only drawn; it doesn't change collision. 0 = none.
+@export_range(0, 4) var overhang_px := 0
 
 
 func validate() -> PackedStringArray:
