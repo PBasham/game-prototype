@@ -19,6 +19,24 @@ def profile(kind):
         for y in range(12,27): p[y]=('body',6)
         p[27]=('body',5); p[28]=('body',4)
         band=(17,21); level=14
+    elif kind=='regular24':
+        for y in range(1,4): p[y]=('cork',2)
+        p[4]=('lip',3)
+        for y in range(5,7): p[y]=('neck',2)
+        p[7]=('body',3); p[8]=('body',4)
+        for y in range(9,20): p[y]=('body',5)
+        p[20]=('body',4); p[21]=('body',3)
+        band=(13,15); level=10
+    elif kind=='large24':
+        for y in range(1,4): p[y]=('cork',2)
+        p[4]=('lip',3)
+        for y in range(5,8): p[y]=('neck',2)
+        cy,r=15,7.6
+        for y in range(8,23):
+            hw=int(round(math.sqrt(max(0,r*r-(y+0.5-cy)**2))))
+            p[y]=('body',max(2,min(8,hw)))
+        p[22]=('body',4)
+        band=(13,16); level=12
     else:
         for y in range(1,5): p[y]=('cork',3)
         p[5]=('lip',4)
@@ -39,13 +57,17 @@ def shade(base,t,y=0,amt=1.0):
 HEART=[".dd.dd..","dhxdxxd.","dxxxxxd.","dxxxxxd.",".dxxxd..","..dxd...","...d....","........"]
 STAR =["...d....","..dxd...","ddxhxdd.","dxxxxxd.",".dxxxd..","dxd.dxd.","d.....d.","........"]
 
-def draw(kind, mat, liquid=None, sym=None, seed=1):
+HEART6=['dd.dd.','xdxxd.' if False else 'dxdxd.','dxxxd.','.dxd..','..d...','......']
+STAR6=['..d...','.dxd..','dxhxd.','.dxd..','d.d.d.','......']
+
+def draw(kind, mat, liquid=None, sym=None, seed=1, size=32):
     random.seed(seed)
-    im=Image.new('RGBA',(32,32))
+    im=Image.new('RGBA',(size,size))
+    C=size//2
     p,band,level=profile(kind)
     inside=set()
     for y,(part,hw) in p.items():
-        x0,x1=16-hw,15+hw
+        x0,x1=C-hw,C-1+hw
         for x in range(x0,x1+1):
             t=(x-x0)/max(1,x1-x0)
             inside.add((x,y))
@@ -81,13 +103,13 @@ def draw(kind, mat, liquid=None, sym=None, seed=1):
         ys=sorted(y for y,(pt,_) in p.items() if pt in('body','neck'))
         for y in ys[1:-3]:
             part,hw=p[y]
-            x=16-hw+ (2 if hw>=4 else 1)
+            x=C-hw+ (2 if hw>=4 else 1)
             if y%7!=3:
                 im.putpixel((x,y),(255,255,255,215))
         if liquid:
             for _ in range(3 if kind!='thin' else 2):
                 y=random.randint(level+3,max(p)-3); hw=p[y][1]
-                x=random.randint(16-hw+3,15+hw-2)
+                x=random.randint(C-hw+3,C-1+hw-2)
                 im.putpixel((x,y),tuple(min(255,v+70) for v in liquid[1])+(255,))
     # wax drips
     if liquid and mat=='clay':
@@ -95,7 +117,7 @@ def draw(kind, mat, liquid=None, sym=None, seed=1):
         hw=p[top][1]
         for (dx,dl) in [(1,2),(hw*2-2,3)]:
             for k in range(dl):
-                if (16-hw+dx,top+k) in inside: im.putpixel((16-hw+dx,top+k),shade(liquid[0],0.3)+(255,))
+                if (C-hw+dx,top+k) in inside: im.putpixel((C-hw+dx,top+k),shade(liquid[0],0.3)+(255,))
     # outline: shape pixels touching the outside
     ol={'clay':(66,38,24,255),'glass':(44,62,72,255)}[mat]
     for (x,y) in list(inside):
@@ -105,13 +127,16 @@ def draw(kind, mat, liquid=None, sym=None, seed=1):
             elif part=='cork': im.putpixel((x,y),tuple(int(v*0.55) for v in liquid[0])+(255,))
             else: im.putpixel((x,y),ol)
     if sym:
-        pat=HEART if sym=='heart' else STAR
+        if size>=32:
+            pat=HEART if sym=='heart' else STAR; o=24
+        else:
+            pat=HEART6 if sym=='heart' else STAR6; o=size-6
         col=liquid[1]
         for y,row in enumerate(pat):
             for x,ch in enumerate(row):
-                if ch=='x': im.putpixel((24+x,24+y),col+(255,))
-                elif ch=='h': im.putpixel((24+x,24+y),(255,240,240,255))
-                elif ch=='d': im.putpixel((24+x,24+y),(28,18,18,255))
+                if ch=='x': im.putpixel((o+x,o+y),col+(255,))
+                elif ch=='h': im.putpixel((o+x,o+y),(255,240,240,255))
+                elif ch=='d': im.putpixel((o+x,o+y),(28,18,18,255))
     return im
 
 RED=((196,40,44),(238,92,86)); BLUE=((44,92,196),(100,156,242)); GREEN=((76,150,52),(126,204,84))

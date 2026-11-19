@@ -236,3 +236,5 @@ or .ogg); the generator never overwrites without `--force`.
 | File | What |
 | --- | --- |
 | art/concepts/flasks/{clay,glass}_{thin,regular,large}_{empty,healing,mana}.png | 32x32 flask concepts Patrick picked: clay (wax seal, glaze band, corner badge) and glass for the later desert tier, in three sizes. Made by `make_flasks.py` (Python, PIL). For when icons move to 32x32 (16 px tiles); the game's slots draw icons at 16x16 today |
+| art/concepts/flasks/icon_compare.png | The flasks at 16, 24 and 32 px in real inventory slots, at today's and other scales |
+| art/concepts/terrain16/ | 16x16-per-block dirt and stone concepts (128x128 seamless, 8x8 blocks each) and a side by side with today's 8x8 terrain. Made by `terrain16.py` |
