@@ -34,6 +34,10 @@ var stone_slot: int
 var collision: PackedInt32Array
 var atlas_row: PackedInt32Array
 var grass_id: int
+var dirt_id: int
+var stone_id: int
+## Tiles below the generated surface line deeper than this count as cave floor.
+var surface_band := 3
 ## Decoration rules (pure functions of x). Null skips decorations.
 var generator: WorldGenerator
 
@@ -46,6 +50,12 @@ var collision_cells := PackedInt32Array()
 var prop_cells := PackedInt32Array()
 ## Flat quads: local x, local y, tree index (-1 none), flower index.
 var decor := PackedInt32Array()
+## Flat triples: local x, local y, floor kind (FLOOR_*). Every other grass, dirt or stone
+## tile with open air above (cliffs, dug-out ground, cave floors), for loose pickups.
+var floors := PackedInt32Array()
+const FLOOR_GRASS := 0
+const FLOOR_GROUND := 1
+const FLOOR_CAVE := 2
 var usec := 0
 var task := -1
 
@@ -128,9 +138,22 @@ func _decor() -> void:
 		var wx := posmod(coord.x * SIZE + lx, world_width)
 		var tree := generator.tree_at(wx)
 		var flower := generator.flower_at(wx)
-		# Bare grass tops are reported too (tree and flower -1): sticks, rocks and flint
-		# can lie there (PlantLayer.pickup_chance).
+		# The first grass top per column is decor (tree and flower -1 when bare: sticks,
+		# rocks and flint can lie there). Other exposed tiles go to `floors`.
+		var top := -1
 		for ly in SIZE:
 			if block(lx, ly) == grass_id and block(lx, ly - 1) == WorldData.AIR:
 				decor.append_array([lx, ly, tree, flower])
+				top = ly
 				break
+		var cave_below := generator.surface_at(wx) + surface_band
+		for ly in SIZE:
+			if ly == top or block(lx, ly - 1) != WorldData.AIR:
+				continue
+			var id := block(lx, ly)
+			if id != grass_id and id != dirt_id and id != stone_id:
+				continue
+			if coord.y * SIZE + ly > cave_below:
+				floors.append_array([lx, ly, FLOOR_CAVE])
+			else:
+				floors.append_array([lx, ly, FLOOR_GRASS if id == grass_id else FLOOR_GROUND])

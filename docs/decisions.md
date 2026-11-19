@@ -63,6 +63,7 @@ Newest first. Each entry: what was decided, why, and what it affects.
   toward, enemies get 6 s grace before despawning, and slimes notice you from 64 tiles
   (beyond the spawn distance) so they come to you.
 - **More sticks:** bare grass gets pickups too (Patrick saw none in a new world).
+- **Loose pickups everywhere:** any exposed grass, dirt or stone can have one, by place: sticks only on surface grass, rocks and flint on surface ground and cave floors at any depth (Patrick).
 - **Second enemy:** Blue Slime, rare (about 11%), tougher, and only after the first Green
   Slime is slain in the world. Slimes are fine (many games use them).
 - **Spawn conditions:** per entry, all must be met. First kind: kills of an enemy in this

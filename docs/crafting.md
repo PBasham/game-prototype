@@ -20,17 +20,28 @@ a **Workbench**, then a **Furnace** for copper bars and an **Anvil** for copper 
 For testing, the console has `devkit` (the old starting kit plus all four spells) and
 `mana` (infinite mana on or off).
 
-### Pickups on the grass (`Plants` node, `src/world/plant_layer.gd`)
+### Loose sticks, rocks and flint (`Plants` node, `src/world/plant_layer.gd`)
 
-They're seeded on the grass: some flower spots become pickups instead, and bare grass
-tiles get one now and then (`pickup_chance`). Areas you haven't changed are re-seeded
-when a world loads, so new settings show up there.
+They're seeded on any grass, dirt or stone tile with open air above it, by where it is:
+
+- **Surface grass:** sticks, rocks and flint. Some flower spots become one instead.
+- **Bare surface dirt or stone** (cliffs, dug ground): rocks and flint.
+- **Cave floors** (more than 3 tiles below the generated surface line, any depth): rocks
+  and flint, no sticks.
+
+Each tile rolls once (the same spot always gives the same thing). Areas you haven't
+changed are re-seeded when a world loads, so new settings show up there.
 
 | Export | Default | What it does |
 | --- | --- | --- |
 | `pickup_share` | 0.4 | Share of flower spots that are a pickup instead |
-| `pickup_chance` | 0.06 | Chance a bare grass tile (no tree or flower) has a pickup: about one every 16 tiles of surface |
-| `flint_share` | 0.2 | Of those, the share that's flint (the rest is split between sticks and rocks) |
+| `pickup_chance` | 0.06 | Chance a bare surface grass tile has a pickup: about one every 16 tiles |
+| `grass_stick_share` | 0.45 | On grass: share of sticks |
+| `flint_share` | 0.15 | On grass: share of flint (the rest are rocks) |
+| `ground_pickup_chance` | 0.05 | Chance a bare surface dirt or stone tile has a rock or flint |
+| `ground_flint_share` | 0.25 | Of those, the share that's flint |
+| `cave_pickup_chance` | 0.03 | Chance a cave floor tile has a rock or flint |
+| `cave_flint_share` | 0.25 | Of those, the share that's flint |
 | `sticks_min`, `sticks_max` | 1, 3 | Sticks a felled tree drops |
 
 Their sprites are sized like the thing (stick 12x5, rock 9x7, flint 7x6 px), from

@@ -238,3 +238,44 @@ func test_closed_doors_block_torch_light() -> void:
 	var shut_light: int = run.call(true)
 	assert_gt(open_light, shut_light + 40, "the open doorway lets light out")
 	assert_almost_eq(shut_light, int(0.16 * 255.0 + 0.5), 3, "a closed door keeps it in")
+
+
+## Surface line at row 10 for every column.
+class FlatGen extends WorldGenerator:
+	func surface_at(_x: int) -> int:
+		return 10
+
+
+func test_build_job_finds_floors_for_loose_pickups() -> void:
+	var S := ChunkBuildJob.SIZE
+	var grass := blocks.index_of(&"grass")
+	var dirt := blocks.index_of(&"dirt")
+	var stone := blocks.index_of(&"stone")
+	var center := PackedInt32Array()
+	center.resize(S * S)
+	for x in S:
+		center[10 * S + x] = dirt if x == 5 else grass  # ground line, one bare dirt tile
+		for y in range(11, S):
+			center[y * S + x] = stone
+	for x in range(8, 13):
+		center[20 * S + x] = WorldData.AIR  # a cave with a stone floor at row 21
+	var job := ChunkBuildJob.new()
+	job.coord = Vector2i.ZERO
+	job.world_width = S * 4
+	job.world_height = S * 4
+	job.grass_id = grass
+	job.dirt_id = dirt
+	job.stone_id = stone
+	job.generator = FlatGen.new(blocks, walls, S * 4, S * 4, 1)
+	for i in 9:
+		job.blocks.append(center if i == 4 else PackedInt32Array())
+	job._decor()
+	var kinds: Dictionary[Vector2i, int] = {}
+	for i in range(0, job.floors.size(), 3):
+		kinds[Vector2i(job.floors[i], job.floors[i + 1])] = job.floors[i + 2]
+	assert_eq(kinds.get(Vector2i(5, 10), -1), ChunkBuildJob.FLOOR_GROUND, "bare surface dirt")
+	for x in range(8, 13):
+		assert_eq(kinds.get(Vector2i(x, 21), -1), ChunkBuildJob.FLOOR_CAVE, "cave floor")
+	assert_false(kinds.has(Vector2i(0, 10)), "first grass top is decor, not a floor")
+	assert_false(kinds.has(Vector2i(0, 11)), "covered tiles are not floors")
+	assert_eq(job.decor.size() / 4, S - 1, "every grass column but the dirt one is decor")

@@ -12,11 +12,12 @@ extends Node2D
 
 ## Emitted when the set of loaded chunks changes (lighting listens).
 signal chunks_changed
-## A chunk's nodes were created. `decor` = every grass top with open air above, with
+## A chunk's nodes were created. `floors` = other exposed grass, dirt and stone tiles
+## (ChunkBuildJob.floors), for loose pickups. `decor` = each column's first grass top, with
 ## the generator's decoration for it (flat quads: x, y, tree, flower; chunk-local
 ## ground tiles; tree and flower are -1 for bare grass). The
 ## PlantLayer seeds plants from these the first time a chunk is shown.
-signal chunk_shown(coord: Vector2i, decor: PackedInt32Array)
+signal chunk_shown(coord: Vector2i, decor: PackedInt32Array, floors: PackedInt32Array)
 signal chunk_hidden(coord: Vector2i)
 
 const TILE := 8
@@ -59,6 +60,8 @@ var _chunk_px := float(ChunkData.SIZE * TILE)
 var _collision_table := PackedInt32Array()
 var _atlas_rows := PackedInt32Array()
 var _grass_id := -1
+var _dirt_id := -1
+var _stone_id := -1
 var _block_slot := PackedInt32Array()
 var _wall_slot := PackedInt32Array()
 var _stone_slot := 0
@@ -75,6 +78,8 @@ func setup(world: World) -> void:
 	_collision_table = world.blocks.collision_table()
 	_atlas_rows = world.blocks.atlas_row_table()
 	_grass_id = world.blocks.index_of(&"grass")
+	_dirt_id = world.blocks.index_of(&"dirt")
+	_stone_id = world.blocks.index_of(&"stone")
 	_build_terrain_material()
 	_collision_set = _build_tileset(true)
 	_props_set = _build_tileset(false)
@@ -244,6 +249,8 @@ func _make_job(c: Vector2i, generate: bool) -> ChunkBuildJob:
 	job.collision = _collision_table
 	job.atlas_row = _atlas_rows
 	job.grass_id = _grass_id
+	job.dirt_id = _dirt_id
+	job.stone_id = _stone_id
 	job.generator = _world.generator
 	for dy in range(-1, 2):
 		for dx in range(-1, 2):
@@ -320,7 +327,7 @@ func _apply(job: ChunkBuildJob) -> void:
 		view.props.set_cell(Vector2i(props[i], props[i + 1]), 0, Vector2i(props[i + 2], props[i + 3]))
 	add_child(view.node)
 	_views[c] = view
-	chunk_shown.emit(c, job.decor)
+	chunk_shown.emit(c, job.decor, job.floors)
 	PerfStats.add("chunk apply (main)", Time.get_ticks_usec() - t)
 
 

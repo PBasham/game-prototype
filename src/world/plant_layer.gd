@@ -43,14 +43,23 @@ const PICKUP_ITEMS: Array[StringName] = [&"stick", &"rock", &"flint"]
 ## world is running). A day is 24 real minutes (WorldClock.day_minutes).
 @export var grow_min_days := 1.0
 @export var grow_max_days := 2.0
-@export_group("Things on the grass")
+@export_group("Loose sticks, rocks and flint")
 ## Share of the generator's flower spots that are sticks, rocks or flint instead.
 @export_range(0.0, 1.0) var pickup_share := 0.4
-## Chance a bare grass tile (no tree or flower) has a stick, rock or flint on it. 0.06 is
-## about one every 16 tiles of surface.
+## Chance a bare surface grass tile (no tree or flower) has a stick, rock or flint on
+## it. 0.06 is about one every 16 tiles of surface.
 @export_range(0.0, 1.0) var pickup_chance := 0.06
-## Of those, how many are flint (the rest split between sticks and rocks).
-@export_range(0.0, 1.0) var flint_share := 0.2
+## On grass: share of sticks and of flint (the rest are rocks).
+@export_range(0.0, 1.0) var grass_stick_share := 0.45
+@export_range(0.0, 1.0) var flint_share := 0.15
+## Chance an exposed surface dirt or stone tile (cliffs, dug ground) has a rock or flint.
+@export_range(0.0, 1.0) var ground_pickup_chance := 0.05
+## Of those, how many are flint (the rest are rocks).
+@export_range(0.0, 1.0) var ground_flint_share := 0.25
+## Chance a cave floor tile (grass, dirt or stone with air above, below the surface)
+## has a rock or flint. No sticks underground.
+@export_range(0.0, 1.0) var cave_pickup_chance := 0.03
+@export_range(0.0, 1.0) var cave_flint_share := 0.25
 ## Sticks a felled tree drops (random in this range).
 @export var sticks_min := 1
 @export var sticks_max := 3
@@ -241,7 +250,7 @@ func request_cut_flowers(rect: Rect2i) -> int:
 
 # --- chunks --------------------------------------------------------------------------
 
-func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array) -> void:
+func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array, floors: PackedInt32Array) -> void:
 	var wc := Vector2i(posmod(c.x, world.data.chunks_x), c.y)
 	if not _seeded.has(wc):
 		_seeded[wc] = true
@@ -264,6 +273,20 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array) -> void:
 				_add(ground, Kind.PICKUP, _pickup_variant(ground), false)
 			else:
 				_add(ground, Kind.FLOWER, spots[i + 3], false)
+		for i in range(0, floors.size(), 3):
+			var ground := world.wrap_tile(wc * SIZE + Vector2i(floors[i], floors[i + 1]))
+			if _plants.has(ground):
+				continue
+			match floors[i + 2]:
+				ChunkBuildJob.FLOOR_GRASS:
+					if _hash(ground, 47) < pickup_chance:
+						_add(ground, Kind.PICKUP, _pickup_variant(ground), false)
+				ChunkBuildJob.FLOOR_GROUND:
+					if _hash(ground, 53) < ground_pickup_chance:
+						_add(ground, Kind.PICKUP, _stone_variant(ground, ground_flint_share), false)
+				ChunkBuildJob.FLOOR_CAVE:
+					if _hash(ground, 59) < cave_pickup_chance:
+						_add(ground, Kind.PICKUP, _stone_variant(ground, cave_flint_share), false)
 	_shown[c] = wc
 	for g: Vector2i in _by_chunk.get(wc, []):
 		_make_node(g, _plants[g], c)
@@ -290,10 +313,18 @@ func reset_unchanged() -> void:
 				_remove(g)
 
 
-## Which pickup lies on a tile: flint (flint_share), else a stick or a rock half and half.
+## Which pickup lies on a grass tile: flint (flint_share), a stick (grass_stick_share)
+## or a rock.
 func _pickup_variant(ground: Vector2i) -> int:
 	var h := _hash(ground, 23)
-	return 2 if h < flint_share else (0 if h < flint_share + (1.0 - flint_share) * 0.5 else 1)
+	if h < flint_share:
+		return 2
+	return 0 if h < flint_share + grass_stick_share else 1
+
+
+## Rock or flint (no sticks) on bare dirt, stone or a cave floor.
+func _stone_variant(ground: Vector2i, flint: float) -> int:
+	return 2 if _hash(ground, 29) < flint else 1
 
 
 ## A steady 0..1 number per tile (so a spot is always the same kind of pickup).
@@ -513,7 +544,7 @@ func _on_block_changed(tile: Vector2i, _old: int, new_id: int) -> void:
 			world.request_set_block(under, _dirt_id)
 	# The ground under a plant went away (or stopped being grass/dirt): it breaks.
 	var p: Plant = _plants.get(tile)
-	if p and new_id != _grass_id and new_id != _dirt_id:
+	if p and new_id != _grass_id and new_id != _dirt_id and not (p.kind == Kind.PICKUP and new_id > 0 and world.blocks.collision(new_id) == TileDef.Collision.SOLID):
 		_break(tile, p)
 	# Something was put where a flower or sapling stood: it breaks.
 	var below := world.wrap_tile(tile + Vector2i.DOWN)

@@ -13,7 +13,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | --- | --- |
 | **1 to 0**, mouse wheel | Pick a hotbar slot |
 | **Left click** | Use the held item on the **front** layer: swing, mine, chop, place a block, plant. Hold to repeat. |
-| **Right click** | On something you can interact with (stations, chests, doors, pickups on the grass): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
+| **Right click** | On something you can interact with (stations, chests, doors, sticks, rocks and flint on the ground): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
 | **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest pickup) |
 | **I** or **Tab** | Open / close the inventory |
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |

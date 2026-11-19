@@ -36,7 +36,7 @@ func setup(w: World) -> void:
 	world.wall_changed.connect(_on_changed)
 
 
-func _on_chunk_shown(c: Vector2i, _decor: PackedInt32Array) -> void:
+func _on_chunk_shown(c: Vector2i, _decor: PackedInt32Array, _floors: PackedInt32Array) -> void:
 	var view := ChunkObjects.new()
 	view.layer = self
 	view.coord = c
