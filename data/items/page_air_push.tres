@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_aram1"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_qnj6b"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_air_push.png" id="3_ksgqo"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_air_push.png" id="4_8ljlq"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_6agb4"]
+
+[sub_resource type="Resource" id="Resource_3c4ll"]
+script = ExtResource("2_qnj6b")
+id = &"page_air_push"
+texture = ExtResource("3_ksgqo")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_6agb4")
+kind = 15
+icon = ExtResource("4_8ljlq")
+max_stack = 20
+held = SubResource("Resource_3c4ll")
+impact_at = 0.2
+learns_spell = &"air_push"
+id = &"page_air_push"
+display_name = "Spell Page: Air Push"
+description = "A found page of spellcraft. Left click: learn Air Push for good (the page is used up)."

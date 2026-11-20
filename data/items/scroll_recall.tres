@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"recall"
 id = &"scroll_recall"
 display_name = "Scroll: Recall"
-description = "One use. Left click: cast Recall once for free. Right click: learn it."
+description = "One use. Left click: cast Recall once for free, at base power."

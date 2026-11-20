@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_llq85"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_uhf3m"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_conjure_platform.png" id="3_fnrui"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_conjure_platform.png" id="4_51pfx"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_jh2gb"]
+
+[sub_resource type="Resource" id="Resource_ujwyp"]
+script = ExtResource("2_uhf3m")
+id = &"page_conjure_platform"
+texture = ExtResource("3_fnrui")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_jh2gb")
+kind = 15
+icon = ExtResource("4_51pfx")
+max_stack = 20
+held = SubResource("Resource_ujwyp")
+impact_at = 0.2
+learns_spell = &"conjure_platform"
+id = &"page_conjure_platform"
+display_name = "Spell Page: Conjure Platform"
+description = "A found page of spellcraft. Left click: learn Conjure Platform for good (the page is used up)."

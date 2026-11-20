@@ -19,7 +19,7 @@ extends Node2D
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT,
-	CHARGE, SCROLL, THROW }
+	CHARGE, SCROLL, THROW, PAGE }
 
 const TILE := World.TILE
 
@@ -272,6 +272,10 @@ func can_use(on_back: bool = false) -> bool:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				eat_held()
 			return false  # no swing
+		Mode.PAGE:
+			if not on_back and Input.is_action_just_pressed("use_primary"):
+				read_page()
+			return false
 		Mode.SCROLL:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				cast_scroll()
@@ -348,6 +352,28 @@ func _reachable(from: Vector2, r: Rect2) -> bool:
 		if world.line_clear(from, to):
 			return true
 	return false
+
+
+## Learns the held Spell Page's spell for good (the page is used up). A spell you
+## already know keeps the page. Returns true if learned.
+func read_page() -> bool:
+	var p := world.player
+	var item := p.held_item
+	if item == null or item.learns_spell == &"" or p.character == null:
+		return false
+	var spell := ItemData.find(ItemData.spell_key(item.learns_spell)) as SpellData
+	if spell == null:
+		return false
+	if p.character.knows(spell.id):
+		EventBus.debug_message.emit("You already know %s" % spell.display_name)
+		return false
+	if not p.take_held():
+		return false
+	p.character.learn_spell(spell.id)
+	var note := "" if spell.tier <= p.character.max_spell_tier() else " (needs a tier %d book to cast)" % spell.tier
+	EventBus.debug_message.emit("Learned %s%s" % [spell.display_name, note])
+	EventBus.sound_requested.emit(&"learn_spell", p.chest())
+	return true
 
 
 ## Casts the held scroll's spell once, free: no mana, reagents, cooldown, book or tier.
@@ -498,6 +524,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.THROW if not on_back else Mode.NONE
 	if item.teaches_spell != &"":
 		return Mode.NONE if on_back else Mode.SCROLL
+	if item.learns_spell != &"":
+		return Mode.NONE if on_back else Mode.PAGE
 	if on_back:
 		return Mode.PLACE_WALL if item.places_wall != &"" else Mode.NONE
 	if item.axe_damage > 0.0:
@@ -896,12 +924,12 @@ func _draw() -> void:
 		draw_circle(at, lerpf(1.5, 5.0, k), Color(spell.projectile_color, 0.5))
 		draw_circle(at, lerpf(0.8, 2.2, k), Color(1, 1, 1, 0.9))
 		draw_arc(at, lerpf(12.0, 6.0, k), 0.0, TAU * k, 24, Color(spell.projectile_color, 0.8), 1.0)
-	if mode == Mode.SCROLL and p.held_item:
-		# Holding a scroll: what a click does.
+	if mode in [Mode.SCROLL, Mode.PAGE] and p.held_item:
+		# Holding a scroll or a page: what a click does.
 		var font := ThemeDB.fallback_font
-		draw_string_outline(font, aim + Vector2(8, 4), "Left: cast once (free)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2,
-			Color(0, 0, 0, 0.7))
-		draw_string(font, aim + Vector2(8, 4), "Left: cast once (free)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, valid_color)
+		var hint := "Left: cast once (free)" if mode == Mode.SCROLL else "Left: learn this spell"
+		draw_string_outline(font, aim + Vector2(8, 4), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.7))
+		draw_string(font, aim + Vector2(8, 4), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, valid_color)
 	if mode in [Mode.CAST, Mode.TOGGLE, Mode.CHARGE]:
 		# No target box: just say why it can't be cast, if it can't.
 		if problem != "":

@@ -59,8 +59,8 @@ const WHEEL_SIZE := 8
 const QUICK_KEYS: Array[StringName] = [&"z", &"x", &"c"]
 const BUFF_SET_SIZE := 6
 
-## The movement spell the movement key (F) and double jump use: the last of Fly or
-## Levitate you turned on (empty = Fly if known, else Levitate).
+## The movement spell the movement key (F) uses, set in the Equipment window's Movement
+## slot (empty = Fly if known, else Levitate).
 var movement_spell: StringName = &""
 
 var name := DEFAULT_NAME

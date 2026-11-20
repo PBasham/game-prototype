@@ -163,7 +163,8 @@ code (`src/combat/light_orb.gd`, `src/combat/spell_effect.gd`).
 ## Scrolls and the Spell Weaving Table (tools/make_item_art.gd -- --scrolls)
 
 `items/icons/paper.png`, `blank_scroll.png`, `scroll_<spell>.png` (parchment with the spell's
-icon), `spell_weaving_table.png`, and `objects/spell_weaving_table.png` (48x24, 6x3 tiles).
+icon), `page_<spell>.png` (a flat torn page with a gold corner and the spell's icon, plus
+`items/held/page_<spell>.png`), `spell_weaving_table.png`, and `objects/spell_weaving_table.png` (48x24, 6x3 tiles).
 Also `items/icons/wisp.png` (spell). Placeholders.
 
 ## Phase 8 placeholders

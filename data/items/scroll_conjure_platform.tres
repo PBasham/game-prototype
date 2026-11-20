@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"conjure_platform"
 id = &"scroll_conjure_platform"
 display_name = "Scroll: Conjure Platform"
-description = "One use. Left click: cast Conjure Platform once for free. Right click: learn it."
+description = "One use. Left click: cast Conjure Platform once for free, at base power."

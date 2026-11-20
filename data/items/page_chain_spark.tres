@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_leb4p"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_tcihs"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_chain_spark.png" id="3_4mg1o"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_chain_spark.png" id="4_eye4h"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_7w4xk"]
+
+[sub_resource type="Resource" id="Resource_m3g7t"]
+script = ExtResource("2_tcihs")
+id = &"page_chain_spark"
+texture = ExtResource("3_4mg1o")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_7w4xk")
+kind = 15
+icon = ExtResource("4_eye4h")
+max_stack = 20
+held = SubResource("Resource_m3g7t")
+impact_at = 0.2
+learns_spell = &"chain_spark"
+id = &"page_chain_spark"
+display_name = "Spell Page: Chain Spark"
+description = "A found page of spellcraft. Left click: learn Chain Spark for good (the page is used up)."

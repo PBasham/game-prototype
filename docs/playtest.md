@@ -138,9 +138,10 @@ guesses; the docs listed say where each tunable lives.
 - [ ] New caves (F6 or unexplored areas): tunnels tall enough to walk and hop through.
 - [ ] Craft window: hold Shift or Ctrl, the amount and costs change to match.
 - [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).
-- [ ] Spell Weaving Table: group buttons and search filter all three tabs.
-- [ ] Carry an unknown spell's scroll to the table: Spells tab offers Learn for just the
-      scroll (it's used up; you know the spell for good).
+- [ ] Spell Weaving Table: Spells | Scrolls; group buttons and search filter both.
+- [ ] Scrolls tab only lists spells you know, at full cost, with the max mana gate.
+- [ ] Spell Pages: `page fly` in the console, left click the page: you know Fly again.
+      Scrolls never teach.
 - [ ] Inventory open, pick up blocks / a wall / a chest / a sapling: over the world they
       show the placement preview and click to place from the mouse stack; non-placeables
       still throw.
@@ -148,7 +149,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Craft amount goes back to 1 after crafting / another recipe / reopening.
 - [ ] Z X C: put an item there (click the slot with it on the mouse). Food eats, a block or
       station goes in hand (from the backpack too).
-- [ ] Equipment window Movement slot: put Levitate there; F and double jump use it.
+- [ ] Equipment window Movement slot: put Levitate there; F uses it.
 - [ ] Picking a cast-right-away spell on a wheel doesn't cast it; tapping does.
 - [ ] Quick panel: key letters above the squares.
 - [ ] Swords and punches don't hit through closed doors or walls; still hit downhill.

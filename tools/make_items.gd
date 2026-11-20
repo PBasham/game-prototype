@@ -799,8 +799,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"spell_weaving_table", &"workbench", {&"wood": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
 	]
 	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by
-	# tier (until scrolls come from loot). Known spells cost less, and the table's Copy tab
-	# copies known spells for mana (Crafting.for_crafter, copy_recipes).
+	# tier (placeholder until each spell gets its own materials). Only spells you know can
+	# be scribed (Crafting.scroll_recipes).
 	for sp in _spells():
 		var spell := sp as SpellData
 		var cost: Dictionary = SCROLL_COSTS.get(spell.id,
@@ -833,7 +833,8 @@ const LEARN_COSTS := {&"gel_cushion": {&"slime": 20}}
 const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20}}
 
 
-## Paper, the Blank Scroll, and a scroll for every spell (left click to learn it).
+## Paper, the Blank Scroll, a scroll for every spell (left click casts it once) and a
+## Spell Page for every spell (left click learns it; found, not crafted).
 func _scrolls() -> Array[ItemData]:
 	var out: Array[ItemData] = []
 	out.append(_small(&"paper", "Paper", "Made from wood. Used for scrolls and the Spell Weaving Table."))
@@ -841,11 +842,17 @@ func _scrolls() -> Array[ItemData]:
 	for sp in _spells():
 		var spell := sp as SpellData
 		var scroll := _small(StringName("scroll_" + String(spell.id)), "Scroll: %s" % spell.display_name,
-			"One use. Left click: cast %s once for free. Right click: learn it." % spell.display_name)
+			"One use. Left click: cast %s once for free, at base power." % spell.display_name)
 		scroll.kind = ItemData.Kind.SCROLL
 		scroll.teaches_spell = spell.id
 		scroll.max_stack = 20
 		out.append(scroll)
+		var page := _small(StringName("page_" + String(spell.id)), "Spell Page: %s" % spell.display_name,
+			"A found page of spellcraft. Left click: learn %s for good (the page is used up)." % spell.display_name)
+		page.kind = ItemData.Kind.PAGE
+		page.learns_spell = spell.id
+		page.max_stack = 20
+		out.append(page)
 	return out
 
 

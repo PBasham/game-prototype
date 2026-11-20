@@ -11,7 +11,7 @@ extends GameData
 ## "spell:<spell id>".
 
 ## New kinds go at the end (saved .tres files store the number).
-enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE, FOOD, ARMOR, ACCESSORY, SCROLL }
+enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE, FOOD, ARMOR, ACCESSORY, SCROLL, PAGE }
 
 const SPELL_PREFIX := "spell:"
 
@@ -101,11 +101,16 @@ const SPELL_PREFIX := "spell:"
 @export var hides_hair := false
 @export_group("Scroll")
 ## A spell scroll, one use (made at the Spell Weaving Table). Left click: cast this spell
-## once for free (no mana, reagents, book or tier needed). Right click: learn it.
+## once for free, at base power (no mana, reagents, book or tier needed). Scrolls don't
+## teach spells (Spell Pages do).
 @export var teaches_spell: StringName = &""
 ## Left click on a concentration or held-beam spell: how long it runs free (seconds).
 ## 0 = the defaults (Player.scroll_concentration_seconds / scroll_beam_seconds).
 @export var scroll_seconds := 0.0
+@export_group("Spell page")
+## A Spell Page (found, not crafted): left click learns this spell for good, and the
+## page is used up. The only way to learn spells that aren't `learnable_at_table`.
+@export var learns_spell: StringName = &""
 @export_group("Food and potions")
 ## Eating or drinking it (left click while holding it) refills this much hunger...
 @export var food_value := 0.0

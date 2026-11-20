@@ -47,9 +47,9 @@ const EQUIP_W := 3 * STEP - GAP
 const CRAFT_SIZE := Vector2(288, 214)
 const LIST_W := 134
 ## Stations whose window has tabs: station kind to tab names. The Spell Weaving Table:
-## Craft (scroll recipes; known spells cost less) and Copy (any known spell into a
-## scroll, for mana). Create and Empower come with Magic progression.
-const STATION_TABS := {&"spell_weaving": ["Spells", "Scrolls", "Copy"], &"alchemy": ["Potions", "Coatings", "Flasks"]}
+## Spells (learn spells) and Scrolls (scribe spells you know). Create and Empower come
+## with Magic progression.
+const STATION_TABS := {&"spell_weaving": ["Spells", "Scrolls"], &"alchemy": ["Potions", "Coatings", "Flasks"]}
 const TAB_H := 14
 const ROW_H := 18
 ## Craft buttons: how many each makes (0 = as many as you can).
@@ -953,15 +953,15 @@ func recipes() -> Array[RecipeData]:
 	var def := world.object_at(station) if station != World.NO_TILE else null
 	var c := world.character
 	var key := "%s|%d|%d|%d|%s|%s|%d|%s|%d" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
-		hash(c.known_spells) if c else 0, world.known_scroll_discount, world.copy_max_mana_by_tier, weave_group,
-		weave_search, hash(_scrolls_carried()) if def and def.station == &"spell_weaving" else 0]
+		hash(c.known_spells) if c else 0, world.scribe_cost_mult, world.scroll_max_mana_by_tier, weave_group,
+		weave_search, 0]
 	if key == _recipe_key:
 		return _recipe_cache
 	var list: Array[RecipeData] = []
 	if def and def.station == &"spell_weaving" and craft_tab == 0:
 		list = Crafting.learn_recipes(c)
-	elif def and def.station == &"spell_weaving" and craft_tab == 2:
-		list = Crafting.copy_recipes(c, world.copy_max_mana_by_tier)
+	elif def and def.station == &"spell_weaving":
+		list = Crafting.scroll_recipes(c, world.scroll_max_mana_by_tier, world.scribe_cost_mult)
 	else:
 		var base := Crafting.recipes_for(def.station, def.station_tier) if def and def.station != &"" \
 			else Crafting.recipes_for(&"")
@@ -971,23 +971,12 @@ func recipes() -> Array[RecipeData]:
 				var t := r.tab if r.tab != "" else String(tabs[0])
 				if t != String(tabs[craft_tab]):
 					continue
-			list.append(Crafting.for_crafter(r, c, world.known_scroll_discount))
+			list.append(r)
 	if _weave_filters_shown():
 		list = list.filter(_weave_match)
 	_recipe_key = key
 	_recipe_cache = list
 	return list
-
-
-## The spell scrolls in the inventory (ids), for the Spells tab's "learn from a scroll".
-func _scrolls_carried() -> Array[StringName]:
-	var out: Array[StringName] = []
-	var inv := world.character.inventory
-	for i in inv.size:
-		var it := inv.item(i)
-		if it and it.teaches_spell != &"" and not it.id in out:
-			out.append(it.id)
-	return out
 
 
 ## Tab names for the open station (none for most).
@@ -1033,7 +1022,7 @@ func _weave_search_rect() -> Rect2:
 	return Rect2(x, _filter_top(), CRAFT_SIZE.x - PAD - x, FILTER_H)
 
 
-## The spell a Spell Weaving Table recipe is about (learning, a scroll, a copy).
+## The spell a Spell Weaving Table recipe is about (learning or a scroll).
 static func recipe_spell(r: RecipeData) -> SpellData:
 	if r.teaches != &"":
 		return ItemData.find(ItemData.spell_key(r.teaches)) as SpellData
@@ -1194,7 +1183,7 @@ func _draw_crafting(g: Control) -> void:
 	if list.is_empty():
 		var empty := "Nothing to craft here yet"
 		if _station_def() and _station_def().station == &"spell_weaving":
-			empty = ["You know every spell", "Nothing to craft here yet", "No known spells to copy"][craft_tab]
+			empty = ["Nothing left to learn here", "Learn a spell to scribe its scroll"][craft_tab]
 		g.draw_string(font, lr.position + Vector2(4, 12), empty, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
 	for i in range(_craft_scroll, mini(_entry_count(), _craft_scroll + _rows_shown())):
 		var rect := _row_rect(i)
@@ -1758,7 +1747,7 @@ func click_quick_slot(slot: StringName) -> void:
 
 
 ## The Movement slot (Equipment window): a movement spell on the mouse becomes the
-## one the movement key and double jump use.
+## one the movement key (F) uses.
 func click_movement_slot() -> void:
 	var c := world.character
 	if not _cursor_is_spell():

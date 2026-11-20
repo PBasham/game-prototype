@@ -228,7 +228,9 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
   (`max_spell_tier`). Spells don't go in the book any more, and not on the hotbar.
 - **Spells you know** are kept on the character. A new character knows none. You learn
   them in the **Spells** tab of a Spell Weaving Table (crafting.md), for each spell's
-  `learn_cost`: copper bars by tier (4, 10, 20), or 20 Slime for Gel Cushion.
+  `learn_cost`: copper bars by tier (4, 10, 20), or 20 Slime for Gel Cushion; or from a
+  found **Spell Page** (left click it), the only way for spells that aren't
+  `learnable_at_table`.
 - **Scrolls are one use.** Hold one:
   - **Left click: cast the spell once, free:** no mana, reagents, book or tier
     needed; it does share the spell's cooldown with casting it normally (a tier 3 spell works before you have a tier 3 book). Concentration spells
@@ -255,7 +257,7 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
     potions are used right away; anything else (a block, a station, a tool) goes in your
     hand like picking its hotbar slot, from the backpack too (`CharacterData.quick_item`,
     saved as `item:<id>`). The square shows how many you have (faded at none).
-  - **Movement slot** (under the buff set): the spell F and the double jump turn on.
+  - **Movement slot** (under the buff set): the spell F turns on (no double jump; it was removed in Phase 11).
     Click a movement toggle (Fly, Levitate: `SpellData.fits_movement_slot`) from the
     Spell Index, then the slot. Empty shows the default faded (Fly, else Levitate);
     right click goes back to it (`CharacterData.movement_spell`).

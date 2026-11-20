@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"arcane_bolt"
 id = &"scroll_arcane_bolt"
 display_name = "Scroll: Arcane Bolt"
-description = "One use. Left click: cast Arcane Bolt once for free. Right click: learn it."
+description = "One use. Left click: cast Arcane Bolt once for free, at base power."

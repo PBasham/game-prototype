@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"healing_circle"
 id = &"scroll_healing_circle"
 display_name = "Scroll: Healing Circle"
-description = "One use. Left click: cast Healing Circle once for free. Right click: learn it."
+description = "One use. Left click: cast Healing Circle once for free, at base power."

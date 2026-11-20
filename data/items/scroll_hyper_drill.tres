@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"hyper_drill"
 id = &"scroll_hyper_drill"
 display_name = "Scroll: Hyper Drill"
-description = "One use. Left click: cast Hyper Drill once for free. Right click: learn it."
+description = "One use. Left click: cast Hyper Drill once for free, at base power."

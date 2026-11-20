@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_41w6g"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_r43gf"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_levitate.png" id="3_218b0"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_levitate.png" id="4_enhi1"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_re08k"]
+
+[sub_resource type="Resource" id="Resource_l6m5d"]
+script = ExtResource("2_r43gf")
+id = &"page_levitate"
+texture = ExtResource("3_218b0")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_re08k")
+kind = 15
+icon = ExtResource("4_enhi1")
+max_stack = 20
+held = SubResource("Resource_l6m5d")
+impact_at = 0.2
+learns_spell = &"levitate"
+id = &"page_levitate"
+display_name = "Spell Page: Levitate"
+description = "A found page of spellcraft. Left click: learn Levitate for good (the page is used up)."

@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"familiar"
 id = &"scroll_familiar"
 display_name = "Scroll: Familiar"
-description = "One use. Left click: cast Familiar once for free. Right click: learn it."
+description = "One use. Left click: cast Familiar once for free, at base power."

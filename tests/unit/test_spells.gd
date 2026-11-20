@@ -183,7 +183,7 @@ func test_spell_weaving_table_teaches_spells() -> void:
 	var a := w.world_to_tile(p.global_position) + Vector2i(4, -1)
 	assert_true(w.request_place_object(a, w.objects.index_of(&"spell_weaving_table")))
 	assert_true(w.try_interact_at(w.tile_to_world(a + Vector2i(1, -1)) + Vector2(4, 4), p))
-	assert_eq(w.hud._tabs(), ["Spells", "Scrolls", "Copy"])
+	assert_eq(w.hud._tabs(), ["Spells", "Scrolls"])
 	w.hud.craft_tab = 0
 	var learn := w.hud.recipes()
 	var names := learn.map(func(r: RecipeData) -> StringName: return r.teaches)
@@ -200,22 +200,17 @@ func test_spell_weaving_table_teaches_spells() -> void:
 	assert_true(c.knows(&"blink"))
 	assert_eq(c.inventory.count_of(&"copper_bar"), 2, "4 bars used")
 	assert_does_not_have(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.teaches), &"blink")
-	# A found scroll of an unknown spell: learning uses the scroll, not bars, even for a
-	# spell the table doesn't teach.
+	# A spell the table doesn't teach isn't listed (it comes from a Spell Page), and a
+	# carried scroll doesn't teach.
 	var drill_spell := _spell(&"hyper_drill")
 	drill_spell.learnable_at_table = false
+	c.inventory.set_slot(5, &"scroll_hyper_drill", 1)
 	w.hud._recipe_key = ""  # spell data changed under the cache
 	assert_does_not_have(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.teaches), &"hyper_drill",
-		"not learnable at the table")
-	c.inventory.set_slot(5, &"scroll_hyper_drill", 1)
-	var from_scroll: Array = w.hud.recipes().filter(func(r: RecipeData) -> bool: return r.teaches == &"hyper_drill")
-	assert_eq(from_scroll.size(), 1, "it shows up while you carry its scroll")
-	var bars := c.inventory.count_of(&"copper_bar")
-	assert_eq(w.hud.craft(from_scroll[0], 1), 1)
-	assert_true(c.knows(&"hyper_drill"))
-	assert_true(c.inventory.is_empty(5), "the scroll is used up")
-	assert_eq(c.inventory.count_of(&"copper_bar"), bars, "no bars")
+		"not learnable at the table, scroll or not")
 	drill_spell.learnable_at_table = true
+	c.inventory.clear(5)
+	c.learn_spell(&"hyper_drill")
 	# Group buttons and search narrow every tab.
 	w.hud.weave_group = SpellData.Group.MOVEMENT
 	assert_true(w.hud.recipes().all(func(r: RecipeData) -> bool: return Hud.recipe_spell(r).group == SpellData.Group.MOVEMENT))
@@ -226,46 +221,63 @@ func test_spell_weaving_table_teaches_spells() -> void:
 	w.hud.weave_search = ""
 	w.hud.craft_tab = 1
 	assert_has(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.output), &"scroll_blink", "Scrolls tab")
-	w.hud.craft_tab = 2
-	assert_has(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.output), &"scroll_blink", "Copy tab")
 	var drill := Registry.get_def(&"recipes", &"scroll_hyper_drill") as RecipeData
 	assert_eq(drill.inputs[&"copper_bar"], 10, "tier 3 costs 10 bars")
 	assert_eq(drill.station, &"spell_weaving")
 
 
-func test_known_spells_craft_cheaper_and_copy_needs_a_strong_mage() -> void:
+func test_scrolls_tab_scribes_known_spells_at_full_cost() -> void:
 	var c := w.character
 	var p := w.player
-	var plain := Registry.get_def(&"recipes", &"scroll_hyper_drill") as RecipeData
 	c.known_spells.erase(&"hyper_drill")
-	assert_eq(Crafting.for_crafter(plain, c, 0.5), plain, "unknown: full price")
-	c.learn_spell(&"hyper_drill")
-	var cheap := Crafting.for_crafter(plain, c, 0.5)
-	assert_eq(cheap.inputs[&"copper_bar"], 5, "known: half of 10")
-	assert_eq(cheap.inputs[&"blank_scroll"], 1, "still a Blank Scroll")
-	assert_ne(cheap.note, "")
-	assert_eq(plain.inputs[&"copper_bar"], 10, "the real recipe is untouched")
-	var other := Registry.get_def(&"recipes", &"wooden_sword") as RecipeData
-	assert_eq(Crafting.for_crafter(other, c, 0.5), other, "not a scroll: unchanged")
-	# Copy tab: every known spell, for a Blank Scroll, if your max mana is big enough for
-	# the spell's tier. No mana is used.
-	var copies := Crafting.copy_recipes(c, [100.0, 200.0, 300.0] as Array[float])
+	var list := Crafting.scroll_recipes(c, [100.0, 200.0, 300.0] as Array[float])
+	var outs := list.map(func(r: RecipeData) -> StringName: return r.output)
+	assert_does_not_have(outs, &"scroll_hyper_drill", "unknown spells can't be scribed")
 	var with_scrolls := c.known_spells.filter(func(id: StringName) -> bool:
 		return ItemData.find(StringName("scroll_" + String(id))) != null)
-	assert_eq(copies.size(), with_scrolls.size(), "one per known spell that has a scroll")
-	var drill: RecipeData = copies.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_hyper_drill")[0]
-	assert_eq(drill.inputs, {&"blank_scroll": 1} as Dictionary[StringName, int])
+	assert_eq(list.size(), with_scrolls.size(), "one per known spell (that has a scroll item)")
+	c.learn_spell(&"hyper_drill")
+	list = Crafting.scroll_recipes(c, [100.0, 200.0, 300.0] as Array[float])
+	var drill: RecipeData = list.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_hyper_drill")[0]
+	assert_eq(drill.inputs[&"copper_bar"], 10, "full cost")
+	assert_eq(drill.inputs[&"blank_scroll"], 1)
 	assert_eq(drill.requires_max_mana, 300.0, "tier 3")
-	var spark: RecipeData = copies.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_spark")[0]
+	var plain := Registry.get_def(&"recipes", &"scroll_hyper_drill") as RecipeData
+	assert_eq(plain.inputs[&"copper_bar"], 10, "the real recipe is untouched")
+	# A skill could lower the cost later.
+	var half := Crafting.scroll_recipes(c, [100.0, 200.0, 300.0] as Array[float], 0.5)
+	var cheap: RecipeData = half.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_hyper_drill")[0]
+	assert_eq(cheap.inputs[&"copper_bar"], 5)
+	assert_eq(cheap.inputs[&"blank_scroll"], 1, "still one Blank Scroll")
+	var spark: RecipeData = list.filter(func(r: RecipeData) -> bool: return r.output == &"scroll_spark")[0]
 	assert_eq(spark.requires_max_mana, 100.0, "tier 1")
 	c.inventory.add(&"blank_scroll", 5)
+	c.inventory.add(&"copper_bar", 50)
 	assert_eq(Crafting.times_craftable(c.inventory, drill, 100.0), 0, "too weak a mage for tier 3")
-	assert_gt(Crafting.times_craftable(c.inventory, spark, 100.0), 4, "a starting mage copies tier 1")
 	p.mana = 40.0
 	var before := c.inventory.count_of(&"scroll_spark")
-	assert_eq(w.hud.craft(spark, 3), 3)
-	assert_eq(c.inventory.count_of(&"scroll_spark"), before + 3)
+	assert_eq(w.hud.craft(spark, 2), 2)
+	assert_eq(c.inventory.count_of(&"scroll_spark"), before + 2)
 	assert_eq(p.mana, 40.0, "no mana used")
+
+
+func test_spell_pages_teach_for_good() -> void:
+	var c := w.character
+	var p := w.player
+	var page := ItemData.find(&"page_hyper_drill")
+	assert_not_null(page)
+	assert_eq(page.learns_spell, &"hyper_drill")
+	c.known_spells.erase(&"hyper_drill")
+	c.inventory.set_slot(0, &"page_hyper_drill", 2)
+	p.select_slot(0)
+	assert_eq(w.item_user._mode_for(p.held_item, false), ItemUser.Mode.PAGE)
+	assert_true(w.item_user.read_page())
+	assert_true(c.knows(&"hyper_drill"))
+	assert_eq(c.inventory.counts[0], 1, "one page used up")
+	assert_false(w.item_user.read_page(), "already known: the page is kept")
+	assert_eq(c.inventory.counts[0], 1)
+	# Scrolls only cast.
+	assert_eq(ItemData.find(&"scroll_spark").learns_spell, &"")
 
 
 func test_every_known_spell_casts_with_the_book_power() -> void:

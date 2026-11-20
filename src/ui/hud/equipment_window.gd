@@ -133,7 +133,7 @@ func quick_rect(slot: StringName) -> Rect2:
 	return Rect2(o + Vector2(col * STEP, row * STEP), Vector2(SLOT, SLOT))
 
 
-## The Movement slot (row 4): the spell the movement key and double jump turn on.
+## The Movement slot (row 4): the spell the movement key (F) turns on.
 func move_rect() -> Rect2:
 	return Rect2(_quick_origin() + Vector2(0, 3 * STEP + 16), Vector2(SLOT, SLOT))
 
@@ -235,7 +235,7 @@ func draw_body(font: Font) -> void:
 		-1, 6, UiSkin.GOLD)
 	# The Movement slot: empty shows the default (Fly, else Levitate) faded.
 	var mr := move_rect()
-	draw_string(font, mr.position + Vector2(0, -3), "Movement (key / double jump)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
+	draw_string(font, mr.position + Vector2(0, -3), "Movement spell (F)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
 		UiSkin.GOLD)
 	UiSkin.slot(self, mr, UiSkin.SlotLook.HOT if h[0] == Part.MOVE else UiSkin.SlotLook.MAGIC)
 	var move_id := hud.world.player.movement_spell_id()

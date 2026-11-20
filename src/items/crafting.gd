@@ -16,59 +16,25 @@ static func recipes_for(station: StringName, tier: int = 1) -> Array[RecipeData]
 	return out
 
 
-## A spell scroll recipe as this character pays for it: spells they know cost `share`
-## of the materials (rounded up; the Blank Scroll is still needed). Other recipes come
-## back unchanged.
-static func for_crafter(r: RecipeData, c: CharacterData, share: float) -> RecipeData:
-	var out := ItemData.find(r.output)
-	if c == null or out == null or out.teaches_spell == &"" or not c.knows(out.teaches_spell):
-		return r
-	var cheap := r.duplicate() as RecipeData
-	cheap.inputs = r.inputs.duplicate()  # its own copy: never touch the real recipe
-	for k: StringName in cheap.inputs:
-		if k != &"blank_scroll":
-			cheap.inputs[k] = maxi(1, ceili(r.inputs[k] * share))
-	cheap.note = "Known spell: %d%% of the materials" % roundi(share * 100.0)
-	return cheap
-
-
-## Copy tab: a recipe per spell the character knows: a Blank Scroll makes that spell's
-## scroll, if their max mana is at least `max_mana_by_tier` for the spell's tier (a
-## stronger mage for stronger spells). Mana isn't used up.
-## The Spell Weaving Table's Spells tab: one recipe per spell you don't know yet. If you
-## carry a scroll of it, learning uses up that scroll (found scrolls teach spells you
-## can't learn otherwise); else its learn_cost (copper bars by tier, slime for Gel
-## Cushion), for spells that are `learnable_at_table`. Crafting it teaches the spell.
-## Cheapest tier first.
+## The Spell Weaving Table's Spells tab: one recipe per spell you don't know yet that's
+## `learnable_at_table`, for its learn_cost (copper bars by tier, slime for Gel Cushion).
+## Crafting it teaches the spell. Other spells come from Spell Pages. Cheapest tier first.
 static func learn_recipes(c: CharacterData) -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	if c == null:
 		return out
-	var scrolls := {}
-	for i in c.inventory.size:
-		var it := c.inventory.item(i)
-		if it and it.teaches_spell != &"":
-			scrolls[it.teaches_spell] = it.id
 	for d in Registry.get_all(&"spells"):
 		var spell := d as SpellData
-		if spell == null or c.knows(spell.id):
-			continue
-		var from_scroll: StringName = scrolls.get(spell.id, &"")
-		if from_scroll == &"" and not spell.learnable_at_table:
+		if spell == null or c.knows(spell.id) or not spell.learnable_at_table:
 			continue
 		var r := RecipeData.new()
 		r.id = StringName("learn_" + String(spell.id))
 		r.display_name = "Learn: %s" % spell.display_name
 		r.station = &"spell_weaving"
-		if from_scroll != &"":
-			r.inputs[from_scroll] = 1
-		else:
-			r.inputs.assign(spell.learn_cost)
+		r.inputs.assign(spell.learn_cost)
 		r.output = ItemData.spell_key(spell.id)
 		r.teaches = spell.id
 		r.note = "Tier %d. Yours for good." % spell.tier
-		if from_scroll != &"":
-			r.note = "From your scroll (used up). Yours for good."
 		if spell.tier > c.max_spell_tier():
 			r.note = "Tier %d: needs a tier %d book to cast." % [spell.tier, spell.tier]
 		out.append(r)
@@ -79,24 +45,41 @@ static func learn_recipes(c: CharacterData) -> Array[RecipeData]:
 	return out
 
 
-static func copy_recipes(c: CharacterData, max_mana_by_tier: Array[float]) -> Array[RecipeData]:
+## The Spell Weaving Table's Scrolls tab: a scroll for each spell you know (only those),
+## from its scroll recipe (data/recipes, output `scroll_<spell>`) with the materials
+## times `cost_mult` (rounded up, at least 1; the Blank Scroll stays 1), or just a Blank
+## Scroll when the spell has no recipe. Your max mana must be at least
+## `max_mana_by_tier` for the spell's tier. Scrolls cast at base power.
+static func scroll_recipes(c: CharacterData, max_mana_by_tier: Array[float], cost_mult: float = 1.0) -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	if c == null:
 		return out
+	var by_output := {}
+	for d in Registry.get_all(&"recipes"):
+		var rd := d as RecipeData
+		if rd and rd.station == &"spell_weaving":
+			by_output[rd.output] = rd
 	for id in c.known_spells:
 		var spell := ItemData.find(ItemData.spell_key(id)) as SpellData
 		var scroll := StringName("scroll_" + String(id))
 		if spell == null or ItemData.find(scroll) == null:
 			continue
-		var r := RecipeData.new()
-		r.id = StringName("copy_" + String(id))
-		r.display_name = "Copy: %s" % spell.display_name
+		var base: RecipeData = by_output.get(scroll)
+		var r := base.duplicate() as RecipeData if base else RecipeData.new()
+		r.inputs = {}
+		if base:
+			for k: StringName in base.inputs:
+				r.inputs[k] = 1 if k == &"blank_scroll" else maxi(1, ceili(base.inputs[k] * cost_mult))
+		else:
+			r.id = scroll
+			r.inputs[&"blank_scroll"] = 1
+		r.display_name = "Scroll: %s" % spell.display_name
 		r.station = &"spell_weaving"
-		r.inputs = {&"blank_scroll": 1}
 		r.output = scroll
+		r.output_count = maxi(1, r.output_count)
 		var tier := clampi(spell.tier, 1, maxi(max_mana_by_tier.size(), 1)) - 1
 		r.requires_max_mana = max_mana_by_tier[tier] if not max_mana_by_tier.is_empty() else 0.0
-		r.note = "Copied from your known spells. Needs %d max mana" % roundi(r.requires_max_mana)
+		r.note = "Needs %d max mana" % roundi(r.requires_max_mana) if r.requires_max_mana > 0.0 else ""
 		out.append(r)
 	out.sort_custom(func(a: RecipeData, b: RecipeData) -> bool: return a.display_name < b.display_name)
 	return out

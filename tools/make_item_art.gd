@@ -8,7 +8,7 @@ extends SceneTree
 ##   godot --headless --path . --script res://tools/make_item_art.gd -- --new-spells
 ##     (only the Phase 7 spell icons that don't exist yet; nothing else is touched)
 ##   godot --headless --path . --script res://tools/make_item_art.gd -- --scrolls
-##     (paper, scrolls and the Spell Weaving Table, where missing)
+##     (paper, scrolls, Spell Pages and the Spell Weaving Table, where missing)
 
 const ICONS := "res://assets/items/icons"
 const HELD := "res://assets/items/held"
@@ -1086,6 +1086,7 @@ func _scroll_art() -> void:
 		var icon_path := ProjectSettings.globalize_path("%s/%s.png" % [ICONS, id])
 		var spell_icon := Image.load_from_file(icon_path) if FileAccess.file_exists(icon_path) else null
 		_save_missing(_scroll(spell_icon), "scroll_" + id, true)
+		_save_missing(_page(spell_icon), "page_" + id, true)
 	var table_path := ProjectSettings.globalize_path("res://assets/objects/spell_weaving_table.png")
 	var table := _weaving_table()
 	if not FileAccess.file_exists(table_path):
@@ -1138,6 +1139,28 @@ func _scroll(spell_icon: Image) -> Image:
 		for row: int in [5, 7, 9]:
 			for x in range(5, 11):
 				img.set_pixel(x, row, Color("a89470"))
+	return img
+
+
+## A loose torn page (flat, not rolled) with the spell shown in the middle and a gold
+## corner, so it reads apart from a scroll.
+func _page(spell_icon: Image) -> Image:
+	var img := _canvas()
+	for y in range(2, 14):
+		for x in range(3, 13):
+			img.set_pixel(x, y, Color("f2e8cc"))
+	for y in range(2, 14):
+		img.set_pixel(12 if y % 3 else 13, y, Color("cbb98e"))  # the torn edge
+	for x in range(3, 13):
+		img.set_pixel(x, 13, Color("cbb98e"))
+	for i in 3:
+		img.set_pixel(3 + i, 2, Color("e0b040"))
+		img.set_pixel(3, 2 + i, Color("e0b040"))
+	if spell_icon:
+		var sm := spell_icon.duplicate() as Image
+		sm.convert(Image.FORMAT_RGBA8)
+		sm.resize(8, 8, Image.INTERPOLATE_NEAREST)
+		img.blend_rect(sm, Rect2i(0, 0, 8, 8), Vector2i(4, 4))
 	return img
 
 

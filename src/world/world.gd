@@ -47,11 +47,12 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 @export var interact_tiles := 6.0
 
 @export_group("Spell scrolls")
-## Crafting a scroll of a spell you know uses this share of its materials.
-@export var known_scroll_discount := 0.5
-## Copying a known spell into a scroll (Spell Weaving Table, Copy tab) needs at least
-## this much max mana, by the spell's tier (1, 2, 3). Nothing is used up but the scroll.
-@export var copy_max_mana_by_tier: Array[float] = [100.0, 200.0, 300.0]
+## Scribing a scroll (Spell Weaving Table, Scrolls tab: only spells you know) uses its
+## recipe's materials times this (1 = full cost; a skill can lower it later).
+@export var scribe_cost_mult := 1.0
+## Scribing needs at least this much max mana, by the spell's tier (1, 2, 3). Mana
+## isn't used up.
+@export var scroll_max_mana_by_tier: Array[float] = [100.0, 200.0, 300.0]
 @export_group("")
 ## Seconds dead before you respawn at the world spawn.
 @export var respawn_seconds := 3.0

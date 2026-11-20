@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"mend"
 id = &"scroll_mend"
 display_name = "Scroll: Mend"
-description = "One use. Left click: cast Mend once for free. Right click: learn it."
+description = "One use. Left click: cast Mend once for free, at base power."

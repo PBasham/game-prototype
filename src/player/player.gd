@@ -1339,7 +1339,7 @@ func _end_attack(finished: bool) -> void:
 
 # --- spell controls ---------------------------------------------------------------------
 
-## The spell the movement key and double jump turn on: the one in the Movement slot
+## The spell the movement key (F) turns on: the one in the Movement slot
 ## (Equipment window), else Fly, else Levitate (among the ones you know).
 func movement_spell_id() -> StringName:
 	if character == null:

@@ -18,7 +18,7 @@ extends GameData
 ## Hammer for the Workbench).
 @export var requires: Array[StringName] = []
 ## Max mana pool the crafter needs (copying a spell into a scroll: a stronger mage for
-## stronger spells). Nothing is used up by it. The Copy tab makes these.
+## stronger spells). Nothing is used up by it. The Scrolls tab sets it (Crafting.scroll_recipes).
 @export var requires_max_mana := 0.0
 ## A short note shown with the recipe ("Known spell: half cost"). Not saved.
 var note := ""

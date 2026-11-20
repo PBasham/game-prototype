@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_ixvum"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_dryqw"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_spark_ward.png" id="3_jwftj"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_spark_ward.png" id="4_kjn4q"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_dw5rr"]
+
+[sub_resource type="Resource" id="Resource_vq5dt"]
+script = ExtResource("2_dryqw")
+id = &"page_spark_ward"
+texture = ExtResource("3_jwftj")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_dw5rr")
+kind = 15
+icon = ExtResource("4_kjn4q")
+max_stack = 20
+held = SubResource("Resource_vq5dt")
+impact_at = 0.2
+learns_spell = &"spark_ward"
+id = &"page_spark_ward"
+display_name = "Spell Page: Spark Ward"
+description = "A found page of spellcraft. Left click: learn Spark Ward for good (the page is used up)."

@@ -39,12 +39,20 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Spell Pages and scrolls (Patrick):** pages teach, scrolls cast. A Spell Page (found;
+  console `page <spell>` for now) teaches its spell for good on left click. Scrolls never
+  teach. The Spell Weaving Table has Spells | Scrolls: the Scrolls tab scribes only
+  spells you know, at full cost (`World.scribe_cost_mult` 1.0, for a skill later), with
+  the max mana gate by tier; no 50% known-spell discount and no Copy tab. Why: rare
+  spells stay valuable (find the page, learn it, scribe scrolls for friends), and scroll
+  costs will be each spell's own materials, which keeps scrolls from being free.
+- **Double jump:** stays removed; F is the movement spell (Patrick).
 - **Mouse stack placing, take 2 (Patrick):** blocks, platforms and ropes were limited
   by the selected hotbar slot's count (0 on an empty slot), so only furniture placed.
 - **Craft amount resets (Patrick)** after crafting, on another recipe and on opening.
 - **Z X C take items (Patrick):** a shortcut to any item. Food is used right away;
   anything else goes in your hand, from the backpack too.
-- **Movement slot (Patrick):** pick the F / double jump spell in the Equipment window
+- **Movement slot (Patrick):** pick the F spell in the Equipment window
   instead of "the last one used".
 - **Wheel picks don't cast (Patrick):** picking a cast-right-away spell on a wheel makes
   it the tap spell; tap to cast.

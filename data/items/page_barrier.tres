@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_43woh"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_4q6kr"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_barrier.png" id="3_gu807"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_barrier.png" id="4_36sfy"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_8an8s"]
+
+[sub_resource type="Resource" id="Resource_2ue0h"]
+script = ExtResource("2_4q6kr")
+id = &"page_barrier"
+texture = ExtResource("3_gu807")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_8an8s")
+kind = 15
+icon = ExtResource("4_36sfy")
+max_stack = 20
+held = SubResource("Resource_2ue0h")
+impact_at = 0.2
+learns_spell = &"barrier"
+id = &"page_barrier"
+display_name = "Spell Page: Barrier"
+description = "A found page of spellcraft. Left click: learn Barrier for good (the page is used up)."

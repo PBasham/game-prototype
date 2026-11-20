@@ -157,6 +157,13 @@ func _register() -> void:
 		_list(_all_spells(), " ".join(a)))
 	_add("learn", "learn <spell>", "Learn a spell (it also goes in a free book slot).", _learn)
 	_add("forget", "forget <spell>", "Forget a spell.", _forget)
+	_add("page", "page <spell>", "Forget a spell and get its Spell Page (left click it to learn the spell again).", func(a: PackedStringArray) -> void:
+		var spell := find_spell(" ".join(a))
+		if spell == null:
+			return
+		_forget(a)
+		world.character.inventory.add(StringName("page_" + String(spell.id)), 1)
+		_print("Forgot %s; here's its Spell Page." % spell.display_name))
 	_add("cast", "cast <spell>", "Cast a spell at the cursor now (no book, mana or cooldown needed).", func(a: PackedStringArray) -> void:
 		var spell := find_spell(" ".join(a))
 		if spell == null:

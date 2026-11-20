@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_l2hqb"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_t640i"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_chopping_spell.png" id="3_6podd"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_chopping_spell.png" id="4_kjlnf"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_ty0r4"]
+
+[sub_resource type="Resource" id="Resource_we50h"]
+script = ExtResource("2_t640i")
+id = &"page_chopping_spell"
+texture = ExtResource("3_6podd")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_ty0r4")
+kind = 15
+icon = ExtResource("4_kjlnf")
+max_stack = 20
+held = SubResource("Resource_we50h")
+impact_at = 0.2
+learns_spell = &"chopping_spell"
+id = &"page_chopping_spell"
+display_name = "Spell Page: Chopping Spell"
+description = "A found page of spellcraft. Left click: learn Chopping Spell for good (the page is used up)."

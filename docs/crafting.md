@@ -269,35 +269,33 @@ Not playtested yet.
 | 1 Wood | Workbench | 3 Paper |
 | 3 Paper + 1 Slime | Workbench | 1 Blank Scroll |
 | 20 Wood + 5 Copper Bars + 4 Paper | Workbench | Spell Weaving Table (6x3, station `spell_weaving`) |
-| 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table | Scroll: <spell>, one recipe per spell |
-| 1 Blank Scroll + 20 Slime | Spell Weaving Table | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
-| 1 Blank Scroll (and a big enough max mana) | Spell Weaving Table, **Copy** tab | **Copy: <spell>**, for any spell you know |
+| 1 Blank Scroll + Copper Bars (2 / 5 / 10 by spell tier) | Spell Weaving Table, **Scrolls** tab | Scroll: <spell>, only for spells you know |
+| 1 Blank Scroll + 20 Slime | Spell Weaving Table, **Scrolls** tab | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
 
-The **Spell Weaving Table** window has three tabs:
+The scroll costs are placeholders: each spell gets its own materials later (feathers for
+Fly, say), in its recipe file `data/recipes/scroll_<spell>.tres`.
+
+The **Spell Weaving Table** window has two tabs:
 
 - **Spells:** learn spells here, for good. Every spell you don't know yet is listed,
   cheapest tier first; **Learn** uses its `learn_cost` (copper bars by tier: 4, 10, 20;
   20 Slime for Gel Cushion) and it joins your known spells. No scroll needed. A spell
   above your book's tier can be learned; it says it needs a better book to cast.
-  **Found scrolls:** if you carry a scroll of a spell you don't know, its Learn recipe
-  costs just that scroll ("From your scroll (used up)"). That's the only way to learn a
-  spell with `learnable_at_table = false` (SpellData), like a loot-only spell; those
-  aren't listed until you carry their scroll.
-  Recipes come from `Crafting.learn_recipes` (made on the fly, `RecipeData.teaches`).
-- **Scrolls:** the scroll recipes (one-use casts). A spell you know costs
-  half the materials, rounded up (`World.known_scroll_discount`, 0.5); the Blank Scroll
-  is still needed. Those are listed in green with a note. The plain recipes stay until
-  scrolls come from loot.
-- **Copy:** every spell you know, written onto a Blank Scroll. It takes a strong enough
-  mage: your **max** mana must be at least `World.copy_max_mana_by_tier` for the
-  spell's tier (100 / 200 / 300), so a starting mage copies tier 1 spells. No mana is
-  used, so you can copy as many as you have Blank Scrolls. This is also how you'll make
-  more of spells that can't be crafted at all. Recipes come from `Crafting.copy_recipes`
-  (made on the fly, not data files). Later: mastery of the spell as a requirement too.
+  Spells with `learnable_at_table = false` (SpellData) aren't listed: they only come
+  from a **Spell Page**. Recipes come from `Crafting.learn_recipes` (made on the fly,
+  `RecipeData.teaches`).
+- **Scrolls:** scribe a scroll (a one-use cast) of any spell **you know**, and only
+  those. It costs the spell's scroll recipe in full, times `World.scribe_cost_mult`
+  (1.0; a skill can lower it later, rounded up, at least 1; the Blank Scroll stays 1).
+  A spell with no recipe file costs just a Blank Scroll. It also takes a strong enough
+  mage: your **max** mana must be at least `World.scroll_max_mana_by_tier` for the
+  spell's tier (100 / 200 / 300); no mana is used. Recipes come from
+  `Crafting.scroll_recipes`. Scrolls cast at base power (your book doesn't boost them),
+  so they're for using a spell without your mana or giving one to a friend.
 
 Under the tabs: group buttons (All, Tools, Movement, Attack, Defense, Light, the same
 groups as the Spell Index) and a search box (click it and type; Esc, Enter or a click
-elsewhere stops typing). They filter all three tabs by the spell each recipe is about.
+elsewhere stops typing). They filter both tabs by the spell each recipe is about.
 
 The craft amount (`-` / `+` / typed) is for one craft: it goes back to 1 after you craft,
 when you pick another recipe, and when the window opens.
@@ -306,7 +304,13 @@ Tabs per station are `Hud.STATION_TABS` (Create and Empower join later). A recip
 `requires_max_mana` is checked, never used up.
 
 A scroll (`ItemData.teaches_spell`, kind SCROLL) is one use: left click casts its spell
-once for free. Scrolls no longer teach spells (that's the Spells tab).
+once for free. Scrolls never teach spells.
+
+A **Spell Page** (`page_<spell>`, `ItemData.learns_spell`, kind PAGE) is found, not
+crafted: left click learns its spell for good and uses the page up (a spell you already
+know keeps the page). Rare spells will only come from pages. There's no loot yet:
+console `page <spell>` forgets a spell and gives you its page, `give page_<spell>` just
+gives one.
 The bar costs per tier are `SCROLL_BARS` in tools/make_items.gd. The table becomes the
 Create and Empower table in the Magic progression phase.
 

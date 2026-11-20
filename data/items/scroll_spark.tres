@@ -23,4 +23,4 @@ impact_at = 0.2
 teaches_spell = &"spark"
 id = &"scroll_spark"
 display_name = "Scroll: Spark"
-description = "One use. Left click: cast Spark once for free. Right click: learn it."
+description = "One use. Left click: cast Spark once for free, at base power."
