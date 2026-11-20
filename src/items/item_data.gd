@@ -107,6 +107,13 @@ const SPELL_PREFIX := "spell:"
 ## Left click on a concentration or held-beam spell: how long it runs free (seconds).
 ## 0 = the defaults (Player.scroll_concentration_seconds / scroll_beam_seconds).
 @export var scroll_seconds := 0.0
+@export_group("Storage")
+## Which special storage takes it: &"lumber" (Lumber Rack: logs, wood), &"potion"
+## (Potion Cabinet: potions, flasks, coatings). Chests take anything.
+@export var storage_tags: Array[StringName] = []
+## The color it shows as in a Potion Cabinet (the liquid / wax); clear = worked out
+## from the icon.
+@export var shelf_color := Color(0, 0, 0, 0)
 @export_group("Spell page")
 ## A Spell Page (found, not crafted): left click learns this spell for good, and the
 ## page is used up. The only way to learn spells that aren't `learnable_at_table`.

@@ -18,6 +18,10 @@ var counts: PackedInt32Array = PackedInt32Array()
 ## Extra data that belongs to the one item in a slot (a weapon's coating:
 ## {"coat": coating id, "hits": n}). It moves with the item; empty for most.
 var metas: Array[Dictionary] = []
+## Special storage: only items with this storage tag fit (&"" = anything).
+var accepts_tag: StringName = &""
+## Special storage: each slot holds this many of an item (0 = the item's own stack).
+var stack_cap := 0
 
 
 func _init(slots: int = DEFAULT_SIZE) -> void:
@@ -43,6 +47,34 @@ func item(slot: int) -> ItemData:
 	return null if is_empty(slot) else ItemData.find(ids[slot])
 
 
+## Whether an item may go in (special storage takes only its tag).
+func accepts(item_id: StringName) -> bool:
+	if accepts_tag == &"":
+		return true
+	var it := ItemData.find(item_id)
+	return it != null and accepts_tag in it.storage_tags
+
+
+## How many of an item one slot holds here.
+func cap_for(item_id: StringName) -> int:
+	return stack_cap if stack_cap > 0 else max_stack(item_id)
+
+
+## How full it is, 0 to 1: items over what all its slots could hold.
+func fill() -> float:
+	var used := 0
+	var room := 0
+	for i in size:
+		var cap := stack_cap if stack_cap > 0 else (max_stack(ids[i]) if not is_empty(i) else 0)
+		if cap <= 0:
+			continue
+		used += counts[i]
+		room += cap
+	if stack_cap > 0:
+		room = stack_cap * size
+	return clampf(float(used) / maxf(room, 1.0), 0.0, 1.0)
+
+
 static func max_stack(item_id: StringName) -> int:
 	var data := ItemData.find(item_id)
 	return data.max_stack if data else 999
@@ -55,7 +87,9 @@ static func max_stack(item_id: StringName) -> int:
 func add(item_id: StringName, count: int, keep_empty: int = -1) -> int:
 	if count <= 0 or item_id == &"":
 		return 0
-	var cap := max_stack(item_id)
+	if not accepts(item_id):
+		return count
+	var cap := cap_for(item_id)
 	for i in size:
 		if count == 0:
 			break
@@ -83,7 +117,9 @@ func add(item_id: StringName, count: int, keep_empty: int = -1) -> int:
 
 ## How many of an item fit (for pickups).
 func room_for(item_id: StringName) -> int:
-	var cap := max_stack(item_id)
+	if not accepts(item_id):
+		return 0
+	var cap := cap_for(item_id)
 	var room := 0
 	for i in size:
 		if is_empty(i):

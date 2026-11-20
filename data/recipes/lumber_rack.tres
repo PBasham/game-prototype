@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_ot7ps"]
+
+[resource]
+script = ExtResource("1_ot7ps")
+station = &"workbench"
+inputs = Dictionary[StringName, int]({
+&"log": 4,
+&"wood": 25
+})
+output = &"lumber_rack"
+id = &"lumber_rack"
+display_name = "Lumber Rack"

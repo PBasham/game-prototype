@@ -135,6 +135,76 @@ func draw_chunk(view: ChunkObjects) -> void:
 				view.draw_set_transform(Vector2.ZERO)
 			else:
 				view.draw_texture_rect_region(def.frames, dest, src)
+			if def.fill_look == ObjectDef.FillLook.BOTTLES:
+				var store := world.container_at(origin + Vector2i(lx, ly))
+				if store:
+					_draw_bottles(view, dest, store, world.is_flipped(origin + Vector2i(lx, ly)))
+
+
+## Redraws every shown chunk's objects (a storage's fill changed).
+func redraw_all() -> void:
+	for v: Node2D in _views.values():
+		v.queue_redraw()
+
+
+## Potion Cabinet: bottles on its 3 shelves (7 each, bottom shelf first), as many as it
+## is full, in the colors of what's inside. In art pixels of its 48x64 picture.
+func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool) -> void:
+	const SHELVES: Array[int] = [54, 38, 22]
+	var spots: Array[Vector2] = []
+	for y in SHELVES:
+		for k in 7:
+			spots.append(Vector2(8 + k * 5, y))
+	var colors: Array[Color] = []
+	var cap := float(inv.stack_cap if inv.stack_cap > 0 else 1)
+	for i in inv.size:
+		if inv.is_empty(i):
+			continue
+		var it := ItemData.find(inv.ids[i])
+		var room := cap if inv.stack_cap > 0 else float(Inventory.max_stack(inv.ids[i]))
+		var share := inv.counts[i] / (room * inv.size)
+		var n := maxi(1, roundi(share * spots.size()))
+		for _k in n:
+			colors.append(shelf_color(it))
+	var s := dest.size.x / 48.0  # art pixel to world pixel
+	for b in mini(colors.size(), spots.size()):
+		var p := spots[b]
+		if flip:
+			p.x = 48.0 - p.x
+		var o := dest.position
+		view.draw_rect(Rect2(o + Vector2(p.x - 1, p.y - 9) * s, Vector2(3, 2) * s), Color("966e50"))  # cork
+		view.draw_rect(Rect2(o + Vector2(p.x - 1, p.y - 7) * s, Vector2(3, 2) * s), Color("cdbeaa"))  # neck
+		view.draw_rect(Rect2(o + Vector2(p.x - 2, p.y - 5) * s, Vector2(5, 5) * s), colors[b])
+		view.draw_rect(Rect2(o + Vector2(p.x - 1, p.y - 4) * s, Vector2(1, 1) * s), Color(1, 1, 1, 0.8))
+
+
+static var _shelf_colors: Dictionary[StringName, Color] = {}
+
+
+## The color an item shows as in a cabinet: its shelf_color, else the most colorful
+## pixels of its icon.
+static func shelf_color(it: ItemData) -> Color:
+	if it == null:
+		return Color.GRAY
+	if it.shelf_color.a > 0.0:
+		return it.shelf_color
+	if _shelf_colors.has(it.id):
+		return _shelf_colors[it.id]
+	var c := Color(0.6, 0.6, 0.6)
+	if it.icon:
+		var img := it.icon.get_image()
+		var best := 0.0
+		var sum := Color(0, 0, 0, 0)
+		for y in img.get_height():
+			for x in img.get_width():
+				var p := img.get_pixel(x, y)
+				if p.a > 0.5 and p.s > 0.45 and p.v > 0.35:
+					sum += p
+					best += 1.0
+		if best > 0.0:
+			c = Color(sum.r / best, sum.g / best, sum.b / best)
+	_shelf_colors[it.id] = c
+	return c
 
 
 ## Which frame of the strip an object shows at a tile.
@@ -159,5 +229,8 @@ func frame_for(def: ObjectDef, tile: Vector2i, id: int) -> int:
 				return 2
 			return 3
 		ObjectDef.Style.FURNITURE:
+			if def.fill_look == ObjectDef.FillLook.FRAMES:
+				var inv := world.container_at(tile)
+				return roundi((inv.fill() if inv else 0.0) * 10.0)  # 0% to 100% in 10% steps
 			return def.frame
 	return 0

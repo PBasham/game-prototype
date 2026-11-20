@@ -488,3 +488,31 @@ func test_chest_names_and_quick_stack() -> void:
 	assert_eq(inv.counts[3], 5, "hotbar stays")
 	hud.chest = World.NO_TILE
 	assert_true(w.request_remove_object(a) or true)
+
+
+func test_special_storage_takes_only_its_kind_and_fills_up() -> void:
+	var rack_id := w.objects.index_of(&"lumber_rack")
+	var a := _floor_spot(4)
+	assert_true(w.request_place_object(a, rack_id))
+	var rack := w.container_at(a)
+	assert_eq(rack.size, 10)
+	assert_eq(rack.add(&"stone", 10), 10, "stone doesn't go in")
+	assert_eq(rack.add(&"wood", 700), 0, "100 a slot")
+	assert_eq(rack.add(&"log", 400), 100, "1,000 in all")
+	assert_almost_eq(rack.fill(), 1.0, 0.001)
+	assert_eq(w.object_layer.frame_for(w.objects.def(rack_id) as ObjectDef, a, rack_id), 10, "the full frame")
+	rack.remove(&"log", 400)
+	rack.remove(&"wood", 200)
+	assert_eq(w.object_layer.frame_for(w.objects.def(rack_id) as ObjectDef, a, rack_id), 5, "half full")
+	# The mouse can't drop stone in, either.
+	var hud := w.hud
+	hud.cursor_id = &"stone"
+	hud.cursor_count = 5
+	hud.click_slot(1, rack)
+	assert_eq(hud.cursor_count, 5)
+	hud.cursor_count = 0
+	hud.cursor_id = &""
+	# Potion Cabinet: potions only; their color shows.
+	var cab := ItemData.find(&"healing_potion")
+	assert_true(&"potion" in cab.storage_tags)
+	assert_eq(ObjectLayer.shelf_color(cab), cab.shelf_color)

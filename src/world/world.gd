@@ -1106,7 +1106,7 @@ func request_place_object(anchor: Vector2i, id: int, facing_left: bool = false) 
 		flipped.erase(wrap_tile(anchor))
 	request_set_object(anchor, id)
 	if def.container_slots > 0:
-		containers[wrap_tile(anchor)] = Inventory.new(def.container_slots)
+		containers[wrap_tile(anchor)] = _new_container(def)
 	return true
 
 
@@ -1379,9 +1379,22 @@ func _containers_from_dict(d: Dictionary) -> void:
 		var parts := key.split(",")
 		var at := Vector2i(int(parts[0]), int(parts[1]))
 		var def := object_at(at)
-		var inv := Inventory.new(def.container_slots if def and def.container_slots > 0 else Inventory.DEFAULT_SIZE)
+		var inv := _new_container(def) if def and def.container_slots > 0 else Inventory.new(Inventory.DEFAULT_SIZE)
 		inv.from_dict(d[key])
 		containers[at] = inv
+
+
+## A container's storage: its slots, and for special storage what fits and how much.
+## Its changes redraw the object (fill looks).
+func _new_container(def: ObjectDef) -> Inventory:
+	var inv := Inventory.new(def.container_slots)
+	inv.accepts_tag = def.container_accepts
+	inv.stack_cap = def.container_stack_cap
+	if def.fill_look != ObjectDef.FillLook.NONE:
+		inv.changed.connect(func() -> void:
+			if object_layer:
+				object_layer.redraw_all())
+	return inv
 
 
 ## Tall objects (a 2-tile torch) need the tiles above them free of solid blocks.

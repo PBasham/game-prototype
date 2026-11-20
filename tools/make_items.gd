@@ -194,6 +194,8 @@ func _items() -> Array[ItemData]:
 			[&"door", "Door", "Right click or E to open and close."],
 			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: learn spells (and later, empower them)."],
 			[&"scribes_desk", "Scribe's Desk", "A crafting station: scribe scrolls of the spells you know onto blank scrolls."],
+			[&"lumber_rack", "Lumber Rack", "Storage for logs and wood: 1,000 of them. It fills up as you stock it."],
+			[&"potion_cabinet", "Potion Cabinet", "Storage for potions, flasks and coatings: 10 stacks, shown on its shelves."],
 			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
 			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."],
 			[&"table", "Table", "Put things on display on top: hold an item and right click the table top."],
@@ -594,9 +596,11 @@ func _objects() -> Array[ObjectDef]:
 	for f: Array in [[&"workbench", "Workbench", 5, 4, &"workbench"], [&"furnace", "Furnace", 4, 5, &"furnace"],
 			[&"copper_anvil", "Copper Anvil", 3, 3, &"anvil"], [&"chest", "Chest", 3, 3, &""],
 			[&"door", "Door", 1, 8, &""], [&"spell_weaving_table", "Spell Weaving Table", 6, 3, &"spell_weaving"],
-			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"],
 			[&"campfire", "Campfire", 4, 3, &"cooking"], [&"alchemy_table", "Alchemy Table", 5, 3, &"alchemy"],
-			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""]]:
+			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""],
+			# Added later go last, so the indexes below stay put.
+			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"],
+			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 4, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -625,6 +629,16 @@ func _objects() -> Array[ObjectDef]:
 		out[i].detail = 2
 	out[10].needs_floor = false
 	out[10].needs_wall = true
+	# Special storage (detailed art): what fits, how much, how it shows its fill.
+	out[12].detail = 2
+	out[12].container_slots = 10
+	out[12].container_accepts = &"lumber"
+	out[12].container_stack_cap = 100
+	out[12].fill_look = ObjectDef.FillLook.FRAMES
+	out[13].detail = 2
+	out[13].container_slots = 10
+	out[13].container_accepts = &"potion"
+	out[13].fill_look = ObjectDef.FillLook.BOTTLES
 	# What's on display (World.displays): drawn as the item itself.
 	var shown := ObjectDef.new()
 	shown.id = &"display"
@@ -810,6 +824,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"blank_scroll", &"workbench", {&"paper": 3, &"slime": 1}, &"blank_scroll", 1, []],
 		[&"spell_weaving_table", &"workbench", {&"wood": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
 		[&"scribes_desk", &"workbench", {&"wood": 15, &"paper": 5, &"copper_bar": 2}, &"scribes_desk", 1, []],
+		[&"lumber_rack", &"workbench", {&"wood": 25, &"log": 4}, &"lumber_rack", 1, []],
+		[&"potion_cabinet", &"workbench", {&"wood": 20, &"copper_bar": 2, &"clay_flask": 2}, &"potion_cabinet", 1, []],
 	]
 	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by
 	# tier (placeholder until each spell gets its own materials). Only spells you know can
@@ -880,12 +896,26 @@ func _spell(spell_id: StringName, label: String, text: String) -> SpellData:
 	return s
 
 
+## Which special storage takes an item (Lumber Rack, Potion Cabinet).
+const STORAGE_TAGS := {&"log": &"lumber", &"wood": &"lumber", &"healing_potion": &"potion",
+	&"mana_potion": &"potion", &"poison_coating": &"potion", &"poison_flask": &"potion", &"clay_flask": &"potion"}
+
+
+## How potions look in a Potion Cabinet.
+const SHELF_COLORS := {&"healing_potion": Color(0.86, 0.27, 0.27), &"mana_potion": Color(0.3, 0.5, 0.95),
+	&"poison_coating": Color(0.45, 0.8, 0.32), &"poison_flask": Color(0.45, 0.8, 0.32), &"clay_flask": Color(0.66, 0.46, 0.32)}
+
+
 func _base(item_id: StringName, label: String, text: String) -> ItemData:
 	var item := ItemData.new()
 	item.id = item_id
 	item.display_name = label
 	item.description = text
 	item.icon = load("res://assets/items/icons/%s.png" % item_id) as Texture2D
+	if STORAGE_TAGS.has(item_id):
+		item.storage_tags.assign([STORAGE_TAGS[item_id]])
+	if SHELF_COLORS.has(item_id):
+		item.shelf_color = SHELF_COLORS[item_id]
 	return item
 
 

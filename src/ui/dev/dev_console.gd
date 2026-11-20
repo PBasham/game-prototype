@@ -342,6 +342,18 @@ func _register() -> void:
 		_fill(a, true))
 	_add("cursor", "cursor <dx> <dy> | cursor off", "Pin the cursor to a tile offset from your feet (for scripted building), or let it follow the mouse again.", _cursor)
 	_add("dig", "dig <w> <h>", "Clear a box of blocks (keeps walls) centered on the cursor.", _dig)
+	_add("stock", "stock <item> [count]", "Put items into the chest or storage under the cursor (what fits).", func(a: PackedStringArray) -> void:
+		if a.is_empty():
+			_print("stock <item> [count]")
+			return
+		var store := world.container_at(world.world_to_tile(world.item_user.cursor()))
+		var it := find_item(a[0])
+		if store == null or it == null:
+			_print("Point at a chest or storage, and name an item.")
+			return
+		var n := int(a[1]) if a.size() > 1 else it.max_stack
+		var left := store.add(it.id, n)
+		_print("Stocked %d %s%s." % [n - left, it.display_name, " (the rest didn't fit)" if left > 0 else ""]))
 	_add("place", "place <object>", "Place a tile object (torch, rope, workbench, chest...) at the cursor, no item needed.", _place)
 	_add("forage", "forage <type>", "Put a forageable (stick, rock, field_mushroom, red_cap, duskcap, glowcap) on the ground under the cursor.", func(a: PackedStringArray) -> void:
 		var def := Registry.get_def(&"forage", StringName(" ".join(a))) as ForageData

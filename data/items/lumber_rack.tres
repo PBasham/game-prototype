@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_ufvl8"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_mu5tq"]
+[ext_resource type="Texture2D" path="res://assets/items/held/lumber_rack.png" id="3_xyq4r"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/lumber_rack.png" id="4_fk6ap"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_3y352"]
+
+[sub_resource type="Resource" id="Resource_14wd6"]
+script = ExtResource("2_mu5tq")
+id = &"lumber_rack"
+texture = ExtResource("3_xyq4r")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_3y352")
+kind = 10
+icon = ExtResource("4_fk6ap")
+max_stack = 99
+held = SubResource("Resource_14wd6")
+impact_at = 0.2
+places_object = &"lumber_rack"
+place_area_max = 1
+id = &"lumber_rack"
+display_name = "Lumber Rack"
+description = "Storage for logs and wood: 1,000 of them. It fills up as you stock it."

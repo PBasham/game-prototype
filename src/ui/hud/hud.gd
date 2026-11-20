@@ -1131,8 +1131,18 @@ func _draw_chest(g: Control) -> void:
 	if bag != null and is_instance_valid(bag):
 		title = "Magic Bag"
 		right = bag.owner_name
+	if store and store.stack_cap > 0:
+		var used := 0
+		for i in store.size:
+			used += store.counts[i]
+		right = "%d / %d" % [used, store.stack_cap * store.size]
 	UiSkin.title(g, Rect2(4, 4, g.size.x - 24, TITLE_H), title, right)
 	_close_button(g, hover[0] == Area.CLOSE)
+	if store and store.accepts_tag != &"":
+		# Special storage: how full it is.
+		var bar := Rect2(PAD, 18.5, g.size.x - PAD * 2, 2.5)
+		g.draw_rect(bar, Color(0.1, 0.07, 0.05))
+		g.draw_rect(Rect2(bar.position, Vector2(bar.size.x * store.fill(), bar.size.y)), Color("b8823e"))
 	if store:
 		for i in store.size:
 			var r := _cell(Vector2(PAD, 22), i)
@@ -1920,11 +1930,18 @@ func click_slot(slot: int, inv: Inventory = null) -> void:
 			cursor_meta = inv.metas[slot]
 			inv.set_slot(slot, &"", 0)
 		return
-	if inv.is_empty(slot):
+	if not _cursor_is_spell() and not inv.accepts(cursor_id):
+		EventBus.debug_message.emit("That doesn't go in here")
+		return
+	if inv.is_empty(slot) and cursor_count > inv.cap_for(cursor_id):
+		# More than a slot holds here: fill it, keep the rest on the mouse.
+		inv.set_slot(slot, cursor_id, inv.cap_for(cursor_id), cursor_meta)
+		cursor_count -= inv.cap_for(cursor_id)
+	elif inv.is_empty(slot):
 		inv.set_slot(slot, cursor_id, cursor_count, cursor_meta)
 		_clear_cursor()
 	elif inv.ids[slot] == cursor_id and not _cursor_is_spell():
-		var cap := Inventory.max_stack(cursor_id)
+		var cap := inv.cap_for(cursor_id)
 		var n := mini(cursor_count, cap - inv.counts[slot])
 		inv.set_slot(slot, cursor_id, inv.counts[slot] + n)
 		cursor_count -= n
@@ -1967,7 +1984,9 @@ func right_click_slot(slot: int, inv: Inventory = null) -> void:
 		cursor_id = inv.ids[slot]
 		cursor_count = inv.take(slot, half)
 		return
-	if inv.is_empty(slot) or (inv.ids[slot] == cursor_id and inv.counts[slot] < Inventory.max_stack(cursor_id)):
+	if not inv.accepts(cursor_id):
+		return
+	if inv.is_empty(slot) or (inv.ids[slot] == cursor_id and inv.counts[slot] < inv.cap_for(cursor_id)):
 		inv.set_slot(slot, cursor_id, (0 if inv.is_empty(slot) else inv.counts[slot]) + 1)
 		cursor_count -= 1
 		if cursor_count <= 0:
