@@ -42,6 +42,22 @@ func test_punch_with_the_item_put_away() -> void:
 	p.toggle_stowed()
 	w.item_user.update_target(w.item_user.cursor())
 	assert_true(w.item_user.can_use(false), "put away: fists")
+	# With real input: the punch actually starts.
+	Input.action_press("use_primary")
+	await wait_physics_frames(3)
+	Input.action_release("use_primary")
+	assert_not_null(p._attack, "a punch is playing")
+	assert_eq(p._attacks(), (load("res://data/item_types/unarmed.tres") as ItemTypeData).attacks)
+
+
+func test_picking_the_same_slot_takes_it_back_out() -> void:
+	var p := w.player
+	w.character.inventory.set_slot(0, &"copper_sword", 1)
+	p.select_slot(0)
+	p.toggle_stowed()
+	assert_true(p.stowed)
+	p.select_slot(0)
+	assert_false(p.stowed, "pressing 1 again: back out")
 
 
 func test_pickups_keep_an_empty_hand_empty() -> void:

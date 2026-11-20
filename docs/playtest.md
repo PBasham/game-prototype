@@ -67,7 +67,7 @@ guesses; the docs listed say where each tunable lives.
 
 **Scrolls**
 - [ ] Paper, Blank Scroll (needs Slime), Spell Weaving Table at the Workbench.
-- [ ] Scroll recipes at the table; left click a scroll to learn its spell.
+- [ ] Scroll recipes at the table; left click a scroll casts it once (learning is the Spells tab now).
 
 ## Phase 8: spell types and sound (branch phase-08-spell-types, on top of Phase 7)
 
@@ -132,7 +132,9 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Right click with blocks, a pickaxe or the Mining Spell does the back wall first;
       doors, chests and stations still open.
 - [ ] Punches push slimes a little but don't stop their hops.
-- [ ] H (put away) then punch works; picking things up leaves an empty hand empty.
+- [ ] H (put away) then punch works (fixed again); pressing that slot's number takes it
+      back out; picking things up leaves an empty hand empty.
+- [ ] Spell Weaving Table: Spells tab (learn for copper bars, no scroll), Scrolls, Copy.
 - [ ] New caves (F6 or unexplored areas): tunnels tall enough to walk and hop through.
 - [ ] Craft window: hold Shift or Ctrl, the amount and costs change to match.
 - [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).

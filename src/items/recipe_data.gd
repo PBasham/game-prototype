@@ -22,6 +22,9 @@ extends GameData
 @export var requires_max_mana := 0.0
 ## A short note shown with the recipe ("Known spell: half cost"). Not saved.
 var note := ""
+## Teaches this spell instead of making an item: the Spell Weaving Table's Spells tab
+## (Crafting.learn_recipes makes these; `output` is the spell, for its icon and name).
+var teaches: StringName = &""
 ## What it makes, and how many per craft.
 @export var output: StringName = &""
 @export var output_count := 1

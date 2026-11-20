@@ -18,7 +18,7 @@ extends Node2D
 ## the beam from the casting hand, and a range ring that fades in as the cursor nears
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
-enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT, LEARN,
+enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT,
 	CHARGE, SCROLL, THROW }
 
 const TILE := World.TILE
@@ -272,10 +272,6 @@ func can_use(on_back: bool = false) -> bool:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				eat_held()
 			return false  # no swing
-		Mode.LEARN:
-			if on_back and Input.is_action_just_pressed("use_secondary"):
-				read_scroll()
-			return false
 		Mode.SCROLL:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				cast_scroll()
@@ -386,47 +382,6 @@ func cast_scroll() -> bool:
 	return ok
 
 
-## Why the player can't learn a spell from a scroll right now ("" = they can): it needs a
-## Spell Weaving Table nearby and the spell's learn_cost.
-func learn_problem(spell: SpellData) -> String:
-	var p := world.player
-	if not world.station_near(&"spell_weaving", p.chest()):
-		return "Learn it at a Spell Weaving Table"
-	for id: StringName in spell.learn_cost:
-		if p.character.inventory.count_of(id) < spell.learn_cost[id]:
-			var it := ItemData.find(id)
-			return "Learning %s needs %d %s" % [spell.display_name, spell.learn_cost[id], it.display_name if it else String(id)]
-	return ""
-
-
-## Reads the held spell scroll (right click, at a Spell Weaving Table): learns its spell,
-## using up the scroll and the spell's learn_cost. Returns true if a spell was learned.
-func read_scroll() -> bool:
-	var p := world.player
-	var item := p.held_item
-	if item == null or item.teaches_spell == &"" or p.selected < 0 or p.character == null:
-		return false
-	var spell := ItemData.find(ItemData.spell_key(item.teaches_spell))
-	if spell == null:
-		return false
-	if p.character.knows(item.teaches_spell):
-		EventBus.debug_message.emit("You already know %s" % spell.display_name)
-		return false
-	var problem_text := learn_problem(spell as SpellData)
-	if problem_text != "":
-		EventBus.debug_message.emit(problem_text)
-		return false
-	var slot := p.selected
-	for id: StringName in (spell as SpellData).learn_cost:
-		p.character.inventory.remove(id, (spell as SpellData).learn_cost[id])
-	if p.character.inventory.take(slot, 1) <= 0:
-		return false
-	p.character.learn_spell(item.teaches_spell)
-	EventBus.debug_message.emit("You learned %s" % spell.display_name)
-	EventBus.sound_requested.emit(&"learn_spell", Vector2.INF)
-	return true
-
-
 ## Eats or drinks one of the held food or potion (hunger, health, mana, a buff).
 ## Returns true if it was used up.
 func eat_held() -> bool:
@@ -525,7 +480,7 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 	if item.throw_speed > 0.0:
 		return Mode.THROW if not on_back else Mode.NONE
 	if item.teaches_spell != &"":
-		return Mode.LEARN if on_back else Mode.SCROLL
+		return Mode.NONE if on_back else Mode.SCROLL
 	if on_back:
 		return Mode.PLACE_WALL if item.places_wall != &"" else Mode.NONE
 	if item.axe_damage > 0.0:
@@ -924,18 +879,12 @@ func _draw() -> void:
 		draw_circle(at, lerpf(1.5, 5.0, k), Color(spell.projectile_color, 0.5))
 		draw_circle(at, lerpf(0.8, 2.2, k), Color(1, 1, 1, 0.9))
 		draw_arc(at, lerpf(12.0, 6.0, k), 0.0, TAU * k, 24, Color(spell.projectile_color, 0.8), 1.0)
-	if mode in [Mode.SCROLL, Mode.LEARN] and p.held_item:
-		# Holding a scroll: what each button does.
-		var sp := ItemData.find(ItemData.spell_key(p.held_item.teaches_spell))
-		var known := sp != null and p.character.knows(sp.id)
+	if mode == Mode.SCROLL and p.held_item:
+		# Holding a scroll: what a click does.
 		var font := ThemeDB.fallback_font
 		draw_string_outline(font, aim + Vector2(8, 4), "Left: cast once (free)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2,
 			Color(0, 0, 0, 0.7))
 		draw_string(font, aim + Vector2(8, 4), "Left: cast once (free)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, valid_color)
-		var right := "Right: learn (at a Spell Weaving Table)" if not known else "Already known"
-		draw_string_outline(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.7))
-		draw_string(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
-			valid_color if not known else Color(valid_color, 0.5))
 	if mode in [Mode.CAST, Mode.TOGGLE, Mode.CHARGE]:
 		# No target box: just say why it can't be cast, if it can't.
 		if problem != "":

@@ -273,9 +273,14 @@ Not playtested yet.
 | 1 Blank Scroll + 20 Slime | Spell Weaving Table | Scroll: Gel Cushion (exceptions are `SCROLL_COSTS` in tools/make_items.gd) |
 | 1 Blank Scroll (and a big enough max mana) | Spell Weaving Table, **Copy** tab | **Copy: <spell>**, for any spell you know |
 
-The **Spell Weaving Table** window has two tabs:
+The **Spell Weaving Table** window has three tabs:
 
-- **Craft:** the scroll recipes. A spell you know costs
+- **Spells:** learn spells here, for good. Every spell you don't know yet is listed,
+  cheapest tier first; **Learn** uses its `learn_cost` (copper bars by tier: 4, 10, 20;
+  20 Slime for Gel Cushion) and it joins your known spells. No scroll needed. A spell
+  above your book's tier can be learned; it says it needs a better book to cast.
+  Recipes come from `Crafting.learn_recipes` (made on the fly, `RecipeData.teaches`).
+- **Scrolls:** the scroll recipes (one-use casts). A spell you know costs
   half the materials, rounded up (`World.known_scroll_discount`, 0.5); the Blank Scroll
   is still needed. Those are listed in green with a note. The plain recipes stay until
   scrolls come from loot.
@@ -290,8 +295,7 @@ Tabs per station are `Hud.STATION_TABS` (Create and Empower join later). A recip
 `requires_max_mana` is checked, never used up.
 
 A scroll (`ItemData.teaches_spell`, kind SCROLL) is one use: left click casts its spell
-once for free, right click at a Spell Weaving Table learns it for the spell's
-`learn_cost` (items-and-mining.md, Magic).
+once for free. Scrolls no longer teach spells (that's the Spells tab).
 The bar costs per tier are `SCROLL_BARS` in tools/make_items.gd. The table becomes the
 Create and Empower table in the Magic progression phase.
 

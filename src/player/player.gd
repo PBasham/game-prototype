@@ -314,10 +314,14 @@ func hold(item: HeldItemLook) -> void:
 
 
 ## Selects a hotbar slot and holds what's in it.
+## Picking the slot you're already on takes a put-away item back out.
 func select_slot(slot: int) -> void:
+	var same := posmod(slot, Inventory.HOTBAR) == selected and _readied == null
 	selected = posmod(slot, Inventory.HOTBAR)
 	_readied = null
 	refresh_held()
+	if same and stowed:
+		toggle_stowed()
 	selection_changed.emit(selected)
 
 
@@ -556,7 +560,8 @@ func fist_item() -> ItemData:
 func _attacks() -> Array[ItemMotion]:
 	if held != null and not stowed:
 		return held.attacks()
-	if held == null and unarmed_attacks and not (world and world.brush and world.brush.active):
+	# Empty hands, or the held item put away (H): punch.
+	if (held == null or stowed) and unarmed_attacks and not (world and world.brush and world.brush.active):
 		var unarmed := load("res://data/item_types/unarmed.tres") as ItemTypeData
 		if unarmed:
 			return unarmed.attacks
@@ -564,14 +569,14 @@ func _attacks() -> Array[ItemMotion]:
 
 
 func _combo_window() -> float:
-	if held != null and held.item_type():
+	if held != null and not stowed and held.item_type():
 		return held.item_type().combo_window
 	var unarmed := load("res://data/item_types/unarmed.tres") as ItemTypeData
 	return unarmed.combo_window if unarmed else 0.35
 
 
 func _repeats() -> bool:
-	return held == null or held.item_type() == null or held.item_type().repeat_while_held
+	return held == null or stowed or held.item_type() == null or held.item_type().repeat_while_held
 
 
 func _hold_motion() -> ItemMotion:

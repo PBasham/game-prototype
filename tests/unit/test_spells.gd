@@ -168,31 +168,42 @@ func test_wisp_follows_the_cursor_then_stays() -> void:
 	u.cursor_override = Vector2.INF
 
 
-func test_scrolls_teach_spells() -> void:
+func test_spell_weaving_table_teaches_spells() -> void:
 	var c := w.character
 	var p := w.player
 	c.known_spells.erase(&"blink")
+	c.known_spells.erase(&"hyper_drill")
+	# Scrolls are one-use casts now: no learning by right click.
 	c.inventory.set_slot(0, &"scroll_blink", 2)
 	p.select_slot(0)
-	assert_eq(w.item_user._mode_for(p.held_item, true), ItemUser.Mode.LEARN, "right click learns")
+	assert_eq(w.item_user._mode_for(p.held_item, true), ItemUser.Mode.NONE)
 	assert_eq(w.item_user._mode_for(p.held_item, false), ItemUser.Mode.SCROLL, "left click casts")
-	# Away from a Spell Weaving Table: can't learn, nothing used.
-	assert_eq(w.item_user.learn_problem(_spell(&"blink")), "Learn it at a Spell Weaving Table")
-	assert_false(w.item_user.read_scroll())
-	assert_eq(c.inventory.counts[0], 2)
-	# At a table, without the bars, then with them.
+	# The table's tabs.
 	var a := w.world_to_tile(p.global_position) + Vector2i(4, -1)
 	assert_true(w.request_place_object(a, w.objects.index_of(&"spell_weaving_table")))
+	assert_true(w.try_interact_at(w.tile_to_world(a + Vector2i(1, -1)) + Vector2(4, 4), p))
+	assert_eq(w.hud._tabs(), ["Spells", "Scrolls", "Copy"])
+	w.hud.craft_tab = 0
+	var learn := w.hud.recipes()
+	var names := learn.map(func(r: RecipeData) -> StringName: return r.teaches)
+	assert_has(names, &"blink", "unknown spells are listed")
+	assert_does_not_have(names, &"spark", "known ones aren't")
+	assert_lt(names.find(&"blink"), names.find(&"hyper_drill"), "cheapest tier first")
+	var blink: RecipeData = learn[names.find(&"blink")]
+	assert_eq(blink.inputs, {&"copper_bar": 4} as Dictionary[StringName, int], "the learn cost, no scroll")
 	c.inventory.remove(&"copper_bar", c.inventory.count_of(&"copper_bar"))
-	assert_eq(w.item_user.learn_problem(_spell(&"blink")), "Learning Blink needs 4 Copper Bar")
-	assert_false(w.item_user.read_scroll())
+	assert_eq(w.hud.craft(blink, 1), 0, "can't afford it")
 	c.inventory.add(&"copper_bar", 6)
-	assert_true(w.item_user.read_scroll())
+	assert_eq(w.hud.planned_crafts(blink), 1, "learning is once")
+	assert_eq(w.hud.craft(blink, 5), 1)
 	assert_true(c.knows(&"blink"))
-	assert_eq(c.inventory.counts[0], 1, "one scroll used")
 	assert_eq(c.inventory.count_of(&"copper_bar"), 2, "4 bars used")
-	assert_false(w.item_user.read_scroll(), "already known: nothing used")
-	assert_eq(c.inventory.counts[0], 1)
+	assert_eq(c.inventory.counts[0], 2, "scrolls untouched")
+	assert_does_not_have(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.teaches), &"blink")
+	w.hud.craft_tab = 1
+	assert_has(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.output), &"scroll_blink", "Scrolls tab")
+	w.hud.craft_tab = 2
+	assert_has(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.output), &"scroll_blink", "Copy tab")
 	var drill := Registry.get_def(&"recipes", &"scroll_hyper_drill") as RecipeData
 	assert_eq(drill.inputs[&"copper_bar"], 10, "tier 3 costs 10 bars")
 	assert_eq(drill.station, &"spell_weaving")

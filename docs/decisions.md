@@ -13,6 +13,13 @@ Newest first. Each entry: what was decided, why, and what it affects.
   wins (so a pickaxe can't mine the wall behind your chest); pickups and bushes don't.
 - **Fists don't stun-lock (Patrick):** punches keep a light push but no stagger
   (`ItemData.staggers`). A "chance to stun" could come later from skills.
+- **Punching with the item put away, take 2 (Patrick):** the punch animation list only
+  allowed empty hands, so H then click still did nothing; fixed (tested with real
+  input this time). Pressing the current hotbar number takes a put-away item back out.
+- **Spell Weaving Table (Patrick):** tabs Spells | Scrolls | Copy. Spells: learn any
+  spell you don't know for its learn cost, no scroll needed. Scrolls: one-use casts
+  only (right click learning removed: it needed a right click near, but not on, the
+  table, so it looked broken).
 - **Taller tunnels (Patrick):** `tunnel_width` 24 (was 18), `tunnel_taper` 0.8 (was 0.6),
   surface entrances 10 to 13 wide (were 7 to 10, the tightest shallow spots). Room to
   hop (3x11) went from 64% to 77% of cave floors (seed 42). New chunks only.

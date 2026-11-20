@@ -49,7 +49,7 @@ const LIST_W := 134
 ## Stations whose window has tabs: station kind to tab names. The Spell Weaving Table:
 ## Craft (scroll recipes; known spells cost less) and Copy (any known spell into a
 ## scroll, for mana). Create and Empower come with Magic progression.
-const STATION_TABS := {&"spell_weaving": ["Craft", "Copy"], &"alchemy": ["Potions", "Coatings", "Flasks"]}
+const STATION_TABS := {&"spell_weaving": ["Spells", "Scrolls", "Copy"], &"alchemy": ["Potions", "Coatings", "Flasks"]}
 const TAB_H := 14
 const ROW_H := 18
 ## Craft buttons: how many each makes (0 = as many as you can).
@@ -905,7 +905,9 @@ func recipes() -> Array[RecipeData]:
 	if key == _recipe_key:
 		return _recipe_cache
 	var list: Array[RecipeData] = []
-	if def and def.station == &"spell_weaving" and craft_tab == 1:
+	if def and def.station == &"spell_weaving" and craft_tab == 0:
+		list = Crafting.learn_recipes(c)
+	elif def and def.station == &"spell_weaving" and craft_tab == 2:
 		list = Crafting.copy_recipes(c, world.copy_max_mana_by_tier)
 	else:
 		var base := Crafting.recipes_for(def.station, def.station_tier) if def and def.station != &"" \
@@ -943,7 +945,8 @@ func _max_mana() -> float:
 
 
 func _times(r: RecipeData) -> int:
-	return Crafting.times_craftable(_inventory(), r, _max_mana())
+	var n := Crafting.times_craftable(_inventory(), r, _max_mana())
+	return mini(n, 1) if r.teaches != &"" else n
 
 
 func _station_def() -> ObjectDef:
@@ -1031,7 +1034,9 @@ func _draw_crafting(g: Control) -> void:
 	var lr := _list_rect()
 	g.draw_rect(lr, Color(0, 0, 0, 0.22))
 	if list.is_empty():
-		var empty := "No known spells to copy" if not tabs.is_empty() and craft_tab == 1 else "Nothing to craft here yet"
+		var empty := "Nothing to craft here yet"
+		if _station_def() and _station_def().station == &"spell_weaving":
+			empty = ["You know every spell", "Nothing to craft here yet", "No known spells to copy"][craft_tab]
 		g.draw_string(font, lr.position + Vector2(4, 12), empty, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
 	for i in range(_craft_scroll, mini(_entry_count(), _craft_scroll + _rows_shown())):
 		var rect := _row_rect(i)
@@ -1140,10 +1145,14 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 		g.draw_string(font, big.end - Vector2(font.get_string_size(made, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 2, 2),
 			made, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, UiSkin.TEXT)
 	var b := _craft_button_rects()
-	g.draw_string(font, Vector2(d.position.x, b[0].position.y - 3), "Can make %d.  Shift: 10  Ctrl: a stack" % times,
-		HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.DIM)
+	var hint := "Can make %d.  Shift: 10  Ctrl: a stack" % times
+	if r.teaches != &"":
+		hint = "Learn it once, it's yours for good." if times > 0 else "Not enough to learn it yet."
+	g.draw_string(font, Vector2(d.position.x, b[0].position.y - 3), hint, HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.DIM)
 	for i in b.size():
 		var hot: bool = hover[0] == Area.CRAFT and hover[1] == i
+		if r.teaches != &"" and i != CraftBtn.CRAFT:
+			continue  # learning has no amount
 		match i:
 			CraftBtn.FIELD:
 				UiSkin.slot(g, b[i], UiSkin.SlotLook.SELECTED if _amount_typing else UiSkin.SlotLook.NORMAL)
@@ -1157,7 +1166,7 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 				UiSkin.button(g, b[i], "-" if i == CraftBtn.MINUS else "+", UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL)
 			_:
 				var state := UiSkin.Btn.DISABLED if times <= 0 else (UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL)
-				UiSkin.button(g, b[i], "Craft", state)
+				UiSkin.button(g, b[i], "Learn" if r.teaches != &"" else "Craft", state)
 
 
 ## One "icon name  have / need" line; returns the next y.
@@ -1357,6 +1366,8 @@ func _asked(r: RecipeData, shift: bool, ctrl: bool) -> int:
 func planned_crafts(r: RecipeData) -> int:
 	var shift := Input.is_key_pressed(KEY_SHIFT)
 	var ctrl := Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_META)
+	if r.teaches != &"":
+		return 1
 	var asked := _asked(r, shift, ctrl)
 	if shift or ctrl:
 		var can := _times(r)
@@ -1392,6 +1403,8 @@ func _amount_key(event: InputEvent) -> bool:
 func craft(r: RecipeData, times: int) -> int:
 	if times <= 0:
 		return 0
+	if r.teaches != &"":
+		return learn(r)
 	var result := Crafting.craft(world.character.inventory, r, times, _max_mana())
 	if int(result[1]) > 0:
 		world.request_spawn_drop(r.output, int(result[1]), world.player.chest(), Vector2.ZERO, true)
@@ -1399,6 +1412,21 @@ func craft(r: RecipeData, times: int) -> int:
 		EventBus.item_picked_up.emit(r.output, int(result[0]) * r.output_count)
 		EventBus.sound_requested.emit(&"craft", Vector2.INF)
 	return int(result[0])
+
+
+## A Spells tab recipe: pays the learn cost and teaches the spell. 1 if learned.
+func learn(r: RecipeData) -> int:
+	var c := world.character
+	if c.knows(r.teaches) or Crafting.times_craftable(c.inventory, r) <= 0:
+		return 0
+	for k: StringName in r.inputs:
+		c.inventory.remove(k, r.inputs[k])
+	c.learn_spell(r.teaches)
+	var spell := ItemData.find(r.output)
+	EventBus.debug_message.emit("You learned %s. Put it in a quick slot (Equipment, P)." % (spell.display_name if spell else String(r.teaches)))
+	EventBus.sound_requested.emit(&"craft", Vector2.INF)
+	selected_recipe = mini(selected_recipe, maxi(0, recipes().size() - 1))
+	return 1
 
 
 func _can_upgrade() -> bool:
@@ -1852,16 +1880,9 @@ static func scroll_lines(item: ItemData, c: CharacterData) -> PackedStringArray:
 					SpellData.Cast.WARD, SpellData.Cast.SUMMON, SpellData.Cast.CONJURE, SpellData.Cast.SENSE]:
 				cast_text += ". Lasts %s" % _secs_text(spell.duration)
 	out.append(cast_text + ".")
-	if c and c.knows(spell.id):
-		out.append("Right click: you already know %s." % spell.display_name)
-	else:
-		var cost := PackedStringArray()
-		for id: StringName in spell.learn_cost:
-			var it := ItemData.find(id)
-			cost.append("%d %s" % [spell.learn_cost[id], it.display_name if it else String(id)])
-		out.append("Right click at a Spell Weaving Table: learn %s (it joins your known spells)%s." % [
-			spell.display_name, (", uses " + ", ".join(cost)) if not cost.is_empty() else ""])
-	out.append("One use: the scroll is used up either way.")
+	if c and not c.knows(spell.id):
+		out.append("To learn %s for good: the Spells tab of a Spell Weaving Table." % spell.display_name)
+	out.append("One use: the scroll is used up.")
 	out.append(spell.display_name + ": " + spell.description)
 	return out
 

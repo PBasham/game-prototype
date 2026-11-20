@@ -149,7 +149,7 @@ in it is hit once per swing.
 | Wooden Sword | 8 | 4 | Workbench: 10 wood |
 | Copper Sword | 13 | 4.5 | Anvil: 8 copper bars, 2 wood |
 | Iron Sword | 18 | 4.75 | Anvil: 10 iron bars, 2 wood |
-| Fists (empty hands) | 3 | 4 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player. Light knockback, no stagger. Also with the held item put away (H). Pickups don't go into an empty slot in your hand unless nothing else has room, so an empty hand stays free for punching. |
+| Fists (empty hands) | 3 | 4 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player. Light knockback, no stagger. Also with the held item put away (H); pressing its hotbar number again takes it back out. Pickups don't go into an empty slot in your hand unless nothing else has room, so an empty hand stays free for punching. |
 
 ## Spells against enemies
 

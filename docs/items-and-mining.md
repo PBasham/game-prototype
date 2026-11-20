@@ -223,7 +223,8 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
   The equipped book powers every spell (`spell_power`) and limits the tier you can cast
   (`max_spell_tier`). Spells don't go in the book any more, and not on the hotbar.
 - **Spells you know** are kept on the character. A new character knows none. You learn
-  one from its **scroll** (made at the Spell Weaving Table, crafting.md).
+  them in the **Spells** tab of a Spell Weaving Table (crafting.md), for each spell's
+  `learn_cost`: copper bars by tier (4, 10, 20), or 20 Slime for Gel Cushion.
 - **Scrolls are one use.** Hold one:
   - **Left click: cast the spell once, free:** no mana, reagents, book or tier
     needed; it does share the spell's cooldown with casting it normally (a tier 3 spell works before you have a tier 3 book). Concentration spells
@@ -232,10 +233,6 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
     you don't know is put away). A charged bolt fires at full charge; a ritual still
     needs you to stand still. If the spell can't go off (no room, no target), the
     scroll isn't used. A scroll item's `scroll_seconds` overrides the time.
-  - **Right click, at a Spell Weaving Table: learn it** (it joins your known spells; put
-    it in a quick slot to cast it). Learning also uses the spell's `learn_cost`:
-    copper bars by tier (4, 10, 20), or 20 Slime for Gel Cushion. If you already know it,
-    or you're short, nothing is used.
   - The tooltip and a hint by the cursor spell both out. Console `devkit` teaches them all; `quick <slot> <spell>` puts one
   in a quick slot (q1..q8, e1..e8, z, x, c, buff1..buff6). How you learn spells in the real game
   comes later.
