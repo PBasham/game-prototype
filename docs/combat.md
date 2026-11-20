@@ -53,6 +53,9 @@ training dummy.
   `aimed_hit_width_tiles` (3) wide. The jab, cross and uppercut also turn the arm toward
   the cursor (`aims` and `aim_limit_degrees` 60 on the motions in
   `data/item_types/unarmed.tres`).
+- **Walls stop hits:** an enemy is only hit when there's a clear line from your chest to
+  its middle or its nearest edge. Solid blocks and closed doors block it
+  (`World.line_clear`, `World.blocks_hits`), so no hitting through a door or a wall.
 
 A hurt enemy shows a small health bar. On death it pops ("*pop*") and rolls its loot
 into item drops.

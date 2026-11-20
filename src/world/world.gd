@@ -810,6 +810,27 @@ func is_solid(tile: Vector2i) -> bool:
 	return b == WorldData.OUT_OF_BOUNDS or (b > 0 and blocks.collision(b) == TileDef.Collision.SOLID)
 
 
+## True when a tile stops a melee hit: a solid block or a closed door.
+func blocks_hits(tile: Vector2i) -> bool:
+	if is_solid(tile):
+		return true
+	var a := object_anchor(tile)
+	if a == NO_TILE:
+		return false
+	var def := object_at(a)
+	return def != null and def.blocks_movement
+
+
+## True when nothing blocks the straight line between two points (tiles stepped along
+## it every half tile, the end included; the start doesn't count).
+func line_clear(from: Vector2, to: Vector2) -> bool:
+	var steps := ceili(from.distance_to(to) / (TILE * 0.5))
+	for i in range(1, steps + 1):
+		if blocks_hits(world_to_tile(from.lerp(to, float(i) / steps))):
+			return false
+	return true
+
+
 ## Whether an object can go in a tile: no object there yet, no solid block, and
 ## something to hold it (see ObjectDef.needs_support).
 func can_place_object(tile: Vector2i, def: ObjectDef) -> bool:

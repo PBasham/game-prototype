@@ -144,6 +144,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Inventory open, pick up blocks / a wall / a chest / a sapling: over the world they
       show the placement preview and click to place from the mouse stack; non-placeables
       still throw.
+- [ ] Swords and punches don't hit through closed doors or walls; still hit downhill.
 - [ ] A magic bag on top of a workbench: right click opens the bag (and it's outlined).
 - [ ] Right click a buff (Arcane Edge, Familiar, Wisps) in the buff row: it ends.
       Potion sickness and Cozy don't.

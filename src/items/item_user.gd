@@ -327,7 +327,7 @@ func melee_hit(item: ItemData) -> int:
 		if node == p or not is_instance_valid(node):
 			continue
 		var r: Rect2 = node.call(&"hit_rect")
-		if not area.intersects(r):
+		if not area.intersects(r) or not _reachable(p.chest(), r):
 			continue
 		node.call(&"take_damage", amount, p)
 		if node.has_method(&"knock_back"):
@@ -337,6 +337,17 @@ func melee_hit(item: ItemData) -> int:
 			node.call(&"poison", coat.poison_dps, coat.poison_seconds)
 		hit += 1
 	return hit
+
+
+## Whether a melee hit from `from` reaches a target: a clear line to its center or to
+## its nearest point (walls and closed doors stop hits, so no hitting through them).
+func _reachable(from: Vector2, r: Rect2) -> bool:
+	r = r.grow(-minf(2.0, minf(r.size.x, r.size.y) * 0.25))  # its edges touch the ground
+	var near := Vector2(clampf(from.x, r.position.x, r.end.x), clampf(from.y, r.position.y, r.end.y))
+	for to: Vector2 in [r.get_center(), near, Vector2(near.x, r.get_center().y)]:
+		if world.line_clear(from, to):
+			return true
+	return false
 
 
 ## Casts the held scroll's spell once, free: no mana, reagents, cooldown, book or tier.

@@ -431,3 +431,23 @@ func test_swings_reach_downhill_and_punches_aim() -> void:
 	var capped := p.chest().y + reach * sin(deg_to_rad(60.0)) + w.item_user.aimed_hit_width_tiles * 0.5 * World.TILE
 	assert_almost_eq(r.end.y, capped, 0.6, "straight down is capped at 60 degrees")
 	u.cursor_override = Vector2.INF
+
+
+func test_melee_doesnt_hit_through_walls() -> void:
+	var p := w.player
+	var sword := ItemData.find(&"copper_sword")
+	var e := w.request_spawn_enemy(_slime(), p.global_position + Vector2(36 * p.facing, 0))
+	await wait_physics_frames(2)
+	w.item_user.cursor_override = p.chest() + Vector2(40 * p.facing, 0)
+	# A solid wall of blocks between you and the slime, floor to above your head.
+	var feet := w.world_to_tile(p.global_position)
+	var wall_x := feet.x + 2 * p.facing
+	for dy in range(-12, 0):
+		w.request_set_block(Vector2i(wall_x, feet.y + dy), w.blocks.index_of(&"stone"))
+	assert_eq(w.item_user.melee_hit(sword), 0, "the wall is in the way")
+	assert_eq(e.health, _slime().max_health)
+	for dy in range(-12, 0):
+		w.request_set_block(Vector2i(wall_x, feet.y + dy), WorldData.AIR)
+	assert_eq(w.item_user.melee_hit(sword), 1, "clear again")
+	e.queue_free()
+	w.item_user.cursor_override = Vector2.INF

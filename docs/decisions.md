@@ -39,6 +39,9 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **No melee through walls (bug, Patrick):** the swing box ignored terrain, so a sword
+  hit a slime through a closed door. Hits now need a clear line (blocks and closed doors
+  stop it).
 - **Magic bag over furniture (Patrick):** clicking a bag that landed on a workbench opened
   the workbench. Interactable nodes (the bag) now come first, and the hover outline
   shows the bag.
