@@ -57,6 +57,9 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 
 @export var cast := Cast.TOOL
 @export var group := Group.ATTACK
+## Listed in the Spell Weaving Table's Spells tab for its learn_cost. Off for spells you
+## can only learn from a scroll you find: they show up there while you carry one.
+@export var learnable_at_table := true
 ## From a quick slot (Q/E wheels, Z X C): 0 = by cast (see casts_from_quick_slot),
 ## 1 = cast right away, 2 = put it in your hand. The player can flip it per slot.
 @export_enum("By cast", "Cast right away", "Put in hand") var quick_default := 0

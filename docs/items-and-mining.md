@@ -40,6 +40,10 @@ the panel lays itself out from it.
 - Ctrl + right click: equip armor, an accessory, a book or a conduit (swaps with the
   equipped one). On an equipment slot (or shift + click it): back into the inventory.
 - Click the world with a stack on the mouse: throw it. Closing the panel puts it back.
+  A **placeable** stack (blocks, walls, furniture, saplings, grass seeds) isn't thrown:
+  over the world your hand holds it, with the usual placement preview, and left / right
+  click place it from the mouse stack (not the hotbar), like a hotbar item
+  (`Player.mouse_stack`, set by the HUD; placing uses `Player.take_held`).
 - Hover a slot for its tooltip.
 - To the right: the **Craft (K)**, **Equip (P)** and **Spells (L)** buttons. The
   inventory holds items only.
@@ -57,8 +61,8 @@ the panel lays itself out from it.
   the two are centered together. Each keeps its spot until you quit. Opening either
   opens the inventory; closing the inventory closes them.
 
-While the mouse is over the hotbar or panel, you're carrying a stack, or the spell wheel
-is open, clicks don't use items.
+While the mouse is over the hotbar or panel, you're carrying a stack that can't be
+placed, or the spell wheel is open, clicks don't use items.
 
 Items with no use (wood, books, conduits) are just held: clicking doesn't swing.
 

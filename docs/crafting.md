@@ -279,6 +279,10 @@ The **Spell Weaving Table** window has three tabs:
   cheapest tier first; **Learn** uses its `learn_cost` (copper bars by tier: 4, 10, 20;
   20 Slime for Gel Cushion) and it joins your known spells. No scroll needed. A spell
   above your book's tier can be learned; it says it needs a better book to cast.
+  **Found scrolls:** if you carry a scroll of a spell you don't know, its Learn recipe
+  costs just that scroll ("From your scroll (used up)"). That's the only way to learn a
+  spell with `learnable_at_table = false` (SpellData), like a loot-only spell; those
+  aren't listed until you carry their scroll.
   Recipes come from `Crafting.learn_recipes` (made on the fly, `RecipeData.teaches`).
 - **Scrolls:** the scroll recipes (one-use casts). A spell you know costs
   half the materials, rounded up (`World.known_scroll_discount`, 0.5); the Blank Scroll
@@ -290,6 +294,10 @@ The **Spell Weaving Table** window has three tabs:
   used, so you can copy as many as you have Blank Scrolls. This is also how you'll make
   more of spells that can't be crafted at all. Recipes come from `Crafting.copy_recipes`
   (made on the fly, not data files). Later: mastery of the spell as a requirement too.
+
+Under the tabs: group buttons (All, Tools, Movement, Attack, Defense, Light, the same
+groups as the Spell Index) and a search box (click it and type; Esc, Enter or a click
+elsewhere stops typing). They filter all three tabs by the spell each recipe is about.
 
 Tabs per station are `Hud.STATION_TABS` (Create and Empower join later). A recipe's
 `requires_max_mana` is checked, never used up.

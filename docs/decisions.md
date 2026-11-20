@@ -33,6 +33,14 @@ Newest first. Each entry: what was decided, why, and what it affects.
   surface layer reaching into shallow caves.
 - **Fists usable (Patrick):** punching works with the held item put away (H; it didn't),
   and pickups skip an empty slot in your hand unless nothing else has room.
+- **Found scrolls teach again, at the table (Patrick):** carrying a scroll of a spell
+  you don't know makes the Spells tab offer Learn for just that scroll. Spells marked
+  `learnable_at_table = false` (loot-only ones, say a Magma Bomb later) can only be
+  learned this way.
+- **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
+  Index, on all three tabs.
+- **Placing from the mouse stack (Patrick):** with the inventory open, a placeable
+  stack on the mouse is held and placed like a hotbar item instead of being thrown.
 
 ## 2026-11-19: Phase 11, spell controls (branch phase-11-spell-controls)
 

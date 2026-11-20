@@ -35,25 +35,40 @@ static func for_crafter(r: RecipeData, c: CharacterData, share: float) -> Recipe
 ## Copy tab: a recipe per spell the character knows: a Blank Scroll makes that spell's
 ## scroll, if their max mana is at least `max_mana_by_tier` for the spell's tier (a
 ## stronger mage for stronger spells). Mana isn't used up.
-## The Spell Weaving Table's Spells tab: one recipe per spell you don't know yet, its
-## inputs the spell's learn_cost (copper bars by tier, slime for Gel Cushion). Crafting
-## it teaches the spell; no scroll needed. Cheapest tier first.
+## The Spell Weaving Table's Spells tab: one recipe per spell you don't know yet. If you
+## carry a scroll of it, learning uses up that scroll (found scrolls teach spells you
+## can't learn otherwise); else its learn_cost (copper bars by tier, slime for Gel
+## Cushion), for spells that are `learnable_at_table`. Crafting it teaches the spell.
+## Cheapest tier first.
 static func learn_recipes(c: CharacterData) -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	if c == null:
 		return out
+	var scrolls := {}
+	for i in c.inventory.size:
+		var it := c.inventory.item(i)
+		if it and it.teaches_spell != &"":
+			scrolls[it.teaches_spell] = it.id
 	for d in Registry.get_all(&"spells"):
 		var spell := d as SpellData
 		if spell == null or c.knows(spell.id):
+			continue
+		var from_scroll: StringName = scrolls.get(spell.id, &"")
+		if from_scroll == &"" and not spell.learnable_at_table:
 			continue
 		var r := RecipeData.new()
 		r.id = StringName("learn_" + String(spell.id))
 		r.display_name = "Learn: %s" % spell.display_name
 		r.station = &"spell_weaving"
-		r.inputs = spell.learn_cost.duplicate()
+		if from_scroll != &"":
+			r.inputs[from_scroll] = 1
+		else:
+			r.inputs.assign(spell.learn_cost)
 		r.output = ItemData.spell_key(spell.id)
 		r.teaches = spell.id
 		r.note = "Tier %d. Yours for good." % spell.tier
+		if from_scroll != &"":
+			r.note = "From your scroll (used up). Yours for good."
 		if spell.tier > c.max_spell_tier():
 			r.note = "Tier %d: needs a tier %d book to cast." % [spell.tier, spell.tier]
 		out.append(r)

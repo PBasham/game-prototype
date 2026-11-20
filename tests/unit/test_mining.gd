@@ -670,3 +670,42 @@ func test_iron_generates_deeper_than_copper() -> void:
 				deep += 1
 	assert_eq(shallow, 0, "none in the first 40 tiles")
 	assert_gt(deep, 20, "some deeper down")
+
+
+func test_placeable_stack_on_the_mouse_places_with_the_inventory_open() -> void:
+	var hud := w.hud
+	var p := w.player
+	hud.set_open(true)
+	hud.cursor_id = &"dirt"
+	hud.cursor_count = 2
+	await wait_process_frames(3)
+	if hud._over_pane() != null:
+		pending("the headless mouse sits over a window")
+		return
+	assert_eq(p.mouse_stack, ItemData.find(&"dirt"), "the hand holds the mouse stack")
+	assert_eq(p.held_item, ItemData.find(&"dirt"))
+	assert_false(p.input_blocked, "clicks reach the world")
+	var u := w.item_user
+	var feet := w.world_to_tile(p.global_position)
+	var t := Vector2i(feet.x + 4, feet.y - 1)
+	var at := Vector2(t * World.TILE) + Vector2(4, 4)
+	u.cursor_override = at
+	u.update_target(at, false)
+	assert_eq(u.mode, ItemUser.Mode.PLACE_BLOCK, "the preview shows")
+	var slot_counts := w.character.inventory.counts.duplicate()
+	p.use_back = false
+	p.use_impact.emit(p.held_item)
+	assert_eq(w.data.get_block(t.x, t.y), w.blocks.index_of(&"dirt"))
+	assert_eq(hud.cursor_count, 1, "taken from the mouse stack")
+	assert_eq(w.character.inventory.counts, slot_counts, "not from the hotbar")
+	# A non-placeable stack still blocks and throws as before.
+	hud.cursor_id = &"stick"
+	hud.cursor_count = 1
+	await wait_process_frames(3)
+	assert_null(p.mouse_stack)
+	assert_true(p.input_blocked)
+	hud.cursor_count = 0
+	hud.cursor_id = &""
+	hud.set_open(false)
+	await wait_process_frames(3)
+	assert_null(p.mouse_stack)

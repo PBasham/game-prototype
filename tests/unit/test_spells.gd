@@ -178,6 +178,7 @@ func test_spell_weaving_table_teaches_spells() -> void:
 	p.select_slot(0)
 	assert_eq(w.item_user._mode_for(p.held_item, true), ItemUser.Mode.NONE)
 	assert_eq(w.item_user._mode_for(p.held_item, false), ItemUser.Mode.SCROLL, "left click casts")
+	c.inventory.clear(0)  # no scroll: learning uses bars
 	# The table's tabs.
 	var a := w.world_to_tile(p.global_position) + Vector2i(4, -1)
 	assert_true(w.request_place_object(a, w.objects.index_of(&"spell_weaving_table")))
@@ -198,8 +199,31 @@ func test_spell_weaving_table_teaches_spells() -> void:
 	assert_eq(w.hud.craft(blink, 5), 1)
 	assert_true(c.knows(&"blink"))
 	assert_eq(c.inventory.count_of(&"copper_bar"), 2, "4 bars used")
-	assert_eq(c.inventory.counts[0], 2, "scrolls untouched")
 	assert_does_not_have(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.teaches), &"blink")
+	# A found scroll of an unknown spell: learning uses the scroll, not bars, even for a
+	# spell the table doesn't teach.
+	var drill_spell := _spell(&"hyper_drill")
+	drill_spell.learnable_at_table = false
+	w.hud._recipe_key = ""  # spell data changed under the cache
+	assert_does_not_have(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.teaches), &"hyper_drill",
+		"not learnable at the table")
+	c.inventory.set_slot(5, &"scroll_hyper_drill", 1)
+	var from_scroll: Array = w.hud.recipes().filter(func(r: RecipeData) -> bool: return r.teaches == &"hyper_drill")
+	assert_eq(from_scroll.size(), 1, "it shows up while you carry its scroll")
+	var bars := c.inventory.count_of(&"copper_bar")
+	assert_eq(w.hud.craft(from_scroll[0], 1), 1)
+	assert_true(c.knows(&"hyper_drill"))
+	assert_true(c.inventory.is_empty(5), "the scroll is used up")
+	assert_eq(c.inventory.count_of(&"copper_bar"), bars, "no bars")
+	drill_spell.learnable_at_table = true
+	# Group buttons and search narrow every tab.
+	w.hud.weave_group = SpellData.Group.MOVEMENT
+	assert_true(w.hud.recipes().all(func(r: RecipeData) -> bool: return Hud.recipe_spell(r).group == SpellData.Group.MOVEMENT))
+	w.hud.weave_group = -1
+	w.hud.weave_search = "blin"
+	w.hud.craft_tab = 1
+	assert_eq(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.output), [&"scroll_blink"] as Array)
+	w.hud.weave_search = ""
 	w.hud.craft_tab = 1
 	assert_has(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.output), &"scroll_blink", "Scrolls tab")
 	w.hud.craft_tab = 2

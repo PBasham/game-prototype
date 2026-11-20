@@ -615,8 +615,8 @@ func _on_impact(item: ItemData) -> void:
 		Mode.PLACE_OBJECT:
 			var id := world.objects.index_of(item.places_object)
 			for t in valid:
-				if inv.counts[p.selected] > 0 and world.request_place_object(t, id):
-					inv.take(p.selected, 1)
+				if p.held_count() > 0 and world.request_place_object(t, id):
+					p.take_held()
 		Mode.CAST:
 			var spell := item as SpellData
 			# Mana is checked before the reagents are used up, so a failed cast costs nothing.
@@ -633,22 +633,22 @@ func _on_impact(item: ItemData) -> void:
 		Mode.PLACE_BLOCK:
 			var id := world.blocks.index_of(item.places_block)
 			for t in valid:
-				if inv.counts[p.selected] > 0 and world.request_set_block(t, id):
-					inv.take(p.selected, 1)
+				if p.held_count() > 0 and world.request_set_block(t, id):
+					p.take_held()
 		Mode.PLACE_WALL:
 			var id := world.walls.index_of(item.places_wall)
 			for t in valid:
-				if inv.counts[p.selected] > 0 and world.request_set_wall(t, id):
-					inv.take(p.selected, 1)
+				if p.held_count() > 0 and world.request_set_wall(t, id):
+					p.take_held()
 		Mode.PLANT_TREE:
 			for g in valid:
-				if world.plants.request_plant_tree(g):
-					inv.take(p.selected, 1)
+				if p.held_count() > 0 and world.plants.request_plant_tree(g):
+					p.take_held()
 		Mode.PLANT_GRASS:
 			var grass := world.blocks.index_of(&"grass")
 			for t in valid:
-				if inv.counts[p.selected] > 0 and world.request_set_block(t, grass):
-					inv.take(p.selected, 1)
+				if p.held_count() > 0 and world.request_set_block(t, grass):
+					p.take_held()
 	if not back and (item.kind == ItemData.Kind.TOOL or item.kind == ItemData.Kind.WEAPON):
 		_cut_flowers_in_swing()
 

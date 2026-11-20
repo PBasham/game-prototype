@@ -439,9 +439,18 @@ func is_spell_active(spell: SpellData) -> bool:
 	return false
 
 
+## A placeable stack on the mouse (inventory open): held and placed from instead of the
+## hotbar slot, with the same preview. The HUD sets it; `mouse_take` takes from it.
+var mouse_stack: ItemData = null
+var mouse_take: Callable
+var mouse_left: Callable
+
+
 ## Holds whatever is in the selected slot (after the inventory or equipment changed).
 func refresh_held() -> void:
 	var item: ItemData = _readied if selected < 0 else (character.inventory.item(selected) if character else null)
+	if mouse_stack:
+		item = mouse_stack
 	var new_look := _look_for(item)
 	if item == held_item and new_look == held:
 		return
@@ -519,6 +528,20 @@ func pick_up(item_id: StringName, count: int) -> int:
 	var inv := character.inventory
 	var keep := selected if selected >= 0 and selected < inv.size and inv.is_empty(selected) else -1
 	return inv.add(item_id, count, keep)
+
+
+## How many of the held item there are to place: the mouse stack's, else the slot's.
+func held_count() -> int:
+	if mouse_stack:
+		return int(mouse_left.call()) if mouse_left.is_valid() else 0
+	return character.inventory.counts[selected] if character and selected >= 0 else 0
+
+
+## Uses up one of the held item (placing): from the mouse stack, else the hotbar slot.
+func take_held() -> bool:
+	if mouse_stack:
+		return mouse_take.is_valid() and bool(mouse_take.call())
+	return character != null and selected >= 0 and character.inventory.take(selected, 1) > 0
 
 
 ## Puts the held item away or takes it back out (H).

@@ -226,6 +226,11 @@ func can_display() -> bool:
 	return kind in [Kind.MATERIAL, Kind.FOOD, Kind.SEED, Kind.SCROLL]
 
 
+## Places something in the world (a block, wall, furniture, a sapling or grass seeds).
+func is_placeable() -> bool:
+	return places_block != &"" or places_wall != &"" or places_object != &"" or plants != &""
+
+
 func drop_pixels() -> float:
 	if drop_size > 0:
 		return float(drop_size)

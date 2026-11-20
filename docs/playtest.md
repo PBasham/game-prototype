@@ -138,6 +138,12 @@ guesses; the docs listed say where each tunable lives.
 - [ ] New caves (F6 or unexplored areas): tunnels tall enough to walk and hop through.
 - [ ] Craft window: hold Shift or Ctrl, the amount and costs change to match.
 - [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).
+- [ ] Spell Weaving Table: group buttons and search filter all three tabs.
+- [ ] Carry an unknown spell's scroll to the table: Spells tab offers Learn for just the
+      scroll (it's used up; you know the spell for good).
+- [ ] Inventory open, pick up blocks / a wall / a chest / a sapling: over the world they
+      show the placement preview and click to place from the mouse stack; non-placeables
+      still throw.
 
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time

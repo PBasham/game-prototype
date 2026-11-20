@@ -33,7 +33,7 @@ const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
 enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CHEST, CHEST_TAKE,
-	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB }
+	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
 const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
@@ -100,6 +100,12 @@ var _amount_typing := false
 var _amount_fresh := false
 ## Which tab of a station with tabs is shown (STATION_TABS).
 var craft_tab := 0
+## Spell Weaving Table filters (like the Spell Index): -1 = All, else a SpellData.Group,
+## and the search text (typing in it while `weave_searching`).
+var weave_group := -1
+var weave_search := ""
+var weave_searching := false
+const FILTER_H := 12
 var _recipe_cache: Array[RecipeData] = []
 var _recipe_key := ""
 ## First crafting row shown (mouse wheel over the list scrolls).
@@ -261,6 +267,9 @@ func _input(event: InputEvent) -> void:
 	if _spells.searching and _spells.search_key(event as InputEventKey):
 		get_viewport().set_input_as_handled()
 		return
+	if weave_searching and _weave_search_key(event as InputEventKey):
+		get_viewport().set_input_as_handled()
+		return
 	var mod := event as InputEventKey
 	if mod and mod.keycode in [KEY_SHIFT, KEY_CTRL, KEY_META] and _craft.visible:
 		_craft.queue_redraw()  # the amount and costs follow Shift / Ctrl
@@ -272,14 +281,16 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	# A click on the world with a stack on the mouse throws it.
 	var mb := event as InputEventMouseButton
-	if open and mb and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and cursor_count > 0:
+	if open and mb and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and cursor_count > 0 \
+			and _cursor_placeable() == null:
 		_throw_cursor()
 		get_viewport().set_input_as_handled()
 
 
 func _process(delta: float) -> void:
 	_update_notes(delta)
-	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching
+	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
+		or weave_searching
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
 		set_open(not open)
@@ -292,7 +303,16 @@ func _process(delta: float) -> void:
 	_update_wheel(paused)
 	var p := world.player
 	var over := _over_pane()
-	p.input_blocked = over != null or cursor_count > 0 or paused or wheel_open
+	# A placeable stack on the mouse places into the world like the hotbar (with the preview).
+	var place := _cursor_placeable() if over == null and not paused and not wheel_open else null
+	if p.mouse_stack != place:
+		p.mouse_stack = place
+		p.mouse_take = _take_cursor_one
+		p.mouse_left = func() -> int: return cursor_count
+		if place and p.stowed:
+			p.toggle_stowed()  # placing takes the hand back out
+		p.refresh_held()
+	p.input_blocked = over != null or (cursor_count > 0 and place == null) or paused or wheel_open
 	_update_tooltip(over if over else (_buffs if _buff_at_mouse() != &"" else null))
 	if (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
 		close_window()  # walked away from the station or chest
@@ -478,6 +498,8 @@ func _layout() -> void:
 	_buffs.size = Vector2(STATUS_SIZE.x, BUFF_STEP)
 	_buffs.position = _status.position - Vector2(0, BUFF_STEP + 8)
 	_craft.visible = open and crafting
+	if weave_searching and not (_craft.visible and _weave_filters_shown()):
+		set_weave_searching(false)
 	_craft.position = Vector2(view.x - CRAFT_SIZE.x - window_right, window_top)
 	_chest.visible = open and _store_open()
 	if _chest.visible:
@@ -900,8 +922,9 @@ func _draw_chest(g: Control) -> void:
 func recipes() -> Array[RecipeData]:
 	var def := world.object_at(station) if station != World.NO_TILE else null
 	var c := world.character
-	var key := "%s|%d|%d|%d|%s|%s" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
-		hash(c.known_spells) if c else 0, world.known_scroll_discount, world.copy_max_mana_by_tier]
+	var key := "%s|%d|%d|%d|%s|%s|%d|%s|%d" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
+		hash(c.known_spells) if c else 0, world.known_scroll_discount, world.copy_max_mana_by_tier, weave_group,
+		weave_search, hash(_scrolls_carried()) if def and def.station == &"spell_weaving" else 0]
 	if key == _recipe_key:
 		return _recipe_cache
 	var list: Array[RecipeData] = []
@@ -919,9 +942,22 @@ func recipes() -> Array[RecipeData]:
 				if t != String(tabs[craft_tab]):
 					continue
 			list.append(Crafting.for_crafter(r, c, world.known_scroll_discount))
+	if _weave_filters_shown():
+		list = list.filter(_weave_match)
 	_recipe_key = key
 	_recipe_cache = list
 	return list
+
+
+## The spell scrolls in the inventory (ids), for the Spells tab's "learn from a scroll".
+func _scrolls_carried() -> Array[StringName]:
+	var out: Array[StringName] = []
+	var inv := world.character.inventory
+	for i in inv.size:
+		var it := inv.item(i)
+		if it and it.teaches_spell != &"" and not it.id in out:
+			out.append(it.id)
+	return out
 
 
 ## Tab names for the open station (none for most).
@@ -934,9 +970,82 @@ func _tab_rect(i: int) -> Rect2:
 	return Rect2(PAD + i * 58, 22, 56, TAB_H)
 
 
-## Below the tabs, when there are any.
+## Below the tabs (and the spell filters), when there are any.
 func _body_top() -> float:
-	return 22.0 + (TAB_H + 3.0 if not _tabs().is_empty() else 0.0)
+	return 22.0 + (TAB_H + 3.0 if not _tabs().is_empty() else 0.0) + (FILTER_H + 3.0 if _weave_filters_shown() else 0.0)
+
+
+## The Spell Weaving Table shows group buttons and a search box above its lists.
+func _weave_filters_shown() -> bool:
+	var def := _station_def()
+	return def != null and def.station == &"spell_weaving"
+
+
+func _filter_top() -> float:
+	return 22.0 + TAB_H + 3.0
+
+
+func _group_rect(i: int) -> Rect2:
+	var font := ThemeDB.fallback_font
+	var x := float(PAD)
+	for k in range(-1, i):
+		x += _group_w(font, k) + 2
+	return Rect2(x, _filter_top(), _group_w(font, i), FILTER_H)
+
+
+func _group_w(font: Font, i: int) -> float:
+	var label := "All" if i < 0 else SpellData.GROUP_NAMES[i]
+	return font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x + 7
+
+
+func _weave_search_rect() -> Rect2:
+	var x := _group_rect(SpellData.GROUP_NAMES.size() - 1).end.x + 4
+	return Rect2(x, _filter_top(), CRAFT_SIZE.x - PAD - x, FILTER_H)
+
+
+## The spell a Spell Weaving Table recipe is about (learning, a scroll, a copy).
+static func recipe_spell(r: RecipeData) -> SpellData:
+	if r.teaches != &"":
+		return ItemData.find(ItemData.spell_key(r.teaches)) as SpellData
+	var out := ItemData.find(r.output)
+	if out and out.teaches_spell != &"":
+		return ItemData.find(ItemData.spell_key(out.teaches_spell)) as SpellData
+	return null
+
+
+func _weave_match(r: RecipeData) -> bool:
+	var spell := recipe_spell(r)
+	if spell == null:
+		return weave_group < 0 and weave_search == ""
+	if weave_group >= 0 and spell.group != weave_group:
+		return false
+	var q := weave_search.strip_edges().to_lower()
+	return q == "" or q in spell.display_name.to_lower() or q in spell.description.to_lower()
+
+
+func set_weave_searching(on: bool) -> void:
+	weave_searching = on
+	world.player.typing = on
+	_craft.queue_redraw()
+
+
+## A key while typing in the Spell Weaving Table's search box. True if used.
+func _weave_search_key(k: InputEventKey) -> bool:
+	if not weave_searching or k == null or not k.pressed:
+		return false
+	if k.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE]:
+		set_weave_searching(false)
+	elif k.keycode == KEY_BACKSPACE:
+		weave_search = weave_search.substr(0, maxi(0, weave_search.length() - 1))
+	elif k.unicode >= 32:
+		weave_search += char(k.unicode)
+	else:
+		return true
+	selected_recipe = 0
+	_craft_scroll = 0
+	_recipe_key = ""
+	_craft.queue_redraw()
+	return true
 
 
 ## The crafter's max mana (some recipes need a big enough pool).
@@ -1004,6 +1113,12 @@ func _craft_hit(local: Vector2) -> Array:
 	for i in _tabs().size():
 		if _tab_rect(i).has_point(local):
 			return [Area.TAB, i]
+	if _weave_filters_shown():
+		for i in range(-1, SpellData.GROUP_NAMES.size()):
+			if _group_rect(i).has_point(local):
+				return [Area.GROUP, i]
+		if _weave_search_rect().has_point(local):
+			return [Area.SEARCH, 0]
 	for i in range(_craft_scroll, mini(_entry_count(), _craft_scroll + _rows_shown())):
 		if _row_rect(i).has_point(local):
 			return [Area.RECIPE, i]
@@ -1028,6 +1143,18 @@ func _draw_crafting(g: Control) -> void:
 	for i in tabs.size():
 		var state := UiSkin.Btn.PRESSED if i == craft_tab else (UiSkin.Btn.HOT if hover[0] == Area.TAB and hover[1] == i else UiSkin.Btn.NORMAL)
 		UiSkin.button(g, _tab_rect(i), String(tabs[i]), state)
+	if _weave_filters_shown():
+		for i in range(-1, SpellData.GROUP_NAMES.size()):
+			var label := "All" if i < 0 else SpellData.GROUP_NAMES[i]
+			var gs := UiSkin.Btn.PRESSED if i == weave_group else (UiSkin.Btn.HOT if hover[0] == Area.GROUP and hover[1] == i else UiSkin.Btn.NORMAL)
+			UiSkin.button(g, _group_rect(i), label, gs)
+		var sr := _weave_search_rect()
+		UiSkin.slot(g, sr, UiSkin.SlotLook.SELECTED if weave_searching else (UiSkin.SlotLook.HOT if hover[0] == Area.SEARCH else UiSkin.SlotLook.NORMAL))
+		var stext := weave_search + ("_" if weave_searching and fmod(Time.get_ticks_msec() / 500.0, 2.0) < 1.0 else "")
+		if weave_search == "" and not weave_searching:
+			stext = "Search..."
+		g.draw_string(font, sr.position + Vector2(3, 8), stext, HORIZONTAL_ALIGNMENT_LEFT, sr.size.x - 6, 6,
+			UiSkin.TEXT if weave_search != "" or weave_searching else UiSkin.DIM)
 	var list := recipes()
 	selected_recipe = clampi(selected_recipe, 0, maxi(_entry_count() - 1, 0))
 	# The list.
@@ -1301,6 +1428,8 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 	var h := _craft_hit(mb.position)
 	if not (h[0] == Area.CRAFT and h[1] == CraftBtn.FIELD):
 		_amount_typing = false
+	if weave_searching and h[0] != Area.SEARCH:
+		set_weave_searching(false)
 	if mb.button_index == MOUSE_BUTTON_RIGHT and h[0] == Area.CRAFT and h[1] in [CraftBtn.MINUS, CraftBtn.PLUS]:
 		set_craft_amount(craft_amount + (10 if h[1] == CraftBtn.PLUS else -10))
 		_redraw()
@@ -1314,6 +1443,12 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 			craft_tab = h[1]
 			selected_recipe = 0
 			_craft_scroll = 0
+		Area.GROUP:
+			weave_group = h[1]
+			selected_recipe = 0
+			_craft_scroll = 0
+		Area.SEARCH:
+			set_weave_searching(not weave_searching)
 		Area.RECIPE:
 			if selected_recipe != h[1]:
 				craft_amount = 1
@@ -1622,6 +1757,24 @@ func _cursor_is_spell() -> bool:
 
 func _cursor_spell() -> StringName:
 	return StringName(String(cursor_id).trim_prefix(ItemData.SPELL_PREFIX))
+
+
+## The stack on the mouse if it places something in the world (inventory open), else null.
+func _cursor_placeable() -> ItemData:
+	if not open or cursor_count <= 0:
+		return null
+	var item := ItemData.find(cursor_id)
+	return item if item and item.is_placeable() else null
+
+
+## Uses up one item of the mouse stack (it was placed). False when it's empty.
+func _take_cursor_one() -> bool:
+	if cursor_count <= 0:
+		return false
+	cursor_count -= 1
+	if cursor_count == 0:
+		cursor_id = &""
+	return true
 
 
 func _throw_cursor() -> void:
