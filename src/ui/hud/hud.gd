@@ -76,6 +76,8 @@ var crafting := false
 var equipping := false
 ## The Spell Index (L) is open.
 var spells_open := false
+## Dev builds: the Dev items window (F7) is shown.
+var dev_items_open := false
 ## Stack held on the mouse (inventory open). "spell:<id>" = a spell being placed.
 var cursor_id: StringName = &""
 var cursor_count := 0
@@ -116,6 +118,7 @@ var _craft: Pane
 var _chest: Pane
 var _equip: EquipmentWindow
 var _spells: SpellWindow
+var _dev_items: DevItemsWindow
 var _status: Pane
 ## Buff icons with their time left, above the status panel.
 var _buffs: Pane
@@ -134,6 +137,9 @@ var _quick: Pane
 var _name_label: Label
 ## The held spell's icon, left of its name (a spell in hand).
 var _name_icon: TextureRect
+## The spell you're concentrating on (Fly, Mend...): its icon and name, under that.
+var _conc_icon: TextureRect
+var _conc_label: Label
 var _tooltip: PanelContainer
 var _tooltip_text: Label
 ## Crafting's materials (inventory + nearby chests), rebuilt each frame (craft_stock).
@@ -180,6 +186,9 @@ func _ready() -> void:
 	_spells = SpellWindow.new(self)
 	_spells.close_pressed.connect(toggle_spells)
 	add_child(_spells)
+	_dev_items = DevItemsWindow.new(self)
+	_dev_items.close_pressed.connect(toggle_dev_items)
+	add_child(_dev_items)
 	_quick = _pane(_draw_quick, func(_p: Pane, _e: InputEvent) -> void: pass)
 	_quick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_buffs = _pane(_draw_buffs, func(_p: Pane, _e: InputEvent) -> void: pass)
@@ -206,6 +215,11 @@ func _ready() -> void:
 	_name_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_name_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_name_icon)
+	_conc_icon = _name_icon.duplicate() as TextureRect
+	add_child(_conc_icon)
+	_conc_label = _name_label.duplicate() as Label
+	_conc_label.add_theme_color_override("font_color", Color("c9a8ff"))
+	add_child(_conc_label)
 	_tooltip = PanelContainer.new()
 	_tooltip.add_theme_stylebox_override("panel", UiSkin.box("panel", 6.0))
 	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -287,9 +301,18 @@ func _redraw() -> void:
 	_chest.queue_redraw()
 	_equip.queue_redraw()
 	_spells.queue_redraw()
+	_dev_items.queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key and key.pressed and not key.echo and key.physical_keycode == KEY_F7 and OS.is_debug_build():
+		toggle_dev_items()
+		get_viewport().set_input_as_handled()
+		return
+	if _dev_items.searching and _dev_items.search_key(key):
+		get_viewport().set_input_as_handled()
+		return
 	if _amount_typing and _amount_key(event):
 		get_viewport().set_input_as_handled()  # digits don't pick hotbar slots
 		return
@@ -320,6 +343,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	_update_notes(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
+		or _dev_items.searching \
 		or weave_searching
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
@@ -362,13 +386,19 @@ func _process(delta: float) -> void:
 	_name_icon.texture = item.icon if spell_in_hand else null
 	_name_label.position.x = MARGIN.x + 2 + (14 if _name_icon.visible else 0)
 	_name_label.add_theme_color_override("font_color", Color("9fd4ff") if spell_in_hand else UiSkin.TEXT)
-	if p.concentration:
-		_name_label.text += ("\n" if _name_label.text != "" else "") + "Concentrating: %s" % p.concentration.display_name
+	# Concentrating: the spell's icon and name in violet, on the next line.
+	var conc := p.concentration
+	_conc_icon.visible = conc != null and conc.icon != null
+	_conc_icon.texture = conc.icon if conc else null
+	_conc_label.visible = conc != null
+	_conc_label.text = conc.display_name if conc else ""
+	_conc_label.position = Vector2(MARGIN.x + 2 + (14 if _conc_icon.visible else 0), _name_label.position.y + 14)
+	_conc_icon.position = Vector2(MARGIN.x + 2, _name_label.position.y + 15)
 
 
 ## The window under the mouse, or null.
 func _over_pane() -> Control:
-	for pane: Control in [_spells, _equip, _craft, _chest, _inv]:
+	for pane: Control in [_dev_items, _spells, _equip, _craft, _chest, _inv]:
 		if pane.visible and pane.get_global_rect().has_point(pane.get_global_mouse_position()):
 			return pane
 	return null
@@ -384,6 +414,7 @@ func set_open(value: bool) -> void:
 		crafting = false
 		equipping = false
 		spells_open = false
+		dev_items_open = false
 		if cursor_count > 0:
 			if _cursor_is_spell():
 				_clear_cursor()  # a spell being placed just goes back
@@ -414,6 +445,32 @@ func toggle_equipment() -> void:
 		open = true
 		_equip.refresh_look()
 	_layout()
+
+
+## F7 (dev builds) or console `creative`: the Dev items window (with the inventory).
+func toggle_dev_items() -> void:
+	dev_items_open = not dev_items_open
+	if dev_items_open:
+		open = true
+	_layout()
+
+
+## Puts `count` of an item on the mouse (the Dev items window). The same item adds up
+## to a stack; something else on the mouse goes back to the inventory first.
+func give_cursor(item_id: StringName, count: int) -> void:
+	if cursor_count > 0 and cursor_id != item_id:
+		if _cursor_is_spell():
+			_clear_cursor()
+		else:
+			var left := world.character.inventory.add(cursor_id, cursor_count)
+			cursor_count = left
+			if left > 0:
+				_throw_cursor()
+			_clear_cursor()
+	var cap := Inventory.max_stack(item_id)
+	cursor_count = mini(cap, (cursor_count if cursor_id == item_id else 0) + count)
+	cursor_id = item_id
+	_redraw()
 
 
 ## L: the Spell Index (with the inventory), or closes it.
@@ -554,6 +611,14 @@ func _layout() -> void:
 		_equip.refresh_look()
 	else:
 		_equip.visible = false
+	if open and dev_items_open:
+		var screen := _view_size()
+		_dev_items.layout()
+		_dev_items.show_at(Vector2(screen.x - _dev_items.size.x - 8, screen.y - _dev_items.size.y - 8))
+	else:
+		_dev_items.visible = false
+		if _dev_items.searching:
+			_dev_items.set_searching(false)
 	if open and spells_open:
 		_spells.show_at(_spell_window_spot())
 	else:

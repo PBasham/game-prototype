@@ -171,6 +171,11 @@ Defaults are written by `tools/make_items.gd` (items, spells, objects and recipe
 
 ## Furniture and stations: `data/objects/<id>.tres` (`ObjectDef`)
 
+**Facing:** furniture you place while facing left is mirrored, so it faces the way you
+did (a bed's headboard on the other side). `ObjectDef.flips` (on by default) turns it
+off for a piece; doors and display spots never flip. Saved with the world (meta
+"flipped", `World.flipped`).
+
 Furniture is a tile object several tiles big. Its item (`kind` FURNITURE,
 `places_object`) places it with the cursor at the bottom middle; a translucent ghost
 shows where. It needs a clear footprint and (with `needs_floor`) a solid block or a

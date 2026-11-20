@@ -102,6 +102,8 @@ var containers: Dictionary[Vector2i, Inventory] = {}
 ## Items on display (tables, shelves, floors): wrapped tile -> item id. Saved with the
 ## world (meta "displays"). The tile holds the "display" object.
 var displays: Dictionary[Vector2i, StringName] = {}
+## Furniture placed facing left (anchor -> true), drawn mirrored. Saved (meta "flipped").
+var flipped: Dictionary[Vector2i, bool] = {}
 ## Damaged tiles: (x, y, layer 0 = block / 1 = wall) -> [damage, seconds until healed].
 var _damage: Dictionary[Vector3i, Array] = {}
 ## Debug builds only (B toggles it); null otherwise.
@@ -168,6 +170,9 @@ func _ready() -> void:
 		plants.from_dict(WorldSave.read_extra(info.path, WorldSave.META_PLANTS), not saved_forage.is_empty())
 		_containers_from_dict(WorldSave.read_extra(info.path, WorldSave.META_CONTAINERS))
 		_displays_from_dict(WorldSave.read_extra(info.path, WorldSave.META_DISPLAYS))
+		for key: String in WorldSave.read_extra(info.path, WorldSave.META_FLIPPED):
+			var parts := key.split(",")
+			flipped[Vector2i(int(parts[0]), int(parts[1]))] = true
 
 	character = Game.character
 	if character == null:
@@ -364,6 +369,7 @@ func save() -> Error:
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
 		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_FORAGE: forage.to_dict(coords),
 			WorldSave.META_CONTAINERS: _containers_to_dict(), WorldSave.META_DISPLAYS: _displays_to_dict(),
+			WorldSave.META_FLIPPED: _flipped_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict()}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
@@ -937,9 +943,27 @@ func _can_place_furniture(anchor: Vector2i, def: ObjectDef) -> bool:
 	return true
 
 
-## Places an object with its anchor at `anchor`: furniture fills its footprint. Returns
-## true if placed.
-func request_place_object(anchor: Vector2i, id: int) -> bool:
+## Whether the furniture anchored at a tile is drawn mirrored (placed facing left).
+func is_flipped(anchor: Vector2i) -> bool:
+	return flipped.has(wrap_tile(anchor))
+
+
+## Whether this object flips when placed facing left (furniture, not doors).
+static func can_flip(def: ObjectDef) -> bool:
+	return def != null and def.flips and def.style == ObjectDef.Style.FURNITURE and not def.display \
+		and def.toggles_to == &"" and def.toggles_to_left == &""
+
+
+func _flipped_to_dict() -> Dictionary:
+	var out := {}
+	for t: Vector2i in flipped:
+		out["%d,%d" % [t.x, t.y]] = true
+	return out
+
+
+## Places an object with its anchor at `anchor`: furniture fills its footprint.
+## `facing_left`: furniture that can flip is mirrored. Returns true if placed.
+func request_place_object(anchor: Vector2i, id: int, facing_left: bool = false) -> bool:
 	if not Game.is_authority() or id <= 0 or id >= objects.size():
 		return false
 	var def := objects.def(id) as ObjectDef
@@ -950,6 +974,10 @@ func request_place_object(anchor: Vector2i, id: int) -> bool:
 	var filler := objects.index_of(&"filler")
 	for t in footprint(anchor, def):
 		request_set_object(t, filler)
+	if facing_left and can_flip(def):
+		flipped[wrap_tile(anchor)] = true
+	else:
+		flipped.erase(wrap_tile(anchor))
 	request_set_object(anchor, id)
 	if def.container_slots > 0:
 		containers[wrap_tile(anchor)] = Inventory.new(def.container_slots)
@@ -979,6 +1007,7 @@ func request_remove_object(tile: Vector2i) -> bool:
 	else:
 		request_set_object(a, WorldData.AIR)
 	containers.erase(a)
+	flipped.erase(wrap_tile(a))
 	_drop_for(def, a)
 	if def.display_surface:
 		# What was on display on top falls off.

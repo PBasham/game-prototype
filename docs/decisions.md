@@ -39,6 +39,14 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Furniture faces the way you placed it (Patrick):** placed facing left = mirrored.
+- **Dev items window (Patrick):** F7 / `creative`, every item, a stack per click. Not a
+  creative mode (no flying or god mode); a creative character could come later.
+- **Test books:** `books` gives tier 1, 2 and 3 test books (dev builds). The Basic
+  Spellbook stays tier 1 (it casts tier 1 spells).
+- **Food and potions:** left or right click (Patrick found left click missing).
+- **Concentration shown** under the held spell: icon and name.
+- **Mushroom icons** are the 9x8 ground sprite on 16x16 (they read too big).
 - **Mouse stack is used (Patrick):** with the inventory open, any item on the mouse is
   held and used over the world (left click); right click throws the stack.
 - **Food and potions on right click (Patrick).**

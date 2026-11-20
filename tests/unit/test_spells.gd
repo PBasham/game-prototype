@@ -789,3 +789,12 @@ func test_book_tooltip_layout() -> void:
 	assert_true(text.begins_with("Basic Spellbook\nSpell power x1"))
 	assert_false("Holds" in text)
 	assert_eq(Hud.tooltip_right(ItemData.find(&"wood")), "")
+
+
+func test_dev_books_for_each_tier() -> void:
+	DevMagic._register()
+	for t in range(1, 4):
+		var b := ItemData.find(StringName("dev_book_t%d" % t))
+		assert_not_null(b)
+		assert_eq(b.max_spell_tier, t)
+		assert_eq(b.kind, ItemData.Kind.BOOK)

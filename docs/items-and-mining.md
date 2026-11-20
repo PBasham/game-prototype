@@ -65,10 +65,10 @@ the panel lays itself out from it.
 While the mouse is over the hotbar or panel, you're carrying a stack that can't be
 placed (a spell shortcut), or the spell wheel is open, clicks don't use items.
 
-**Food and potions** are used with **right click** (left click does nothing with them),
-like Terraria's quick use, so swinging never wastes a potion.
+**A spell in hand** shows its icon and name (in blue) under the hotbar, and the spell
+you're concentrating on (Fly, Mend...) shows its icon and name (violet) below that.
 
-**A spell in hand** shows its icon and name (in blue) under the hotbar.
+**Food and potions:** left or right click eats or drinks.
 
 Items with no use (wood, books, conduits) are just held: clicking doesn't swing.
 

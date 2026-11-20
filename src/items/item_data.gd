@@ -206,6 +206,13 @@ static func register_runtime(item: ItemData) -> void:
 	_runtime[spell_key(item.id) if item.is_spell() else item.id] = item
 
 
+## The runtime-only items (dev items in debug builds), by key.
+static func runtime_items() -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	out.assign(_runtime.values())
+	return out
+
+
 ## Runtime-only items aren't saved.
 static func is_runtime(item_id: StringName) -> bool:
 	return _runtime.has(item_id)

@@ -67,6 +67,10 @@ enum Style {
 ## its hinge.
 enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 @export var sprite_align := SpriteAlign.CENTER
+## Furniture: mirrored when you place it while facing left, so it faces the way you
+## did (a bed's headboard, a workbench's vise). Off for things that mustn't flip.
+## Doors never flip (they open toward a side already).
+@export var flips := true
 ## Storage slots (chests). It can only be picked up when empty.
 @export var container_slots := 0
 ## Internal: the filler that marks the tiles furniture covers besides its anchor.

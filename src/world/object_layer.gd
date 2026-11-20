@@ -126,8 +126,15 @@ func draw_chunk(view: ChunkObjects) -> void:
 			elif def.sprite_align == ObjectDef.SpriteAlign.FROM_RIGHT:
 				x = lx * TILE + w * TILE - sw
 			var d := def.detail
-			view.draw_texture_rect_region(def.frames, Rect2(x, (ly - h + 1) * TILE, sw, h * TILE),
-				Rect2(frame * sw * d, 0, sw * d, h * TILE * d))
+			var dest := Rect2(x, (ly - h + 1) * TILE, sw, h * TILE)
+			var src := Rect2(frame * sw * d, 0, sw * d, h * TILE * d)
+			if def.style == ObjectDef.Style.FURNITURE and world.is_flipped(origin + Vector2i(lx, ly)):
+				# Placed facing left: mirrored around its footprint.
+				view.draw_set_transform(Vector2(dest.position.x * 2.0 + dest.size.x, 0), 0.0, Vector2(-1, 1))
+				view.draw_texture_rect_region(def.frames, dest, src)
+				view.draw_set_transform(Vector2.ZERO)
+			else:
+				view.draw_texture_rect_region(def.frames, dest, src)
 
 
 ## Which frame of the strip an object shows at a tile.

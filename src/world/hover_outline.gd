@@ -37,6 +37,8 @@ var _mat: ShaderMaterial
 var _tex: Texture2D
 var _dest := Rect2()
 var _src := Rect2()
+## Mirrored (furniture placed facing left).
+var _flip := false
 ## Art pixels per world pixel of the target (ObjectDef.detail).
 var _det := 1
 var _time := 0.0
@@ -56,6 +58,7 @@ func _process(delta: float) -> void:
 	_time += delta
 	var had := _tex != null
 	_tex = null
+	_flip = false
 	_find_target()
 	if _tex:
 		var a := lerpf(outline_alpha_min, outline_color.a, 0.5 + 0.5 * sin(_time * TAU * pulse_speed))
@@ -72,7 +75,12 @@ func _draw() -> void:
 	if _tex == null:
 		return
 	# One pixel bigger all around, so the outline has room outside the sprite.
-	draw_texture_rect_region(_tex, _dest.grow(1.0), _src.grow(float(_det)))
+	var r := _dest.grow(1.0)
+	if _flip:
+		draw_set_transform(Vector2(r.position.x * 2.0 + r.size.x, 0), 0.0, Vector2(-1, 1))
+	draw_texture_rect_region(_tex, r, _src.grow(float(_det)))
+	if _flip:
+		draw_set_transform(Vector2.ZERO)
 
 
 ## What the cursor is on (and the player could use), if anything.
@@ -141,6 +149,7 @@ func _object(tile: Vector2i) -> bool:
 	_det = def.detail
 	_dest = Rect2(x, (a.y - h + 1) * World.TILE, sw, h * World.TILE)
 	_src = Rect2(frame * sw * def.detail, 0, sw * def.detail, h * World.TILE * def.detail)
+	_flip = def.style == ObjectDef.Style.FURNITURE and world.is_flipped(a)
 	return true
 
 

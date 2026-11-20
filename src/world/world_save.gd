@@ -26,6 +26,8 @@ const META_FORAGE := "forage"
 const META_CONTAINERS := "containers"
 ## Items on display: {"x,y": item id}.
 const META_DISPLAYS := "displays"
+## Furniture placed facing left (drawn mirrored): {"x,y": true}.
+const META_FLIPPED := "flipped"
 ## Magic bags left where characters died: {"list": [ItemBag.to_dict()...]}.
 const META_BAGS := "bags"
 ## The clock: {"time": fraction of the day, "day": n}.

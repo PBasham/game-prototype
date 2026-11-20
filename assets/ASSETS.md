@@ -218,7 +218,7 @@ or .ogg); the generator never overwrites without `--force`.
 | items/{icons,held}/iron_{ore,bar,pickaxe,axe,sword,helmet,chestplate,greaves}.png, armor/iron_*.png | The copper versions recolored grey (wood kept) |
 | terrain/ore_iron.png | The copper ore overlay recolored |
 | tiles/blocks.png row 8 | Collision row for iron ore (copy of the copper ore row) |
-| decor/pickup_{field_mushroom,red_cap,duskcap,glowcap}.png, items/{icons,held}/ same names | Mushrooms (9x8 on the ground), hand-made placeholders |
+| decor/pickup_{field_mushroom,red_cap,duskcap,glowcap}.png, items/{icons,held}/ same names | Mushrooms (9x8 on the ground), hand-made placeholders. The icon and held sprites are the 9x8 ground sprite centered on 16x16 (Patrick: the full-size ones read too big) |
 
 ## Food and alchemy
 

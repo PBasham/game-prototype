@@ -274,7 +274,8 @@ func can_use(on_back: bool = false) -> bool:
 				return false
 			return cooldown_left(_item as SpellData) <= 0.0
 		Mode.EAT:
-			if on_back and Input.is_action_just_pressed("use_secondary") and _eat_frame != Engine.get_process_frames():
+			var pressed := Input.is_action_just_pressed("use_secondary" if on_back else "use_primary")
+			if pressed and _eat_frame != Engine.get_process_frames():
 				_eat_frame = Engine.get_process_frames()  # asked twice in one click: eat once
 				eat_held()
 			return false  # no swing
@@ -539,7 +540,7 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 	if item.mining_damage > 0.0:
 		return Mode.MINE
 	if item.kind == ItemData.Kind.FOOD:
-		return Mode.EAT if on_back else Mode.NONE  # right click, like Terraria's quick use
+		return Mode.EAT  # left or right click
 	if item.throw_speed > 0.0:
 		return Mode.THROW if not on_back else Mode.NONE
 	if item.teaches_spell != &"":
@@ -680,7 +681,7 @@ func _on_impact(item: ItemData) -> void:
 		Mode.PLACE_OBJECT:
 			var id := world.objects.index_of(item.places_object)
 			for t in valid:
-				if p.held_count() > 0 and world.request_place_object(t, id):
+				if p.held_count() > 0 and world.request_place_object(t, id, p.facing < 0):
 					p.take_held()
 		Mode.CAST:
 			var spell := item as SpellData
@@ -977,8 +978,14 @@ func _draw() -> void:
 			var w := furn.width_tiles * TILE
 			var h := furn.height_tiles * TILE
 			var det := furn.detail
-			draw_texture_rect_region(furn.frames, Rect2(Vector2(rect.position * TILE), Vector2(w, h)),
+			var gr := Rect2(Vector2(rect.position * TILE), Vector2(w, h))
+			var mirror := p.facing < 0 and World.can_flip(furn)
+			if mirror:  # it'll face the way you do
+				draw_set_transform(Vector2(gr.position.x * 2.0 + gr.size.x, 0), 0.0, Vector2(-1, 1))
+			draw_texture_rect_region(furn.frames, gr,
 				Rect2(furn.frame * w * det, 0, w * det, h * det), Color(1, 1, 1, ghost_alpha if not valid.is_empty() else 0.25))
+			if mirror:
+				draw_set_transform(Vector2.ZERO)
 		for t in valid if not (furn and furn.style == ObjectDef.Style.FURNITURE) else []:
 			var r := Rect2(Vector2(t * TILE), Vector2(TILE, TILE))
 			if mode == Mode.PLANT_GRASS:

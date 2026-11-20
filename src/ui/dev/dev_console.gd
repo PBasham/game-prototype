@@ -303,6 +303,14 @@ func _register() -> void:
 	_add("devkit", "devkit", "Tools, blocks, torches, all spells and the dev test items.", func(_a: PackedStringArray) -> void:
 		world.character.give_dev_kit()
 		_print("Dev kit given."))
+	_add("creative", "creative", "Open the Dev items window (also F7): every item, take as many as you like.", func(_a: PackedStringArray) -> void:
+		world.hud.toggle_dev_items()
+		_print("Dev items window %s." % ("open" if world.hud.dev_items_open else "closed")))
+	_add("books", "books", "Give the tier 1, 2 and 3 test books (dev builds).", func(_a: PackedStringArray) -> void:
+		DevMagic._register()
+		for t in range(1, 4):
+			world.character.inventory.add(StringName("dev_book_t%d" % t), 1)
+		_print("Gave the tier 1, 2 and 3 test books."))
 	_add("freecraft", "freecraft", "Toggle free crafting: no materials (or max mana) needed, nothing used up.", func(_a: PackedStringArray) -> void:
 		world.free_crafting = not world.free_crafting
 		if world.hud:

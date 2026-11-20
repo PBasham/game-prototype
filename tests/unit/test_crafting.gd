@@ -431,3 +431,35 @@ func test_freecraft_needs_no_materials() -> void:
 	assert_eq(hud.craft(r, 2), 2)
 	assert_eq(inv.count_of(&"torch"), torches + 2)
 	w.free_crafting = false
+
+
+func test_furniture_faces_the_way_you_placed_it() -> void:
+	var bed := w.objects.index_of(&"bed")
+	var a := _floor_spot(4)
+	assert_true(w.request_place_object(a, bed, true))
+	assert_true(w.is_flipped(a), "placed facing left: mirrored")
+	assert_true(w._flipped_to_dict().has("%d,%d" % [w.wrap_tile(a).x, w.wrap_tile(a).y]), "saved")
+	assert_true(w.request_remove_object(a))
+	assert_false(w.is_flipped(a), "cleared when picked up")
+	assert_false(World.can_flip(w.objects.def(w.objects.index_of(&"door")) as ObjectDef), "doors don't flip")
+	assert_true(w.request_place_object(a, bed, false))
+	assert_false(w.is_flipped(a))
+
+
+func test_dev_items_window_gives_stacks() -> void:
+	var hud := w.hud
+	hud.toggle_dev_items()
+	assert_true(hud.dev_items_open)
+	var win := hud._dev_items
+	assert_gt(win.all_items().size(), 50)
+	assert_false(win.all_items().any(func(it: ItemData) -> bool: return it.is_spell()), "no spells")
+	win.search = "wood platform"
+	assert_eq(win.shown().map(func(it: ItemData) -> StringName: return it.id), [&"wood_platform"] as Array)
+	hud.give_cursor(&"wood_platform", 999)
+	assert_eq(hud.cursor_count, Inventory.max_stack(&"wood_platform"), "a full stack")
+	hud.give_cursor(&"wood_platform", 1)
+	assert_eq(hud.cursor_count, Inventory.max_stack(&"wood_platform"), "never past a stack")
+	hud.cursor_count = 0
+	hud.cursor_id = &""
+	hud.toggle_dev_items()
+	hud.set_open(false)

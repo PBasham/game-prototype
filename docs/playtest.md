@@ -140,7 +140,12 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).
 - [ ] Inventory open, sword or pickaxe on the mouse: left click swings / mines; right
       click throws the stack.
-- [ ] Food and potions: right click eats / drinks; left click doesn't.
+- [ ] Food and potions: left or right click eats / drinks.
+- [ ] Place a bed / workbench facing left: it's mirrored (and stays so after reload).
+- [ ] F7 (or `creative`): Dev items window; tabs, search, click for a stack.
+- [ ] `books`: tier 1 / 2 / 3 test books.
+- [ ] Concentrating (Fly): its icon and name under the held item.
+- [ ] Mushrooms look small in the inventory and hand.
 - [ ] Dev Focus tooltip: just the changes, "Focus" on the right.
 - [ ] Spell in hand: icon and name under the hotbar.
 - [ ] Cave edges in shadow: no checkerboard blocks.
