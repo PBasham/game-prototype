@@ -231,6 +231,8 @@ func _target_dir() -> float:
 	var dx := _wrapped_dx(p.global_position.x)
 	if absf(dx) > data.aggro_tiles * TILE or dx == 0.0:
 		return 0.0
+	if absf(p.global_position.y - global_position.y) > data.aggro_tiles_vertical * TILE:
+		return 0.0
 	return signf(dx)
 
 

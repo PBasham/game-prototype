@@ -79,7 +79,7 @@ extends GameData
 @export var tunnel_min_depth := 16
 ## Typical tunnel height, in tiles. The Scholar is 8 tall and 3 wide, so tunnels under
 ## about 10 are crawl spaces he can't walk through.
-@export var tunnel_width := 18.0
+@export var tunnel_width := 24.0
 ## Rough distance between neighboring tunnels.
 @export var tunnel_spacing := 240.0
 ## How much of the underground has tunnels: 0 = none, 1 = everywhere.
@@ -89,7 +89,7 @@ extends GameData
 ## Where a tunnel runs out (the edge of the tunnel coverage, or its first tiles of
 ## depth) it narrows to this share of tunnel_width before it ends. Low = long crawl
 ## spaces at tunnel ends; 1 = tunnels end at full height.
-@export_range(0.0, 1.0) var tunnel_taper := 0.6
+@export_range(0.0, 1.0) var tunnel_taper := 0.8
 
 @export_group("Caves: caverns")
 ## Large open caverns start this deep.
@@ -111,8 +111,8 @@ extends GameData
 @export var entrance_depth_min := 50
 @export var entrance_depth_max := 110
 ## Shaft width (the Scholar is 3 wide).
-@export var entrance_width_min := 7
-@export var entrance_width_max := 10
+@export var entrance_width_min := 10
+@export var entrance_width_max := 13
 ## How far the shaft winds left and right.
 @export var entrance_wobble := 8.0
 ## Radius of the chamber at the bottom of the shaft.

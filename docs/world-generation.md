@@ -192,8 +192,8 @@ is a crawl space he can't walk through.
 | Setting | Default | What it does |
 | --- | --- | --- |
 | `tunnel_min_depth` | 16 | Tunnels start this deep. They narrow near the top so they rarely break the surface. |
-| `tunnel_width` | 18 | Typical tunnel height in tiles (was 13: too many crawl spaces for the 8-tall Scholar). |
-| `tunnel_taper` | 0.6 | Where a tunnel runs out (edge of its coverage, or its first tiles of depth) it narrows to this share of `tunnel_width` before ending. Low = long crawl spaces at tunnel ends. |
+| `tunnel_width` | 24 | Typical tunnel height in tiles (was 13, then 18: tunnels were too low to move through without mining). |
+| `tunnel_taper` | 0.8 | Where a tunnel runs out (edge of its coverage, or its first tiles of depth) it narrows to this share of `tunnel_width` before ending. Low = long crawl spaces at tunnel ends. |
 | `tunnel_spacing` | 240 | Rough distance between neighboring tunnels. Smaller = denser network. |
 | `tunnel_coverage` | 0.5 | Fraction of the underground with tunnels (0 to 1). |
 | `cave_flatten` | 1.5 | Above 1, caves are wider than tall. |
@@ -205,7 +205,7 @@ is a crawl space he can't walk through.
 | `entrance_spacing` | 600 | Average distance between entrances. |
 | `entrance_chance` | 0.85 | Chance each stretch actually gets one. |
 | `entrance_depth_min` / `max` | 50 / 110 | How deep the shaft goes. |
-| `entrance_width_min` / `max` | 7 / 10 | Shaft width (the mouth is a bit wider). |
+| `entrance_width_min` / `max` | 10 / 13 | Shaft width (the mouth is a bit wider). Was 7 / 10: the tightest shallow spots. |
 | `entrance_wobble` | 8 | How far the shaft winds left and right. |
 | `entrance_chamber` | 9 | Radius of the chamber at the bottom. |
 
@@ -264,10 +264,14 @@ of open air above), overall and by depth. Any setting can be overridden to compa
 ```
 godot --headless --path . --script res://tools/cave_fit.gd -- --seed=42
 godot --headless --path . --script res://tools/cave_fit.gd -- --seed=42 --tunnel_width=20.0
+godot --headless --path . --script res://tools/cave_fit.gd -- --seed=42 --fit_h=11   # room to hop
 ```
 
-Before Phase 9 (`tunnel_width` 13): 64 to 75% fit (seeds 42, 7, 99). Now (18, taper
-0.6): 79 to 83%, with the tightest bits in the first 50 tiles below the surface.
+Before Phase 9 (`tunnel_width` 13): 64 to 75% fit (seeds 42, 7, 99). Phase 9 (18, taper
+0.6): 79 to 83%. Now (24, taper 0.8, entrances 10 to 13), with room to hop too
+(`--fit_h=11`, 3x11): 77% (seed 42, was 64%) and 78% (seed 7, was 69%); the first 50
+tiles below the surface went from 51% to 80% (seed 42) and 37% to 54% (seed 7). Only new
+chunks and F6 use new settings: places you've already explored keep their caves.
 
 *Rarer and deeper* (so it feels earned): `copper_min_depth 25`,
 `copper_chance_shallow 0.02`, `copper_chance_deep 0.1`. *Bigger veins*:

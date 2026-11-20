@@ -49,8 +49,11 @@ enum AI { SLIME }
 @export var wander_by_day := true
 ## While wandering: chance per move to turn around (it also turns when blocked).
 @export_range(0.0, 1.0) var turn_chance := 0.15
-## Within this many tiles it comes at you when it's chasing.
+## Within this many tiles (sideways) it comes at you when it's chasing...
 @export var aggro_tiles := 64.0
+## ...and only if you're within this many tiles up or down: a slime on the surface
+## doesn't sense you through the ground in a cave below.
+@export var aggro_tiles_vertical := 16.0
 ## Gravity in tiles/s².
 @export var gravity := 110.0
 

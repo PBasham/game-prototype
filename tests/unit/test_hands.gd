@@ -66,3 +66,36 @@ func test_usable_furniture_under_the_cursor() -> void:
 	assert_true(w.request_place_object(a, w.objects.index_of(&"chest")))
 	assert_true(w.usable_object_at(w.tile_to_world(a) + Vector2(4, 4)))
 	assert_false(w.usable_object_at(w.tile_to_world(a + Vector2i(6, 0)) + Vector2(4, 4)))
+
+
+func test_slimes_dont_sense_you_through_the_ground() -> void:
+	var p := w.player
+	var data := Registry.get_def(&"enemies", &"green_slime") as EnemyData
+	var e := w.request_spawn_enemy(data, p.global_position + Vector2(20 * World.TILE, 0))
+	await wait_physics_frames(2)
+	e._angry = true
+	assert_ne(e._target_dir(), 0.0, "same level: comes at you")
+	p.global_position.y += (data.aggro_tiles_vertical + 4.0) * World.TILE
+	assert_eq(e._target_dir(), 0.0, "you're far below: it doesn't know you're there")
+
+
+func test_far_above_despawns() -> void:
+	var p := w.player
+	var data := Registry.get_def(&"enemies", &"green_slime") as EnemyData
+	var e := w.request_spawn_enemy(data, p.global_position + Vector2(0, -(w.spawner.despawn_tiles_vertical + 10.0) * World.TILE))
+	await wait_physics_frames(1)
+	e.far_for = w.spawner.despawn_seconds
+	w.spawner._despawn_far()
+	assert_true(e.is_queued_for_deletion(), "60 tiles above you: gone")
+
+
+func test_craft_amount_and_costs_follow_the_box() -> void:
+	var hud := w.hud
+	var r := RecipeData.new()
+	r.inputs = {&"wood": 2}
+	r.output = &"torch"
+	r.output_count = 1
+	hud.set_craft_amount(3)
+	assert_eq(hud.planned_crafts(r), 3, "no Shift or Ctrl: the amount box")
+	assert_eq(hud._asked(r, true, false), 10, "Shift asks for 10")
+	assert_eq(hud._asked(r, false, true), ItemData.find(&"torch").max_stack, "Ctrl asks for a stack")

@@ -261,6 +261,9 @@ func _input(event: InputEvent) -> void:
 	if _spells.searching and _spells.search_key(event as InputEventKey):
 		get_viewport().set_input_as_handled()
 		return
+	var mod := event as InputEventKey
+	if mod and mod.keycode in [KEY_SHIFT, KEY_CTRL, KEY_META] and _craft.visible:
+		_craft.queue_redraw()  # the amount and costs follow Shift / Ctrl
 	if open and event.is_action_pressed("ui_cancel"):
 		set_open(false)
 		get_viewport().set_input_as_handled()
@@ -1108,8 +1111,10 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 		y += 6
 	g.draw_string(font, Vector2(d.position.x, y), "Needs", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 	y += 4
+	var n := planned_crafts(r)
 	for k: StringName in r.inputs:
-		y = _ingredient_row(g, font, d, y, k, "%d / %d" % [inv.count_of(k), r.inputs[k]], inv.count_of(k) >= r.inputs[k])
+		var need: int = r.inputs[k] * n
+		y = _ingredient_row(g, font, d, y, k, "%d / %d" % [inv.count_of(k), need], inv.count_of(k) >= need)
 	if r.requires_max_mana > 0.0:
 		var have := _max_mana()
 		var ok := have >= r.requires_max_mana
@@ -1128,6 +1133,12 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 			var has := inv.count_of(q) > 0
 			y = _ingredient_row(g, font, d, y, q, "have" if has else "missing", has)
 	var times := _times(r)
+	if out and n * r.output_count > 1:
+		var made := str(n * r.output_count)
+		g.draw_string_outline(font, big.end - Vector2(font.get_string_size(made, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 2, 2),
+			made, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, 3, Color(0, 0, 0, 0.85))
+		g.draw_string(font, big.end - Vector2(font.get_string_size(made, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 2, 2),
+			made, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, UiSkin.TEXT)
 	var b := _craft_button_rects()
 	g.draw_string(font, Vector2(d.position.x, b[0].position.y - 3), "Can make %d.  Shift: 10  Ctrl: a stack" % times,
 		HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.DIM)
@@ -1136,10 +1147,12 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 		match i:
 			CraftBtn.FIELD:
 				UiSkin.slot(g, b[i], UiSkin.SlotLook.SELECTED if _amount_typing else UiSkin.SlotLook.NORMAL)
-				var txt := str(craft_amount) + ("_" if _amount_typing and fmod(Time.get_ticks_msec() / 500.0, 2.0) < 1.0 else "")
-				var tw := font.get_string_size(str(craft_amount), HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+				var shown := craft_amount if _amount_typing else n
+				var txt := str(shown) + ("_" if _amount_typing and fmod(Time.get_ticks_msec() / 500.0, 2.0) < 1.0 else "")
+				var tw := font.get_string_size(str(shown), HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x
+				var modded := shown != craft_amount
 				g.draw_string(font, Vector2(b[i].get_center().x - tw * 0.5, b[i].position.y + 11), txt,
-					HORIZONTAL_ALIGNMENT_LEFT, -1, 8, UiSkin.TEXT if craft_amount <= times else UiSkin.BAD)
+					HORIZONTAL_ALIGNMENT_LEFT, -1, 8, UiSkin.BAD if shown > times else (UiSkin.GOLD if modded else UiSkin.TEXT))
 			CraftBtn.MINUS, CraftBtn.PLUS:
 				UiSkin.button(g, b[i], "-" if i == CraftBtn.MINUS else "+", UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL)
 			_:
@@ -1324,13 +1337,31 @@ func craft_selected(shift: bool = false, ctrl: bool = false) -> int:
 	if selected_recipe >= recipes().size():
 		return 0
 	var r := recipes()[selected_recipe]
-	var times := craft_amount
+	return craft(r, mini(_asked(r, shift, ctrl), _times(r)))
+
+
+## How many crafts the Craft button asks for: the amount box, 10 with Shift, a stack of
+## the output with Ctrl.
+func _asked(r: RecipeData, shift: bool, ctrl: bool) -> int:
 	if ctrl:
 		var it := ItemData.find(r.output)
-		times = maxi(1, (it.max_stack if it else 999) / maxi(1, r.output_count))
-	elif shift:
-		times = 10
-	return craft(r, mini(times, _times(r)))
+		return maxi(1, (it.max_stack if it else 999) / maxi(1, r.output_count))
+	if shift:
+		return 10
+	return craft_amount
+
+
+## What a click on Craft would do right now (Shift / Ctrl held count): with a modifier,
+## as many as you can of what it asks for; else the amount box. Drives the amount shown
+## and the costs.
+func planned_crafts(r: RecipeData) -> int:
+	var shift := Input.is_key_pressed(KEY_SHIFT)
+	var ctrl := Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_META)
+	var asked := _asked(r, shift, ctrl)
+	if shift or ctrl:
+		var can := _times(r)
+		return mini(asked, can) if can > 0 else asked
+	return asked
 
 
 ## Typing a number into the amount field (after clicking it). Returns true if used.

@@ -16,8 +16,11 @@ extends Node
 ## Spawn this many tiles to the side of the player (off screen, inside the loaded area).
 @export var min_distance_tiles := 44.0
 @export var max_distance_tiles := 60.0
-## Enemies farther than this (tiles) for despawn_seconds in a row are removed.
+## Enemies farther than this (tiles, sideways) for despawn_seconds in a row are removed...
 @export var despawn_tiles := 90.0
+## ...or farther than this up or down (Terraria spawns at most 47 tiles up or down, so
+## a surface slime far above you in a cave goes away).
+@export var despawn_tiles_vertical := 50.0
 ## Enemies never spawn inside the view: when zoomed out, spawn and despawn distances
 ## grow to at least the edge of the screen plus this many tiles.
 @export var view_margin_tiles := 6.0
@@ -172,7 +175,7 @@ func _despawn_far() -> void:
 	var p := world.player
 	var delta := get_process_delta_time()
 	var view := view_half_tiles() + Vector2.ONE * view_margin_tiles
-	var lim := Vector2(maxf(despawn_tiles, view.x), maxf(despawn_tiles, view.y)) * World.TILE
+	var lim := Vector2(maxf(despawn_tiles, view.x), maxf(despawn_tiles_vertical, view.y)) * World.TILE
 	for e in world.enemies():
 		var dx := absf(e._wrapped_dx(p.global_position.x))
 		var dy := absf(e.global_position.y - p.global_position.y)

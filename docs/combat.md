@@ -27,7 +27,8 @@ training dummy.
 | `slither_seconds_min`, `slither_seconds_max` | 0.5, 1.2 | How long one slither lasts. |
 | `wander_by_day` | on | By day on the surface, a slime that hasn't been hit ignores you and wanders (like Terraria's). |
 | `turn_chance` | 0.15 | While wandering, chance per move to turn around. It also turns after 2 moves in a row that got nowhere. |
-| `aggro_tiles` | 64 | When it's chasing (night, underground, or once hit), it comes at you inside this range. |
+| `aggro_tiles` | 64 | When it's chasing (night, underground, or once hit), it comes at you inside this range sideways... |
+| `aggro_tiles_vertical` | 16 | ...and only if you're within this many tiles up or down. A slime on the surface doesn't sense you in a cave below. |
 | `gravity` | 110 | Tiles/s². |
 | `loot` | | `LootDrop` list: `item`, `min_count`, `max_count`, `chance` (0 to 1). |
 
@@ -110,7 +111,7 @@ beaten) are a small script each, extending `SpawnCondition` with `met(world)` an
 
 ### Despawning
 
-Enemies more than `despawn_tiles` (90) away from you, sideways or up and down, for
+Enemies more than `despawn_tiles` (90) away from you sideways, or `despawn_tiles_vertical` (50) up or down, for
 `despawn_seconds` (6) in a row, are removed without loot and don't count as kills.
 
 ### The spawner (`EnemySpawner`, child of World, `src/combat/enemy_spawner.gd`)
@@ -120,7 +121,7 @@ Enemies more than `despawn_tiles` (90) away from you, sideways or up and down, f
 | `rate_scale` | 1 | Multiplies every table's rate (2 = twice as often). |
 | `catch_up` | on | Spawn faster when few enemies are around: below 20% of the cap the average wait is x0.6, below 40% x0.7, below 60% x0.8 (Terraria's numbers). |
 | `min_distance_tiles` / `max_distance_tiles` | 44 / 60 tiles | Spawns off screen, on ground with room for the enemy. |
-| `despawn_tiles`, `despawn_seconds` | 90 tiles, 6 s | Enemies farther than this for 6 s in a row vanish (no loot). |
+| `despawn_tiles`, `despawn_tiles_vertical`, `despawn_seconds` | 90 sideways, 50 up or down, 6 s | Enemies farther than this for 6 s in a row vanish (no loot). Terraria spawns 62 to 84 tiles to the side and at most 47 up or down, and despawns after 12.5 s out of range. |
 | `view_margin_tiles` | 6 | Never spawn inside the view plus this margin; when zoomed out, spawn and despawn distances grow to the screen edge plus this. |
 | `ahead_bias`, `ahead_speed_tiles` | 0.8, 6 tiles/s | While you move sideways faster than this, 80% of spawns appear ahead of you, so travelling isn't empty. |
 | `peaceful` | false | No spawns. |

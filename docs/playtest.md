@@ -133,6 +133,9 @@ guesses; the docs listed say where each tunable lives.
       doors, chests and stations still open.
 - [ ] Punches push slimes a little but don't stop their hops.
 - [ ] H (put away) then punch works; picking things up leaves an empty hand empty.
+- [ ] New caves (F6 or unexplored areas): tunnels tall enough to walk and hop through.
+- [ ] Craft window: hold Shift or Ctrl, the amount and costs change to match.
+- [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).
 
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time

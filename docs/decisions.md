@@ -13,6 +13,17 @@ Newest first. Each entry: what was decided, why, and what it affects.
   wins (so a pickaxe can't mine the wall behind your chest); pickups and bushes don't.
 - **Fists don't stun-lock (Patrick):** punches keep a light push but no stagger
   (`ItemData.staggers`). A "chance to stun" could come later from skills.
+- **Taller tunnels (Patrick):** `tunnel_width` 24 (was 18), `tunnel_taper` 0.8 (was 0.6),
+  surface entrances 10 to 13 wide (were 7 to 10, the tightest shallow spots). Room to
+  hop (3x11) went from 64% to 77% of cave floors (seed 42). New chunks only.
+- **Craft preview (Patrick):** while Shift or Ctrl is held, the amount box and the costs
+  show what a click would craft and spend; costs are always multiplied by the amount.
+- **Slimes in caves at night (Patrick asked):** they chased you by distance sideways
+  only, so surface slimes homed in on you from above and dropped into caves. Now they
+  only sense you within 16 tiles up or down (`aggro_tiles_vertical`) and despawn 50
+  tiles up or down (`despawn_tiles_vertical`; Terraria spawns at most 47 up or down).
+  Surface spawns still happen while you're less than 20 tiles down, like Terraria's
+  surface layer reaching into shallow caves.
 - **Fists usable (Patrick):** punching works with the held item put away (H; it didn't),
   and pickups skip an empty slot in your hand unless nothing else has room.
 

@@ -6,11 +6,12 @@ extends SceneTree
 ##   godot --headless --path . --script res://tools/cave_fit.gd -- --seed=42
 ##   ... -- --seed=42 --tunnel_width=18 --cave_flatten=1.2
 ##
-## Options: --seed, --size (small), --width (tiles sampled, 1600), --depth (tiles below
+## Options: --seed, --fit_h (headroom, 8), --size (small), --width (tiles sampled, 1600), --depth (tiles below
 ## the surface, 300), plus any ForestGenSettings property.
 
 const FIT_W := 3
-const FIT_H := 8
+## Headroom to count as a fit (8 = standing; --fit_h=11 asks for room to hop too).
+var FIT_H := 8
 
 
 func _init() -> void:
@@ -18,6 +19,9 @@ func _init() -> void:
 	for a in OS.get_cmdline_user_args():
 		var kv := a.trim_prefix("--").split("=", true, 1)
 		args[kv[0]] = kv[1] if kv.size() > 1 else ""
+	if args.has("fit_h"):
+		FIT_H = int(args["fit_h"])
+		args.erase("fit_h")
 	var registry: Node = load("res://src/core/registry.gd").new()
 	registry.quiet = true
 	registry.load_all("res://data")
