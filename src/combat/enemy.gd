@@ -119,13 +119,22 @@ func take_damage(amount: float, from: Node) -> void:
 		_die()
 
 
-## Pushed away from `from` (px position) at `strength` tiles/s.
-func knock_back(from: Vector2, strength: float) -> void:
+## Pushed away from `from` (px position) at `strength` tiles/s. `stagger`: its hop or
+## slither is cut short and it starts over (weapons). Without (fists): only a sideways
+## push, and it carries on with what it was doing.
+func knock_back(from: Vector2, strength: float, stagger: bool = true) -> void:
 	var k := strength * (1.0 - data.knockback_resist)
 	if k <= 0.0:
 		return
 	var dir := signf(global_position.x - from.x)
-	velocity = Vector2((dir if dir != 0.0 else 1.0) * k * TILE, -k * 0.6 * TILE)
+	if dir == 0.0:
+		dir = 1.0
+	if not stagger:
+		velocity.x += dir * k * TILE
+		if _hop_vx != 0.0:
+			_hop_vx += dir * k * 0.5 * TILE
+		return
+	velocity = Vector2(dir * k * TILE, -k * 0.6 * TILE)
 	_hop_vx = 0.0
 	_slither = 0.0
 	_wait = 0.25  # hop again soon

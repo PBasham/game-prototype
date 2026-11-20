@@ -216,9 +216,12 @@ player (3 tall vs our 8), so ours are those to the power 3/8.
 | `solid_decay` | 0.8 | Share kept per tile through blocks: the surface is well lit about 3 blocks down and dark by about 10. |
 | `indoors_factor` | 0 | Share kept coming out of a block into a walled space (a room, a cave): 0 = the sun doesn't shine through a roof. Rooms get light through open doors, gaps and torches. |
 | `min_interval` | 0.12 | Minimum seconds between recomputes. |
+| `sky_depth_tiles` | 0 | Open air counts as sky only down to this many tiles below the natural ground (the generator's surface). Deeper dug-out air gets only the light that spreads in from above. |
 | `source_solid_factor` | 6 | Light sources fade this many times faster through blocks than through air (Terraria's torch: about 42 tiles of air vs 7 of blocks). Closed doors block light like blocks. |
 
-Open sky (no block and no wall) is the light source. The spread runs on a background
+Open sky (no block and no wall, above the natural ground) is the light source. Air you
+dig out underground isn't sky, even without a back wall: before this fix, every block
+mined out of wall-less rock shone like daylight. The spread runs on a background
 thread (`LightJob`), so editing tiles never stalls the game; light catches up a fraction
 of a second later.
 

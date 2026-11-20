@@ -6,7 +6,8 @@ extends RefCounted
 ##
 ## Like Terraria's: light is multiplied by `air_decay` for every tile it crosses through
 ## air and walls and by `solid_decay` through blocks, so it fades smoothly and dies a few
-## blocks into the ground. Open sky (no block, no wall) is fully lit. Coming out of a
+## blocks into the ground. Open sky (no block, no wall, above the natural ground: see
+## `sky_floor`) is fully lit. Coming out of a
 ## block into an enclosed space (a tile with a background wall: a room, a cave) keeps
 ## only `indoors_factor` of it, so the sun lights the top of the ground but doesn't
 ## shine through a house's walls or roof. Objects that block movement (closed doors)
@@ -39,6 +40,9 @@ var sky := Color.WHITE
 var air_decay := 0.965
 var solid_decay := 0.8
 var indoors_factor := 0.0
+## Per column (relative to rect): rows above this (relative to rect) can be open sky;
+## air at or below it (dug out underground) isn't, it only gets light that spreads in.
+var sky_floor := PackedInt32Array()
 ## Per object id that blocks light (closed doors): its footprint width and height in
 ## tiles (0 = doesn't block). The id is only stored on the object's anchor (bottom-left)
 ## tile; the rest of the footprint is "filler", so the whole footprint is marked here.
@@ -94,7 +98,10 @@ func run() -> void:
 				if cw[src + lx] != 0:
 					walled[row + lx] = 1
 				elif not is_solid:
-					light[row + lx] = 1.0
+					var tx := (k % cols) * SIZE + lx
+					var ty := (k / cols) * SIZE + ly
+					if sky_floor.is_empty() or ty < sky_floor[tx]:
+						light[row + lx] = 1.0
 	for i in w * h:
 		if blocked_by_object[i] == 1:
 			solid_at[i] = 1

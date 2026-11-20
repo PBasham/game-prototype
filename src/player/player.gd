@@ -74,7 +74,8 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export_range(0.1, 1.0) var backpedal_speed := 0.8
 ## Empty hands punch (data/item_types/unarmed.tres: jab, cross, uppercut) on click.
 @export var unarmed_attacks := true
-## A punch hits enemies for this much (the Wooden Sword does 8), this far (tiles).
+## A punch hits enemies for this much (the Wooden Sword does 8), this far (tiles). It
+## pushes them back a little but doesn't stagger them (ItemData.staggers).
 @export var fist_damage := 3.0
 @export var fist_reach_tiles := 4.0
 ## Point in a punch (0..1 of the swing) where it lands.
@@ -505,6 +506,17 @@ func is_using() -> bool:
 	return _attack != null
 
 
+## Picks something up into the inventory; returns how many didn't fit. An empty hotbar
+## slot in your hand stays empty unless nothing else has room, so you can keep your
+## fists free (punching) while picking things up.
+func pick_up(item_id: StringName, count: int) -> int:
+	if character == null:
+		return count
+	var inv := character.inventory
+	var keep := selected if selected >= 0 and selected < inv.size and inv.is_empty(selected) else -1
+	return inv.add(item_id, count, keep)
+
+
 ## Puts the held item away or takes it back out (H).
 func toggle_stowed() -> void:
 	if held == null:
@@ -532,6 +544,7 @@ func fist_item() -> ItemData:
 		_fist.id = &"fists"
 		_fist.display_name = "Fists"
 		_fist.knockback = 6.0
+		_fist.staggers = false  # a light push; punching can't pin an enemy down
 		_fist.melee_aims = true  # punches go toward the cursor
 	_fist.melee_damage = fist_damage
 	_fist.melee_reach = fist_reach_tiles
@@ -1168,15 +1181,20 @@ func _update_use(delta: float) -> void:
 	if _just("interact") and world:
 		world.try_interact_near(self)
 	if _attack == null and not input_blocked:
-		# Left click: front layer (or punch). Right click: interact with what's under the
-		# cursor, otherwise the back layer.
+		# Left click: front layer (or punch). Right click: the held item's back layer
+		# action when it has one here (a wall to place or mine), unless usable furniture
+		# is under the cursor; otherwise interact (furniture, pickups, bushes), put an
+		# item on display, or the back layer.
 		var back := false
 		var clicked := _just("use_primary")
 		if not clicked and _just("use_secondary"):
-			if world and world.try_interact_at(aim_point(), self):
-				return
-			if world and world.try_place_display(aim_point(), self):
-				return
+			var back_first: bool = held_item != null and not stowed and world != null \
+				and not world.usable_object_at(aim_point()) and use_check.is_valid() and use_check.call(true)
+			if not back_first:
+				if world and world.try_interact_at(aim_point(), self):
+					return
+				if world and world.try_place_display(aim_point(), self):
+					return
 			back = held_item != null and not stowed
 			clicked = back
 		var held_down := false

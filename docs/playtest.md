@@ -127,6 +127,13 @@ guesses; the docs listed say where each tunable lives.
 - [ ] No keyboard throw (Q) or interact (E) any more; walk toggle is Caps Lock;
       the debug brush moved to F4.
 
+**Fixes from your Phase 11 testing**
+- [ ] Digging down underground: no bright area with a hard line any more.
+- [ ] Right click with blocks, a pickaxe or the Mining Spell does the back wall first;
+      doors, chests and stations still open.
+- [ ] Punches push slimes a little but don't stop their hops.
+- [ ] H (put away) then punch works; picking things up leaves an empty hand empty.
+
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time
       (`pickups 10` then walk a bit), never on screen or indoors.

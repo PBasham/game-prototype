@@ -80,6 +80,9 @@ const SPELL_PREFIX := "spell:"
 @export var melee_aims := false
 ## How hard it knocks enemies back (tiles/s).
 @export var knockback := 12.0
+## A hit staggers: the enemy's hop or slither is cut short and it starts over. Off for a
+## light push that doesn't interrupt (fists), so a flurry can't keep an enemy pinned.
+@export var staggers := true
 @export_group("Equipment")
 ## Armor slot: &"head", &"chest" or &"legs" (kind ARMOR). Accessories go in any
 ## accessory slot.

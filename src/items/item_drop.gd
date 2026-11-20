@@ -124,7 +124,7 @@ func _on_ground() -> bool:
 
 
 func _pick_up(player: Player) -> void:
-	var left := player.character.inventory.add(item_id, count)
+	var left := player.pick_up(item_id, count)
 	if left < count:
 		EventBus.item_picked_up.emit(item_id, count - left)
 	count = left

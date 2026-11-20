@@ -290,7 +290,8 @@ func can_use(on_back: bool = false) -> bool:
 			# Empty hands punch and weapons swing; materials, books and the like have no
 			# use, so the arm just keeps holding them.
 			var held := world.player.held_item
-			return not on_back and (held == null or held.kind in [ItemData.Kind.WEAPON, ItemData.Kind.TOOL])
+			return not on_back and (held == null or world.player.stowed
+				or held.kind in [ItemData.Kind.WEAPON, ItemData.Kind.TOOL])
 	return true
 
 
@@ -334,7 +335,7 @@ func melee_hit(item: ItemData) -> int:
 			continue
 		node.call(&"take_damage", amount, p)
 		if node.has_method(&"knock_back"):
-			node.call(&"knock_back", p.chest(), item.knockback)
+			node.call(&"knock_back", p.chest(), item.knockback, item.staggers)
 		var coat := p.use_poison_hit()
 		if coat and node.has_method(&"poison"):
 			node.call(&"poison", coat.poison_dps, coat.poison_seconds)

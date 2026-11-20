@@ -143,6 +143,37 @@ func test_light_sky_is_lit_and_deep_rock_is_ambient() -> void:
 	assert_eq(at.call(5, ChunkData.SIZE * 2 - 1), int(job.ambient * 255.0 + 0.5), "deep rock is ambient")
 
 
+func test_dug_out_air_underground_isnt_sky() -> void:
+	# Ground starts at row SIZE (the generator's surface). A pocket dug out of the rock,
+	# no back wall, deep down: it must stay dark, not shine like open sky.
+	var stone := blocks.index_of(&"stone")
+	var sky := PackedInt32Array()
+	sky.resize(ChunkData.AREA)
+	var rock := PackedInt32Array()
+	rock.resize(ChunkData.AREA)
+	rock.fill(stone)
+	for y in range(20, 24):
+		for x in range(4, 10):
+			rock[y * ChunkData.SIZE + x] = 0
+	var no_walls := PackedInt32Array()
+	no_walls.resize(ChunkData.AREA)
+	var job := LightJob.new()
+	job.rect = Rect2i(0, 0, ChunkData.SIZE, ChunkData.SIZE * 2)
+	job.blocks = [sky, rock]
+	job.walls = [no_walls, no_walls]
+	job.sky_floor.resize(ChunkData.SIZE)
+	job.sky_floor.fill(ChunkData.SIZE)
+	var table := blocks.collision_table()
+	job.solid.resize(table.size())
+	for i in table.size():
+		job.solid[i] = 1 if table[i] == TileDef.Collision.SOLID else 0
+	job.run()
+	var w := ChunkData.SIZE
+	var at := func(x: int, y: int) -> int: return job.bytes[(y * w + x) * 3]
+	assert_eq(at.call(5, 5), 255, "sky above the ground")
+	assert_lt(at.call(6, ChunkData.SIZE + 21), 30, "a dug pocket 20 tiles down is dark")
+
+
 func test_torches_light_a_dark_cave_warm() -> void:
 	# A sealed 32x32 room in rock (no sky), with a torch in the middle.
 	var stone := blocks.index_of(&"stone")

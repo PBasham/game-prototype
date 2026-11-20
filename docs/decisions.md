@@ -2,6 +2,20 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-20: Playtest fixes on phase-11-spell-controls
+
+- **Dug-out rock lit like daylight (bug, Patrick):** air with no back wall counted as
+  open sky anywhere, so mining wall-less rock lit everything you dug with a hard line
+  where your digging stopped. Now open sky only counts above the natural ground
+  (`LightMap.sky_depth_tiles`, 0); below that, light only spreads in.
+- **Right click (Patrick):** a held block, pickaxe or mining spell does its back layer
+  action first when it has one at the cursor. Usable furniture under the cursor still
+  wins (so a pickaxe can't mine the wall behind your chest); pickups and bushes don't.
+- **Fists don't stun-lock (Patrick):** punches keep a light push but no stagger
+  (`ItemData.staggers`). A "chance to stun" could come later from skills.
+- **Fists usable (Patrick):** punching works with the held item put away (H; it didn't),
+  and pickups skip an empty slot in your hand unless nothing else has room.
+
 ## 2026-11-19: Phase 11, spell controls (branch phase-11-spell-controls)
 
 - **Quick slots instead of the book's slots (Patrick):** spells go on two wheels (Q and

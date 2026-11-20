@@ -992,7 +992,7 @@ func request_take_display(tile: Vector2i, who: Player) -> bool:
 	EventBus.sound_requested.emit(&"item_pickup", tile_to_world(tile))
 	var left := 1
 	if who and who.character:
-		left = who.character.inventory.add(id, 1)
+		left = who.pick_up(id, 1)
 		if left == 0:
 			EventBus.item_picked_up.emit(id, 1)
 	if left > 0:
@@ -1314,6 +1314,15 @@ func _heal_blocks(delta: float) -> void:
 ## crafting station), something lying on the grass (pick it up), or an interactable
 ## node (group "interactable", with interact_rect() and interact(player)). Must be
 ## within interact_tiles of the player. Returns true if something was used.
+## Whether usable furniture (a door, chest, station, bed, display) is at a point.
+func usable_object_at(point: Vector2) -> bool:
+	var a := object_anchor_visual(world_to_tile(point))
+	if a == NO_TILE:
+		return false
+	var def := object_at(a)
+	return def != null and _usable(def)
+
+
 func try_interact_at(point: Vector2, who: Player) -> bool:
 	if who and point.distance_to(who.chest()) > (interact_tiles + 2.0) * TILE:
 		return false

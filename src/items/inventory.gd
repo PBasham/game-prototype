@@ -43,7 +43,9 @@ static func max_stack(item_id: StringName) -> int:
 
 ## Adds items: tops up existing stacks first, then fills empty slots (hotbar first).
 ## Returns how many didn't fit.
-func add(item_id: StringName, count: int) -> int:
+## `keep_empty`: an empty slot to fill only if nothing else has room (the slot in your
+## hand, so picking things up doesn't fill your empty hand).
+func add(item_id: StringName, count: int, keep_empty: int = -1) -> int:
 	if count <= 0 or item_id == &"":
 		return 0
 	var cap := max_stack(item_id)
@@ -54,7 +56,13 @@ func add(item_id: StringName, count: int) -> int:
 			var n := mini(count, cap - counts[i])
 			counts[i] += n
 			count -= n
+	var order: Array[int] = []
 	for i in size:
+		if i != keep_empty:
+			order.append(i)
+	if keep_empty >= 0 and keep_empty < size:
+		order.append(keep_empty)
+	for i in order:
 		if count == 0:
 			break
 		if is_empty(i):

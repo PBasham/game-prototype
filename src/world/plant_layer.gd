@@ -326,7 +326,7 @@ func request_pick_berries(ground: Vector2i, who: Player) -> bool:
 		return false
 	var n := randi_range(berries_min, berries_max)
 	if who and who.character:
-		var left := who.character.inventory.add(&"berries", n)
+		var left := who.pick_up(&"berries", n)
 		if left < n:
 			EventBus.item_picked_up.emit(&"berries", n - left)
 		if left > 0:

@@ -154,7 +154,7 @@ func request_pick_up(tile: Vector2i, who: Player) -> bool:
 	var f: Forage = _items.get(g)
 	if f == null:
 		return false
-	if who.character.inventory.add(f.def.item, f.def.count) > 0:
+	if who.pick_up(f.def.item, f.def.count) > 0:
 		return false  # no room
 	EventBus.item_picked_up.emit(f.def.item, f.def.count)
 	_remove(g)

@@ -137,6 +137,7 @@ Weapons are items with `melee_damage > 0` (`ItemData`, Weapon group):
 | `melee_damage` | | Damage per swing. |
 | `melee_reach` | 4.5 tiles | How far in front the hit box reaches. |
 | `knockback` | 12 | Push on the enemy (reduced by its `knockback_resist`). |
+| `staggers` | on | The hit cuts the enemy's hop or slither short so it starts over. Fists don't: a light push it shrugs off, so punching can't pin an enemy down. |
 
 The hit lands on the swing's impact frame. The hit box is in front of the player, on the
 cursor's side, `melee_reach` tiles wide and 9 tiles tall around the chest. Every enemy
@@ -147,7 +148,7 @@ in it is hit once per swing.
 | Wooden Sword | 8 | 4 | Workbench: 10 wood |
 | Copper Sword | 13 | 4.5 | Anvil: 8 copper bars, 2 wood |
 | Iron Sword | 18 | 4.75 | Anvil: 10 iron bars, 2 wood |
-| Fists (empty hands) | 3 | 4 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player |
+| Fists (empty hands) | 3 | 4 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player. Light knockback, no stagger. Also with the held item put away (H). Pickups don't go into an empty slot in your hand unless nothing else has room, so an empty hand stays free for punching. |
 
 ## Spells against enemies
 

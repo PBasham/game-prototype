@@ -26,6 +26,10 @@ extends Sprite2D
 @export var source_solid_factor := 6.0
 ## Recompute when the sky light (day and night) changes by more than this.
 @export var sky_change := 0.012
+## Open air (no block, no wall) is sky only down to this many tiles below the natural
+## ground (the generator's surface): a hole dug deeper gets light only as it spreads in
+## from above, instead of every dug-out tile shining like open sky.
+@export var sky_depth_tiles := 0
 ## Minimum seconds between recomputes.
 @export var min_interval := 0.12
 
@@ -92,6 +96,17 @@ func rebuild_now() -> void:
 	_apply(job)
 
 
+## Natural ground height of a column (the generator's surface), cached.
+var _surfaces: Dictionary[int, int] = {}
+
+
+func _surface(x: int) -> int:
+	var wx := posmod(x, world.data.width)
+	if not _surfaces.has(wx):
+		_surfaces[wx] = world.generator.surface_at(wx) if world.generator else 0
+	return _surfaces[wx]
+
+
 ## Blocks until a running recompute is done (on world unload).
 func wait() -> void:
 	if _job != null:
@@ -108,6 +123,9 @@ func _make_job() -> LightJob:
 		return null
 	var job := LightJob.new()
 	job.rect = rect
+	job.sky_floor.resize(rect.size.x)
+	for x in rect.size.x:
+		job.sky_floor[x] = _surface(rect.position.x + x) + sky_depth_tiles - rect.position.y
 	job.ambient = ambient
 	_last_sky = _sky()
 	job.sky = _last_sky
