@@ -134,6 +134,9 @@ var _quick: Pane
 var _name_label: Label
 var _tooltip: PanelContainer
 var _tooltip_text: Label
+## The tooltip's title line and its right side (a book's tier).
+var _tooltip_title: Label
+var _tooltip_right: Label
 var _notes: VBoxContainer
 var _note_labels: Dictionary[StringName, Label] = {}
 var _note_counts: Dictionary[StringName, int] = {}
@@ -195,10 +198,25 @@ func _ready() -> void:
 	_tooltip = PanelContainer.new()
 	_tooltip.add_theme_stylebox_override("panel", UiSkin.box("panel", 6.0))
 	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tip_box := VBoxContainer.new()
+	tip_box.add_theme_constant_override("separation", 0)
+	_tooltip.add_child(tip_box)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 12)
+	tip_box.add_child(head)
+	_tooltip_title = Label.new()
+	_tooltip_title.add_theme_font_size_override("font_size", 8)
+	_tooltip_title.add_theme_color_override("font_color", UiSkin.TEXT)
+	_tooltip_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(_tooltip_title)
+	_tooltip_right = Label.new()
+	_tooltip_right.add_theme_font_size_override("font_size", 8)
+	_tooltip_right.add_theme_color_override("font_color", UiSkin.GOLD)
+	head.add_child(_tooltip_right)
 	_tooltip_text = Label.new()
 	_tooltip_text.add_theme_font_size_override("font_size", 8)
 	_tooltip_text.add_theme_color_override("font_color", UiSkin.TEXT)
-	_tooltip.add_child(_tooltip_text)
+	tip_box.add_child(_tooltip_text)
 	_tooltip.visible = false
 	add_child(_tooltip)
 	_death = Label.new()
@@ -312,11 +330,12 @@ func _process(delta: float) -> void:
 		if place and p.stowed:
 			p.toggle_stowed()  # placing takes the hand back out
 		p.refresh_held()
-	var on_buff := _buff_at_mouse() != &""
+	var on_buff := _buff_at_mouse() != &"" or _quick_key_at_mouse() != &""
 	p.input_blocked = over != null or (cursor_count > 0 and place == null) or paused or wheel_open or on_buff
 	if on_buff and not paused and Input.is_action_just_pressed("use_secondary"):
 		dismiss_buff(_buff_entry_at_mouse())
-	_update_tooltip(over if over else (_buffs if _buff_at_mouse() != &"" else null))
+	_update_tooltip(over if over else (_buffs if _buff_at_mouse() != &"" else
+		(_quick if _quick_key_at_mouse() != &"" else null)))
 	if (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
 		close_window()  # walked away from the station or chest
 	if bag != null and (not is_instance_valid(bag) or bag.is_queued_for_deletion()
@@ -648,6 +667,37 @@ func quick_key_spell(key: StringName) -> Array:
 	return [slot, c.quick_spell(slot) if slot != &"" else &""]
 
 
+## Where quick key `i` (QUICK_KEYS_SHOWN) sits in the panel beside the hotbar.
+func _quick_key_rect(i: int) -> Rect2:
+	# A small gap between the wheels (Q E) and the keys (Z X C).
+	return Rect2(Vector2(PAD + i * STEP + (4 if i >= 2 else 0), PAD + QUICK_LABEL_H), Vector2(SLOT, SLOT))
+
+
+## The quick key under the mouse in that panel (&"" if none).
+func _quick_key_at_mouse() -> StringName:
+	if not _quick.visible:
+		return &""
+	var local := _quick.get_local_mouse_position()
+	for i in QUICK_KEYS_SHOWN.size():
+		if _quick_key_rect(i).has_point(local):
+			return QUICK_KEYS_SHOWN[i]
+	return &""
+
+
+## The tooltip for a quick key: its spell (with what the key does) or its item.
+func _quick_key_tooltip(key: StringName) -> Array:
+	var c := world.character
+	if key in CharacterData.QUICK_KEYS and c.quick_item(key) != &"":
+		var it := ItemData.find(c.quick_item(key))
+		return [it, "\n%s: shortcut (you have %d)" % [String(key).to_upper(), c.inventory.count_of(c.quick_item(key))]]
+	var pick := quick_key_spell(key)
+	var spell := ItemData.find(ItemData.spell_key(pick[1])) as SpellData if pick[1] != &"" else null
+	if spell == null:
+		return [null, "%s: empty (set it up in the Equipment window, P)" % String(key).to_upper()]
+	var how := "casts right away" if c.quick_casts(pick[0]) else "goes in your hand"
+	return [spell, "\n%s: %s" % [String(key).to_upper(), how]]
+
+
 func _draw_quick(g: Control) -> void:
 	var c := world.character
 	var p := world.player
@@ -656,8 +706,7 @@ func _draw_quick(g: Control) -> void:
 	var in_hand: StringName = p.held_item.id if p.selected < 0 and p.held_item and p.held_item.is_spell() else &""
 	for i in QUICK_KEYS_SHOWN.size():
 		var key := QUICK_KEYS_SHOWN[i]
-		# A small gap between the wheels (Q E) and the keys (Z X C).
-		var r := Rect2(Vector2(PAD + i * STEP + (4 if i >= 2 else 0), PAD + QUICK_LABEL_H), Vector2(SLOT, SLOT))
+		var r := _quick_key_rect(i)
 		var pick := quick_key_spell(key)
 		var spell := ItemData.find(ItemData.spell_key(pick[1])) as SpellData if pick[1] != &"" else null
 		var shortcut := ItemData.find(c.quick_item(key)) if key in CharacterData.QUICK_KEYS and c.quick_item(key) != &"" else null
@@ -1960,10 +2009,20 @@ func _update_tooltip(over: Control) -> void:
 					_clock(e[2]), spell.description]
 				if (e[3] and not String(e[0]).begins_with("sick_")) or String(e[0]).begins_with("summon_"):
 					extra_only += "\nRight click: end it"
+		elif over == _quick:
+			var qt := _quick_key_tooltip(_quick_key_at_mouse())
+			item = qt[0]
+			if item:
+				extra = qt[1]
+			else:
+				extra_only = qt[1]
 		elif over is HudWindow:
 			var t: Array = (over as HudWindow).tooltip_at(over.get_local_mouse_position())
 			item = t[0]
-			extra_only = t[1]
+			if item and t[1] != "":
+				extra = "\n" + t[1]
+			else:
+				extra_only = t[1]
 		match h[0]:
 			Area.INVENTORY:
 				item = c.inventory.item(h[1])
@@ -1978,13 +2037,36 @@ func _update_tooltip(over: Control) -> void:
 	_tooltip.visible = item != null or extra_only != ""
 	if not _tooltip.visible:
 		return
-	_tooltip_text.text = extra_only if item == null else tooltip_for(item, world.character) + extra
+	var full := extra_only if item == null else tooltip_for(item, world.character) + extra
+	# The first line is the title (with a book's tier on the right); the rest below it.
+	var cut := full.find("\n")
+	_tooltip_title.text = full if cut < 0 else full.substr(0, cut)
+	_tooltip_text.text = "" if cut < 0 else full.substr(cut + 1)
+	_tooltip_text.visible = cut >= 0
+	_tooltip_right.text = tooltip_right(item) if item else ""
+	_tooltip_right.visible = _tooltip_right.text != ""
 	_tooltip.reset_size()
 	var at := over.get_global_mouse_position() + Vector2(10, 8)
 	var view := _view_size()
 	at.x = minf(at.x, view.x - _tooltip.size.x - 2)
 	at.y = minf(at.y, view.y - _tooltip.size.y - 2)
 	_tooltip.position = at
+
+
+## The right side of a tooltip's title line: "Tier N" for spellbooks.
+static func tooltip_right(item: ItemData) -> String:
+	return "Tier %d" % item.max_spell_tier if item and item.kind == ItemData.Kind.BOOK else ""
+
+
+## A stat bonus as a line: "+10% Magic damage", "+20 Max mana".
+static func stat_text(k: StringName, v: float) -> String:
+	var names := {&"max_health": "Max health", &"max_mana": "Max mana", &"mana_regen": "Mana regen",
+		&"move_speed": "Speed", &"jump": "Jump", &"melee_damage": "Melee damage",
+		&"magic_damage": "Magic damage", &"mining_speed": "Mining speed"}
+	var label: String = names.get(k, String(k).capitalize())
+	if k in [&"max_health", &"max_mana", &"mana_regen"]:
+		return "%+d %s" % [roundi(v), label]
+	return "%+d%% %s" % [roundi(v * 100.0), label]
 
 
 static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
@@ -2002,7 +2084,11 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 		lines.append("Reach %s tiles" % str(item.reach_tiles))
 	match item.kind:
 		ItemData.Kind.BOOK:
-			lines.append("Spellbook: spell power x%s for every spell, spells up to tier %d" % [str(item.spell_power), item.max_spell_tier])
+			# Name | Tier (the title line), spell power, then its modifiers.
+			lines.append("Spell power x%s" % str(item.spell_power))
+			for k: StringName in item.stats:
+				if item.stats[k] != 0.0:
+					lines.append(stat_text(k, item.stats[k]))
 		ItemData.Kind.CONDUIT:
 			lines.append("Conduit (%s): spell power x%s, +%s reach" % [String(item.conduit_type),
 				str(item.spell_power), str(item.spell_reach_bonus)])
@@ -2078,7 +2164,7 @@ static func scroll_lines(item: ItemData, c: CharacterData) -> PackedStringArray:
 				cast_text += ". Lasts %s" % _secs_text(spell.duration)
 	out.append(cast_text + ".")
 	if c and not c.knows(spell.id):
-		out.append("To learn %s for good: the Spells tab of a Spell Weaving Table." % spell.display_name)
+		out.append("Scrolls don't teach. Learn %s from its Spell Page or a Spell Weaving Table." % spell.display_name)
 	out.append("One use: the scroll is used up.")
 	out.append(spell.display_name + ": " + spell.description)
 	return out

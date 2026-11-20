@@ -111,7 +111,8 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 @export_group("Zone, ward, summon, conjure")
 ## Zone radius (tiles).
 @export var zone_tiles := 5.0
-## Wards and familiars you can have out at once (the oldest goes).
+## Zones, wards and familiars you can have out at once (a new one replaces the oldest).
+## Healing Circle is 1, so casting it again moves it instead of stacking the healing.
 @export var max_active := 3
 ## Familiar: shots every this many seconds, at enemies within this many tiles.
 @export var summon_interval := 1.0

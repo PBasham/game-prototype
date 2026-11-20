@@ -47,7 +47,9 @@ training dummy.
 
 - **Swings** (swords): an arc in front of you toward the cursor, from
   `swing_above_chest_tiles` (6) above your chest to `swing_below_feet_tiles` (3) below
-  your feet, like Terraria's sweep, so they reach an enemy downhill.
+  your feet, like Terraria's sweep, so they reach an enemy downhill. Off the ground
+  (flying, levitating, jumping) it stops at your feet (`swing_below_feet_airborne_tiles`,
+  0), so you can't hit a slime far below you.
 - **Aimed** (punches; `melee_aims` on the item): in front of you (head to knees) plus a
   line toward the cursor, at most `aimed_hit_limit_degrees` (60) up or down,
   `aimed_hit_width_tiles` (3) wide. The jab, cross and uppercut also turn the arm toward

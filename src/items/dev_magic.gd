@@ -33,8 +33,7 @@ static func add_to(c: CharacterData) -> void:
 static func _register() -> void:
 	if ItemData.find(&"dev_grimoire") != null:
 		return
-	var book := _item(&"dev_grimoire", "Dev Grimoire (dev)", "8 spell slots, spell power x1.5.", ItemData.Kind.BOOK)
-	book.spell_slots = 8
+	var book := _item(&"dev_grimoire", "Dev Grimoire (dev)", "A test book.", ItemData.Kind.BOOK)
 	book.spell_power = 1.5
 	book.max_spell_tier = 3
 	book.icon = _book_texture(Color("2a5a8a"), Color("f2d27a"))

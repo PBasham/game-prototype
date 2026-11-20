@@ -28,6 +28,9 @@ const TILE := World.TILE
 ## your feet, so they reach an enemy downhill.
 @export var swing_above_chest_tiles := 6.0
 @export var swing_below_feet_tiles := 3.0
+## The same while you're off the ground (flying, levitating, jumping): no slope to reach
+## down, so a swing doesn't hit things far below you.
+@export var swing_below_feet_airborne_tiles := 0.0
 ## Aimed attacks (punches): the most they turn up or down from straight ahead, and how
 ## wide their line is (tiles).
 @export var aimed_hit_limit_degrees := 60.0
@@ -316,7 +319,8 @@ func melee_rect(item: ItemData) -> Rect2:
 	var feet_y := p.global_position.y
 	var top := chest.y - swing_above_chest_tiles * World.TILE
 	var x := chest.x if side > 0.0 else chest.x - reach_px
-	return Rect2(x, top, reach_px, feet_y + swing_below_feet_tiles * World.TILE - top)
+	var below := swing_below_feet_tiles if p.is_on_floor() else swing_below_feet_airborne_tiles
+	return Rect2(x, top, reach_px, feet_y + below * World.TILE - top)
 
 
 ## Hits everything damageable in the swing (once each). Returns how many were hit.

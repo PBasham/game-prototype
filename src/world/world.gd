@@ -574,6 +574,11 @@ func request_spell_effect(spell: SpellData, at: Vector2, power: float) -> Node:
 		return null
 	match spell.cast:
 		SpellData.Cast.ZONE:
+			# Up to `max_active` circles of this spell; a new one replaces the oldest.
+			var zones := effects.get_children().filter(func(n: Node) -> bool:
+				return n is SpellZone and (n as SpellZone).spell == spell and not n.is_queued_for_deletion())
+			while zones.size() >= maxi(spell.max_active, 1):
+				zones.pop_front().queue_free()
 			var z := SpellZone.new()
 			effects.add_child(z)
 			z.setup(self, spell, at, power)

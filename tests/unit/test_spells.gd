@@ -768,3 +768,24 @@ func test_wheel_pick_doesnt_cast() -> void:
 	assert_true(p.tap_wheel(&"q"))
 	assert_eq(p.concentration, _spell(&"mend"), "tapping casts it")
 	p.toggle_concentration(_spell(&"mend"))
+
+
+func test_healing_circle_moves_instead_of_stacking() -> void:
+	var circle := _spell(&"healing_circle")
+	assert_eq(circle.max_active, 1)
+	var at := w.player.chest()
+	w.request_spell_effect(circle, at, 1.0)
+	w.request_spell_effect(circle, at + Vector2(16, 0), 1.0)
+	await wait_physics_frames(1)
+	var zones := w.effects.get_children().filter(func(n: Node) -> bool: return n is SpellZone)
+	assert_eq(zones.size(), 1, "the first one went")
+	assert_eq((zones[0] as SpellZone).global_position, at + Vector2(16, 0))
+
+
+func test_book_tooltip_layout() -> void:
+	var book := ItemData.find(&"basic_spellbook")
+	assert_eq(Hud.tooltip_right(book), "Tier 1")
+	var text := Hud.tooltip_for(book)
+	assert_true(text.begins_with("Basic Spellbook\nSpell power x1"))
+	assert_false("Holds" in text)
+	assert_eq(Hud.tooltip_right(ItemData.find(&"wood")), "")

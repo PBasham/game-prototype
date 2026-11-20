@@ -145,7 +145,7 @@ const SPELL_PREFIX := "spell:"
 @export var cloud_tiles := Vector2(6, 4)
 @export var cloud_seconds := 5.0
 @export_group("Magic")
-## Spellbooks: how many spells the book holds.
+## Unused (spells don't go in books any more); kept so older files still load.
 @export var spell_slots := 0
 ## Spellbooks: the highest spell tier the book can hold.
 @export var max_spell_tier := 1

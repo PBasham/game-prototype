@@ -39,6 +39,14 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Swings in the air (bug, Patrick):** flying above a slime still hit it (the swing
+  reaches 3 tiles below your feet for downhill enemies). Off the ground it stops at
+  your feet now.
+- **Healing Circle doesn't stack (Patrick):** one at a time; casting again moves it.
+  Later an upgrade could allow 2 (`max_active`, also used by wards and familiars).
+- **Book tooltip (Patrick):** Name | Tier, Spell power, modifiers. "Holds 4 spells" is
+  gone (books don't hold spells since Phase 11).
+- **Quick panel tooltips (Patrick):** hover Q E Z X C for the spell's info.
 - **Spell Pages and scrolls (Patrick):** pages teach, scrolls cast. A Spell Page (found;
   console `page <spell>` for now) teaches its spell for good on left click. Scrolls never
   teach. The Spell Weaving Table has Spells | Scrolls: the Scrolls tab scribes only

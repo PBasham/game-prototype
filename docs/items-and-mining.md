@@ -147,7 +147,7 @@ Current items:
 | Dirt, Stone, Wood, Log | Blocks (Wood places planks, Log a log cabin block whose run ends stick out 2 px, `overhang_px` on the tile); right click places them as background walls |
 | Copper Ore, Wood Platform | Blocks (front only) |
 | Rope, Torch | Tile objects |
-| Basic Spellbook | The book used when the Book slot is empty: 4 slots, power x1 |
+| Basic Spellbook | The book used when the Book slot is empty: power x1, tier 1 |
 | Tree Seed | Plant on grass; grows into a tree |
 | Grass Seeds | Plant on dirt that touches air; turns it into grass |
 
@@ -209,7 +209,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Wisp | LIGHT (placed) | Hold to steer a cool light with the cursor (within 24 tiles of you), let go to leave it there. Radius 9, 5 minutes, up to 3 at once (the oldest goes). 12 mana, 0.5 s cooldown. |
 | Gel Cushion | BUFF | The next fall that would hurt does no damage, then the buff is gone ("*squish*" and a green splat at your feet). Otherwise it lasts 2 minutes. 10 mana + **5 Slime** per cast. Scroll: Blank Scroll + 20 Slime. A sound hook fires when it saves you (`EventBus.sound_requested`, id `gel_cushion_used`). |
 | Arcane Bolt | CHARGED | Up to 1.5 s: a tap does 6 damage for 4 mana, a full charge 30 for 15, and the bolt grows. 45 tiles/s, 26 tiles. |
-| Healing Circle | ZONE | 5 tile radius at the cursor, 10 s, heals 4/s (times spell power) while you're inside. 25 mana, 2 s cooldown. |
+| Healing Circle | ZONE | 5 tile radius at the cursor, 10 s, heals 4/s (times spell power) while you're inside. 25 mana, 2 s cooldown. One at a time (`max_active` 1): casting again moves it, so circles don't stack. |
 | Spark Ward | WARD | A rune for 2 minutes; the first enemy on it takes 20 and knockback 20. Up to 3. 15 mana. |
 | Familiar | SUMMON | Follows you for 60 s, shoots the nearest enemy within 15 tiles every second for 5. One at a time. 30 mana. |
 | Conjure Platform | CONJURE | 6 tiles wide at the cursor for 30 s. 10 mana. |
@@ -243,7 +243,9 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
   in a quick slot (q1..q8, e1..e8, z, x, c, buff1..buff6). How you learn spells in the real game
   comes later.
 - **The spellbook is part of the character**, not a hotbar item: the **Book** slot in
-  the Equipment window. Empty = the Basic Spellbook (x1 power, tier 1). Other books have
+  the Equipment window. Empty = the Basic Spellbook (x1 power, tier 1). A book's tooltip:
+  its name with "Tier N" on the right, then "Spell power xN", then its modifiers (the
+  book's `stats`, like "+10% Magic damage"), then its description. Other books have
   more `spell_power` and a higher `max_spell_tier`. (`spell_slots` on books is unused now.)
 - **Quick spells** (Equipment window, P, "Quick spells"): click a spell in the Spell
   Index (L), then a slot. Click a filled slot to pick its spell up; right click empties it.
@@ -251,7 +253,8 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
     and let go: that spell becomes the tap spell (a cast-right-away one isn't cast by
     the pick). Tap Q: the last spell picked on that wheel again (or its first). The
     small panel beside the hotbar shows what Q and E would pick, and Z, X, C, with each
-    key's letter above its square.
+    key's letter above its square. Hover a square for the spell's full tooltip (or the
+    item's) and what the key does.
   - **Z, X, C**: one spell each, **or a shortcut to any item**: click the slot with an
     item on the mouse (the stack stays on the mouse; right click clears). Food and
     potions are used right away; anything else (a block, a station, a tool) goes in your

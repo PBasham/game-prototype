@@ -282,10 +282,9 @@ func _items() -> Array[ItemData]:
 	bed_item.max_stack = 99
 	out.append(bed_item)
 	# The spellbook used when the book slot is empty. Not found in the world.
-	var book := _base(&"basic_spellbook", "Basic Spellbook", "Holds 4 spells. Used when no other book is equipped.")
+	var book := _base(&"basic_spellbook", "Basic Spellbook", "Always yours: used when no other book is equipped.")
 	book.kind = ItemData.Kind.BOOK
 	book.max_stack = 1
-	book.spell_slots = 4
 	book.max_spell_tier = 1
 	book.held = _look(&"basic_spellbook", &"spell_book", Vector2(5, 9))
 	out.append(book)
@@ -430,6 +429,7 @@ func _spells() -> Array[ItemData]:
 	circle.zone_tiles = 5.0
 	circle.duration = 10.0
 	circle.heal_per_second = 4.0
+	circle.max_active = 1  # casting again moves it
 	circle.mana_cost = 25.0
 	circle.cooldown = 2.0
 	circle.impact_at = 0.3

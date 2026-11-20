@@ -268,17 +268,10 @@ func draw_body(font: Font) -> void:
 func stat_lines() -> Array[String]:
 	var p := hud.world.player
 	var lines: Array[String] = ["Defense %d" % p.defense]
-	var names := {&"max_health": "Max health", &"max_mana": "Max mana", &"mana_regen": "Mana regen",
-		&"move_speed": "Speed", &"jump": "Jump", &"melee_damage": "Melee damage",
-		&"magic_damage": "Magic damage", &"mining_speed": "Mining speed"}
 	for k: StringName in CharacterData.STATS:
 		var v := p.stat(k)
-		if v == 0.0:
-			continue
-		if k in [&"max_health", &"max_mana", &"mana_regen"]:
-			lines.append("%s %+d" % [names[k], roundi(v)])
-		else:
-			lines.append("%s %+d%%" % [names[k], roundi(v * 100.0)])
+		if v != 0.0:
+			lines.append(Hud.stat_text(k, v))
 	return lines
 
 

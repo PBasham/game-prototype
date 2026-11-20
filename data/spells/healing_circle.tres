@@ -10,6 +10,7 @@ cast = 8
 cooldown = 2.0
 projectile_color = Color(0.5, 1, 0.6, 1)
 heal_per_second = 4.0
+max_active = 1
 duration = 10.0
 mana_cost = 25.0
 learn_cost = Dictionary[StringName, int]({

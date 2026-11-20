@@ -138,6 +138,10 @@ guesses; the docs listed say where each tunable lives.
 - [ ] New caves (F6 or unexplored areas): tunnels tall enough to walk and hop through.
 - [ ] Craft window: hold Shift or Ctrl, the amount and costs change to match.
 - [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).
+- [ ] Flying or jumping over a slime: a sword can't hit it far below you.
+- [ ] Healing Circle: casting again moves it (no stacking).
+- [ ] Book tooltip: name and Tier on top, Spell power, modifiers. No "Holds 4 spells".
+- [ ] Hover Q E Z X C beside the hotbar: full spell tooltip.
 - [ ] Spell Weaving Table: Spells | Scrolls; group buttons and search filter both.
 - [ ] Scrolls tab only lists spells you know, at full cost, with the max mana gate.
 - [ ] Spell Pages: `page fly` in the console, left click the page: you know Fly again.

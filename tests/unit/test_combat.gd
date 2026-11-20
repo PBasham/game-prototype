@@ -451,3 +451,21 @@ func test_melee_doesnt_hit_through_walls() -> void:
 	assert_eq(w.item_user.melee_hit(sword), 1, "clear again")
 	e.queue_free()
 	w.item_user.cursor_override = Vector2.INF
+
+
+func test_swings_dont_reach_far_below_while_flying() -> void:
+	var p := w.player
+	var sword := ItemData.find(&"wooden_sword")
+	p.toggle_concentration(Registry.get_def(&"spells", &"fly") as SpellData)
+	p.global_position.y -= 9 * World.TILE
+	p.reset_physics_interpolation()
+	await wait_physics_frames(2)
+	assert_false(p.is_on_floor())
+	var e := w.request_spawn_enemy(_slime(), p.global_position + Vector2(-8, 4 * World.TILE))
+	await wait_physics_frames(1)
+	e.global_position = p.global_position + Vector2(-8, 4 * World.TILE)
+	w.item_user.cursor_override = e.global_position
+	assert_eq(w.item_user.melee_hit(sword), 0, "4 tiles under your feet in the air: out of reach")
+	e.queue_free()
+	p.toggle_concentration(Registry.get_def(&"spells", &"fly") as SpellData)
+	w.item_user.cursor_override = Vector2.INF
