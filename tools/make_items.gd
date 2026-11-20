@@ -594,9 +594,10 @@ func _objects() -> Array[ObjectDef]:
 	for f: Array in [[&"workbench", "Workbench", 5, 4, &"workbench"], [&"furnace", "Furnace", 4, 5, &"furnace"],
 			[&"copper_anvil", "Copper Anvil", 3, 3, &"anvil"], [&"chest", "Chest", 3, 3, &""],
 			[&"door", "Door", 1, 8, &""], [&"spell_weaving_table", "Spell Weaving Table", 6, 3, &"spell_weaving"],
-			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"],
 			[&"campfire", "Campfire", 4, 3, &"cooking"], [&"alchemy_table", "Alchemy Table", 5, 3, &"alchemy"],
-			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""]]:
+			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""],
+			# Added later go last, so the indexes below stay put.
+			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
