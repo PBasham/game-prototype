@@ -301,6 +301,29 @@ Trees and flowers only grow on grass with air above, so cave entrances and dug-o
 ground stay bare. Placement rules live in `tree_at` / `flower_at`; the chunk builder
 (`chunk_build_job.gd`) asks them per column.
 
+### Dark Forest
+
+Patches of Dark Forest spread evenly around the world, away from spawn. Inside: tall
+darkwood trees packed close together, a dark backdrop of trunks under a canopy, half
+the daylight, and Forest Spirits (combat.md). The edges fade over a few dozen tiles.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `dark_forest_share` | 0.15 | Share of the world's width that is Dark Forest (0 = none). |
+| `dark_forest_patch_tiles` | 480 | About this wide per patch: Tiny 1 patch (154 tiles), Small 2 (480 each), Medium 3, Large 4. |
+| `dark_forest_spawn_clear` | 300 | No Dark Forest closer to spawn than this (tiles to the patch's edge). |
+| `dark_forest_edge_tiles` | 40 | The fade at each edge. |
+| `dark_tree_spacing` | 5 | One dark tree spot per this many columns (pines: 9). |
+| `dark_tree_chance` | 0.9 | Chance a spot has a tree. |
+| `dark_tree_variants` | 3 | Darkwood tree art (`assets/trees/darkwood_<n>.png`, 180 to 280 px tall). |
+| `dark_flower_chance` | 0.01 | Flowers under the dark trees. |
+
+`ForestGenerator.dark_forest_at(x)` (0 to 1) and `biome_at(x)` (`forest` or
+`dark_forest`) drive the trees, the spawn tables, the backdrop (`Backdrop.DARK_LAYERS`,
+`dark_veil`, `dark_fade_speed`) and the light (`LightMap.dark_forest_shade`, 0.5 = half
+as bright). The world map preview draws dark trees as taller purple ticks. Changes
+only affect chunks not generated yet.
+
 ## Code tour
 
 `ForestGenerator` (`forest_generator.gd`), in reading order:

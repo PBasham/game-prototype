@@ -432,6 +432,10 @@ Sticks and rocks lying around are the `Forage` node (crafting.md).
   it falls away from you over `fall_time` and breaks into Logs along its trunk (one per
   `tiles_per_log`, 6, tiles of height: 2 to 4) and 1 seed (`extra_seed_chance` of a second). Removing the grass under a tree breaks
   it on the spot.
+- **Darkwood trees** (the Dark Forest, tree variants after the 12 pines) drop **Dark
+  Logs** instead, more of them (they're 22 to 35 tiles tall). 1 Dark Log = 4
+  **Darkwood** by hand; Darkwood places Darkwood Planks (block, 70 health) and, with
+  right click, a Darkwood Wall. Saplings always grow pines.
 - **Saplings:** plant a tree seed on grass with `tree_spacing` (3) tiles to the next
   tree. It grows in `grow_min_seconds` to `grow_max_seconds` (60 to 150) while the
   world runs, once there are `grow_clearance` (10) clear tiles above it.

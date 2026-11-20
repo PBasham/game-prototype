@@ -58,6 +58,16 @@ func tree_at(_x: int) -> int:
 	return -1
 
 
+## 0 outside the Dark Forest, 1 deep inside it, in between at its edges (x wrapped).
+func dark_forest_at(_x: int) -> float:
+	return 0.0
+
+
+## The biome at column x (spawn tables, music later).
+func biome_at(x: int) -> StringName:
+	return &"dark_forest" if dark_forest_at(posmod(x, maxi(width, 1))) >= 0.5 else &"forest"
+
+
 ## Flower art variant for column x, or -1.
 func flower_at(_x: int) -> int:
 	return -1

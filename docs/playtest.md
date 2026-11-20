@@ -245,6 +245,17 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Costs 3 mana a second; stops when you're out.
 - [ ] Mine a far wall with the Mining Spell, then Tele Grab the ore.
 
+**Phase 14: Dark Forest (branch phase-14-dark-forest)**
+- [ ] New world (Small: 2 patches about 480 wide, away from spawn). `tp` there or walk.
+      The map preview shows them as purple trees.
+- [ ] Tall darkwood trees close together, dark trunks backdrop, half the daylight; the
+      edge fades in and out.
+- [ ] Chop a darkwood tree: Dark Logs; 1 Dark Log = 4 Darkwood (by hand); Darkwood
+      builds blocks and back walls.
+- [ ] Forest Spirits: dart about, stop, charge (sparks) for 1 s, shoot (15 damage).
+      Walls block their shots; they don't shoot what they can't see.
+- [ ] They drop Magic Essence, and a Spirit Core now and then. `summon forest_spirit`.
+
 ## Known
 
 - `test_spawns_ahead_when_moving_and_despawn_waits` (test_combat.gd) fails now and

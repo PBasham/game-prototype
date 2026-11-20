@@ -16,7 +16,8 @@ extends SceneTree
 ##   --out=PATH        output file (default user://preview_<seed>.png)
 ##
 ## Colors: sky, grass, dirt, stone, copper (orange), iron (pale grey), clay (terracotta), caves (dark), cave walls (darker
-## brown/gray), tree trunks (dark green ticks above the surface), flowers (pink dots).
+## brown/gray), tree trunks (dark green ticks above the surface; Dark Forest trees are
+## taller purple ticks), flowers (pink dots).
 
 const COLORS := {
 	&"grass": Color("4f8a2c"),
@@ -35,6 +36,7 @@ const CAVE_DIRT := Color("2e2118")
 const CAVE_STONE := Color("26262b")
 const CAVE_OPEN := Color("141418")
 const TREE := Color("1f4a22")
+const DARK_TREE := Color("6a3a62")
 const FLOWER := Color("e070b0")
 
 var _gen: WorldGenerator
@@ -156,8 +158,9 @@ func _decor() -> void:
 				continue
 			var r := (_gen.surface_at(x) - _y0) / _step
 			if tree >= 0:
-				for dy in range(1, maxi(2, 14 / _step)):
+				var dark := _gen.dark_forest_at(x) >= 0.5
+				for dy in range(1, maxi(2, (21 if dark else 14) / _step)):
 					if r - dy >= 0:
-						_img.set_pixel(c, r - dy, TREE)
+						_img.set_pixel(c, r - dy, DARK_TREE if dark else TREE)
 			elif r - 1 >= 0:
 				_img.set_pixel(c, r - 1, FLOWER)

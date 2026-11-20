@@ -4,7 +4,7 @@ extends GameData
 ## and when it spawns. Enemy (src/combat/enemy.gd) brings one to life.
 
 ## How it moves.
-enum AI { SLIME }
+enum AI { SLIME, SPIRIT }
 
 @export_group("Look")
 ## Sprite sheet: frames side by side, each frame_size: 0 = resting, 1 = squashed (about
@@ -57,5 +57,23 @@ enum AI { SLIME }
 ## Gravity in tiles/s².
 @export var gravity := 110.0
 
+@export_group("Spirit (floats and shoots)")
+## SPIRIT: darts to a spot near you (dart_speed tiles/s, for dart_seconds), stops,
+## glows for charge_seconds, then shoots a bolt at you (shot_damage, shot_speed
+## tiles/s, out to shot_tiles). Never more than float_tiles above the ground.
+@export var dart_speed := 16.0
+@export var dart_seconds_min := 0.5
+@export var dart_seconds_max := 1.1
+@export var charge_seconds := 1.0
+@export var shot_damage := 15.0
+@export var shot_speed := 22.0
+@export var shot_tiles := 30.0
+@export var float_tiles := 10.0
+## How far from you (tiles, sideways) it likes to hover while fighting.
+@export var keep_tiles_min := 6.0
+@export var keep_tiles_max := 12.0
+## Light it gives off (tiles; 0 = none) and its color.
+@export var glow_tiles := 0.0
+@export var glow_color := Color(0.5, 0.75, 1.0)
 @export_group("Loot")
 @export var loot: Array[LootDrop] = []

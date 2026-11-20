@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_s8dv3"]
+
+[resource]
+script = ExtResource("1_s8dv3")
+inputs = Dictionary[StringName, int]({
+&"dark_log": 1
+})
+output = &"darkwood"
+output_count = 4
+id = &"darkwood"
+display_name = "Darkwood"

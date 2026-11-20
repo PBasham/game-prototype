@@ -38,6 +38,8 @@ var _dirty := true
 var _cooldown := 0.0
 var _job: LightJob
 var _texture: ImageTexture
+## Share of daylight the Dark Forest's canopy keeps out (0.5 = half as bright).
+@export_range(0.0, 1.0) var dark_forest_shade := 0.5
 var _last_sky := Color.WHITE
 ## The tile rect the shown light covers. Outside it (moving fast, zoomed out) a rough
 ## stand-in is drawn: the sky's light above the ground, dark below.
@@ -109,6 +111,13 @@ func rebuild_now() -> void:
 var _surfaces: Dictionary[int, int] = {}
 
 
+## How much daylight reaches open ground in column x: less under the Dark Forest.
+func _sky_scale(x: int) -> float:
+	if world == null or world.generator == null:
+		return 1.0
+	return 1.0 - dark_forest_shade * world.generator.dark_forest_at(world.data.wrap_x(x))
+
+
 func _surface(x: int) -> int:
 	var wx := posmod(x, world.data.width)
 	if not _surfaces.has(wx):
@@ -133,8 +142,10 @@ func _make_job() -> LightJob:
 	var job := LightJob.new()
 	job.rect = rect
 	job.sky_floor.resize(rect.size.x)
+	job.sky_scale.resize(rect.size.x)
 	for x in rect.size.x:
 		job.sky_floor[x] = _surface(rect.position.x + x) + sky_depth_tiles - rect.position.y
+		job.sky_scale[x] = _sky_scale(rect.position.x + x)
 	job.ambient = ambient
 	_last_sky = _sky()
 	job.sky = _last_sky
@@ -189,14 +200,16 @@ func _draw() -> void:
 	for x in range(-m, w + m, step):
 		var inside_x := x >= 0 and x < w
 		var ground := _surface(_shown_rect.position.x + x) - _shown_rect.position.y
+		var k := _sky_scale(_shown_rect.position.x + x)
+		var col_sky := Color(ambient, ambient, ambient).lerp(sky, k) if k < 1.0 else sky
 		var top := -m
 		var bottom := h + m
 		if inside_x:
 			# Above and below the map only.
-			_strip(x, step, top, 0, ground, sky, dark)
-			_strip(x, step, h, bottom, ground, sky, dark)
+			_strip(x, step, top, 0, ground, col_sky, dark)
+			_strip(x, step, h, bottom, ground, col_sky, dark)
 		else:
-			_strip(x, step, top, bottom, ground, sky, dark)
+			_strip(x, step, top, bottom, ground, col_sky, dark)
 
 
 ## A column strip from y0 to y1 (tiles): sky light down to `ground`, dark under it.

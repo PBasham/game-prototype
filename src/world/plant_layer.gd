@@ -89,6 +89,9 @@ var _grass_budget := 0.0
 var _grass_id := -1
 var _dirt_id := -1
 var _trees: Array[Texture2D] = []
+## The pines come first in _trees; tree variants from here on are darkwood trees
+## (the Dark Forest), which drop Dark Logs.
+var _pines := 12
 var _flowers: Array[Texture2D] = []
 var _sapling_tex: Texture2D
 ## [young, grown ripe, grown picked].
@@ -109,6 +112,9 @@ func setup(w: World) -> void:
 	for kind: String in ["green", "olive", "teal", "gold"]:
 		for i in 3:
 			_trees.append(load("res://assets/trees/pine_%s_%d.png" % [kind, i]) as Texture2D)
+	_pines = _trees.size()
+	for i in 3:
+		_trees.append(load("res://assets/trees/darkwood_%d.png" % i) as Texture2D)
 	for i in 5:
 		_flowers.append(load("res://assets/decor/flower_%d.png" % i) as Texture2D)
 	_sapling_tex = load("res://assets/decor/sapling.png") as Texture2D
@@ -448,7 +454,7 @@ func _grow(delta: float) -> void:
 			continue
 		_saplings.erase(g)
 		_remove(g)
-		var tree := _add(g, Kind.TREE, randi() % _trees.size())
+		var tree := _add(g, Kind.TREE, randi() % _pines)
 		tree.health = tree_health
 
 
@@ -598,7 +604,7 @@ func _break(g: Vector2i, p: Plant) -> void:
 	var pos := ground_position(g, world.player.global_position if world.player else Vector2.ZERO) + Vector2(0, -4)
 	match p.kind:
 		Kind.TREE:
-			_drop_tree(pos, 0.0, _height_tiles(p))
+			_drop_tree(pos, 0.0, _height_tiles(p), log_of(p))
 		Kind.SAPLING:
 			world.request_spawn_drop(&"tree_seed", 1, pos, _pop())
 		Kind.FLOWER:
@@ -620,30 +626,36 @@ func _height_tiles(p: Plant) -> float:
 	return _trees[p.variant % _trees.size()].get_height() / float(TILE)
 
 
+## What a tree drops: Dark Logs from darkwood trees, Logs from pines.
+func log_of(p: Plant) -> StringName:
+	return &"dark_log" if p.variant % _trees.size() >= _pines else &"log"
+
+
 func _fell(g: Vector2i, p: Plant, dir: float) -> void:
 	var height := _height_tiles(p)
+	var log_id := log_of(p)
 	var node := p.node
 	p.node = null
 	_remove(g)
 	if node == null:
-		_drop_tree(ground_position(g, world.player.global_position) + Vector2(0, -4), dir, _height_tiles(p))
+		_drop_tree(ground_position(g, world.player.global_position) + Vector2(0, -4), dir, _height_tiles(p), log_id)
 		return
 	var tw := node.create_tween()
 	tw.tween_property(node, "rotation", dir * PI * 0.5, fall_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.parallel().tween_property(node, "modulate:a", 0.0, fall_time * 0.4).set_delay(fall_time * 0.75)
 	tw.tween_callback(func() -> void:
-		_drop_tree(node.global_position + Vector2(0, -4), dir, height)
+		_drop_tree(node.global_position + Vector2(0, -4), dir, height, log_id)
 		node.queue_free())
 
 
 ## Logs along where the trunk lay, and seeds.
-func _drop_tree(base: Vector2, dir: float, height_tiles: float) -> void:
+func _drop_tree(base: Vector2, dir: float, height_tiles: float, log_id: StringName = &"log") -> void:
 	var wood := logs_for(height_tiles)
 	var length := height_tiles * 0.8 * TILE  # the trunk, not the tip
 	for i in wood:
 		var along := (i + 0.5) / wood * length * (dir if dir != 0.0 else 0.0)
 		var pos := base + Vector2(along, 0.0 if dir != 0.0 else float(-i * TILE))
-		world.request_spawn_drop(&"log", 1, pos, _pop())
+		world.request_spawn_drop(log_id, 1, pos, _pop())
 	var seeds := 1 + (1 if randf() < extra_seed_chance else 0)
 	world.request_spawn_drop(&"tree_seed", seeds, base + Vector2(dir * length * 0.6, 0), _pop())
 

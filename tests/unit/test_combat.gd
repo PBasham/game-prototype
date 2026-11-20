@@ -159,6 +159,9 @@ func test_spawner_spawns_on_the_surface_not_indoors() -> void:
 
 
 func test_spawn_chance_and_weighted_picks() -> void:
+	# A slime may have spawned in the frames before the spawner was made peaceful.
+	for e in w.enemies():
+		e.free()
 	var t := w.spawner.table_here()
 	w.clock.set_hour(12.0)
 	# Empty area: catch up (12 s * 0.6 = 7.2 s average wait).

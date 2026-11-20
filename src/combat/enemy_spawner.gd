@@ -75,7 +75,9 @@ func table_here() -> SpawnTable:
 
 
 ## The biome at a column. Only the forest exists so far.
-func biome_at(_x: int) -> StringName:
+func biome_at(x: int) -> StringName:
+	if world and world.generator:
+		return world.generator.biome_at(x)
 	return &"forest"
 
 

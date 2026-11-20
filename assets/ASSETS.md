@@ -256,3 +256,8 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/potion_cabinet.png, items/{icons,held}/potion_cabinet.png | Potion Cabinet (3x4 tiles, detail 2): 48x64 empty cabinet; bottles are drawn in code in each item's `shelf_color`. Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |
 | items/icons/tele_grab.png (+ scroll_ and page_ icons) | 16x16 Tele Grab spell icon: a violet swirl pulling in an ore chunk. Placeholder from `art/concepts/spells/make_tele_grab.py` |
+| trees/darkwood_{0,1,2}.png | Darkwood trees, 104 wide, 180 / 230 / 280 tall: purple-brown trunk, round dark crown. Placeholders from `art/concepts/dark_forest/make_dark_forest.py` |
+| backdrop/dark_forest_far.png, backdrop/dark_forest_near.png | 1280x480, tiles sideways: dark trunks under a canopy (`--backdrops` on the same script) |
+| terrain/darkwood_planks.png, terrain/darkwood_planks_wall.png | 64x64 darkwood planks (block, back wall) |
+| items/{icons,held}: dark_log, darkwood, magic_essence, spirit_core | 16x16 icons, same script |
+| enemies/forest_spirit.png | 72x24: three 24x24 frames (drifting, charging, shooting) |

@@ -320,6 +320,8 @@ func _process(delta: float) -> void:
 	var cam := get_viewport().get_camera_2d()
 	var center := cam.get_screen_center_position() if cam else player.position
 	renderer.update(center)
+	if backdrop and generator:
+		backdrop.dark_target = generator.dark_forest_at(data.wrap_x(floori(center.x / TILE)))
 	_heal_blocks(delta)
 	DebugOverlay.watch("chunks", "%d loaded, %d generated, %d queued" % [renderer.loaded_count(),
 		data.generated_chunk_count(), renderer.pending_count() + data.pending_generation_count()])

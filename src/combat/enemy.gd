@@ -65,6 +65,10 @@ func _ready() -> void:
 	_set_frame(0)
 	z_index = 1
 	_wait = randf_range(data.hop_wait_min, data.hop_wait_max)
+	if data.glow_tiles > 0.0:
+		radius = data.glow_tiles
+		color = data.glow_color
+		add_to_group(&"light_sources")
 
 
 func hit_rect() -> Rect2:
@@ -168,6 +172,8 @@ func _physics_process(delta: float) -> void:
 	match data.ai:
 		EnemyData.AI.SLIME:
 			_slime(delta)
+		EnemyData.AI.SPIRIT:
+			_spirit(delta)
 	move_and_slide()
 	if is_on_floor() and not _was_on_floor:
 		_squash = 0.15  # landed
@@ -252,6 +258,104 @@ func _step_up() -> void:
 	global_position.y -= TILE + 0.5
 
 
+# --- Forest Spirit ------------------------------------------------------------------
+
+enum SpiritState { DART, CHARGE, SHOT }
+var _state := SpiritState.DART
+var _state_left := 0.0
+var _goal := Vector2.INF
+var _aim := Vector2.ZERO
+## Light it gives off (the "light_sources" group: the light map picks it up).
+var radius := 0.0
+var color := Color.WHITE
+
+
+## Darts to a spot near you (or wanders), stops and charges for a second, then shoots.
+func _spirit(delta: float) -> void:
+	velocity.y -= data.gravity * TILE * delta  # floats: undo the gravity added above
+	_state_left -= delta
+	var p := world.player
+	var hunting := p != null and not p.dead and _player_in_range(data.aggro_tiles)
+	match _state:
+		SpiritState.DART:
+			if _goal == Vector2.INF or _state_left <= 0.0:
+				if _goal != Vector2.INF and hunting and _player_in_range(data.shot_tiles) and _sees_player():
+					_state = SpiritState.CHARGE
+					_state_left = data.charge_seconds
+					EventBus.sound_requested.emit(&"bolt_charge", global_position)
+				else:
+					_pick_goal(hunting)
+					_state_left = randf_range(data.dart_seconds_min, data.dart_seconds_max)
+			var to := _goal - global_position if _goal != Vector2.INF else Vector2.ZERO
+			var want := to.limit_length(data.dart_speed * TILE) if to.length() > 2.0 else Vector2.ZERO
+			if to.length() < 24.0:
+				want *= to.length() / 24.0  # ease in
+			velocity = velocity.move_toward(want, data.dart_speed * TILE * 4.0 * delta)
+		SpiritState.CHARGE:
+			velocity = velocity.move_toward(Vector2.ZERO, data.dart_speed * TILE * 6.0 * delta)
+			if p:
+				_aim = Vector2(global_position.x + _wrapped_dx(p.chest().x), p.chest().y)
+			if _state_left <= 0.0:
+				_shoot()
+				_state = SpiritState.SHOT
+				_state_left = 0.35
+		SpiritState.SHOT:
+			velocity = velocity.move_toward(Vector2.ZERO, data.dart_speed * TILE * 6.0 * delta)
+			if _state_left <= 0.0:
+				_state = SpiritState.DART
+				_goal = Vector2.INF
+
+
+## Where its light comes from (the light map reads this).
+func light_tile() -> Vector2i:
+	return world.world_to_tile(global_position + Vector2(0, -data.size.y * 0.5))
+
+
+func _player_in_range(tiles: float) -> bool:
+	var p := world.player
+	return absf(_wrapped_dx(p.chest().x)) <= tiles * TILE and absf(p.chest().y - global_position.y) <= tiles * TILE
+
+
+func _sees_player() -> bool:
+	var p := world.player
+	var at := Vector2(global_position.x + _wrapped_dx(p.chest().x), p.chest().y)
+	return world.line_clear(global_position + Vector2(0, -data.size.y * 0.5), at)
+
+
+## A new spot to dart to: beside you at a hovering height (hunting), or nearby.
+func _pick_goal(hunting: bool) -> void:
+	var x: float
+	if hunting:
+		var p := world.player
+		var px := global_position.x + _wrapped_dx(p.chest().x)
+		var side := -1.0 if randf() < 0.5 else 1.0
+		x = px + side * randf_range(data.keep_tiles_min, data.keep_tiles_max) * TILE
+	else:
+		x = global_position.x + randf_range(-10.0, 10.0) * TILE
+	var ground := _ground_below(Vector2(x, global_position.y - 6.0 * TILE))
+	var up := randf_range(3.0, maxf(data.float_tiles, 3.5))
+	_goal = Vector2(x, ground - up * TILE)
+
+
+## World y (px) of the ground under a point (searching up to 40 tiles down).
+func _ground_below(at: Vector2) -> float:
+	var t := world.world_to_tile(at)
+	for dy in 40:
+		if world.is_solid(t + Vector2i(0, dy)):
+			return (t.y + dy) * TILE
+	return at.y + 10.0 * TILE
+
+
+func _shoot() -> void:
+	var from := global_position + Vector2(0, -data.size.y * 0.5)
+	var dir := (_aim - from).normalized() if _aim != from else Vector2.LEFT
+	var shot := EnemyShot.new()
+	shot.setup(world, dir * data.shot_speed * TILE, data.shot_damage, data.shot_tiles * TILE, data.knockback, data.glow_color)
+	shot.position = from
+	world.effects.add_child(shot)
+	EventBus.sound_requested.emit(&"bolt_fire", from)
+
+
 func _wrapped_dx(x: float) -> float:
 	var dx := x - global_position.x
 	var w := world.data.width * TILE
@@ -275,6 +379,16 @@ func _set_frame(i: int) -> void:
 
 
 func _update_look() -> void:
+	if data.ai == EnemyData.AI.SPIRIT:
+		_set_frame(1 if _state == SpiritState.CHARGE else (2 if _state == SpiritState.SHOT else 0))
+		var bob := sin(Time.get_ticks_msec() * 0.006 + get_instance_id()) * 0.06
+		_sprite.scale = Vector2(1.0 + bob, 1.0 - bob)
+		var f2 := data.frame_size
+		_sprite.position = Vector2(-f2.x * 0.5 * _sprite.scale.x, -f2.y * 0.5 * _sprite.scale.y - data.size.y * 0.5)
+		_sprite.modulate = data.tint if _flash <= 0.0 else Color(2.0, 2.0, 2.0)
+		if _flash <= 0.0 and _poison_left > 0.0:
+			_sprite.modulate = data.tint * Color(0.7, 1.15, 0.6)
+		return
 	if not is_on_floor():
 		_set_frame(2)
 		_sprite.scale = Vector2(0.92, 1.1)
@@ -298,6 +412,14 @@ func _update_look() -> void:
 
 
 func _draw() -> void:
+	# A Forest Spirit charging: sparks closing in on it.
+	if data.ai == EnemyData.AI.SPIRIT and _state == SpiritState.CHARGE:
+		var k := 1.0 - clampf(_state_left / maxf(data.charge_seconds, 0.01), 0.0, 1.0)
+		var mid := Vector2(0, -data.size.y * 0.5)
+		var r := lerpf(16.0, 7.0, k)
+		var spin := Time.get_ticks_msec() * 0.004
+		for i in 8:
+			draw_circle(mid + Vector2.from_angle(spin + i * TAU / 8.0) * r, 1.0, Color(0.85, 0.95, 1.0, 0.4 + 0.6 * k))
 	# Health bar once hurt (fades after a while).
 	if health >= data.max_health or _since_hit > 6.0:
 		return

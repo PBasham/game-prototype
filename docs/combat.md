@@ -73,6 +73,18 @@ in this world. 35 health, 1 defense, 9 contact damage,
 hops about 7 tiles and more often (waits 0.6 to 1.8 s). Drops 2 to 4 **Slime**. Same
 sheet as the Green Slime, tinted blue.
 
+### Forest Spirit (Dark Forest)
+
+`ai` SPIRIT: a glowing blue ball that floats (no gravity), never more than
+`float_tiles` (10) above the ground. It darts to a spot beside you (`dart_speed` 16
+tiles/s, `keep_tiles_min/max` 6 to 12 tiles away, 3 to 10 up), stops, charges for
+`charge_seconds` (1 s: sparks close in on it), then shoots a bolt at where you are
+(`shot_damage` 15, `shot_speed` 22 tiles/s, out to `shot_tiles` 30; `EnemyShot`,
+`src/combat/enemy_shot.gd`, stops at blocks). It only shoots when it can see you. 30
+health, 6 contact damage, lights its surroundings (`glow_tiles` 8). Day and night.
+Drops 1 to 2 **Magic Essence**, and a **Spirit Core** 1 time in 20. Sheet:
+`assets/enemies/forest_spirit.png` (24x24 frames: drifting, charging, shooting).
+
 ## Spawning
 
 Chance based, like Terraria: there's a small chance every frame, so on average one
@@ -107,7 +119,8 @@ spawn entry. Kinds so far:
 |---|---|---|
 | `KillCountCondition` | `enemy` (id), `count` | at least `count` of that enemy have been slain in this world |
 
-Forest: Blue Slime needs 1 Green Slime slain. New kinds (time, rain, depth, a boss
+Forest: Blue Slime needs 1 Green Slime slain. Dark Forest (`dark_forest_surface`):
+Forest Spirit 70, Green Slime 30, day and night, cap 5 by day and 7 at night. New kinds (time, rain, depth, a boss
 beaten) are a small script each, extending `SpawnCondition` with `met(world)` and
 `describe(world)`.
 

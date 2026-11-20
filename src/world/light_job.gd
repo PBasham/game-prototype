@@ -43,6 +43,9 @@ var indoors_factor := 0.0
 ## Per column (relative to rect): rows above this (relative to rect) can be open sky;
 ## air at or below it (dug out underground) isn't, it only gets light that spreads in.
 var sky_floor := PackedInt32Array()
+## Per column: how bright open sky is there (1 = full daylight; the Dark Forest's
+## canopy lets less through). Empty = 1 everywhere.
+var sky_scale := PackedFloat32Array()
 ## Per object id that blocks light (closed doors): its footprint width and height in
 ## tiles (0 = doesn't block). The id is only stored on the object's anchor (bottom-left)
 ## tile; the rest of the footprint is "filler", so the whole footprint is marked here.
@@ -101,7 +104,7 @@ func run() -> void:
 					var tx := (k % cols) * SIZE + lx
 					var ty := (k / cols) * SIZE + ly
 					if sky_floor.is_empty() or ty < sky_floor[tx]:
-						light[row + lx] = 1.0
+						light[row + lx] = 1.0 if sky_scale.is_empty() else sky_scale[tx]
 	for i in w * h:
 		if blocked_by_object[i] == 1:
 			solid_at[i] = 1

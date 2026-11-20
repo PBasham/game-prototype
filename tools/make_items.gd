@@ -95,6 +95,15 @@ func _items() -> Array[ItemData]:
 	out.append(wood)
 	# Logs: what trees drop. Craft into 4 Wood, or build a log cabin with them.
 	out.append(_block(&"log", "Log", "From trees. Craft into 4 Wood, or build with it: a log cabin block (right click: a log back wall).", &"log_wall"))
+	# Dark Forest: darkwood trees drop Dark Logs, 1 = 4 Darkwood (a building block).
+	var dlog := _small(&"dark_log", "Dark Log", "From darkwood trees in the Dark Forest. Craft into 4 Darkwood.")
+	out.append(dlog)
+	var dwood := _block(&"darkwood", "Darkwood", "Dark, dense wood from the Dark Forest (1 Dark Log = 4). A building block (right click: a back wall).", &"darkwood_wall")
+	dwood.places_block = &"darkwood_planks"
+	dwood.held.grip = Vector2(3, 5)
+	out.append(dwood)
+	out.append(_small(&"magic_essence", "Magic Essence", "A wisp of magic left by a Forest Spirit."))
+	out.append(_small(&"spirit_core", "Spirit Core", "The glowing heart of a Forest Spirit. Rare."))
 	# Platforms and rope go one at a time (line placing may come later).
 	var platform := _block(&"wood_platform", "Wood Platform", "Stand on it; jump up through it, Down + Jump drops through.")
 	platform.place_area_max = 1
@@ -762,6 +771,28 @@ func _enemies() -> Array[EnemyData]:
 	blue.hop_wait_max = 1.8
 	blue.loot.append(LootDrop.make(&"slime", 2, 4))
 	out.append(blue)
+	# Dark Forest: a glowing ball that darts about, stops, charges and shoots.
+	var spirit := EnemyData.new()
+	spirit.id = &"forest_spirit"
+	spirit.display_name = "Forest Spirit"
+	spirit.description = "A glowing wisp of the Dark Forest. Darts about, stops, charges for a second and shoots."
+	spirit.texture = load("res://assets/enemies/forest_spirit.png") as Texture2D
+	spirit.frame_size = Vector2i(24, 24)
+	spirit.size = Vector2(12, 12)
+	spirit.ai = EnemyData.AI.SPIRIT
+	spirit.gravity = 0.0
+	spirit.max_health = 30.0
+	spirit.contact_damage = 6.0
+	spirit.knockback = 10.0
+	spirit.knockback_resist = 0.3
+	spirit.aggro_tiles = 40.0
+	spirit.aggro_tiles_vertical = 24.0
+	spirit.wander_by_day = false
+	spirit.shot_damage = 15.0
+	spirit.glow_tiles = 8.0
+	spirit.loot.append(LootDrop.make(&"magic_essence", 1, 2))
+	spirit.loot.append(LootDrop.make(&"spirit_core", 1, 1, 0.05))
+	out.append(spirit)
 	return out
 
 
@@ -783,6 +814,20 @@ func _spawns() -> Array[SpawnTable]:
 	var after_green: Array[SpawnCondition] = [KillCountCondition.make(&"green_slime", 1)]
 	forest.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/blue_slime.tres") as EnemyData, 12.0, true, true, after_green))
 	out.append(forest)
+	# The Dark Forest: Forest Spirits day and night, and a few slimes.
+	var dark := SpawnTable.new()
+	dark.id = &"dark_forest_surface"
+	dark.display_name = "Dark Forest surface"
+	dark.biome = &"dark_forest"
+	dark.layer = SpawnTable.Layer.SURFACE
+	dark.day_seconds = 9.0
+	dark.night_seconds = 6.0
+	dark.max_day = 5
+	dark.max_night = 7
+	dark.max_depth_tiles = 20
+	dark.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/forest_spirit.tres") as EnemyData, 70.0))
+	dark.entries.append(SpawnEntry.make(load(ENEMY_DIR + "/green_slime.tres") as EnemyData, 30.0))
+	out.append(dark)
 	return out
 
 
@@ -842,6 +887,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"stone_pickaxe", &"", {&"stone": 3, &"wood": 2}, &"stone_pickaxe", 1, []],
 		[&"stone_axe", &"", {&"stone": 3, &"wood": 2}, &"stone_axe", 1, []],
 		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
+		[&"darkwood", &"", {&"dark_log": 1}, &"darkwood", 4, []],
 		[&"wood_platform", &"", {&"wood": 1}, &"wood_platform", 2, []],
 		[&"campfire", &"", {&"wood": 5, &"stone": 3}, &"campfire", 1, []],
 		# Food & Alchemy.
@@ -963,7 +1009,7 @@ func _spell(spell_id: StringName, label: String, text: String) -> SpellData:
 
 
 ## Which special storage takes an item (Lumber Rack, Potion Cabinet).
-const STORAGE_TAGS := {&"log": &"lumber", &"wood": &"lumber", &"healing_potion": &"potion",
+const STORAGE_TAGS := {&"log": &"lumber", &"wood": &"lumber", &"dark_log": &"lumber", &"darkwood": &"lumber", &"healing_potion": &"potion",
 	&"mana_potion": &"potion", &"poison_coating": &"potion", &"poison_flask": &"potion", &"clay_flask": &"potion"}
 
 

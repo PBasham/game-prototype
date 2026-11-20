@@ -183,6 +183,24 @@ extends GameData
 @export var tree_variants := 12
 @export var flower_variants := 5
 
+@export_group("Dark forest")
+## Share of the world's width that is Dark Forest (0 = none). It's split into patches
+## of about dark_forest_patch_tiles each, spread around the world, so bigger worlds get
+## more patches (Small: 2, Medium: 3, Large: 4 by default).
+@export_range(0.0, 0.6) var dark_forest_share := 0.15
+@export var dark_forest_patch_tiles := 480
+## No Dark Forest closer to spawn than this (tiles from spawn to the patch's edge).
+@export var dark_forest_spawn_clear := 300
+## The patch fades in and out over this many tiles at each edge (trees, darkness, sky).
+@export var dark_forest_edge_tiles := 40
+## Dark trees: one spot every this many columns, the chance a spot has a tree, and the
+## number of darkwood tree art variants (assets/trees/darkwood_<n>.png).
+@export var dark_tree_spacing := 5
+@export_range(0.0, 1.0) var dark_tree_chance := 0.9
+@export var dark_tree_variants := 3
+## Flower chance per column under the dark trees.
+@export_range(0.0, 1.0) var dark_flower_chance := 0.01
+
 
 func validate() -> PackedStringArray:
 	var problems := super()
@@ -194,6 +212,8 @@ func validate() -> PackedStringArray:
 		problems.append("%s: cliff or copper min > max" % id)
 	if surface_min >= surface_max:
 		problems.append("%s: surface_min must be below surface_max" % id)
+	if dark_tree_spacing < 3:
+		problems.append("%s: dark_tree_spacing must be at least 3" % id)
 	if tree_spacing < 3:
 		problems.append("%s: tree_spacing must be at least 3" % id)
 	return problems

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://src/combat/loot_drop.gd" id="1_x1301"]
+[ext_resource type="Script" path="res://src/combat/enemy_data.gd" id="2_5vjx8"]
+[ext_resource type="Texture2D" path="res://assets/enemies/forest_spirit.png" id="3_bh05k"]
+
+[sub_resource type="Resource" id="Resource_prlqr"]
+script = ExtResource("1_x1301")
+item = &"magic_essence"
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_b8bsc"]
+script = ExtResource("1_x1301")
+item = &"spirit_core"
+chance = 0.05
+
+[resource]
+script = ExtResource("2_5vjx8")
+texture = ExtResource("3_bh05k")
+frame_size = Vector2i(24, 24)
+size = Vector2(12, 12)
+max_health = 30.0
+knockback_resist = 0.3
+ai = 1
+wander_by_day = false
+aggro_tiles = 40.0
+aggro_tiles_vertical = 24.0
+gravity = 0.0
+glow_tiles = 8.0
+loot = Array[ExtResource("1_x1301")]([SubResource("Resource_prlqr"), SubResource("Resource_b8bsc")])
+id = &"forest_spirit"
+display_name = "Forest Spirit"
+description = "A glowing wisp of the Dark Forest. Darts about, stops, charges for a second and shoots."

@@ -17,6 +17,20 @@ const LAYERS := [
 	["hills_1.png", 0.3, 0.18, 195.0],
 ]
 
+## Dark Forest: [texture, horizontal parallax factor]; drawn over the hills (with a
+## murky veil over the sky) as the camera enters a Dark Forest patch.
+const DARK_LAYERS := [["dark_forest_far.png", 0.2], ["dark_forest_near.png", 0.34]]
+## The veil's color over the sky and hills in the Dark Forest, and how fast the
+## backdrop turns dark or light again (share per second).
+@export var dark_veil := Color("16282a")
+@export var dark_fade_speed := 1.5
+
+## How dark-forest the view is (0 to 1), set by the world from where the camera is.
+var dark_target := 0.0
+var _dark := 0.0
+var _veil: ColorRect
+var _dark_rects: Array[TextureRect] = []
+
 ## Sky colors (top, horizon) for day, dusk and dawn, and night.
 @export var day_sky: PackedColorArray = PackedColorArray([Color("3fa9e8"), Color("aee4f6")])
 @export var twilight_sky: PackedColorArray = PackedColorArray([Color("4a5aa8"), Color("f0a070")])
@@ -96,6 +110,19 @@ void fragment() {
 		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_root.add_child(rect)
 		_rects.append(rect)
+	_veil = ColorRect.new()
+	_veil.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_veil.color = dark_veil
+	_veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_veil)
+	for spec: Array in DARK_LAYERS:
+		var rect := TextureRect.new()
+		rect.texture = load(DIR.path_join(spec[0])) as Texture2D
+		rect.stretch_mode = TextureRect.STRETCH_TILE
+		rect.size = Vector2(LAYER_WIDTH * 2, rect.texture.get_height())
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_root.add_child(rect)
+		_dark_rects.append(rect)
 	# Solid ground below the nearest hills, so holes never show sky underneath.
 	var front := (_rects.back().texture as Texture2D).get_image()
 	_ground = ColorRect.new()
@@ -106,7 +133,8 @@ void fragment() {
 	_follow(Vector2.ZERO)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_dark = move_toward(_dark, dark_target, dark_fade_speed * delta)
 	_update_sky()
 	var cam := get_viewport().get_camera_2d()
 	if cam:
@@ -123,6 +151,15 @@ func _follow(cam: Vector2) -> void:
 		rect.position.y = float(spec[3]) - dy * float(spec[2])
 	var last := _rects.back() as TextureRect
 	_ground.position = Vector2(0, last.position.y + last.size.y - 1)
+	# Dark Forest: the veil, then trunks standing on the ground line.
+	_veil.visible = _dark > 0.0
+	_veil.color = Color(dark_veil * _layers_tint, 0.9 * _dark)
+	for i in _dark_rects.size():
+		var rect := _dark_rects[i]
+		rect.visible = _dark > 0.0
+		rect.modulate = Color(_layers_tint, _dark)
+		rect.position.x = -fposmod(cam.x * float(DARK_LAYERS[i][1]), LAYER_WIDTH)
+		rect.position.y = _ground.position.y - rect.size.y + 4.0 + i * 6.0
 	_ground.modulate = _layers_tint
 	# Darken as the camera goes underground.
 	var under := clampf((dy - 120.0) / 360.0, 0.0, 1.0)

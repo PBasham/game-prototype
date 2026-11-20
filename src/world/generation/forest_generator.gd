@@ -52,6 +52,8 @@ var _cavern_t_top: float
 var _cavern_t_deep: float
 var _entrance_cells: int
 var _entrance_cell_w: float
+## Dark Forest patches: [center x, half width] each.
+var _dark: Array[Vector2] = []
 
 
 func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: int,
@@ -92,6 +94,43 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	_entrance_cells = maxi(1, roundi(float(width) / maxf(s.entrance_spacing, 50)))
 	_entrance_cell_w = float(width) / _entrance_cells
 	_spawn_raw = _raw_surface(s.spawn_x)
+	_place_dark_forests()
+
+
+## Spreads the Dark Forest patches evenly around the world (from the far side of spawn
+## outward), each nudged a little by the seed, never within dark_forest_spawn_clear.
+func _place_dark_forests() -> void:
+	var s := settings
+	_dark.clear()
+	var total := s.dark_forest_share * width
+	if total < 20.0:
+		return
+	var count := maxi(1, roundi(total / maxf(s.dark_forest_patch_tiles, 50)))
+	var half := total / count * 0.5
+	var step := float(width) / count
+	for i in count:
+		var c := s.spawn_x + step * (i + 0.5)
+		c += (GenUtil.hash01(i, 21, seed) - 0.5) * maxf(step - half * 2.0, 0.0) * 0.5
+		# Keep spawn clear: push the patch away from it if it came too close.
+		var d := float(wrap_delta(roundi(c), s.spawn_x))
+		var need := half + s.dark_forest_spawn_clear
+		if absf(d) < need:
+			c = s.spawn_x + signf(d if d != 0.0 else 1.0) * need
+		_dark.append(Vector2(fposmod(c, width), half))
+
+
+func dark_forest_at(x: int) -> float:
+	var best := 0.0
+	var edge := maxf(settings.dark_forest_edge_tiles, 1.0)
+	for p in _dark:
+		var d := absf(float(wrap_delta(x, roundi(p.x))))
+		best = maxf(best, clampf((p.y - d) / edge + 0.5, 0.0, 1.0))
+	return smoothstep(0.0, 1.0, best)
+
+
+## The Dark Forest patches (center x, half width), for the world map preview.
+func dark_forests() -> Array[Vector2]:
+	return _dark.duplicate()
 
 
 ## The settings file, as saved on disk. `fresh` skips Godot's resource cache so edits
@@ -345,6 +384,8 @@ func tree_at(x: int) -> int:
 	x = posmod(x, width)
 	if absi(wrap_delta(x, s.spawn_x)) < 3:
 		return -1  # keep the spawn point itself clear
+	if dark_forest_at(x) >= 0.5:
+		return _dark_tree_at(x)
 	var cell := floori(x / float(s.tree_spacing))
 	var spot := cell * s.tree_spacing + 1 + floori(GenUtil.hash01(cell, 2, seed) * (s.tree_spacing - 2))
 	if x != spot:
@@ -357,12 +398,27 @@ func tree_at(x: int) -> int:
 	return floori(GenUtil.hash01(cell, 1, seed) * s.tree_variants)
 
 
+## Dark Forest trees: close together, nearly every spot. Variants after the pines
+## (tree_variants + n), so the plant layer draws darkwood trees for them.
+func _dark_tree_at(x: int) -> int:
+	var s := settings
+	var cell := floori(x / float(s.dark_tree_spacing))
+	var spot := cell * s.dark_tree_spacing + 1 + floori(GenUtil.hash01(cell, 22, seed) * (s.dark_tree_spacing - 2))
+	if x != spot or GenUtil.hash01(cell, 23, seed) >= s.dark_tree_chance:
+		return -1
+	if absi(surface_at(posmod(x - 2, width)) - surface_at(posmod(x + 2, width))) > s.tree_max_slope + 1:
+		return -1
+	return s.tree_variants + floori(GenUtil.hash01(cell, 24, seed) * maxi(s.dark_tree_variants, 1))
+
+
 func flower_at(x: int) -> int:
 	var s := settings
 	x = posmod(x, width)
 	if tree_at(x) >= 0:
 		return -1
 	var chance := lerpf(s.clearing_flower_chance, s.grove_flower_chance, groveness(x))
+	if dark_forest_at(x) >= 0.5:
+		chance = s.dark_flower_chance
 	if GenUtil.hash01(x, 7, seed) >= chance:
 		return -1
 	return floori(GenUtil.hash01(x, 8, seed) * s.flower_variants)
