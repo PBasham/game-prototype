@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/tele_grab.png" id="1_fst62"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_jf5vl"]
+
+[resource]
+script = ExtResource("2_jf5vl")
+cast = 15
+quick_default = 2
+projectile_color = Color(0.75, 0.55, 1, 1)
+mana_per_second = 3.0
+learn_cost = Dictionary[StringName, int]({
+&"copper_bar": 4
+})
+kind = 4
+icon = ExtResource("1_fst62")
+max_stack = 1
+beam = true
+reach_tiles = 25.0
+id = &"tele_grab"
+display_name = "Tele Grab"
+description = "Hold: a portal opens at the cursor and pulls loose items near it into a portal at your hand. Needs sight of the spot."

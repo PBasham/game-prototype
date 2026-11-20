@@ -19,7 +19,7 @@ extends Node2D
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT,
-	CHARGE, SCROLL, THROW, PAGE }
+	CHARGE, SCROLL, THROW, PAGE, GRAB }
 
 const TILE := World.TILE
 
@@ -102,6 +102,9 @@ func _process(delta: float) -> void:
 		if not p.spend_mana((_item as SpellData).mana_per_second * delta):
 			p.stop_using()
 			EventBus.debug_message.emit("Out of mana")
+	if mode == Mode.GRAB and p.is_using() and not p.input_blocked and problem == "":
+		var sp := _item as SpellData
+		world.tele_grab(grab_point(), sp.grab_tiles * TILE, sp.grab_pull_speed * TILE)
 	if _item and _item.beam and mode == Mode.CHOP and p.is_using() and not p.input_blocked and tree != PlantLayer.NONE:
 		world.plants.request_hit_tree(tree, chop_damage() * delta, p.global_position.x)
 	if _item and _item.beam and mode == Mode.MINE and p.is_using() and not p.input_blocked:
@@ -127,6 +130,14 @@ func chop_damage() -> float:
 	if _item == null:
 		return 0.0
 	return _item.axe_damage * (_spell_power() if _item.is_spell() else 1.0)
+
+
+## Where Tele Grab's portal opens: the cursor, pulled in to the spell's reach.
+func grab_point() -> Vector2:
+	var p := world.player
+	var at := cursor()
+	var from := p.chest()
+	return from + (at - from).limit_length(reach())
 
 
 func reach() -> float:
@@ -235,6 +246,11 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 			_limit_to_stack()
 		Mode.CAST, Mode.TOGGLE:
 			rect = Rect2i(Vector2i(floori(c.x), floori(c.y)), Vector2i.ONE)
+		Mode.GRAB:
+			rect = Rect2i(Vector2i(floori(c.x), floori(c.y)), Vector2i.ONE)
+			if problem == "" and (_item as SpellData).needs_sight \
+					and not world.line_clear(p.chest(), grab_point().move_toward(p.chest(), World.TILE)):
+				problem = "Out of sight"
 		Mode.PLANT_TREE:
 			var g := world.plants.sapling_spot(Vector2i(floori(c.x), floori(c.y)))
 			if g != PlantLayer.NONE:
@@ -273,6 +289,8 @@ func can_use(on_back: bool = false) -> bool:
 			if on_back:
 				return false
 			return cooldown_left(_item as SpellData) <= 0.0
+		Mode.GRAB:
+			return not on_back
 		Mode.EAT:
 			var pressed := Input.is_action_just_pressed("use_secondary" if on_back else "use_primary")
 			if pressed and _eat_frame != Engine.get_process_frames():
@@ -559,6 +577,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 				return Mode.CAST
 			SpellData.Cast.TOGGLE:
 				return Mode.TOGGLE
+			SpellData.Cast.GRAB:
+				return Mode.GRAB
 	if item.mining_damage > 0.0:
 		return Mode.MINE
 	if item.kind == ItemData.Kind.FOOD:
@@ -973,6 +993,17 @@ func _draw() -> void:
 		return
 	var p := world.player
 	var aim := cursor()
+	if mode == Mode.GRAB:
+		var sp := _item as SpellData
+		var on := p.is_using() and problem == ""
+		var gp := grab_point()
+		if on:
+			_draw_portal(gp, 7.0, sp.projectile_color, 1.0)
+			_draw_portal(p.casting_hand_position(), 3.5, sp.projectile_color, 0.9)
+			draw_arc(gp, sp.grab_tiles * TILE, 0.0, TAU, 40, Color(sp.projectile_color, 0.18), 1.0)
+		else:
+			_draw_portal(gp, 6.0, Color(0.9, 0.3, 0.3) if problem != "" else sp.projectile_color, 0.35)
+		return
 	if mode == Mode.CHARGE and charge >= 0.0:
 		# The bolt growing in the casting hand, with a ring that closes when it's full.
 		var spell := _item as SpellData
@@ -1055,3 +1086,14 @@ func _draw() -> void:
 		var label := "%dx%d" % [rect.size.x, rect.size.y]
 		var c := Color(1, 1, 1, minf(_area_shown * 2.0, 1.0))
 		draw_string(font, Vector2(rect.end * TILE) + Vector2(2, 0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, c)
+
+
+## A swirling portal (Tele Grab): a dark middle, a glowing rim and a turning spark.
+func _draw_portal(at: Vector2, radius: float, color: Color, alpha: float) -> void:
+	var t := Time.get_ticks_msec() / 1000.0
+	draw_circle(at, radius, Color(0.06, 0.04, 0.12, 0.85 * alpha))
+	for i in 3:
+		var r := radius * (1.0 - i * 0.22)
+		var start := t * (3.0 + i) * (1.0 if i % 2 == 0 else -1.0)
+		draw_arc(at, r, start, start + PI * 1.3, 18, Color(color, (0.9 - i * 0.25) * alpha), 1.0)
+	draw_circle(at + Vector2.from_angle(t * 5.0) * radius * 0.5, 0.8, Color(1, 1, 1, alpha))

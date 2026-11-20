@@ -238,6 +238,13 @@ guesses; the docs listed say where each tunable lives.
       torches need slime; no flint (stone tools are stone + wood). Old saves convert.
 - [ ] Punching a slime hurts it; punches aim at the cursor (a slime downhill); sword swings reach downhill.
 
+**Phase 13: Tele Grab (branch phase-13-tele-grab)**
+- [ ] Learn Tele Grab at the Spell Weaving Table. Hold left click: a violet portal at the
+      cursor (out to 25 tiles), items near it fly in and pop out at your hand.
+- [ ] Portal is red and nothing happens when there's a wall between you and it.
+- [ ] Costs 3 mana a second; stops when you're out.
+- [ ] Mine a far wall with the Mining Spell, then Tele Grab the ore.
+
 ## Known
 
 - `test_spawns_ahead_when_moving_and_despawn_waits` (test_combat.gd) fails now and

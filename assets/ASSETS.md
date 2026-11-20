@@ -255,3 +255,4 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/lumber_rack.png, items/{icons,held}/lumber_rack.png | Lumber Rack (3x3 tiles, detail 2): 11 frames of 48x48, empty to full in 10% steps, log ends in staggered rows (5, 4, 5, 4, 5) filled a layer at a time. Placeholder from `art/concepts/storage/make_storage.py` |
 | objects/potion_cabinet.png, items/{icons,held}/potion_cabinet.png | Potion Cabinet (3x4 tiles, detail 2): 48x64 empty cabinet; bottles are drawn in code in each item's `shelf_color`. Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |
+| items/icons/tele_grab.png (+ scroll_ and page_ icons) | 16x16 Tele Grab spell icon: a violet swirl pulling in an ore chunk. Placeholder from `art/concepts/spells/make_tele_grab.py` |

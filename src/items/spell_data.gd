@@ -41,6 +41,9 @@ extends ItemData
 ##               spawn. Mana is spent when it completes.
 ##   SENSE       shows `sense_block` tiles within `sense_tiles` through everything, for
 ##               `duration` seconds (Seek Ore).
+##   GRAB        held like a beam: a portal opens at the cursor (out to reach) and pulls
+##               loose items within `grab_tiles` of it into a second portal at your
+##               hand (Tele Grab). Mana per second while held.
 ##   LIGHT       a floating light for `duration` seconds: follows you (Light Orb), or with
 ##               `light_placed` you steer it while the button is held and it stays where
 ##               you let go (Wisp).
@@ -49,7 +52,7 @@ extends ItemData
 ## channels at the cursor). Its Channel motion (0.3 s) is the time between casts.
 
 enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT, BUFF, CHARGED, ZONE, WARD, SUMMON, CONJURE,
-	CHAIN, RITUAL, SENSE }
+	CHAIN, RITUAL, SENSE, GRAB }
 
 ## Spell Index tabs.
 enum Group { TOOLS, MOVEMENT, ATTACK, DEFENSE, LIGHT }
@@ -142,6 +145,12 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## Seek Ore: which block to show, and how far (tiles).
 @export var sense_block: StringName = &"copper_ore"
 @export var sense_tiles := 30.0
+
+@export_group("Grab (Tele Grab)")
+## How close to the portal (tiles) loose items are pulled in, and how fast they fly to
+## it (tiles per second).
+@export var grab_tiles := 3.0
+@export var grab_pull_speed := 18.0
 
 @export_group("Blink")
 ## Farthest teleport, in tiles.

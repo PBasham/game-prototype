@@ -145,6 +145,32 @@ func test_cooldowns() -> void:
 	assert_gt(u.cooldown_left(blink), 0.5)
 
 
+func test_tele_grab_pulls_loose_items_to_you() -> void:
+	var p := w.player
+	var u := w.item_user
+	var c := w.character
+	c.learn_spell(&"tele_grab")
+	p.ready_spell(&"tele_grab")
+	assert_eq(p.held_item.id, &"tele_grab")
+	var before := c.inventory.count_of(&"copper_ore")
+	# A drop 14 tiles away, far past the pickup magnet, in the open above the player.
+	var spot := p.chest() + Vector2(14 * World.TILE, -3 * World.TILE)
+	var d := w.request_spawn_drop(&"copper_ore", 3, spot)
+	u.cursor_override = spot
+	p.mana = p.max_mana
+	Input.action_press("use_primary")
+	await wait_seconds(1.5)
+	Input.action_release("use_primary")
+	assert_eq(c.inventory.count_of(&"copper_ore"), before + 3, "pulled through and picked up")
+	assert_false(is_instance_valid(d) and not d.is_queued_for_deletion())
+	assert_lt(p.mana, p.max_mana, "costs mana while held")
+	# Out of reach: the portal stops at the spell's reach.
+	u.cursor_override = p.chest() + Vector2(200 * World.TILE, 0)
+	u.update_target(u.cursor(), false)
+	assert_almost_eq(u.grab_point().distance_to(p.chest()), u.reach(), 0.5)
+	u.cursor_override = Vector2.INF
+
+
 func test_wisp_follows_the_cursor_then_stays() -> void:
 	var p := w.player
 	var u := w.item_user

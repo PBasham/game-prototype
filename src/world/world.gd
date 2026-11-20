@@ -1695,6 +1695,23 @@ func request_set_wall(tile: Vector2i, id: int) -> bool:
 
 ## Puts an item stack in the world at `pos` with velocity `vel` (px/s). `thrown` = the
 ## player threw it (it can't be picked straight back up).
+## Tele Grab: loose items within `radius` (px) of `portal` fly into it and come out at
+## the player's hand. Returns how many drops were caught this frame.
+func tele_grab(portal: Vector2, radius: float, speed: float) -> int:
+	var n := 0
+	var w := float(data.width * TILE)
+	for c in _drops.get_children():
+		var d := c as ItemDrop
+		if d == null or d.is_queued_for_deletion():
+			continue
+		var off := d.global_position + Vector2(0, -4) - portal
+		off.x = wrapf(off.x, -w * 0.5, w * 0.5)
+		if off.length() <= radius:
+			d.grab(portal, speed)
+			n += 1
+	return n
+
+
 func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vector2 = Vector2.ZERO,
 		thrown: bool = false) -> ItemDrop:
 	if not Game.is_authority() or count <= 0 or ItemData.find(item_id) == null:

@@ -2411,7 +2411,7 @@ static func spell_types(spell: SpellData) -> String:
 		SpellData.Cast.LIGHT: "Summon", SpellData.Cast.BUFF: "Buff", SpellData.Cast.CHARGED: "Charged",
 		SpellData.Cast.ZONE: "Zone", SpellData.Cast.WARD: "Ward", SpellData.Cast.SUMMON: "Summon",
 		SpellData.Cast.CONJURE: "Conjure", SpellData.Cast.CHAIN: "Chain", SpellData.Cast.RITUAL: "Ritual",
-		SpellData.Cast.SENSE: "Sense"}
+		SpellData.Cast.SENSE: "Sense", SpellData.Cast.GRAB: "Channel"}
 	var group := String(SpellData.Group.keys()[spell.group]).capitalize()
 	return "%s, %s" % [group, how.get(spell.cast, "")]
 

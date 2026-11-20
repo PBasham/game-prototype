@@ -443,6 +443,19 @@ func _spells() -> Array[ItemData]:
 	wisp.impact_at = 0.2
 	out.append(wisp)
 
+	var grab := _spell(&"tele_grab", "Tele Grab", "Hold: a portal opens at the cursor and pulls loose items near it into a portal at your hand. Needs sight of the spot.")
+	grab.cast = SpellData.Cast.GRAB
+	grab.group = SpellData.Group.TOOLS
+	grab.quick_default = 2
+	grab.beam = true
+	grab.reach_tiles = 25.0
+	grab.grab_tiles = 3.0
+	grab.grab_pull_speed = 18.0
+	grab.mana_per_second = 3.0
+	grab.projectile_color = Color(0.75, 0.55, 1.0)
+	grab.learn_cost = {&"copper_bar": 3}
+	out.append(grab)
+
 	var gel := _spell(&"gel_cushion", "Gel Cushion", "A slime cushion: the next fall that would hurt you doesn't. Lasts 2 minutes or one fall. Uses 5 Slime.")
 	gel.cast = SpellData.Cast.BUFF
 	gel.effect = &"gel_cushion"

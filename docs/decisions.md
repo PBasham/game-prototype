@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-20: Phase 13, Tele Grab
+
+- **Tele Grab (Patrick's idea, name temporary):** held like a beam (Fly stays a toggle).
+  A portal at the cursor (25 tiles, needs sight) pulls loose items within 3 tiles into
+  a portal at your hand, 3 mana a second. New cast type GRAB. The "no sight needed"
+  option is the existing `needs_sight` flag, waiting for the upgrade system. Holding two
+  concentration spells is dropped (not in the plan).
+
 ## 2026-11-20: Phase 12, home and storage
 
 - **Special storage (Patrick's idea and concept):** Lumber Rack (wood and logs, 10 x 100)

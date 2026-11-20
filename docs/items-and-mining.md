@@ -209,6 +209,7 @@ How a spell works is its `cast`:
 | RITUAL | Stand still for `ritual_seconds` (moving or getting hurt cancels it); mana is paid when it completes. Effect `recall`: back to your bed or the world spawn | `ritual_seconds`, `effect` |
 | SENSE | Outlines every `sense_block` tile within `sense_tiles` of you, above the darkness, for `duration` (a snapshot when cast) | `sense_block`, `sense_tiles`, `duration` |
 | LIGHT | A floating light: follows you (one at a time; casting again refreshes it), or with `light_placed` you steer it with the cursor while the button is held and it stays where you let go | `light_radius`, `light_color`, `duration`, `light_placed`, `light_max` |
+| GRAB | Held like a beam: a portal opens at the cursor (pulled in to `reach_tiles`, needs sight unless `needs_sight` is off) and loose items within `grab_tiles` of it fly into it, straight through blocks, and pop out of a small portal at your hand, where you pick them up. Mana per second while held | `grab_tiles`, `grab_pull_speed`, `reach_tiles`, `mana_per_second`, `needs_sight` |
 
 Every spell also has `mana_cost` (per cast) and `mana_per_second` (beams and
 concentration), `reagents` (items used up by each cast, e.g. 5 Slime; it can't be cast
@@ -240,6 +241,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Recall | RITUAL | 3 s standing still, then home (your bed, else the world spawn). 40 mana at the end. |
 | Seek Ore | SENSE | Copper ore within 30 tiles glows through everything for 15 s. 15 mana. |
 | Mend | TOGGLE | Heals 3 health per second (times spell power) while on. 6 mana/s. |
+| Tele Grab | GRAB | Hold: portal up to 25 tiles away, pulls loose items within 3 tiles of it (18 tiles/s) to your hand. 3 mana/s. Learned at the Spell Weaving Table; name is temporary. |
 
 Damageable things are nodes in the `damageable` group with `hit_rect()` and
 `take_damage(amount, from)`; enemies will use the same.

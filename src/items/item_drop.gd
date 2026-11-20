@@ -39,6 +39,11 @@ var _pickup_delay := 0.0
 var _age := 0.0
 var _bob := 0.0
 var _magnetized := false
+## Tele Grab: the portal it's being pulled into, and for how much longer (the spell
+## renews it every frame while it's held).
+var _grab_at := Vector2.INF
+var _grab_left := 0.0
+var _grab_speed := 0.0
 var _sprite: Sprite2D
 ## Drawn size in px (from the item's drop_pixels()).
 var _size := 10.0
@@ -79,6 +84,10 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 	var player := world.player if world else null
+	if _grab_left > 0.0 and player:
+		_grab_left -= delta
+		_pulled(player, delta)
+		return
 	var center := global_position + Vector2(0, -4)
 	var gap := INF
 	var to_player := Vector2.ZERO
@@ -133,6 +142,34 @@ func _physics_process(delta: float) -> void:
 	global_position = next
 	_bob += delta * 3.0
 	_sprite.position.y = -_size * 0.5 - (absf(sin(_bob)) * 1.0 if _on_ground() else 0.0)
+
+
+## Tele Grab is pulling it toward `portal` (px) this frame.
+func grab(portal: Vector2, speed: float) -> void:
+	_grab_at = portal
+	_grab_speed = speed
+	_grab_left = 0.1
+
+
+## Flies into the portal (straight through blocks), then comes out at the player's
+## hand, where the usual pickup takes it.
+func _pulled(player: Player, delta: float) -> void:
+	var center := global_position + Vector2(0, -4)
+	var to := _grab_at - center
+	if world.data:
+		var w := float(world.data.width * TILE)
+		to.x = wrapf(to.x, -w * 0.5, w * 0.5)
+	if to.length() <= maxf(_grab_speed * delta, 3.0):
+		global_position = player.casting_hand_position() + Vector2(0, 4)
+		velocity = Vector2(player.facing * 30.0, -40.0)
+		_grab_left = 0.0
+		_pickup_delay = 0.0
+		_magnetized = false
+		EventBus.sound_requested.emit(&"cast_blink", global_position)
+		return
+	global_position += to.normalized() * _grab_speed * delta
+	velocity = Vector2.ZERO
+	_sprite.position.y = -_size * 0.5
 
 
 ## Takes in resting drops of the same item within merge_tiles (up to a full stack).
