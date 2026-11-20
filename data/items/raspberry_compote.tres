@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_gwggo"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_2ugmd"]
+[ext_resource type="Texture2D" path="res://assets/items/held/raspberry_compote.png" id="3_hdel8"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/raspberry_compote.png" id="4_3ywdo"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_06ndj"]
+
+[sub_resource type="Resource" id="Resource_s5fnu"]
+script = ExtResource("2_2ugmd")
+id = &"raspberry_compote"
+texture = ExtResource("3_hdel8")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_06ndj")
+kind = 11
+icon = ExtResource("4_3ywdo")
+held = SubResource("Resource_s5fnu")
+impact_at = 0.2
+food_value = 35.0
+heal_value = 6.0
+buff_name = "Mending"
+buff_description = "Health refills 1 a second faster."
+buff_seconds = 240.0
+buff_health_regen = 1.0
+id = &"raspberry_compote"
+display_name = "Raspberry Compote"
+description = "Stewed raspberries. +35 hunger, +6 health, and Mending for 4 minutes."

@@ -204,6 +204,21 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Right click a buff (Arcane Edge, Familiar, Wisps) in the buff row: it ends.
       Potion sickness and Cozy don't.
 
+**Phase 12: home and storage (branch phase-12-home-storage)**
+- [ ] Lumber Rack (workbench: 25 wood + 4 logs): only wood and logs go in, 10 stacks of
+      100 (1,000). The pile grows in flat layers every 10%.
+- [ ] Potion Cabinet (workbench: 20 wood + 2 copper bars + 2 clay flasks): only potions,
+      coatings and flasks, 10 stacks. The shelves fill with bottles the color of what's
+      inside (red healing, blue mana, green poison).
+- [ ] Their windows show "used / total" and a fill bar; Shift+click and Deposit all skip
+      what doesn't fit.
+- [ ] `stock <item> [count]` puts items in the chest you have open.
+- [ ] New world: raspberry (pink) and blueberry (blue) bushes among the red ones.
+      `bush raspberry` / `bush blueberry` in the console.
+- [ ] Raspberries fill more (+14), blueberries heal more (+4 health).
+- [ ] Campfire: Raspberry Compote (4 + a bowl, Mending: +1 health/s for 4 min) and
+      Blueberry Mash (4 + a bowl, Light Step: +15% speed for 4 min).
+
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time
       (`pickups 10` then walk a bit), never on screen or indoors.

@@ -18,7 +18,7 @@ const NONE := Vector2i(0, -1000000)
 ## PICKUP: only in older saves (sticks, rocks and flint moved to the Forage node).
 enum Kind { TREE, SAPLING, FLOWER, PICKUP, BUSH }
 
-## Berry bush variants.
+## Berry bush variants: `variant` = kind * 2 + grown (the kind is BushData.save_index).
 const BUSH_YOUNG := 0
 const BUSH_GROWN := 1
 
@@ -92,7 +92,9 @@ var _trees: Array[Texture2D] = []
 var _flowers: Array[Texture2D] = []
 var _sapling_tex: Texture2D
 ## [young, grown ripe, grown picked].
-var _bush_tex: Array[Texture2D] = []
+## Bush kinds by save_index (data/bushes/), and the kinds in worldgen order.
+var _bushes: Dictionary[int, BushData] = {}
+var _bush_list: Array[BushData] = []
 ## Young bushes growing up (their Plant.health counts down the seconds left).
 var _young: Array[Vector2i] = []
 ## Bushes waiting for their berries to grow back.
@@ -110,8 +112,11 @@ func setup(w: World) -> void:
 	for i in 5:
 		_flowers.append(load("res://assets/decor/flower_%d.png" % i) as Texture2D)
 	_sapling_tex = load("res://assets/decor/sapling.png") as Texture2D
-	for f: String in ["berry_bush_young", "berry_bush", "berry_bush_bare"]:
-		_bush_tex.append(load("res://assets/decor/%s.png" % f) as Texture2D)
+	for d: GameData in Registry.get_all(&"bushes"):
+		var b := d as BushData
+		_bushes[b.save_index] = b
+		_bush_list.append(b)
+	_bush_list.sort_custom(func(a: BushData, b: BushData) -> bool: return a.save_index < b.save_index)
 	world.renderer.chunk_shown.connect(_on_chunk_shown)
 	world.renderer.chunk_hidden.connect(_on_chunk_hidden)
 	world.block_changed.connect(_on_block_changed)
@@ -257,7 +262,7 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array, _floors: PackedInt32A
 				continue  # bare grass (the Forage node may put something there)
 			elif _hash(ground, 31) < bush_share:
 				var young := _hash(ground, 37) >= bush_grown_share
-				var bush := _add(ground, Kind.BUSH, BUSH_YOUNG if young else BUSH_GROWN, false)
+				var bush := _add(ground, Kind.BUSH, bush_variant(_wild_bush(ground), not young), false)
 				if young:
 					bush.health = _days(randf_range(bush_grow_min_days, bush_grow_max_days))
 					_young.append(ground)
@@ -329,9 +334,53 @@ func is_ripe(ground: Vector2i) -> bool:
 	return _ripe(p)
 
 
+## The variant for a bush of `kind` (BushData.save_index), young or grown.
+static func bush_variant(kind: int, grown: bool) -> int:
+	return kind * 2 + (BUSH_GROWN if grown else BUSH_YOUNG)
+
+
+## The kind of a bush plant (null if its kind's data is gone).
+func bush_kind(p: Plant) -> BushData:
+	return _bushes.get(p.variant >> 1) if p and p.kind == Kind.BUSH else null
+
+
+## What a ripe bush gives.
+func fruit_of(p: Plant) -> StringName:
+	var b := bush_kind(p)
+	return b.fruit if b else &"berries"
+
+
+## The kind of the bush at `ground` (for the console and tests), or null.
+func bush_kind_at(ground: Vector2i) -> BushData:
+	return bush_kind(_plants.get(world.wrap_tile(ground)))
+
+
+## The save_index of the bush kind with this id, or -1.
+func bush_index(id: StringName) -> int:
+	for b in _bush_list:
+		if b.id == id:
+			return b.save_index
+	return -1
+
+
+## Which kind a wild bush on `ground` is: picked by weight, the same for a seed.
+func _wild_bush(ground: Vector2i) -> int:
+	var total := 0.0
+	for b in _bush_list:
+		total += maxf(b.weight, 0.0)
+	if total <= 0.0:
+		return 0
+	var r := _hash(ground, 41) * total
+	for b in _bush_list:
+		r -= maxf(b.weight, 0.0)
+		if r <= 0.0:
+			return b.save_index
+	return _bush_list[-1].save_index
+
+
 ## Only full grown bushes have berries.
 static func _ripe(p: Plant) -> bool:
-	return p != null and p.kind == Kind.BUSH and p.variant == BUSH_GROWN and p.grow_left <= 0.0
+	return p != null and p.kind == Kind.BUSH and p.variant % 2 == BUSH_GROWN and p.grow_left <= 0.0
 
 
 ## Picks the berries off a ripe bush (`ground` = the grass tile it grows on). They grow
@@ -342,12 +391,13 @@ func request_pick_berries(ground: Vector2i, who: Player) -> bool:
 	if not Game.is_authority() or not _ripe(p):
 		return false
 	var n := randi_range(berries_min, berries_max)
+	var fruit := fruit_of(p)
 	if who and who.character:
-		var left := who.pick_up(&"berries", n)
+		var left := who.pick_up(fruit, n)
 		if left < n:
-			EventBus.item_picked_up.emit(&"berries", n - left)
+			EventBus.item_picked_up.emit(fruit, n - left)
 		if left > 0:
-			world.request_spawn_drop(&"berries", left, who.chest())
+			world.request_spawn_drop(fruit, left, who.chest())
 	p.grow_left = _days(randf_range(regrow_min_days, regrow_max_days))
 	_regrowing.append(ground)
 	_dirty[_chunk_of(ground)] = true
@@ -413,13 +463,13 @@ func advance(seconds: float) -> void:
 func _grow_bushes(delta: float) -> void:
 	for g: Vector2i in _young.duplicate():
 		var p: Plant = _plants.get(g)
-		if p == null or p.kind != Kind.BUSH or p.variant != BUSH_YOUNG:
+		if p == null or p.kind != Kind.BUSH or p.variant % 2 != BUSH_YOUNG:
 			_young.erase(g)
 			continue
 		p.health -= delta
 		if p.health <= 0.0:
 			p.health = 0.0
-			p.variant = BUSH_GROWN
+			p.variant += BUSH_GROWN
 			_young.erase(g)
 			_dirty[_chunk_of(g)] = true
 			_refresh_node(g, p)
@@ -556,7 +606,7 @@ func _break(g: Vector2i, p: Plant) -> void:
 				world.request_spawn_drop(&"grass_seeds", 1, pos, _pop())
 		Kind.BUSH:
 			if _ripe(p):
-				world.request_spawn_drop(&"berries", randi_range(berries_min, berries_max), pos, _pop())
+				world.request_spawn_drop(fruit_of(p), randi_range(berries_min, berries_max), pos, _pop())
 	_remove(g)
 
 
@@ -635,9 +685,12 @@ func _texture(p: Plant) -> Texture2D:
 		Kind.SAPLING:
 			return _sapling_tex
 		Kind.BUSH:
-			if p.variant != BUSH_GROWN:
-				return _bush_tex[0]  # young: no berries yet
-			return _bush_tex[1 if p.grow_left <= 0.0 else 2]
+			var b := bush_kind(p)
+			if b == null:
+				return _sapling_tex
+			if p.variant % 2 != BUSH_GROWN:
+				return b.young_texture  # young: no berries yet
+			return b.ripe_texture if p.grow_left <= 0.0 else b.bare_texture
 	return _flowers[p.variant % _flowers.size()]
 
 
@@ -683,5 +736,5 @@ func from_dict(d: Dictionary, has_forage_save: bool = true) -> void:
 			p.grow_left = float(e[5])
 			if p.kind == Kind.BUSH and p.grow_left > 0.0:
 				_regrowing.append(Vector2i(int(e[0]), int(e[1])))
-			if p.kind == Kind.BUSH and p.variant == BUSH_YOUNG:
+			if p.kind == Kind.BUSH and p.variant % 2 == BUSH_YOUNG:
 				_young.append(Vector2i(int(e[0]), int(e[1])))

@@ -111,6 +111,37 @@ func test_young_bushes_grow_up() -> void:
 	assert_true(w.plants.is_ripe(ground), "full grown: berries")
 
 
+func test_bush_kinds_give_their_own_fruit() -> void:
+	var feet := w.world_to_tile(w.player.global_position)
+	var inv := w.character.inventory
+	var kinds := {&"raspberry_bush": &"raspberries", &"blueberry_bush": &"blueberries"}
+	var dx := 8
+	for kind: StringName in kinds:
+		var ground := w.wrap_tile(Vector2i(feet.x + dx, feet.y))
+		dx += 4
+		w.data.set_block(ground.x, ground.y, w.blocks.index_of(&"grass"))
+		var index := w.plants.bush_index(kind)
+		assert_gt(index, 0, "%s is a bush kind" % kind)
+		var young := w.plants._add(ground, PlantLayer.Kind.BUSH, PlantLayer.bush_variant(index, false))
+		young.health = 5.0
+		w.plants._young.append(ground)
+		w.plants._grow_bushes(6.0)
+		assert_eq(w.plants.bush_kind_at(ground).id, kind, "still the same kind once grown")
+		assert_true(w.plants.is_ripe(ground))
+		var fruit: StringName = kinds[kind]
+		var before := inv.count_of(fruit)
+		assert_true(w.plants.request_pick_berries(ground, w.player))
+		assert_gt(inv.count_of(fruit), before, "picked %s" % fruit)
+		assert_eq(w.plants._texture(w.plants.plant_at(ground)), w.plants.bush_kind_at(ground).bare_texture)
+	# Food values differ, and each cooks into its own buff food.
+	assert_gt(ItemData.find(&"raspberries").food_value, ItemData.find(&"blueberries").food_value)
+	assert_gt(ItemData.find(&"blueberries").heal_value, ItemData.find(&"raspberries").heal_value)
+	assert_gt(ItemData.find(&"raspberry_compote").buff_health_regen, 0.0)
+	assert_gt(ItemData.find(&"blueberry_mash").buff_move_speed, 0.0)
+	# Old worlds' bushes (variant 0 and 1) are the plain berry bush.
+	assert_eq(PlantLayer.bush_variant(0, true), PlantLayer.BUSH_GROWN)
+
+
 func test_dying_drops_a_magic_bag_and_respawns() -> void:
 	var p := w.player
 	var inv := w.character.inventory

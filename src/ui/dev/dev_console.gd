@@ -206,13 +206,22 @@ func _register() -> void:
 			_print("%s: %s (%s)." % [a[0], spell.display_name, "casts right away" if c.quick_casts(slot) else "in hand"])
 		else:
 			_print("Only Buff spells go in the buff set."))
-	_add("bush", "bush [young]", "Grow a ripe berry bush (full grown, or young) on the grass under the cursor.", func(a: PackedStringArray) -> void:
+	_add("bush", "bush [kind] [young]", "Grow a ripe berry bush (full grown, or young) on the grass under the cursor. Kinds: berry_bush, raspberry_bush, blueberry_bush.", func(a: PackedStringArray) -> void:
 		var t := world.world_to_tile(world.item_user.cursor())
+		var young := a.has("young")
+		var kind := 0
+		for w in a:
+			if w != "young":
+				kind = world.plants.bush_index(StringName(w))
+				if kind < 0:
+					kind = world.plants.bush_index(StringName(w + "_bush"))
+				if kind < 0:
+					_print("No bush kind %s." % w)
+					return
 		for g: Vector2i in [t, t + Vector2i.DOWN, t + Vector2i(0, 2)]:
 			if world.plants.bush_room(g):
-				var young := a.size() > 0 and a[0] == "young"
 				var bush := world.plants._add(world.wrap_tile(g), PlantLayer.Kind.BUSH,
-					PlantLayer.BUSH_YOUNG if young else PlantLayer.BUSH_GROWN)
+					PlantLayer.bush_variant(kind, not young))
 				if young:
 					bush.health = world.plants._days(world.plants.bush_grow_min_days)
 					world.plants._young.append(world.wrap_tile(g))

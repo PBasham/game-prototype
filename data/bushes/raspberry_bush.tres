@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BushData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/decor/raspberry_bush_bare.png" id="1_no4ui"]
+[ext_resource type="Texture2D" path="res://assets/decor/raspberry_bush.png" id="2_ahj01"]
+[ext_resource type="Script" path="res://src/world/bush_data.gd" id="3_xu83t"]
+[ext_resource type="Texture2D" path="res://assets/decor/raspberry_bush_young.png" id="4_g2yhp"]
+
+[resource]
+script = ExtResource("3_xu83t")
+save_index = 1
+fruit = &"raspberries"
+young_texture = ExtResource("4_g2yhp")
+ripe_texture = ExtResource("2_ahj01")
+bare_texture = ExtResource("1_no4ui")
+id = &"raspberry_bush"
+display_name = "Raspberry Bush"
+description = "A wild bush. Ripe ones give Raspberries."

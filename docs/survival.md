@@ -61,8 +61,11 @@ stays full.
 - **Berries** (`data/items/berries.tres`, kind FOOD): left click while holding them to
   eat one: +10 hunger (`food_value`), +2 health (`heal_value`). You can't eat while
   both are full.
+- **Raspberries** (+14 hunger, +1 health) and **Blueberries** (+6 hunger, +4 health):
+  the same, from raspberry and blueberry bushes. Raspberries fill you up, blueberries
+  heal; each cooks into its own buff food (below).
 - **Berry bushes** grow on the grass like flowers. Right click (or E near) a ripe one
-  to pick 1 to 3 berries; it grows them back in 2 to 3 in-game days. Breaking the ground
+  to pick 1 to 3 berries (or raspberries, or blueberries); it grows them back in 2 to 3 in-game days. Breaking the ground
   under a ripe bush drops its berries. Exports on the `Plants` node:
 
 | Export | Default | What it does |
@@ -77,8 +80,21 @@ Wild bushes are slow and stingy on purpose: farming (later) should be the better
 to get food.
 
 Young bushes are small and have no berries; once full grown (bigger) they bear berries.
-Art: `assets/decor/berry_bush.png` / `berry_bush_bare.png` (full grown, 24x19) and
-`berry_bush_young.png` (14x12). Later: crops, and moving
+
+**Bush kinds** are data: `data/bushes/<id>.tres` (`BushData`, src/world/bush_data.gd).
+
+| Field | What it does |
+| --- | --- |
+| `fruit` | The item a ripe bush gives |
+| `weight` | How often worldgen picks this kind (Berry 2, Raspberry 1, Blueberry 1: half the wild bushes are plain berry bushes) |
+| `young_texture`, `ripe_texture`, `bare_texture` | Young, full grown with fruit, full grown picked |
+| `save_index` | Saved in the world with each bush; never change it (0 = the plain berry bush older worlds have) |
+
+A bush's `variant` in the plant save is `save_index * 2 + grown`, so worlds from before
+the kinds still load as plain berry bushes. Changing weights only affects new chunks.
+Art: `assets/decor/<kind>_bush.png` / `_bare.png` (full grown, 24x19) and
+`_young.png` (14x12); raspberry and blueberry art comes from
+`art/concepts/berries/make_berries.py` (recolors of the berry bush). Later: crops, and moving
 bushes with special tools (a brief first).
 
 ## Cooking, potions and buffs
@@ -102,6 +118,8 @@ nothing ("You're full", "No need right now") or while its sickness is on.
 | --- | --- | --- |
 | 3 Berries | Roasted Berries | +25 hunger, +5 health |
 | 1 Field Mushroom | Cooked Mushroom | +16 hunger, +4 health |
+| 4 Raspberries + 1 Wooden Bowl | Raspberry Compote | +35 hunger, +6 health, Mending 4 min (+1 health/s) |
+| 4 Blueberries + 1 Wooden Bowl | Blueberry Mash | +20 hunger, +10 health, Light Step 4 min (+15% speed) |
 | 2 Field Mushroom + 1 Red Cap + 1 Wooden Bowl | Mushroom Stew | +40 hunger, +8 health, Well Fed 5 min (+0.5 health/s, +10% speed) |
 
 Wooden Bowls: 2 Wood makes 2 at the workbench. Raw berries and mushrooms still work,
@@ -155,7 +173,8 @@ left. A character saved while dead comes back full.
 
 `god` (no damage), `hurt <n>`, `kill`, `heal` (full health and hunger), `hunger <n>`,
 `mana` (infinite mana), `time` (show), `time <hour>` or `time day | noon | dusk | night | dawn`, `time speed <x>`,
-`bush` / `bush young` (a ripe berry bush on the grass under the cursor), `grow` (also
+`bush [kind] [young]` (a ripe bush on the grass under the cursor; kind = `raspberry`,
+`blueberry`, or the plain berry bush when left out), `grow` (also
 makes picked bushes ripe and young bushes full grown).
 
 

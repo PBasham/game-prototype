@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-20: Phase 12, home and storage
+
+- **Special storage (Patrick's idea and concept):** Lumber Rack (wood and logs, 10 x 100)
+  and Potion Cabinet (potions, coatings, flasks, 10 stacks). Names picked by Claude;
+  Patrick liked them. The rack fills in 10% steps with flat layers (not a pyramid); the
+  cabinet only shows bottles of the colors actually inside.
+- **Berry kinds (Patrick):** raspberry and blueberry bushes besides the plain berry bush.
+  They differ in food value (raspberries fill, blueberries heal) and each cooks into a
+  buff food (Raspberry Compote: Mending, regen; Blueberry Mash: Light Step, speed). No
+  brief needed (Patrick). Kinds are data (`data/bushes`), saved as `kind * 2 + grown`
+  so old worlds keep their bushes. The plain berry bush stays as the common one.
+
 ## 2026-11-20: Playtest fixes on phase-11-spell-controls
 
 - **Dug-out rock lit like daylight (bug, Patrick):** air with no back wall counted as

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BushData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/decor/berry_bush_bare.png" id="1_m7sw3"]
+[ext_resource type="Texture2D" path="res://assets/decor/berry_bush.png" id="2_g6aw4"]
+[ext_resource type="Script" path="res://src/world/bush_data.gd" id="3_hy11i"]
+[ext_resource type="Texture2D" path="res://assets/decor/berry_bush_young.png" id="4_12cue"]
+
+[resource]
+script = ExtResource("3_hy11i")
+weight = 2.0
+young_texture = ExtResource("4_12cue")
+ripe_texture = ExtResource("2_g6aw4")
+bare_texture = ExtResource("1_m7sw3")
+id = &"berry_bush"
+display_name = "Berry Bush"
+description = "A wild bush. Ripe ones give Berries."

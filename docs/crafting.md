@@ -222,6 +222,23 @@ can't mine the floor under furniture.
   **Deposit all** puts in everything below your hotbar. A chest with something in it
   can't be broken. Contents save with the world. A chest's size is its
   `container_slots`.
+- **Special storage** holds only one kind of thing, but lots of it, and its picture
+  fills up as it fills:
+
+| Object | Size | Holds | Capacity | Recipe (workbench) |
+| --- | --- | --- | --- | --- |
+| Lumber Rack | 3x3 | Wood and Logs | 10 stacks of 100 (1,000) | 25 Wood + 4 Logs |
+| Potion Cabinet | 3x4 | Potions, coatings, flasks | 10 normal stacks | 20 Wood + 2 Copper Bars + 2 Clay Flasks |
+
+  Fields on the `ObjectDef`: `container_accepts` (a storage tag; items list theirs in
+  `ItemData.storage_tags`: wood and logs are `lumber`; healing and mana potions, poison
+  coatings and flasks, and clay flasks are `potion`), `container_stack_cap` (a stack size
+  that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (the sprite sheet
+  has 11 frames, 0% to 100% in 10% steps: the Lumber Rack's logs stack in flat layers)
+  or `BOTTLES` (the Potion Cabinet draws one bottle per item kind on its shelves, in that
+  item's `shelf_color`; filled shelves follow the stacks inside). The window shows
+  "used / total" and a fill bar. Art from `art/concepts/storage/make_storage.py`.
+- Console `stock <item> [count]` fills the chest you have open (testing storage).
 - Furniture is at most 8x8 tiles (`World.MAX_FURNITURE`). Furniture placed before a
   size change keeps its old filler tiles; mine it and place it again.
 - **Station tiers:** a station with `upgrade_to` shows an **Upgrade** row at the bottom

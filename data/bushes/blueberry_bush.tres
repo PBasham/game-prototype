@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BushData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/decor/blueberry_bush_bare.png" id="1_plhs6"]
+[ext_resource type="Texture2D" path="res://assets/decor/blueberry_bush.png" id="2_3qg1p"]
+[ext_resource type="Script" path="res://src/world/bush_data.gd" id="3_d0lgf"]
+[ext_resource type="Texture2D" path="res://assets/decor/blueberry_bush_young.png" id="4_og7g2"]
+
+[resource]
+script = ExtResource("3_d0lgf")
+save_index = 2
+fruit = &"blueberries"
+young_texture = ExtResource("4_og7g2")
+ripe_texture = ExtResource("2_3qg1p")
+bare_texture = ExtResource("1_plhs6")
+id = &"blueberry_bush"
+display_name = "Blueberry Bush"
+description = "A wild bush. Ripe ones give Blueberries."

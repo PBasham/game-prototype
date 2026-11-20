@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_fubxc"]
+
+[resource]
+script = ExtResource("1_fubxc")
+station = &"cooking"
+inputs = Dictionary[StringName, int]({
+&"blueberries": 4,
+&"wooden_bowl": 1
+})
+output = &"blueberry_mash"
+id = &"blueberry_mash"
+display_name = "Blueberry Mash"

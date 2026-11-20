@@ -18,6 +18,7 @@ const RECIPE_DIR := "res://data/recipes"
 const ENEMY_DIR := "res://data/enemies"
 const SPAWN_DIR := "res://data/spawns"
 const FORAGE_DIR := "res://data/forage"
+const BUSH_DIR := "res://data/bushes"
 
 var _force := false
 
@@ -40,6 +41,8 @@ func _init() -> void:
 		all.append([scroll, DIR])
 	for f in _forage():
 		all.append([f, FORAGE_DIR])
+	for b in _bushes():
+		all.append([b, BUSH_DIR])
 	for e: Array in all:
 		var res: GameData = e[0]
 		var dir: String = e[1]
@@ -116,6 +119,16 @@ func _items() -> Array[ItemData]:
 	berries.food_value = 10.0
 	berries.heal_value = 2.0
 	out.append(berries)
+	var rasp := _small(&"raspberries", "Raspberries", "Picked from raspberry bushes. Filling: left click to eat, +14 hunger, +1 health.")
+	rasp.kind = ItemData.Kind.FOOD
+	rasp.food_value = 14.0
+	rasp.heal_value = 1.0
+	out.append(rasp)
+	var blue := _small(&"blueberries", "Blueberries", "Picked from blueberry bushes. Light but good for you: left click to eat, +6 hunger, +4 health.")
+	blue.kind = ItemData.Kind.FOOD
+	blue.food_value = 6.0
+	blue.heal_value = 4.0
+	out.append(blue)
 	# Mushrooms (forageables): food, and ingredients for potions and poisons later.
 	var field := _small(&"field_mushroom", "Field Mushroom", "A plain, filling mushroom. Left click to eat: +8 hunger, +1 health. Better cooked at a campfire.")
 	field.kind = ItemData.Kind.FOOD
@@ -148,6 +161,24 @@ func _items() -> Array[ItemData]:
 	out[out.size() - 1].buff_seconds = 300.0
 	out[out.size() - 1].buff_health_regen = 0.5
 	out[out.size() - 1].buff_move_speed = 0.1
+	var compote := _small(&"raspberry_compote", "Raspberry Compote", "Stewed raspberries. +35 hunger, +6 health, and Mending for 4 minutes.")
+	compote.kind = ItemData.Kind.FOOD
+	compote.food_value = 35.0
+	compote.heal_value = 6.0
+	compote.buff_name = "Mending"
+	compote.buff_description = "Health refills 1 a second faster."
+	compote.buff_seconds = 240.0
+	compote.buff_health_regen = 1.0
+	out.append(compote)
+	var mash := _small(&"blueberry_mash", "Blueberry Mash", "Mashed blueberries. +20 hunger, +10 health, and Light Step for 4 minutes.")
+	mash.kind = ItemData.Kind.FOOD
+	mash.food_value = 20.0
+	mash.heal_value = 10.0
+	mash.buff_name = "Light Step"
+	mash.buff_description = "You move 15% faster."
+	mash.buff_seconds = 240.0
+	mash.buff_move_speed = 0.15
+	out.append(mash)
 	var heal := _small(&"healing_potion", "Healing Potion", "Drink: +30 health. Then 30 s before another.")
 	heal.kind = ItemData.Kind.FOOD
 	heal.heal_value = 30.0
@@ -769,6 +800,26 @@ func _forage() -> Array[ForageData]:
 	return out
 
 
+## Berry bush kinds (data/bushes): [id, name, save index, fruit, worldgen weight, art].
+func _bushes() -> Array[BushData]:
+	var out: Array[BushData] = []
+	for row: Array in [[&"berry_bush", "Berry Bush", 0, &"berries", 2.0, "berry_bush"],
+			[&"raspberry_bush", "Raspberry Bush", 1, &"raspberries", 1.0, "raspberry_bush"],
+			[&"blueberry_bush", "Blueberry Bush", 2, &"blueberries", 1.0, "blueberry_bush"]]:
+		var b := BushData.new()
+		b.id = row[0]
+		b.display_name = row[1]
+		b.description = "A wild bush. Ripe ones give %s." % String(row[3]).capitalize()
+		b.save_index = row[2]
+		b.fruit = row[3]
+		b.weight = row[4]
+		b.young_texture = load("res://assets/decor/%s_young.png" % row[5]) as Texture2D
+		b.ripe_texture = load("res://assets/decor/%s.png" % row[5]) as Texture2D
+		b.bare_texture = load("res://assets/decor/%s_bare.png" % row[5]) as Texture2D
+		out.append(b)
+	return out
+
+
 ## Recipes: [id, station, {inputs}, output, count, requires]. Station &"" = by hand.
 func _recipes() -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
@@ -788,6 +839,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"shelf", &"workbench", {&"wood": 4}, &"shelf", 1, []],
 		[&"roasted_berries", &"cooking", {&"berries": 3}, &"roasted_berries", 1, []],
 		[&"cooked_mushroom", &"cooking", {&"field_mushroom": 1}, &"cooked_mushroom", 1, []],
+		[&"raspberry_compote", &"cooking", {&"raspberries": 4, &"wooden_bowl": 1}, &"raspberry_compote", 1, []],
+		[&"blueberry_mash", &"cooking", {&"blueberries": 4, &"wooden_bowl": 1}, &"blueberry_mash", 1, []],
 		[&"mushroom_stew", &"cooking", {&"field_mushroom": 2, &"red_cap": 1, &"wooden_bowl": 1}, &"mushroom_stew", 1, []],
 		[&"healing_potion", &"alchemy", {&"clay_flask": 1, &"red_cap": 2}, &"healing_potion", 1, []],
 		[&"mana_potion", &"alchemy", {&"clay_flask": 1, &"glowcap": 2}, &"mana_potion", 1, []],
