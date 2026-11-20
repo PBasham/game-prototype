@@ -205,7 +205,7 @@ func _register() -> void:
 		if c.set_quick(slot, spell.id):
 			_print("%s: %s (%s)." % [a[0], spell.display_name, "casts right away" if c.quick_casts(slot) else "in hand"])
 		else:
-			_print("Only timed effects on you go in the buff set."))
+			_print("Only Buff spells go in the buff set."))
 	_add("bush", "bush [young]", "Grow a ripe berry bush (full grown, or young) on the grass under the cursor.", func(a: PackedStringArray) -> void:
 		var t := world.world_to_tile(world.item_user.cursor())
 		for g: Vector2i in [t, t + Vector2i.DOWN, t + Vector2i(0, 2)]:
@@ -306,11 +306,13 @@ func _register() -> void:
 	_add("creative", "creative", "Open the Dev items window (also F7): every item, take as many as you like.", func(_a: PackedStringArray) -> void:
 		world.hud.toggle_dev_items()
 		_print("Dev items window %s." % ("open" if world.hud.dev_items_open else "closed")))
-	_add("books", "books", "Give the tier 1, 2 and 3 test books (dev builds).", func(_a: PackedStringArray) -> void:
-		DevMagic._register()
+	_add("books", "books", "Give the tier 1, 2 and 3 spellbooks.", func(_a: PackedStringArray) -> void:
 		for t in range(1, 4):
 			world.character.inventory.add(StringName("spellbook_t%d" % t), 1)
 		_print("Gave the tier 1, 2 and 3 test books."))
+	_add("infinite", "infinite", "Toggle infinite items: placing, eating and throwing use nothing up.", func(_a: PackedStringArray) -> void:
+		world.infinite_items = not world.infinite_items
+		_print("Infinite items %s." % ("on" if world.infinite_items else "off")))
 	_add("freecraft", "freecraft", "Toggle free crafting: no materials (or max mana) needed, nothing used up.", func(_a: PackedStringArray) -> void:
 		world.free_crafting = not world.free_crafting
 		if world.hud:

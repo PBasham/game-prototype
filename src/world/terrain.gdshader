@@ -65,6 +65,7 @@ int nat(ivec2 t) {
 
 float occ_b(ivec2 t) { return blk(t) > 0 ? 1.0 : 0.0; }
 float occ_w(ivec2 t) { return wal(t) > 0 ? 1.0 : 0.0; }
+float occ_n(ivec2 t) { return nat(t) > 0 ? 1.0 : 0.0; }
 
 // The noise is per world pixel, read with texelFetch: with detailed art `p` moves in
 // half pixels, and sampling at a texel's edge made some GPUs pick either side, which
@@ -97,6 +98,20 @@ float field_w(vec2 p) {
 }
 
 bool solid(vec2 p) { return field_b(p) + nz(p) > 0.5; }
+
+// Like field_b, but only natural blocks count: a built block (wood planks) next to
+// grass or stone doesn't grow a natural bump into the open tile above it.
+float field_n(vec2 p) {
+	vec2 f = (p + 0.5) / T - 0.5 + float(B);
+	vec2 i = floor(f);
+	vec2 fr = smoothstep(0.0, 1.0, f - i);
+	ivec2 ii = ivec2(i);
+	float a = mix(occ_n(ii), occ_n(ii + ivec2(1, 0)), fr.x);
+	float b = mix(occ_n(ii + ivec2(0, 1)), occ_n(ii + ivec2(1, 1)), fr.x);
+	return mix(a, b, fr.y);
+}
+
+bool solid_nat(vec2 p) { return field_n(p) + nz(p) > 0.5; }
 
 ivec2 tile_of(vec2 p) { return ivec2(floor(p / T)) + ivec2(B); }
 
@@ -182,7 +197,8 @@ void fragment() {
 	ivec2 here_t = tile_of(p);
 	int here = blk(here_t);
 	int m = 0;
-	if (!is_built(here) && solid(p)) {
+	// In an open tile, only natural blocks round out into it (see field_n).
+	if (!is_built(here) && solid(p) && (here != 0 || solid_nat(p))) {
 		m = mat_at(p);
 	}
 	bool drew = false;
@@ -260,7 +276,8 @@ void fragment() {
 		for (int k = 1; k <= (indoors ? 0 : 5); k++) {
 			vec2 q = p + vec2(0.0, float(k));
 			if (solid(q)) {
-				if (grass_slots[mat_at(q)] > 0.5) {
+				// Blades grow from grass, not from the top of a built block next to it.
+				if (solid_nat(q) && grass_slots[mat_at(q)] > 0.5) {
 					int tall = hash(wp.x * 1.31 + 7.0) > 0.25 ? 1 + int(hash(wp.x * 2.17 + 3.0) * 5.0) : 0;
 					if (k <= tall) {
 						col = vec4(k == tall ? grass_5 : (k > 1 ? grass_4 : grass_3), 1.0);

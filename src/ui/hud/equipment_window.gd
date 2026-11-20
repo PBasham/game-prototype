@@ -341,5 +341,5 @@ func tooltip_at(local: Vector2) -> Array:
 			var how := "Casts right away" if c.quick_casts(slot) else "Goes in your hand (left click casts)"
 			if not CharacterData.is_buff_slot(slot):
 				how += ". Click the top right corner to change."
-			return [null, Hud.spell_tooltip(spell, c) + "\n" + how]
+			return [spell, how]
 	return [null, ""]

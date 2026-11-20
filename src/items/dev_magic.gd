@@ -40,16 +40,6 @@ static func _register() -> void:
 	book.held = _look(&"dev_grimoire", book.icon)
 	ItemData.register_runtime(book)
 
-	# Test books for each tier (console `books`, or give spellbook_t1 / t2 / t3).
-	var tints: Array[Color] = [Color("4a6a3a"), Color("3a4a8a"), Color("6a2a7a")]
-	for t in range(1, 4):
-		var tb := _item(StringName("spellbook_t%d" % t), "Tier %d Spellbook (dev)" % t, "", ItemData.Kind.BOOK)
-		tb.max_spell_tier = t
-		tb.spell_power = [1.0, 1.25, 1.5][t - 1]
-		tb.icon = _book_texture(tints[t - 1], Color("f2d27a"))
-		tb.held = _look(tb.id, tb.icon)
-		ItemData.register_runtime(tb)
-
 	var focus := _item(&"dev_focus", "Dev Focus (dev)", "", ItemData.Kind.CONDUIT)
 	focus.conduit_type = &"focus"
 	focus.spell_power = 1.25

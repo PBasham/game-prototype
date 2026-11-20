@@ -15,6 +15,9 @@ const HOTBAR := 10
 var size := DEFAULT_SIZE
 var ids: Array[StringName] = []
 var counts: PackedInt32Array = PackedInt32Array()
+## Extra data that belongs to the one item in a slot (a weapon's coating:
+## {"coat": coating id, "hits": n}). It moves with the item; empty for most.
+var metas: Array[Dictionary] = []
 
 
 func _init(slots: int = DEFAULT_SIZE) -> void:
@@ -26,6 +29,10 @@ func resize(slots: int) -> void:
 	size = maxi(slots, 1)
 	ids.resize(size)  # new slots are &"" (empty)
 	counts.resize(size)
+	metas.resize(size)
+	for i in size:
+		if metas[i] == null:
+			metas[i] = {}
 
 
 func is_empty(slot: int) -> bool:
@@ -131,11 +138,19 @@ func take(slot: int, count: int) -> int:
 	return n
 
 
-func set_slot(slot: int, item_id: StringName, count: int) -> void:
+## Puts `count` of an item in a slot. `meta` is that item's own data (moving a coated
+## weapon passes its meta along); left out, the slot keeps its meta only if it still
+## holds the same item.
+func set_slot(slot: int, item_id: StringName, count: int, meta: Variant = null) -> void:
 	if item_id == &"" or count <= 0:
 		ids[slot] = &""
 		counts[slot] = 0
+		metas[slot] = {}
 	else:
+		if meta != null:
+			metas[slot] = meta
+		elif ids[slot] != item_id:
+			metas[slot] = {}
 		ids[slot] = item_id
 		counts[slot] = count
 	changed.emit()
@@ -144,13 +159,17 @@ func set_slot(slot: int, item_id: StringName, count: int) -> void:
 func clear(slot: int) -> void:
 	ids[slot] = &""
 	counts[slot] = 0
+	metas[slot] = {}
 
 
 func to_dict() -> Dictionary:
 	var slots: Array = []
 	for i in size:
 		var keep := not is_empty(i) and not ItemData.is_runtime(ids[i])  # dev items aren't saved
-		slots.append([String(ids[i]), counts[i]] if keep else [])
+		var entry: Array = [String(ids[i]), counts[i]]
+		if keep and not metas[i].is_empty():
+			entry.append(metas[i])
+		slots.append(entry if keep else [])
 	return {"slots": slots}
 
 
@@ -161,7 +180,7 @@ func from_dict(d: Dictionary) -> void:
 		resize(slots.size())  # the saved size wins (bags may have grown it)
 	for i in size:
 		clear(i)
-		if i < slots.size() and (slots[i] as Array).size() == 2:
+		if i < slots.size() and (slots[i] as Array).size() >= 2:
 			var item_id := StringName(slots[i][0])
 			item_id = ItemData.RENAMED.get(item_id, item_id)
 			if ItemData.find(item_id) == null:
@@ -169,4 +188,6 @@ func from_dict(d: Dictionary) -> void:
 				continue
 			ids[i] = item_id
 			counts[i] = int(slots[i][1])
+			if (slots[i] as Array).size() >= 3 and slots[i][2] is Dictionary:
+				metas[i] = (slots[i][2] as Dictionary).duplicate()
 	changed.emit()

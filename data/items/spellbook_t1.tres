@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_5xu8f"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_diq87"]
+[ext_resource type="Texture2D" path="res://assets/items/held/spellbook_t1.png" id="3_eo4db"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/spellbook_t1.png" id="4_ypmck"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_48ks2"]
+
+[sub_resource type="Resource" id="Resource_it2yf"]
+script = ExtResource("2_diq87")
+id = &"spellbook_t1"
+texture = ExtResource("3_eo4db")
+type = &"spell_book"
+grip = Vector2(5, 9)
+
+[resource]
+script = ExtResource("5_48ks2")
+kind = 7
+icon = ExtResource("4_ypmck")
+max_stack = 1
+held = SubResource("Resource_it2yf")
+id = &"spellbook_t1"
+display_name = "Tier 1 Spellbook"
+description = "A spellbook for spells up to tier 1."

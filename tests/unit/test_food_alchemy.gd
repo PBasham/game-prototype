@@ -112,19 +112,30 @@ func test_poison_coating_poisons_on_hit() -> void:
 	w.hud.cursor_count = 2
 	w.hud.right_click_slot(12)
 	assert_eq(w.hud.cursor_count, 1, "one coating used")
-	assert_eq(c.coating_on(&"wooden_sword")[1], 10)
+	assert_eq(Coating.of(c.inventory.metas[12])[1], 10, "on that sword")
 	w.hud.cursor_count = 0
 	w.hud.cursor_id = &""
-	assert_string_contains(Hud.tooltip_for(ItemData.find(&"wooden_sword"), c), "Poison Coating: 10 hits left")
+	assert_string_contains(Hud.tooltip_for(ItemData.find(&"wooden_sword"), c, c.inventory.metas[12]),
+		"Poison Coating: 10 hits left")
+	# Another wooden sword isn't coated.
+	c.inventory.set_slot(13, &"wooden_sword", 1)
+	assert_true(Coating.of(c.inventory.metas[13]).is_empty(), "only the one you coated")
+	# Hold the coated one.
+	c.inventory.set_slot(0, &"wooden_sword", 1, c.inventory.metas[12])
+	c.inventory.clear(12)
+	p.select_slot(0)
 	var e := w.request_spawn_enemy(_slime(), p.global_position + Vector2(20 * p.facing, 0))
 	e.health = 999.0
 	await wait_physics_frames(2)
 	w.item_user.cursor_override = p.chest() + Vector2(40 * p.facing, 0)
 	assert_eq(w.item_user.melee_hit(ItemData.find(&"wooden_sword")), 1)
 	assert_true(e.is_poisoned())
-	assert_eq(c.coating_on(&"wooden_sword")[1], 9, "no timer: just hits")
-	# Other weapons aren't coated; the dummy can be poisoned too.
-	assert_true(c.coating_on(&"copper_sword").is_empty())
+	assert_eq(Coating.of(c.inventory.metas[0])[1], 9, "no timer: just hits")
+	# It's saved with the slot.
+	var back := Inventory.new(c.inventory.size)
+	back.from_dict(c.inventory.to_dict())
+	assert_eq(Coating.of(back.metas[0])[1], 9)
+	# The dummy can be poisoned too.
 	var dummy := DevDummy.new()
 	w.add_child(dummy)
 	dummy.poison(2.0, 3.0)

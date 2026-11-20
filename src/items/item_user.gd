@@ -344,7 +344,10 @@ func melee_hit(item: ItemData) -> int:
 		node.call(&"take_damage", amount, p)
 		if node.has_method(&"knock_back"):
 			node.call(&"knock_back", p.chest(), item.knockback, item.staggers)
-		var coat := p.character.use_coating(item.id) if p.character else null
+		var held_meta := p.held_meta()
+		var coat := Coating.use(held_meta) if item == p.held_item else null
+		if coat and p.character:
+			p.character.inventory.changed.emit()  # the hits left changed
 		if coat and node.has_method(&"poison"):
 			node.call(&"poison", coat.poison_dps, coat.poison_seconds)
 		hit += 1
@@ -360,6 +363,25 @@ func _reachable(from: Vector2, r: Rect2) -> bool:
 		if world.line_clear(from, to):
 			return true
 	return false
+
+
+## Holding something that can go on a table or shelf over a free display spot (in
+## reach): a faint picture of it there; right click puts it down.
+func _draw_display_ghost() -> void:
+	var p := world.player
+	var item := p.held_item
+	if item == null or p.stowed or not item.can_display() or item.is_spell() or p.held_count() <= 0:
+		return
+	var aim := cursor()
+	if aim.distance_to(p.chest()) > (world.interact_tiles + 2.0) * World.TILE:
+		return
+	var tile := world.world_to_tile(aim)
+	if not world.can_display_at(tile, item):
+		return
+	var r := world.display_rect(tile, item)
+	if item.icon:
+		draw_texture_rect(item.icon, r, false, Color(1, 1, 1, 0.55))
+	draw_rect(r.grow(1.0), Color(1, 1, 1, 0.35), false, 1.0)
 
 
 ## Learns the held Spell Page's spell for good (the page is used up). A spell you
@@ -457,7 +479,7 @@ func eat_from(slot: int) -> bool:
 		EventBus.debug_message.emit(why)
 		return false
 	var inv := p.character.inventory
-	if inv.take(slot, 1) <= 0:
+	if not world.infinite_items and inv.take(slot, 1) <= 0:
 		return false
 	p.refresh_held()
 	p.consume(item)
@@ -692,7 +714,7 @@ func _on_impact(item: ItemData) -> void:
 			if cooldown_left(spell) <= 0.0 and p.has_mana(cost) and p.character.take_reagents(spell):
 				if pays:
 					p.spend_mana(cost)
-				_ready_at[spell.id] = _now() + spell.cooldown
+					_ready_at[spell.id] = _now() + spell.cooldown  # a ritual's starts when it completes
 				if not cast(spell) and pays:
 					p.mana += cost  # it fizzled (no room, no target): refund
 					_ready_at.erase(spell.id)
@@ -741,6 +763,12 @@ func cast_direct(spell: SpellData) -> String:
 	return ""
 
 
+## Starts a spell's cooldown now (a ritual, when it completes: cancelling one by moving
+## leaves no cooldown).
+func start_cooldown(spell: SpellData) -> void:
+	_ready_at[spell.id] = _now() + spell.cooldown
+
+
 ## Casts a non-toggle spell now (mana and cooldown already handled). False if it
 ## fizzled (no room, no target), with the reason shown.
 func cast(spell: SpellData) -> bool:
@@ -765,6 +793,12 @@ func cast(spell: SpellData) -> bool:
 			p.add_buff(spell)
 			SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, p.chest(), Vector2.ZERO, spell.projectile_color)
 		SpellData.Cast.ZONE, SpellData.Cast.WARD, SpellData.Cast.SUMMON, SpellData.Cast.CONJURE, SpellData.Cast.SENSE:
+			# Made at the cursor: it has to be in sight (no casting through walls), unless
+			# the spell says otherwise (`needs_sight`, for a later upgrade).
+			if spell.needs_sight and spell.cast != SpellData.Cast.SENSE \
+					and not world.line_clear(p.chest(), cursor().move_toward(p.chest(), World.TILE)):
+				EventBus.debug_message.emit("Out of sight")
+				return false
 			if world.request_spell_effect(spell, cursor(), _spell_power()) == null:
 				EventBus.debug_message.emit(world.spell_problem if world.spell_problem != "" else "It fizzles")
 				return false
@@ -844,7 +878,7 @@ func chain(spell: SpellData, from: Vector2) -> int:
 	var travelled := 0.0
 	while travelled <= reach and first == null:
 		var pt := from + dir * travelled
-		if world.is_solid(world.world_to_tile(pt)):
+		if world.blocks_hits(world.world_to_tile(pt)):  # blocks and closed doors stop it
 			end = pt
 			break
 		for n in targets:
@@ -873,8 +907,9 @@ func chain(spell: SpellData, from: Vector2) -> int:
 		for n in targets:
 			if n in hit or not is_instance_valid(n):
 				continue
-			var d := (n.call(&"hit_rect") as Rect2).get_center().distance_to(at)
-			if d <= nd:
+			var c := (n.call(&"hit_rect") as Rect2).get_center()
+			var d := c.distance_to(at)
+			if d <= nd and world.line_clear(at, c):  # it doesn't jump through walls
 				nd = d
 				next = n
 		current = next
@@ -933,6 +968,7 @@ func _cut_flowers_in_swing() -> void:
 # --- drawing -------------------------------------------------------------------------
 
 func _draw() -> void:
+	_draw_display_ghost()
 	if mode == Mode.NONE or world.player.input_blocked:
 		return
 	var p := world.player

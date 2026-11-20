@@ -288,6 +288,16 @@ func _items() -> Array[ItemData]:
 	book.max_spell_tier = 1
 	book.held = _look(&"basic_spellbook", &"spell_book", Vector2(5, 9))
 	out.append(book)
+	# Spellbooks by tier (Patrick: for testing; not found or crafted yet: `give` them).
+	for t in range(1, 4):
+		var tb := _base(StringName("spellbook_t%d" % t), "Tier %d Spellbook" % t,
+			"A spellbook for spells up to tier %d." % t)
+		tb.kind = ItemData.Kind.BOOK
+		tb.max_stack = 1
+		tb.max_spell_tier = t
+		tb.spell_power = [1.0, 1.25, 1.5][t - 1]
+		tb.held = _look(tb.id, &"spell_book", Vector2(5, 9))
+		out.append(tb)
 	return out
 
 

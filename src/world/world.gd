@@ -49,6 +49,8 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 @export var craft_chest_tiles := 12.0
 ## Dev console `freecraft`: crafting needs no materials (and nothing is used up).
 var free_crafting := false
+## Dev console `infinite`: blocks, furniture, food and throwables aren't used up.
+var infinite_items := false
 
 @export_group("Spell scrolls")
 ## Scribing a scroll (Spell Weaving Table, Scrolls tab: only spells you know) uses its
@@ -122,6 +124,8 @@ var _autosave_left := 0.0
 
 
 func _ready() -> void:
+	if OS.is_debug_build():
+		DevMagic._register()  # so `give dev_focus` and the Dev items window have them
 	Game.set_state(Game.State.LOADING)
 	blocks = TileTypes.new(&"tiles")
 	walls = TileTypes.new(&"walls")
@@ -422,15 +426,36 @@ func regenerate() -> void:
 ## keeps items), and they respawn at the world spawn after respawn_seconds.
 func _on_player_died(cause: StringName) -> void:
 	var inv := character.inventory
-	if info.death_drop == WorldInfo.DeathDrop.BAG and not inv.is_all_empty():
-		var bag_inv := Inventory.new(inv.size)
-		for i in inv.size:
+	var mode := info.death_drop
+	if mode != WorldInfo.DeathDrop.KEEP:
+		var from := Inventory.HOTBAR if mode == WorldInfo.DeathDrop.BACKPACK else 0
+		var worn: Array[StringName] = []
+		if mode in [WorldInfo.DeathDrop.ALL, WorldInfo.DeathDrop.PERMADEATH]:
+			for slot: StringName in [CharacterData.SLOT_HEAD, CharacterData.SLOT_CHEST, CharacterData.SLOT_LEGS] \
+					+ CharacterData.SLOT_ACCESSORIES:
+				if character.equipment.get(slot, &"") != &"":
+					worn.append(character.equip(slot, &""))  # armor and accessories come off
+		var bag_inv := Inventory.new(inv.size + worn.size())
+		for i in range(from, inv.size):
 			if not inv.is_empty(i) and not String(inv.ids[i]).begins_with(ItemData.SPELL_PREFIX):
-				bag_inv.set_slot(i, inv.ids[i], inv.counts[i])
+				bag_inv.set_slot(i, inv.ids[i], inv.counts[i], inv.metas[i])
 				inv.clear(i)
+		for k in worn.size():
+			if worn[k] != &"":
+				bag_inv.set_slot(inv.size + k, worn[k], 1)
 		inv.changed.emit()
 		if not bag_inv.is_all_empty():
 			request_spawn_bag(bag_inv, character.name, player.chest())
+	# Buffs, summons and lights end.
+	player.clear_buffs()
+	for n in get_tree().get_nodes_in_group(&"familiars"):
+		n.queue_free()
+	for n in get_tree().get_nodes_in_group(&"light_sources"):
+		if n is LightOrb:
+			n.queue_free()
+	if mode == WorldInfo.DeathDrop.PERMADEATH:
+		character.ghost = true
+		character.save()
 	player.visible = false
 	player.set_physics_process(false)
 	EventBus.player_died.emit(cause)
@@ -443,6 +468,9 @@ func _on_player_died(cause: StringName) -> void:
 ## health, hunger and mana.
 func respawn_player() -> void:
 	if not is_instance_valid(player) or not player.dead:
+		return
+	if character and character.ghost:
+		Game.quit_to_menu()  # permadeath: no coming back
 		return
 	var pos := respawn_position()
 	renderer.load_all_now(pos)
@@ -1126,7 +1154,7 @@ func displayed_item(tile: Vector2i) -> ItemData:
 ## Right click with an item in hand on a free spot: puts one on display. False if the
 ## spot can't take it (then the click does whatever else it would).
 func try_place_display(point: Vector2, who: Player) -> bool:
-	if who == null or who.held_item == null or who.stowed or who.selected < 0:
+	if who == null or who.held_item == null or who.stowed or who.held_count() <= 0:
 		return false
 	if point.distance_to(who.chest()) > (interact_tiles + 2.0) * TILE:
 		return false
@@ -1134,7 +1162,7 @@ func try_place_display(point: Vector2, who: Player) -> bool:
 	var tile := world_to_tile(point)
 	if not can_display_at(tile, item):
 		return false
-	if who.character.inventory.take(who.selected, 1) <= 0:
+	if not who.take_held():  # the hotbar slot, the mouse stack or a Z X C item
 		return false
 	return request_place_display(tile, item.id)
 

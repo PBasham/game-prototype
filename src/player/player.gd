@@ -394,6 +394,18 @@ func use_quick_item(item_id: StringName) -> bool:
 	if item == null or inv.count_of(item_id) <= 0:
 		EventBus.debug_message.emit("No %s left" % (item.display_name if item else String(item_id)))
 		return false
+	if item.buff_poison_hits > 0:
+		# A coating: onto the weapon in your hand.
+		var slot := held_slot()
+		var weapon := held_item
+		if slot < 0 or weapon == null or weapon.kind != ItemData.Kind.WEAPON:
+			EventBus.debug_message.emit("Hold a weapon to coat it")
+			return false
+		if not Coating.apply(inv.metas[slot], weapon, item):
+			return false
+		inv.remove(item_id, 1)
+		EventBus.debug_message.emit("%s coated: next %d hits poison" % [weapon.display_name, item.buff_poison_hits])
+		return true
 	if item.kind == ItemData.Kind.FOOD:
 		return world != null and world.item_user.eat_from(_slot_of(item_id))
 	for i in Inventory.HOTBAR:
@@ -424,6 +436,15 @@ func _slot_of(item_id: StringName) -> int:
 		if inv.ids[i] == item_id and not inv.is_empty(i):
 			return i
 	return -1
+
+
+## The held item's own data (a coated weapon's coating): the mouse stack's, else its
+## inventory slot's. Changes to it stick.
+func held_meta() -> Dictionary:
+	if mouse_stack:
+		return mouse_meta.call() if mouse_meta.is_valid() else {}
+	var slot := held_slot()
+	return character.inventory.metas[slot] if slot >= 0 else {}
 
 
 ## The inventory slot the held item comes from: the hotbar slot, or for an item taken
@@ -520,6 +541,7 @@ func is_spell_active(spell: SpellData) -> bool:
 var mouse_stack: ItemData = null
 var mouse_take: Callable
 var mouse_left: Callable
+var mouse_meta: Callable
 
 
 ## Holds whatever is in the selected slot (after the inventory or equipment changed).
@@ -620,6 +642,8 @@ func held_count() -> int:
 
 ## Uses up one of the held item (placing): from the mouse stack, else the hotbar slot.
 func take_held() -> bool:
+	if world and world.infinite_items and held_count() > 0:
+		return true  # dev: nothing is used up
 	if mouse_stack:
 		return mouse_take.is_valid() and bool(mouse_take.call())
 	var slot := held_slot()
@@ -641,6 +665,9 @@ func toggle_stowed() -> void:
 
 ## True while facing the cursor: attacking, or holding something that aims.
 func is_aiming() -> bool:
+	# Placing furniture doesn't turn you: it faces the way you do, as the preview shows.
+	if held_item and held_item.places_object != &"":
+		return false
 	if _attack != null:
 		return true
 	var m := _hold_motion()
@@ -1169,6 +1196,11 @@ func _fly(input_x: float, input_y: float, delta: float) -> void:
 ## Levitating: hovers `hover_tiles` above the ground below and follows it; fast, smooth
 ## sideways movement. Down lowers you to the ground; you can't go above the hover height.
 ## Over a drop with no ground in reach you sink slowly.
+## Levitate's chosen height above the ground (px), and the last frame it ran.
+var _lev_height := 0.0
+var _lev_frame := -10
+
+
 func _levitate(input_x: float, input_y: float, delta: float) -> void:
 	_climbing = false
 	var spell := concentration
@@ -1176,9 +1208,16 @@ func _levitate(input_x: float, input_y: float, delta: float) -> void:
 	velocity.x = move_toward(velocity.x, input_x * speed * TILE, speed * TILE / maxf(levitate_accel_time, 0.01) * delta)
 	var ground := ground_below()
 	var vy := levitate_sink * TILE
+	# Height above the ground: up raises it to the spell's hover height, down lowers it,
+	# and it stays where you leave it (going down doesn't push you back up).
+	var frame := Engine.get_physics_frames()
+	var top := spell.hover_tiles * TILE
+	if _lev_frame != frame - 1:
+		_lev_height = top  # just started: rise to the full height
+	_lev_frame = frame
+	_lev_height = clampf(_lev_height - input_y * levitate_max_vertical * TILE * delta, 0.0, top)
 	if ground != INF:
-		var hover := 0.0 if input_y > 0.0 else spell.hover_tiles * TILE
-		var target := ground - hover
+		var target := ground - _lev_height
 		vy = clampf((target - global_position.y) * levitate_follow, -levitate_max_vertical * TILE, levitate_max_vertical * TILE)
 	velocity.y = vy
 	_peak_y = global_position.y
@@ -1828,7 +1867,15 @@ func _complete_ritual() -> void:
 				reset_physics_interpolation()
 				SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, chest(), Vector2.ZERO, spell.projectile_color)
 	EventBus.sound_requested.emit(&"ritual_done", global_position)
+	if not _ritual_free and world and world.item_user:
+		world.item_user.start_cooldown(spell)
 	ritual_finished.emit(spell, true)
+
+
+## Ends every buff (dying). Potion sickness too: a fresh start.
+func clear_buffs() -> void:
+	for effect: StringName in buffs.keys():
+		end_buff(effect)
 
 
 func _tick_buffs(delta: float) -> void:

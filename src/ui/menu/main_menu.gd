@@ -124,9 +124,14 @@ func _show_characters() -> void:
 		doll.look = all[0].make_look()
 	for c in all:
 		var row := HBoxContainer.new()
-		var play := UiKit.button(c.name, func() -> void:
+		var play := UiKit.button(c.name + (" (ghost)" if c.ghost else ""), func() -> void:
+			if c.ghost:
+				return  # died in a permadeath world: kept, but not playable
 			_chosen = c
 			_show_worlds(), 150)
+		if c.ghost:
+			play.disabled = true
+			play.tooltip_text = "Died in a permadeath world"
 		play.mouse_entered.connect(func() -> void: doll.look = c.make_look())
 		play.focus_entered.connect(func() -> void: doll.look = c.make_look())
 		row.add_child(play)
@@ -391,8 +396,11 @@ func _show_new_world() -> void:
 	box.add_child(UiKit.row("Hunger", hunger))
 	var death := OptionButton.new()
 	death.add_theme_font_size_override("font_size", 10)
-	death.add_item("Drop items in a magic bag", WorldInfo.DeathDrop.BAG)
+	death.add_item("Drop everything (armor too)", WorldInfo.DeathDrop.ALL)
+	death.add_item("Drop the inventory", WorldInfo.DeathDrop.BAG)
+	death.add_item("Drop items outside the hotbar", WorldInfo.DeathDrop.BACKPACK)
 	death.add_item("Keep items", WorldInfo.DeathDrop.KEEP)
+	death.add_item("Permadeath (drop everything; the character becomes a ghost)", WorldInfo.DeathDrop.PERMADEATH)
 	box.add_child(UiKit.row("On death", death))
 	var error := UiKit.label("", 8, UiSkin.BAD)
 	box.add_child(error)

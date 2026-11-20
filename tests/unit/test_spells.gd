@@ -378,13 +378,12 @@ func test_buff_set_casts_them_all() -> void:
 	for i in CharacterData.BUFF_SET_SIZE:
 		c.set_quick(CharacterData.buff_slot(i), &"")
 	c.set_quick(&"buff_0", &"arcane_edge")
-	c.set_quick(&"buff_1", &"light_orb")
+	assert_false(c.set_quick(&"buff_1", &"light_orb"), "Buff spells only")
 	c.set_quick(&"buff_2", &"barrier")
 	p.mana = 1000.0
-	assert_eq(p.cast_buff_set(), 3)
+	assert_eq(p.cast_buff_set(), 2)
 	assert_true(p.has_buff(&"arcane_edge"))
 	assert_true(p.has_buff(&"barrier"))
-	assert_gt(w.summon_time_left(_spell(&"light_orb")), 0.0)
 	assert_eq(p.cast_buff_set(), 0, "already on: skipped")
 	p.end_buff(&"arcane_edge")
 	p.infinite_mana = false

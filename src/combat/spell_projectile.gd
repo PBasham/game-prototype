@@ -39,7 +39,7 @@ func _physics_process(delta: float) -> void:
 	for i in n:
 		global_position += direction * (step / n)
 		_travelled += step / n
-		if world.is_solid(world.world_to_tile(global_position)):
+		if world.blocks_hits(world.world_to_tile(global_position)):  # blocks and closed doors
 			_fizzle()
 			return
 		for node in get_tree().get_nodes_in_group(&"damageable"):

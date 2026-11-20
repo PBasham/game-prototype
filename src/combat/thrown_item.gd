@@ -27,7 +27,7 @@ func _physics_process(delta: float) -> void:
 	var steps := maxi(1, ceili(velocity.length() * delta / 2.0))
 	for i in steps:
 		global_position += velocity * delta / steps
-		if world.is_solid(world.world_to_tile(global_position)) or _hits_enemy():
+		if world.blocks_hits(world.world_to_tile(global_position)) or _hits_enemy():
 			_shatter()
 			return
 	_spin += delta * 12.0

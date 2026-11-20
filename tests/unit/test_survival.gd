@@ -202,3 +202,30 @@ func test_campfire_lights_and_makes_you_cozy() -> void:
 	await wait_seconds(1.0)
 	assert_false(p.has_buff(&"aura_campfire"), "gone once you leave")
 	assert_eq(p.aura_regen, 0.0)
+
+
+func test_death_options_drop_armor_or_just_the_backpack() -> void:
+	var c := w.character
+	var p := w.player
+	w.respawn_seconds = 0.1
+	# Drop everything: armor comes off into the bag; buffs end.
+	w.info.death_drop = WorldInfo.DeathDrop.ALL
+	c.equip(CharacterData.SLOT_HEAD, &"copper_helmet")
+	var helmets := c.inventory.count_of(&"copper_helmet") + 1
+	p.add_buff(Registry.get_def(&"spells", &"arcane_edge") as SpellData)
+	p.take_damage(p.health + 1.0, &"test")
+	assert_eq(c.equipment[CharacterData.SLOT_HEAD], &"", "armor dropped")
+	assert_eq(w.bags()[0].inventory.count_of(&"copper_helmet"), helmets, "worn one too")
+	assert_false(p.has_buff(&"arcane_edge"), "buffs end")
+	await wait_seconds(0.4)
+	for b in w.bags():
+		b.queue_free()
+	await wait_physics_frames(2)
+	# Only outside the hotbar: the hotbar stays.
+	w.info.death_drop = WorldInfo.DeathDrop.BACKPACK
+	c.inventory.set_slot(2, &"stone", 7)
+	c.inventory.set_slot(20, &"wood", 4)
+	p.take_damage(p.health + 1.0, &"test")
+	assert_eq(c.inventory.count_of(&"stone"), 7, "hotbar kept")
+	assert_eq(c.inventory.counts[20], 0, "backpack dropped")
+	await wait_seconds(0.4)

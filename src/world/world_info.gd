@@ -19,7 +19,11 @@ var path := ""
 
 ## World options (chosen on the New World page).
 ## What happens to your items when you die.
-enum DeathDrop { BAG, KEEP }
+## What dying costs (world option): BAG = your inventory goes in a magic bag; KEEP =
+## nothing; BACKPACK = only the items outside the hotbar; ALL = the inventory and the
+## armor and accessories you wear (not the book or conduit); PERMADEATH = like ALL, and
+## the character becomes a ghost that can't be played again (it isn't deleted).
+enum DeathDrop { BAG, KEEP, BACKPACK, ALL, PERMADEATH }
 ## Hunger drains (off: the hunger bar stays full).
 var hunger := true
 var death_drop := DeathDrop.BAG

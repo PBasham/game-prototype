@@ -81,6 +81,8 @@ var dev_items_open := false
 ## Stack held on the mouse (inventory open). "spell:<id>" = a spell being placed.
 var cursor_id: StringName = &""
 var cursor_count := 0
+## The data of the item on the mouse (a coated weapon's coating), carried with it.
+var cursor_meta: Dictionary = {}
 ## The spell wheel is open (R held): its center and the highlighted spell.
 var wheel_open := false
 var wheel_center := Vector2.ZERO
@@ -140,14 +142,21 @@ var _name_icon: TextureRect
 ## The spell you're concentrating on (Fly, Mend...): its icon and name, under that.
 var _conc_icon: TextureRect
 var _conc_label: Label
+## The held weapon's coating (and later other effects): icon and hits left.
+var _effect_icon: TextureRect
+var _effect_label: Label
 var _tooltip: PanelContainer
 var _tooltip_text: Label
 ## Crafting's materials (inventory + nearby chests), rebuilt each frame (craft_stock).
 var _stock: CraftStock
 var _stock_frame := -1
+## A mouse press began on a window; world clicks stay blocked until it's released.
+var _press_on_ui := false
 ## The tooltip's title line and its right side (a book's tier).
 var _tooltip_title: Label
 var _tooltip_right: Label
+## Small text between the title and the right side: a spell's types.
+var _tooltip_types: Label
 var _notes: VBoxContainer
 var _note_labels: Dictionary[StringName, Label] = {}
 var _note_counts: Dictionary[StringName, int] = {}
@@ -220,6 +229,11 @@ func _ready() -> void:
 	_conc_label = _name_label.duplicate() as Label
 	_conc_label.add_theme_color_override("font_color", Color("c9a8ff"))
 	add_child(_conc_label)
+	_effect_icon = _name_icon.duplicate() as TextureRect
+	add_child(_effect_icon)
+	_effect_label = _name_label.duplicate() as Label
+	_effect_label.add_theme_color_override("font_color", Color("9be36b"))
+	add_child(_effect_label)
 	_tooltip = PanelContainer.new()
 	_tooltip.add_theme_stylebox_override("panel", UiSkin.box("panel", 6.0))
 	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -234,6 +248,11 @@ func _ready() -> void:
 	_tooltip_title.add_theme_color_override("font_color", UiSkin.TEXT)
 	_tooltip_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_tooltip_title)
+	_tooltip_types = Label.new()
+	_tooltip_types.add_theme_font_size_override("font_size", 6)
+	_tooltip_types.add_theme_color_override("font_color", UiSkin.DIM)
+	_tooltip_types.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	head.add_child(_tooltip_types)
 	_tooltip_right = Label.new()
 	_tooltip_right.add_theme_font_size_override("font_size", 8)
 	_tooltip_right.add_theme_color_override("font_color", UiSkin.GOLD)
@@ -305,6 +324,16 @@ func _redraw() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	# A click that starts on a window (its close button, say) never reaches the world,
+	# even if the window closes under the mouse: blocked until the button comes up.
+	var press := event as InputEventMouseButton
+	if press and press.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
+		if press.pressed and _over_pane() != null:
+			_press_on_ui = true
+			world.player.input_blocked = true
+		elif not press.pressed and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) \
+				and not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+			_press_on_ui = false
 	var key := event as InputEventKey
 	if key and key.pressed and not key.echo and key.physical_keycode == KEY_F7 and OS.is_debug_build():
 		toggle_dev_items()
@@ -336,7 +365,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	var mb := event as InputEventMouseButton
 	if open and mb and mb.pressed and cursor_count > 0 and (mb.button_index == MOUSE_BUTTON_RIGHT
 			or (mb.button_index == MOUSE_BUTTON_LEFT and _cursor_placeable() == null)):
-		_throw_cursor()
+		# Right click over a free table or shelf spot puts one down there instead.
+		var p := world.player
+		if not (mb.button_index == MOUSE_BUTTON_RIGHT and p.mouse_stack
+				and world.try_place_display(p.aim_point(), p)):
+			_throw_cursor()
 		get_viewport().set_input_as_handled()
 
 
@@ -363,11 +396,13 @@ func _process(delta: float) -> void:
 		p.mouse_stack = place
 		p.mouse_take = _take_cursor_one
 		p.mouse_left = func() -> int: return cursor_count
+		p.mouse_meta = func() -> Dictionary: return cursor_meta
 		if place and p.stowed:
 			p.toggle_stowed()  # placing takes the hand back out
 		p.refresh_held()
 	var on_buff := _buff_at_mouse() != &"" or _quick_key_at_mouse() != &""
-	p.input_blocked = over != null or (cursor_count > 0 and place == null) or paused or wheel_open or on_buff
+	p.input_blocked = over != null or (cursor_count > 0 and place == null) or paused or wheel_open or on_buff \
+		or _press_on_ui
 	if on_buff and not paused and Input.is_action_just_pressed("use_secondary"):
 		dismiss_buff(_buff_entry_at_mouse())
 	_update_tooltip(over if over else (_buffs if _buff_at_mouse() != &"" else
@@ -386,14 +421,25 @@ func _process(delta: float) -> void:
 	_name_icon.texture = item.icon if spell_in_hand else null
 	_name_label.position.x = MARGIN.x + 2 + (14 if _name_icon.visible else 0)
 	_name_label.add_theme_color_override("font_color", Color("9fd4ff") if spell_in_hand else UiSkin.TEXT)
+	# The held weapon's coating: its icon and hits left, in green.
+	var coat := Coating.of(p.held_meta()) if item and not p.stowed else []
+	_effect_icon.visible = not coat.is_empty() and (coat[0] as ItemData).icon != null
+	_effect_icon.texture = (coat[0] as ItemData).icon if not coat.is_empty() else null
+	_effect_label.visible = not coat.is_empty()
+	_effect_label.text = "%s: %d hits" % [(coat[0] as ItemData).display_name, coat[1]] if not coat.is_empty() else ""
+	var line_y := _name_label.position.y + 14
+	_effect_label.position = Vector2(MARGIN.x + 2 + (14 if _effect_icon.visible else 0), line_y)
+	_effect_icon.position = Vector2(MARGIN.x + 2, line_y + 1)
+	if _effect_label.visible:
+		line_y += 14
 	# Concentrating: the spell's icon and name in violet, on the next line.
 	var conc := p.concentration
 	_conc_icon.visible = conc != null and conc.icon != null
 	_conc_icon.texture = conc.icon if conc else null
 	_conc_label.visible = conc != null
 	_conc_label.text = conc.display_name if conc else ""
-	_conc_label.position = Vector2(MARGIN.x + 2 + (14 if _conc_icon.visible else 0), _name_label.position.y + 14)
-	_conc_icon.position = Vector2(MARGIN.x + 2, _name_label.position.y + 15)
+	_conc_label.position = Vector2(MARGIN.x + 2 + (14 if _conc_icon.visible else 0), line_y)
+	_conc_icon.position = Vector2(MARGIN.x + 2, line_y + 1)
 
 
 ## The window under the mouse, or null.
@@ -542,7 +588,9 @@ func _on_player_died(cause: StringName) -> void:
 	var lines := PackedStringArray()
 	if DEATH_CAUSES.has(cause):
 		lines.append(DEATH_CAUSES[cause])
-	if world.info.death_drop == WorldInfo.DeathDrop.BAG:
+	if world.info.death_drop == WorldInfo.DeathDrop.PERMADEATH:
+		lines.append("Permadeath: %s is a ghost now." % world.character.name)
+	elif world.info.death_drop != WorldInfo.DeathDrop.KEEP:
 		lines.append("Your items are in a magic bag where you fell.")
 	_death_sub.text = "\n".join(lines)
 	var view := _view_size()
@@ -829,7 +877,7 @@ func _draw_inventory(g: Control) -> void:
 		UiSkin.slot(g, r, look)
 		var item := inv.item(i)
 		if item:
-			_draw_item(g, font, r, item, inv.counts[i])
+			_draw_item(g, font, r, item, inv.counts[i], 1.0, inv.metas[i])
 		if i < Inventory.HOTBAR:
 			g.draw_string(font, r.position + Vector2(3, 8), str((i + 1) % 10), HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
 				Color(UiSkin.DIM, 0.8))
@@ -862,7 +910,8 @@ func _draw_cursor_stack(g: Control) -> void:
 		_draw_count(g, ThemeDB.fallback_font, Rect2(m, Vector2(SLOT, SLOT)), cursor_count)
 
 
-func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, alpha: float = 1.0) -> void:
+func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, alpha: float = 1.0,
+		meta: Dictionary = {}) -> void:
 	if item.icon:
 		g.draw_texture_rect(item.icon, Rect2(r.position + (r.size - Vector2(16, 16)) * 0.5, Vector2(16, 16)), false,
 			Color(1, 1, 1, alpha))
@@ -871,9 +920,10 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 		var b := 16.0 / 3.0
 		g.draw_texture_rect(item.badge, Rect2(r.position + Vector2(r.size.x - b - 1.5, 1.5), Vector2(b, b)), false,
 			Color(1, 1, 1, alpha))
-	if item.kind == ItemData.Kind.WEAPON and world.character and not world.character.coating_on(item.id).is_empty():
+	var coating := Coating.of(meta)
+	if not coating.is_empty():
 		# Coated: the coating's badge in the bottom right corner.
-		var coat: ItemData = world.character.coating_on(item.id)[0]
+		var coat: ItemData = coating[0]
 		if coat.badge:
 			var b := 16.0 / 3.0
 			g.draw_texture_rect(coat.badge, Rect2(r.end - Vector2(b + 1.5, b + 1.5), Vector2(b, b)), false,
@@ -1075,7 +1125,7 @@ func _draw_chest(g: Control) -> void:
 			UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hover[0] == Area.CHEST and hover[1] == i else UiSkin.SlotLook.NORMAL)
 			var item := store.item(i)
 			if item:
-				_draw_item(g, font, r, item, store.counts[i])
+				_draw_item(g, font, r, item, store.counts[i], 1.0, store.metas[i])
 	var b := _chest_buttons()
 	UiSkin.button(g, b[0], "Take all", UiSkin.Btn.HOT if hover[0] == Area.CHEST_TAKE else UiSkin.Btn.NORMAL)
 	UiSkin.button(g, b[1], "Deposit all", UiSkin.Btn.HOT if hover[0] == Area.CHEST_DEPOSIT else UiSkin.Btn.NORMAL)
@@ -1774,6 +1824,15 @@ func _move_stack(from: Inventory, slot: int, to: Inventory) -> void:
 	if to == null or from.is_empty(slot) or String(from.ids[slot]).begins_with(ItemData.SPELL_PREFIX):
 		return
 	var id := from.ids[slot]
+	var meta := from.metas[slot]
+	if not meta.is_empty():  # one item with its own data (a coated weapon): to an empty slot
+		for i in to.size:
+			if to.is_empty(i):
+				to.set_slot(i, id, from.counts[slot], meta)
+				from.clear(slot)
+				from.changed.emit()
+				return
+		return
 	var left := to.add(id, from.counts[slot])
 	from.set_slot(slot, id if left > 0 else &"", left)
 
@@ -1789,10 +1848,11 @@ func click_slot(slot: int, inv: Inventory = null) -> void:
 		if not inv.is_empty(slot):
 			cursor_id = inv.ids[slot]
 			cursor_count = inv.counts[slot]
+			cursor_meta = inv.metas[slot]
 			inv.set_slot(slot, &"", 0)
 		return
 	if inv.is_empty(slot):
-		inv.set_slot(slot, cursor_id, cursor_count)
+		inv.set_slot(slot, cursor_id, cursor_count, cursor_meta)
 		_clear_cursor()
 	elif inv.ids[slot] == cursor_id and not _cursor_is_spell():
 		var cap := Inventory.max_stack(cursor_id)
@@ -1806,9 +1866,11 @@ func click_slot(slot: int, inv: Inventory = null) -> void:
 	else:
 		var id := inv.ids[slot]
 		var count := inv.counts[slot]
-		inv.set_slot(slot, cursor_id, cursor_count)
+		var meta := inv.metas[slot]
+		inv.set_slot(slot, cursor_id, cursor_count, cursor_meta)
 		cursor_id = id
 		cursor_count = count
+		cursor_meta = meta
 
 
 ## Right click: take half (empty mouse) or put one down. With a coating on the mouse
@@ -1821,7 +1883,8 @@ func right_click_slot(slot: int, inv: Inventory = null) -> void:
 	var on_mouse := ItemData.find(cursor_id) if cursor_count > 0 else null
 	var there := inv.item(slot)
 	if on_mouse and on_mouse.buff_poison_hits > 0 and there and there.kind == ItemData.Kind.WEAPON:
-		if world.character.coat(there.id, on_mouse):
+		if Coating.apply(inv.metas[slot], there, on_mouse):
+			inv.changed.emit()
 			cursor_count -= 1
 			if cursor_count <= 0:
 				_clear_cursor()
@@ -1899,7 +1962,7 @@ func click_quick_slot(slot: StringName) -> void:
 		if c.set_quick(slot, _cursor_spell()):
 			_clear_cursor()
 		else:
-			EventBus.debug_message.emit("Only timed effects on you go in the buff set (buffs, Light Orb, Familiar)")
+			EventBus.debug_message.emit("Only Buff spells go in the buff set")
 	elif cursor_count > 0:
 		# An item: Z X C become a shortcut to it (the stack stays on the mouse).
 		if not c.set_quick_item(slot, cursor_id):
@@ -1944,6 +2007,7 @@ func _quick_move(slot: int) -> void:
 	var lo := 0 if to_hotbar else Inventory.HOTBAR
 	var hi := Inventory.HOTBAR if to_hotbar else inv.size
 	var cap := Inventory.max_stack(id)
+	var meta := inv.metas[slot]  # a coated weapon keeps its coating
 	for pass_i in 2:  # first top up matching stacks, then empty slots
 		for i in range(lo, hi):
 			if n <= 0:
@@ -1954,7 +2018,7 @@ func _quick_move(slot: int) -> void:
 				n -= k
 			elif pass_i == 1 and inv.is_empty(i):
 				var k := mini(n, cap)
-				inv.set_slot(i, id, k)
+				inv.set_slot(i, id, k, meta if not meta.is_empty() else null)
 				n -= k
 	inv.set_slot(slot, id if n > 0 else &"", n)
 
@@ -1983,6 +2047,7 @@ func _take_cursor_one() -> bool:
 	cursor_count -= 1
 	if cursor_count == 0:
 		cursor_id = &""
+		cursor_meta = {}
 	return true
 
 
@@ -1997,6 +2062,7 @@ func _throw_cursor() -> void:
 func _clear_cursor() -> void:
 	cursor_id = &""
 	cursor_count = 0
+	cursor_meta = {}
 	_redraw()
 
 
@@ -2109,6 +2175,7 @@ func _update_tooltip(over: Control) -> void:
 	var item: ItemData = null
 	var extra := ""
 	var extra_only := ""
+	var meta: Dictionary = {}
 	if over and cursor_count == 0:
 		var c := world.character
 		var h: Array = [Area.NONE, -1]
@@ -2144,9 +2211,11 @@ func _update_tooltip(over: Control) -> void:
 		match h[0]:
 			Area.INVENTORY:
 				item = c.inventory.item(h[1])
+				meta = c.inventory.metas[h[1]]
 			Area.CHEST:
 				var store := _store()
 				item = store.item(h[1]) if store else null
+				meta = store.metas[h[1]] if store else {}
 			Area.RECIPE:
 				if h[1] < recipes().size():
 					var r: RecipeData = recipes()[h[1]]
@@ -2155,7 +2224,7 @@ func _update_tooltip(over: Control) -> void:
 	_tooltip.visible = item != null or extra_only != ""
 	if not _tooltip.visible:
 		return
-	var full := extra_only if item == null else tooltip_for(item, world.character) + extra
+	var full := extra_only if item == null else tooltip_for(item, world.character, meta) + extra
 	# The first line is the title (with a book's tier on the right); the rest below it.
 	var cut := full.find("\n")
 	_tooltip_title.text = full if cut < 0 else full.substr(0, cut)
@@ -2163,6 +2232,8 @@ func _update_tooltip(over: Control) -> void:
 	_tooltip_text.visible = cut >= 0
 	_tooltip_right.text = tooltip_right(item) if item else ""
 	_tooltip_right.visible = _tooltip_right.text != ""
+	_tooltip_types.text = spell_types(item as SpellData) if item is SpellData else ""
+	_tooltip_types.visible = _tooltip_types.text != ""
 	_tooltip.reset_size()
 	var at := over.get_global_mouse_position() + Vector2(10, 8)
 	var view := _view_size()
@@ -2173,6 +2244,8 @@ func _update_tooltip(over: Control) -> void:
 
 ## The right side of a tooltip's title line: "Tier N" for spellbooks, the kind for conduits.
 static func tooltip_right(item: ItemData) -> String:
+	if item is SpellData:
+		return "Tier %d" % (item as SpellData).tier
 	if item and item.kind == ItemData.Kind.BOOK:
 		return "Tier %d" % item.max_spell_tier
 	if item and item.kind == ItemData.Kind.CONDUIT and item.conduit_type != &"":
@@ -2191,7 +2264,7 @@ static func stat_text(k: StringName, v: float) -> String:
 	return "%+d%% %s" % [roundi(v * 100.0), label]
 
 
-static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
+static func tooltip_for(item: ItemData, c: CharacterData = null, meta: Dictionary = {}) -> String:
 	if item is SpellData:
 		return spell_tooltip(item as SpellData, c)
 	var lines := PackedStringArray([item.display_name])
@@ -2216,8 +2289,8 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 		ItemData.Kind.TOME:
 			var s := ItemData.find(ItemData.spell_key(item.tome_spell))
 			lines.append("Tome: casts %s" % (s.display_name if s else String(item.tome_spell)))
-	if c and item.kind == ItemData.Kind.WEAPON and not c.coating_on(item.id).is_empty():
-		var coat: Array = c.coating_on(item.id)
+	var coat := Coating.of(meta)
+	if not coat.is_empty():
 		lines.append("%s: %d hits left" % [(coat[0] as ItemData).display_name, coat[1]])
 	# Modifiers (books, conduits, accessories): "+10% Magic damage".
 	for k: StringName in item.stats:
@@ -2235,6 +2308,20 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 
 ## A spell's tooltip: name, description, mana cost, then what else it needs (reagents,
 ## a conduit, a book tier) and why it can't be cast right now.
+## A spell's types for its tooltip: its group and how it's cast ("Attack, Projectile").
+static func spell_types(spell: SpellData) -> String:
+	if spell == null:
+		return ""
+	var how := {SpellData.Cast.TOOL: "Tool", SpellData.Cast.PROJECTILE: "Projectile",
+		SpellData.Cast.TOGGLE: "Concentration", SpellData.Cast.GUST: "Gust", SpellData.Cast.BLINK: "Blink",
+		SpellData.Cast.LIGHT: "Summon", SpellData.Cast.BUFF: "Buff", SpellData.Cast.CHARGED: "Charged",
+		SpellData.Cast.ZONE: "Zone", SpellData.Cast.WARD: "Ward", SpellData.Cast.SUMMON: "Summon",
+		SpellData.Cast.CONJURE: "Conjure", SpellData.Cast.CHAIN: "Chain", SpellData.Cast.RITUAL: "Ritual",
+		SpellData.Cast.SENSE: "Sense"}
+	var group := String(SpellData.Group.keys()[spell.group]).capitalize()
+	return "%s, %s" % [group, how.get(spell.cast, "")]
+
+
 static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
 	var lines := PackedStringArray([spell.display_name])
 	if spell.description != "":

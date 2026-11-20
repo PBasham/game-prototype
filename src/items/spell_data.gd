@@ -111,6 +111,9 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 @export_group("Zone, ward, summon, conjure")
 ## Zone radius (tiles).
 @export var zone_tiles := 5.0
+## Spells made at the cursor (zones, wards, familiars, platforms) need a clear line from
+## you to it: no casting through walls or closed doors. An upgrade could turn it off.
+@export var needs_sight := true
 ## Zones, wards and familiars you can have out at once (a new one replaces the oldest).
 ## Healing Circle is 1, so casting it again moves it instead of stacking the healing.
 @export var max_active := 3
@@ -191,7 +194,7 @@ func fits_movement_slot() -> bool:
 	return cast == Cast.TOGGLE and group == Group.MOVEMENT
 
 
-## Whether it can go in the buff set (B): a timed effect on you (buffs, a following
+## Whether it can go in the buff set (B): Buff spells only: a timed effect on you (buffs, a following
 ## light, a familiar).
 func fits_buff_set() -> bool:
-	return cast == Cast.BUFF or cast == Cast.SUMMON or (cast == Cast.LIGHT and not light_placed)
+	return cast == Cast.BUFF  # only buffs (Patrick)
