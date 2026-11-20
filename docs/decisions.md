@@ -39,6 +39,22 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Phase 11 wrap-up batch (Patrick, Nov 20):** coating per weapon (slot data),
+  coating on Z X C coats the held weapon, coating shown under the hotbar; right click
+  puts things on tables and shelves from the mouse, with a preview; window clicks don't
+  leak into the world; `infinite` dev toggle; Tier 1 to 3 Spellbooks are real items
+  (`give spellbook_t2`); no grass or stone bumps on wood next to them (natural blocks
+  round only into open tiles by natural neighbors); spells and Chain Spark stop at walls
+  and doors; cursor spells need sight; furniture placing doesn't turn you; a cancelled
+  ritual has no cooldown; spell tooltips show types and tier; buff set = Buff spells
+  only; Levitate height stays where you leave it; dying ends buffs and summons and the
+  On death options grew (drop everything incl. armor, inventory, outside the hotbar,
+  keep, permadeath ghost); berry bushes need 3 tiles; ground beyond the light map is
+  lit roughly (sky above ground, dark below) so nothing flashes bright; the sun's glow
+  fades at its edges; loose items merge and cap at 400; tunnels break into runs;
+  chests: Quick stack, Rename, names on hover; wall torches come down with right click;
+  spawns blocked in a small ring around beds and campfires (plus built walls, as
+  before); the Scribe's Desk takes the scrolls, the Spell Weaving Table keeps learning.
 - **Jumping up through a hole (Patrick):** the jump got your feet just under the floor
   above, and the body is wider than the hole's edge, so you slid back down (a platform
   in the hole worked because landing on it lifts you a few pixels). In the air, pushing

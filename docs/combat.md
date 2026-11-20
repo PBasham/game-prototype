@@ -131,8 +131,17 @@ Enemies more than `despawn_tiles` (90) away from you sideways, or `despawn_tiles
 | `ahead_bias`, `ahead_speed_tiles` | 0.8, 6 tiles/s | While you move sideways faster than this, 80% of spawns appear ahead of you, so travelling isn't empty. |
 | `peaceful` | false | No spawns. |
 
-Never spawns indoors (a tile with a built back wall behind it). Enemies you `summon`
-count toward the cap.
+Never spawns indoors (a tile with a built back wall behind it, like Terraria's player
+walls; natural cave walls don't count) or within a small ring around a **bed** (14
+tiles) or **campfire** (12 tiles), so an open-air camp is safe without making a whole
+area spawn-free (`ObjectDef.spawn_safe_tiles`, `World.near_spawn_safe`). Enemies you
+`summon` count toward the cap.
+
+**Swords and spells need a clear line:** walls and closed doors stop melee hits,
+projectiles, thrown flasks and Chain Spark (and its jumps). Spells made at the cursor
+(Healing Circle, wards, familiars, Conjure Platform) need a clear line from you to the
+cursor ("Out of sight"); `SpellData.needs_sight` (on) is there for a later upgrade.
+A coated weapon shows its coating and hits left under the hotbar.
 
 ## Melee
 
@@ -235,9 +244,11 @@ Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 wood.
   weapon's slot. That weapon's next 10 melee hits poison for 2 per second over 4 s, with
   no time limit. A coated weapon shows the coating's drop badge in its slot's bottom
   right corner, and its tooltip says how many hits are left. A new coating replaces the
-  old one. It can't be drunk. Stored per weapon kind on the character
-  (`CharacterData.coatings`, saved). Item fields `buff_poison_hits`, `poison_dps`,
-  `poison_seconds`. The training dummy can be poisoned too.
+  old one. It can't be drunk. With a Poison Coating on Z, X or C, the key coats the
+  weapon in your hand. The coating belongs to that one weapon: it's kept in its slot's
+  data (`Inventory.metas`, `Coating`), moves with it (mouse, chests, the death bag) and
+  is saved. Item fields `buff_poison_hits`, `poison_dps`, `poison_seconds`. The training
+  dummy can be poisoned too.
 - **Poison Flask**: left click throws it toward the cursor in an arc (`throw_speed`
   22 tiles/s, plus a small lift). It shatters on a block or an enemy into a green cloud
   (`throw_effect` `poison_cloud`, `cloud_tiles` 4x3, `cloud_seconds` 4) that poisons

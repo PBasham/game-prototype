@@ -24,7 +24,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **B** | The buff set: casts every spell in it at once |
 | **R** | Mining Spell in hand (again: put it away, back to your hotbar slot) |
 | **Ctrl + R** | Chopping Spell in hand (same) |
-| **F** | Movement spell on or off (the one in the Equipment window's Movement slot; empty = Fly, else Levitate) |
+| **F** | Movement spell on or off. Levitate: up raises you to its hover height, down lowers you, and you stay at the height you leave it (the one in the Equipment window's Movement slot; empty = Fly, else Levitate) |
 | **Caps Lock** | Walk / run toggle |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
 | **H** | Put the held item away / take it out |
@@ -65,8 +65,19 @@ the panel lays itself out from it.
 While the mouse is over the hotbar or panel, you're carrying a stack that can't be
 placed (a spell shortcut), or the spell wheel is open, clicks don't use items.
 
-**A spell in hand** shows its icon and name (in blue) under the hotbar, and the spell
-you're concentrating on (Fly, Mend...) shows its icon and name (violet) below that.
+**A spell in hand** shows its icon and name (in blue) under the hotbar. Below that: a
+coated weapon's coating and hits left (green), and the spell you're concentrating on
+(Fly, Mend...) with its icon (violet).
+
+**Tables and shelves:** holding something that can go on display over a free spot shows
+a faint picture of it there; right click puts it down (from the hotbar, a Z X C item, or
+the mouse stack with the inventory open).
+
+**Loose items:** resting drops of the same item within 1.5 tiles merge into one stack
+(`ItemDrop.merge_tiles`), and resting drops skip their physics. At most
+`World.max_drops` (400) lie around; past that the oldest disappear (like Terraria).
+
+A click that starts on a window (its close button, say) never reaches the world.
 
 **Food and potions:** left click eats or drinks (in the hotbar, or on the mouse with the
 inventory open, where right click throws the stack).

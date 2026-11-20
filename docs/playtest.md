@@ -141,6 +141,29 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Inventory open, sword or pickaxe on the mouse: left click swings / mines; right
       click throws the stack.
 - [ ] Food and potions: left click eats / drinks (right click doesn't).
+- [ ] Coat one of two wooden swords: only that one is coated (badge, tooltip, under the
+      hotbar); Z/X/C with a coating coats the held weapon.
+- [ ] Inventory open, potion on the mouse over a shelf: preview, right click puts it there.
+- [ ] Click a window's x: the hotbar item isn't used.
+- [ ] `infinite`, `give spellbook_t1` (no "(dev)").
+- [ ] Wood next to grass or stone: no green or gray bump on top.
+- [ ] Chain Spark and projectiles stop at walls and closed doors; Healing Circle through a
+      wall: "Out of sight".
+- [ ] Place a bed facing left: you don't turn, it stays as the preview showed.
+- [ ] Recall, then move: no cooldown.
+- [ ] Spell tooltip: types small beside the name, tier top right. Buff set takes Buff
+      spells only.
+- [ ] Levitate: down lowers you and you stay there; up goes back up.
+- [ ] Die: buffs, Light Orb, familiars end. New world On death options; permadeath
+      character shows as a ghost.
+- [ ] `bush` needs 3 tiles of grass apart.
+- [ ] Move fast / zoom out at night: no bright ground at the edges.
+- [ ] Sunrise: no straight edge on the glow.
+- [ ] Dig a long line: items merge on the ground, no big lag.
+- [ ] New world (or F6): tunnels in pieces of different lengths.
+- [ ] Chest: Quick stack, Rename, name on hover. Right click a wall torch: it comes down.
+- [ ] Sleep area: no spawns within ~14 tiles of a bed or ~12 of a campfire.
+- [ ] Scribe's Desk (workbench) makes scrolls; the Spell Weaving Table only learns.
 - [ ] Jump up through a hole in a floor (no platform): you step onto the floor.
 - [ ] Poison Coating on the mouse, right click a sword: badge on the sword, tooltip hits
       left, 10 poisoned hits. Dummy shows green numbers.

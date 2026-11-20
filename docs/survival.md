@@ -117,10 +117,20 @@ cooked food is just much better.
 ## Dying and the magic bag
 
 At 0 health you die. "You died" shows for `respawn_seconds` (3, on the `World`), then
-you're back at the world spawn with full health, hunger and mana.
+you're back at your bed (or the world spawn) with full health, hunger and mana. Buffs,
+potion sickness, familiars and Light Orbs end.
 
-With the world option **On death: Drop items in a magic bag** (the default), everything
-in your inventory goes into a **magic bag** (`ItemBag`, src/items/item_bag.gd) that's
+The world option **On death** (`WorldInfo.DeathDrop`):
+- **Drop everything (armor too)** (new worlds' default, `ALL`): the inventory and the
+  armor and accessories you wear. Your book and conduit stay (for now).
+- **Drop the inventory** (`BAG`, older worlds): the inventory only.
+- **Drop items outside the hotbar** (`BACKPACK`): the hotbar stays.
+- **Keep items** (`KEEP`).
+- **Permadeath** (`PERMADEATH`): drop everything, and the character becomes a **ghost**:
+  kept in the character list but greyed out and not playable (`CharacterData.ghost`).
+  After "You died" the game goes back to the menu.
+
+Dropped items go into a **magic bag** (`ItemBag`, src/items/item_bag.gd) that's
 tossed up where you died, then falls, bounces and settles like a Terraria tombstone.
 Spell shortcuts, your equipped book and conduit, and the spells you know stay with you.
 Right click or E on the bag opens it like a chest (Take all, Shift + click); it vanishes
@@ -128,7 +138,7 @@ once empty. A bag on top of furniture (a workbench, say) opens before the furnit
 Bags are saved with the world. Bag exports: `gravity`, `bounce`,
 `settle_speed`, `ground_friction`. Art: `assets/objects/magic_bag.png` (12x12).
 
-**On death: Keep items** keeps everything in your inventory.
+A coated weapon keeps its coating in the bag.
 
 ## World options
 

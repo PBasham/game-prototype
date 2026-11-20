@@ -193,6 +193,7 @@ is a crawl space he can't walk through.
 | --- | --- | --- |
 | `tunnel_min_depth` | 16 | Tunnels start this deep. They narrow near the top so they rarely break the surface. |
 | `tunnel_width` | 24 | Typical tunnel height in tiles (was 13, then 18: tunnels were too low to move through without mining). |
+| `tunnel_length`, `tunnel_breaks` | 160, 0.35 | Tunnels break into runs about `tunnel_length` tiles long (some shorter, some longer); `tunnel_breaks` is how much is cut away into gaps (0 = one long ribbon wherever coverage allows). |
 | `tunnel_taper` | 0.8 | Where a tunnel runs out (edge of its coverage, or its first tiles of depth) it narrows to this share of `tunnel_width` before ending. Low = long crawl spaces at tunnel ends. |
 | `tunnel_spacing` | 240 | Rough distance between neighboring tunnels. Smaller = denser network. |
 | `tunnel_coverage` | 0.5 | Fraction of the underground with tunnels (0 to 1). |

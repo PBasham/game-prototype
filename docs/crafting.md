@@ -113,7 +113,15 @@ what's in chests within `World.craft_chest_tiles` (12) of you. Your inventory is
 first, then the closest chest, then the next. The "have / need" counts include them.
 Crafted items go to your inventory (`CraftStock`, src/items/craft_stock.gd).
 Dev console **`freecraft`** toggles free crafting: no materials or max mana needed and
-nothing is used up.
+nothing is used up. **`infinite`** toggles infinite items: placing, eating, throwing and
+scrolls use nothing up.
+
+**Chests:** Shift + click moves a stack between your inventory and the chest. Buttons:
+**Take all**, **Deposit all** (everything outside the hotbar), **Quick stack** (only the
+items the chest already holds, from outside the hotbar, like Terraria) and **Rename**
+(type a name, Enter or Done saves, Esc cancels). Hovering a chest in the world shows its
+name (`World.chest_names`, saved). A torch on a wall comes down with a right click
+(`ObjectDef.right_click_takes`).
 
 - **Left:** the recipe list. Each row is the output icon and name; the green number is
   how many you can make right now; rows you can't make are dimmed. Mouse wheel scrolls.
@@ -287,16 +295,19 @@ Not playtested yet.
 The scroll costs are placeholders: each spell gets its own materials later (feathers for
 Fly, say), in its recipe file `data/recipes/scroll_<spell>.tres`.
 
-The **Spell Weaving Table** window has two tabs:
+Two magic stations:
 
-- **Spells:** learn spells here, for good. Every spell you don't know yet is listed,
+- **Spell Weaving Table** (station `spell_weaving`, 20 wood, 5 copper bars, 4 paper at
+  the workbench): learn spells here, for good. Its Empower tab (skill tree) comes with
+  magic progression. Every spell you don't know yet is listed,
   cheapest tier first; **Learn** uses its `learn_cost` (copper bars by tier: 4, 10, 20;
   20 Slime for Gel Cushion) and it joins your known spells. No scroll needed. A spell
   above your book's tier can be learned; it says it needs a better book to cast.
   Spells with `learnable_at_table = false` (SpellData) aren't listed: they only come
   from a **Spell Page**. Recipes come from `Crafting.learn_recipes` (made on the fly,
   `RecipeData.teaches`).
-- **Scrolls:** scribe a scroll (a one-use cast) of any spell **you know**, and only
+- **Scribe's Desk** (station `scribing`, 15 wood, 5 paper, 2 copper bars at the
+  workbench): scribe a scroll (a one-use cast) of any spell **you know**, and only
   those. It costs the spell's scroll recipe in full, times `World.scribe_cost_mult`
   (1.0; a skill can lower it later, rounded up, at least 1; the Blank Scroll stays 1).
   A spell with no recipe file costs just a Blank Scroll. It also takes a strong enough
@@ -305,9 +316,9 @@ The **Spell Weaving Table** window has two tabs:
   `Crafting.scroll_recipes`. Scrolls cast at base power (your book doesn't boost them),
   so they're for using a spell without your mana or giving one to a friend.
 
-Under the tabs: group buttons (All, Tools, Movement, Attack, Defense, Light, the same
-groups as the Spell Index) and a search box (click it and type; Esc, Enter or a click
-elsewhere stops typing). They filter both tabs by the spell each recipe is about.
+Both show group buttons (All, Tools, Movement, Attack, Defense, Light, the same groups
+as the Spell Index) and a search box (click it and type; Esc, Enter or a click
+elsewhere stops typing) above their lists.
 
 The craft amount (`-` / `+` / typed) is for one craft: it goes back to 1 after you craft,
 when you pick another recipe, and when the window opens.
