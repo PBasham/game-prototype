@@ -130,3 +130,37 @@ func test_running_down_steps_and_into_walls_keeps_a_steady_animation() -> void:
 	assert_lte(changes, 2, "jog then stand, no flicker")
 	w.queue_free()
 	await wait_physics_frames(2)
+
+
+func test_you_come_back_where_you_stood() -> void:
+	const SPOT_PATH := "user://test_worlds/spot.gpworld"
+	WorldSave.delete(SPOT_PATH)
+	var info := WorldInfo.create("Spot", WorldData.Size.TINY, 31)
+	info.path = SPOT_PATH
+	var w := _start(info)
+	await wait_physics_frames(3)
+	var s := w.generator.spawn_tile()
+	var spot := w.tile_to_world(Vector2i(s.x + 20, w.generator.surface_at(s.x + 20))) + Vector2(4, 0)
+	w.teleport_player(spot)
+	await wait_physics_frames(3)
+	var stood := w.player.global_position
+	w.queue_free()
+	await wait_physics_frames(2)
+	var w2 := _start(WorldSave.read_info(SPOT_PATH))
+	await wait_physics_frames(3)
+	assert_almost_eq(w2.player.global_position.x, stood.x, 1.0, "back where you stood")
+	# Build over the spot: next time you're at the world spawn (or your bed) instead.
+	var t := w2.world_to_tile(stood)
+	for y in range(t.y - 8, t.y):
+		for x in range(t.x - 2, t.x + 3):
+			w2.request_set_block(Vector2i(x, y), w2.blocks.index_of(&"stone"))
+	w2.player_spots[w2.character.name] = stood
+	var blocked_save := w2.player_spots.duplicate()
+	w2.teleport_player(w2.respawn_position())  # stand somewhere else, then put the old spot back
+	await wait_physics_frames(2)
+	w2.player_spots = blocked_save
+	w2._place_at_saved_spot()
+	assert_almost_eq(w2.player.global_position.x, w2.respawn_position().x, 1.0, "blocked: at spawn / bed")
+	w2.queue_free()
+	await wait_physics_frames(2)
+	WorldSave.delete(SPOT_PATH)

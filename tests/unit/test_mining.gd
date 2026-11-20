@@ -752,3 +752,25 @@ func test_mouse_stack_places_with_an_empty_hotbar_slot_selected() -> void:
 	hud.cursor_id = &""
 	hud.set_open(false)
 	u.cursor_override = Vector2.INF
+
+
+func test_air_ledge_climb_onto_a_floor_edge() -> void:
+	var p := w.player
+	var feet := w.world_to_tile(p.global_position)
+	# A ledge 6 tiles up to the right: a slab of stone, open above.
+	var top_row := feet.y - 6
+	for x in range(feet.x + 3, feet.x + 9):
+		for y in range(top_row, top_row + 2):
+			w.request_set_block(Vector2i(x, y), w.blocks.index_of(&"stone"))
+		for y in range(top_row - 12, top_row):
+			w.request_set_block(Vector2i(x, y), WorldData.AIR)
+	await wait_physics_frames(2)
+	# In the air, feet 6 px below the ledge top, right up against it.
+	var top_y := float(top_row * World.TILE)
+	p.global_position = Vector2(p.global_position.x, top_y + 6.0)
+	while not p.test_move(p.global_transform, Vector2(2, 0)):
+		p.global_position.x += 1.0
+	p.velocity = Vector2.ZERO
+	p._air_ledge_climb(1.0, 1.0 / 60.0)
+	assert_lte(p.global_position.y, top_y + 0.01, "lifted onto the ledge")
+	assert_false(p.test_move(p.global_transform, Vector2(2, 0)), "free to step on")

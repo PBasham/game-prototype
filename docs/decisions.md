@@ -39,6 +39,19 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Jumping up through a hole (Patrick):** the jump got your feet just under the floor
+  above, and the body is wider than the hole's edge, so you slid back down (a platform
+  in the hole worked because landing on it lifts you a few pixels). In the air, pushing
+  into a ledge up to 12 px above your feet now lifts you onto it.
+- **Poison Coating goes on weapons (Patrick):** right click a weapon with it on the
+  mouse; 10 hits, no timer; a badge on the weapon. New clay vial art with green wax and
+  a drop badge; the Poison Flask is a round clay ball with a green wax band and a skull
+  badge. The dummy can be poisoned.
+- **Come back where you stood (Patrick):** each character's spot per world is saved;
+  if it's blocked when you return, you start at your bed (or the world spawn) so you
+  can't teleport into a sealed room. Dying clears it.
+- **Spellbooks for testing** are `spellbook_t1` / `t2` / `t3` (`books` gives all three).
+- **Food and potions: left click** (Patrick), on the hotbar or the mouse.
 - **Furniture faces the way you placed it (Patrick):** placed facing left = mirrored.
 - **Dev items window (Patrick):** F7 / `creative`, every item, a stack per click. Not a
   creative mode (no flying or god mode); a creative character could come later.

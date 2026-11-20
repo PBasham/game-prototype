@@ -871,6 +871,13 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 		var b := 16.0 / 3.0
 		g.draw_texture_rect(item.badge, Rect2(r.position + Vector2(r.size.x - b - 1.5, 1.5), Vector2(b, b)), false,
 			Color(1, 1, 1, alpha))
+	if item.kind == ItemData.Kind.WEAPON and world.character and not world.character.coating_on(item.id).is_empty():
+		# Coated: the coating's badge in the bottom right corner.
+		var coat: ItemData = world.character.coating_on(item.id)[0]
+		if coat.badge:
+			var b := 16.0 / 3.0
+			g.draw_texture_rect(coat.badge, Rect2(r.end - Vector2(b + 1.5, b + 1.5), Vector2(b, b)), false,
+				Color(1, 1, 1, alpha))
 	if item.is_spell():
 		# Red when it can't be cast right now.
 		if world.character.cast_problem(item as SpellData) != "":
@@ -1804,11 +1811,22 @@ func click_slot(slot: int, inv: Inventory = null) -> void:
 		cursor_count = count
 
 
-## Right click: take half (empty mouse) or put one down.
+## Right click: take half (empty mouse) or put one down. With a coating on the mouse
+## and a weapon in the slot: coats the weapon (uses one coating).
 func right_click_slot(slot: int, inv: Inventory = null) -> void:
 	if inv == null:
 		inv = world.character.inventory
 	if _cursor_is_spell():
+		return
+	var on_mouse := ItemData.find(cursor_id) if cursor_count > 0 else null
+	var there := inv.item(slot)
+	if on_mouse and on_mouse.buff_poison_hits > 0 and there and there.kind == ItemData.Kind.WEAPON:
+		if world.character.coat(there.id, on_mouse):
+			cursor_count -= 1
+			if cursor_count <= 0:
+				_clear_cursor()
+			EventBus.debug_message.emit("%s coated: next %d hits poison" % [there.display_name, on_mouse.buff_poison_hits])
+			EventBus.sound_requested.emit(&"craft", Vector2.INF)
 		return
 	if cursor_count == 0:
 		if inv.is_empty(slot):
@@ -2198,6 +2216,9 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 		ItemData.Kind.TOME:
 			var s := ItemData.find(ItemData.spell_key(item.tome_spell))
 			lines.append("Tome: casts %s" % (s.display_name if s else String(item.tome_spell)))
+	if c and item.kind == ItemData.Kind.WEAPON and not c.coating_on(item.id).is_empty():
+		var coat: Array = c.coating_on(item.id)
+		lines.append("%s: %d hits left" % [(coat[0] as ItemData).display_name, coat[1]])
 	# Modifiers (books, conduits, accessories): "+10% Magic damage".
 	for k: StringName in item.stats:
 		if item.stats[k] != 0.0:

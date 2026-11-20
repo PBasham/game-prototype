@@ -140,7 +140,14 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).
 - [ ] Inventory open, sword or pickaxe on the mouse: left click swings / mines; right
       click throws the stack.
-- [ ] Food and potions: left or right click eats / drinks.
+- [ ] Food and potions: left click eats / drinks (right click doesn't).
+- [ ] Jump up through a hole in a floor (no platform): you step onto the floor.
+- [ ] Poison Coating on the mouse, right click a sword: badge on the sword, tooltip hits
+      left, 10 poisoned hits. Dummy shows green numbers.
+- [ ] New Poison Coating vial and round Poison Flask art.
+- [ ] Leave a world and come back: you're where you stood. Wall yourself in a box,
+      leave and come back: you're at your bed / spawn.
+- [ ] `give spellbook_t2` works.
 - [ ] Place a bed / workbench facing left: it's mirrored (and stays so after reload).
 - [ ] F7 (or `creative`): Dev items window; tabs, search, click for a stack.
 - [ ] `books`: tier 1 / 2 / 3 test books.

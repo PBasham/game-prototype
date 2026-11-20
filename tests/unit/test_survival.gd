@@ -75,8 +75,8 @@ func test_eating_berries() -> void:
 	p.health = p.max_health
 	assert_false(w.item_user.eat_held(), "full: doesn't eat")
 	assert_eq(inv.counts[0], 2)
-	# Left or right click eats.
-	assert_eq(w.item_user._mode_for(ItemData.find(&"berries"), true), ItemUser.Mode.EAT)
+	# Left click eats (right click doesn't).
+	assert_eq(w.item_user._mode_for(ItemData.find(&"berries"), true), ItemUser.Mode.NONE)
 	assert_eq(w.item_user._mode_for(ItemData.find(&"berries"), false), ItemUser.Mode.EAT)
 
 

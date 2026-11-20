@@ -104,15 +104,32 @@ func test_stew_well_fed() -> void:
 func test_poison_coating_poisons_on_hit() -> void:
 	var p := w.player
 	_hold(&"poison_coating", 1)
-	assert_true(w.item_user.eat_held(), "coating applied")
-	assert_eq(p.poison_hits, 10)
+	assert_false(w.item_user.eat_held(), "not drunk: it goes on a weapon")
+	# Coat the sword: coating on the mouse, right click the sword's slot.
+	var c := w.character
+	c.inventory.set_slot(12, &"wooden_sword", 1)
+	w.hud.cursor_id = &"poison_coating"
+	w.hud.cursor_count = 2
+	w.hud.right_click_slot(12)
+	assert_eq(w.hud.cursor_count, 1, "one coating used")
+	assert_eq(c.coating_on(&"wooden_sword")[1], 10)
+	w.hud.cursor_count = 0
+	w.hud.cursor_id = &""
+	assert_string_contains(Hud.tooltip_for(ItemData.find(&"wooden_sword"), c), "Poison Coating: 10 hits left")
 	var e := w.request_spawn_enemy(_slime(), p.global_position + Vector2(20 * p.facing, 0))
 	e.health = 999.0
 	await wait_physics_frames(2)
 	w.item_user.cursor_override = p.chest() + Vector2(40 * p.facing, 0)
 	assert_eq(w.item_user.melee_hit(ItemData.find(&"wooden_sword")), 1)
 	assert_true(e.is_poisoned())
-	assert_eq(p.poison_hits, 9)
+	assert_eq(c.coating_on(&"wooden_sword")[1], 9, "no timer: just hits")
+	# Other weapons aren't coated; the dummy can be poisoned too.
+	assert_true(c.coating_on(&"copper_sword").is_empty())
+	var dummy := DevDummy.new()
+	w.add_child(dummy)
+	dummy.poison(2.0, 3.0)
+	assert_true(dummy.is_poisoned())
+	dummy.queue_free()
 	var before := e.health
 	e._tick_poison(1.0)
 	assert_almost_eq(e.health, before - 2.0, 0.01, "2 per second")

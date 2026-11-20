@@ -794,7 +794,7 @@ func test_book_tooltip_layout() -> void:
 func test_dev_books_for_each_tier() -> void:
 	DevMagic._register()
 	for t in range(1, 4):
-		var b := ItemData.find(StringName("dev_book_t%d" % t))
+		var b := ItemData.find(StringName("spellbook_t%d" % t))
 		assert_not_null(b)
 		assert_eq(b.max_spell_tier, t)
 		assert_eq(b.kind, ItemData.Kind.BOOK)

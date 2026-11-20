@@ -34,6 +34,8 @@ const META_BAGS := "bags"
 const META_TIME := "time"
 ## Respawn points set by beds: {character name: [x, y] (the bed's anchor tile)}.
 const META_SPAWNS := "spawns"
+## Where each character last stood in this world: {character name: [x, y] (feet, px)}.
+const META_POSITIONS := "positions"
 ## Enemies slain in this world, by enemy id (spawn conditions read these).
 const META_KILLS := "kills"
 

@@ -168,6 +168,11 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 ## the collision box's bottom (the jump pose tucks the legs up, so the drawn feet are
 ## higher than the box). 0 = off.
 @export var ledge_assist_px := 10.0
+## Pixels: in the air, pushing into a ledge whose top is at most this far above the
+## collision box's bottom lifts you onto it (jumping up through a hole in a floor: the
+## body is wider than the gap's edge, so without this you slide back down beside it).
+## Only near the top of a jump or falling. 0 = off.
+@export var air_ledge_climb_px := 12.0
 ## Pixels each side of the center where the feet are, for slopes: the body is drawn
 ## at the higher of the two so no foot sinks into a hill (the other may hang a little).
 @export var foot_spread_px := 4.0
@@ -785,6 +790,8 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 	var y_before := global_position.y
 	if not grounded:
 		_ledge_assist()
+		if input_x != 0.0:
+			_air_ledge_climb(signf(input_x), delta)
 	if grounded and input_x != 0.0 and max_step_tiles > 0:
 		_try_step_up(signf(input_x), delta)
 	move_and_slide()
@@ -825,6 +832,28 @@ func _try_step_up(dir: float, delta: float) -> void:
 				global_position += up
 				velocity.y = maxf(velocity.y, 0.0)
 				break
+	set_collision_mask_value(2, platforms)
+
+
+## In the air and pushing into a wall whose top is just above the feet: lift onto it
+## if there's room (see air_ledge_climb_px). Not while still rising fast.
+func _air_ledge_climb(dir: float, delta: float) -> void:
+	if air_ledge_climb_px <= 0.0 or velocity.y < -jump_values(_jump_height(), time_to_apex).y * 0.35:
+		return
+	var motion := Vector2(dir * maxf(absf(velocity.x) * delta, 2.0), 0.0)
+	var platforms := get_collision_mask_value(2)
+	set_collision_mask_value(2, false)
+	if test_move(global_transform, motion):
+		var lift := 2.0
+		while lift <= air_ledge_climb_px:
+			var up := Vector2(0.0, -lift)
+			if test_move(global_transform, up):
+				break
+			if not test_move(global_transform.translated(up), motion):
+				global_position += up
+				velocity.y = minf(velocity.y, 0.0)
+				break
+			lift += 2.0
 	set_collision_mask_value(2, platforms)
 
 
@@ -952,16 +981,15 @@ func eat(food: float, heal_amount: float = 0.0) -> void:
 
 ## Food and potion buffs running: buff key -> the item that gave it.
 var _item_buffs: Dictionary[StringName, ItemData] = {}
-## Melee hits left that poison (a coating), and the coating.
-var poison_hits := 0
-var _coating: ItemData
 
 
 ## Why this food or potion can't be used now ("" = it can).
 func cant_consume(item: ItemData) -> String:
 	if item.sickness != &"" and has_buff(StringName("sick_" + String(item.sickness))):
 		return "Too soon for another %s" % item.display_name
-	var useful := item.buff_seconds > 0.0 or item.buff_poison_hits > 0 \
+	if item.buff_poison_hits > 0:
+		return "Coat a weapon with it: pick it up, then right click a weapon in your inventory"
+	var useful := item.buff_seconds > 0.0 \
 		or (item.food_value > 0.0 and hunger < max_hunger) \
 		or (item.heal_value > 0.0 and health < max_health) \
 		or (item.mana_value > 0.0 and mana < max_mana)
@@ -980,9 +1008,6 @@ func consume(item: ItemData) -> void:
 		var key := StringName("item_" + String(item.id))
 		_item_buffs[key] = item
 		_timed_buff(key, item.buff_name, item.buff_description, item.buff_seconds, item.icon)
-		if item.buff_poison_hits > 0:
-			poison_hits = item.buff_poison_hits
-			_coating = item
 		apply_stats()
 
 
@@ -998,21 +1023,6 @@ func _timed_buff(key: StringName, title: String, text: String, seconds: float, i
 	s.duration = seconds
 	buffs[key] = seconds
 	buff_spells[key] = s
-
-
-## A melee hit landed: if a coating is on, uses one of its hits and returns it.
-func use_poison_hit() -> ItemData:
-	if poison_hits <= 0 or _coating == null:
-		return null
-	var key := StringName("item_" + String(_coating.id))
-	if not has_buff(key):
-		poison_hits = 0
-		return null
-	poison_hits -= 1
-	var c := _coating
-	if poison_hits <= 0:
-		buffs[key] = 0.0  # used up: ends with the next tick
-	return c
 
 
 ## Extra health per second from food buffs.

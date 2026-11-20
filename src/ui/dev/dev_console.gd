@@ -309,7 +309,7 @@ func _register() -> void:
 	_add("books", "books", "Give the tier 1, 2 and 3 test books (dev builds).", func(_a: PackedStringArray) -> void:
 		DevMagic._register()
 		for t in range(1, 4):
-			world.character.inventory.add(StringName("dev_book_t%d" % t), 1)
+			world.character.inventory.add(StringName("spellbook_t%d" % t), 1)
 		_print("Gave the tier 1, 2 and 3 test books."))
 	_add("freecraft", "freecraft", "Toggle free crafting: no materials (or max mana) needed, nothing used up.", func(_a: PackedStringArray) -> void:
 		world.free_crafting = not world.free_crafting

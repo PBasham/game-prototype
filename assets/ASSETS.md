@@ -228,7 +228,7 @@ or .ogg); the generator never overwrites without `--force`.
 | tiles/blocks.png row 9 | Collision row for clay (copy of the dirt row) |
 | items/{icons,held}/clay.png | Clay block icon |
 | items/{icons,held}/clay_flask.png | Empty clay flask (16x16) |
-| items/{icons,held}/{healing_potion,mana_potion,poison_coating,poison_flask}.png | The flask with a colored glaze band and a 5x5 badge in the bottom right corner (heart, star, drop, skull) |
+| items/{icons,held}/{poison_coating,poison_flask}.png | 32x32 clay (detail 2): the thin vial and a round ball, green wax, from `art/concepts/flasks/make_poison.py`; badges `items/badges/{poison,poison_throw}.png` (drop, skull) |
 | items/{icons,held}/{wooden_bowl,mushroom_stew,roasted_berries,cooked_mushroom}.png | Food placeholders (16x16) |
 | objects/alchemy_table.png, items/{icons,held}/alchemy_table.png | Alchemy Table (40x24, 5x3 tiles): table, three flasks, a jar, mortar and pestle |
 

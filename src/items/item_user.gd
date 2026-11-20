@@ -344,7 +344,7 @@ func melee_hit(item: ItemData) -> int:
 		node.call(&"take_damage", amount, p)
 		if node.has_method(&"knock_back"):
 			node.call(&"knock_back", p.chest(), item.knockback, item.staggers)
-		var coat := p.use_poison_hit()
+		var coat := p.character.use_coating(item.id) if p.character else null
 		if coat and node.has_method(&"poison"):
 			node.call(&"poison", coat.poison_dps, coat.poison_seconds)
 		hit += 1
@@ -540,7 +540,7 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 	if item.mining_damage > 0.0:
 		return Mode.MINE
 	if item.kind == ItemData.Kind.FOOD:
-		return Mode.EAT  # left or right click
+		return Mode.EAT if not on_back else Mode.NONE  # left click
 	if item.throw_speed > 0.0:
 		return Mode.THROW if not on_back else Mode.NONE
 	if item.teaches_spell != &"":

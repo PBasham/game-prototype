@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_tue3h"]
 [ext_resource type="Texture2D" path="res://assets/items/held/poison_flask.png" id="3_d56ro"]
 [ext_resource type="Texture2D" path="res://assets/items/icons/poison_flask.png" id="4_yrthj"]
+[ext_resource type="Texture2D" path="res://assets/items/badges/poison_throw.png" id="6_badge"]
 [ext_resource type="Script" path="res://src/items/item_data.gd" id="5_ijbm3"]
 
 [sub_resource type="Resource" id="Resource_utawf"]
@@ -11,10 +12,13 @@ script = ExtResource("2_tue3h")
 id = &"poison_flask"
 texture = ExtResource("3_d56ro")
 type = &"block"
-grip = Vector2(4, 6)
+grip = Vector2(12, 22)
+detail = 2
 
 [resource]
 script = ExtResource("5_ijbm3")
+drop_size = 16
+badge = ExtResource("6_badge")
 icon = ExtResource("4_yrthj")
 max_stack = 30
 held = SubResource("Resource_utawf")

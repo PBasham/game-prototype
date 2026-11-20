@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_ug7ww"]
 [ext_resource type="Texture2D" path="res://assets/items/held/poison_coating.png" id="3_ek7lj"]
 [ext_resource type="Texture2D" path="res://assets/items/icons/poison_coating.png" id="4_kwgs5"]
+[ext_resource type="Texture2D" path="res://assets/items/badges/poison.png" id="6_badge"]
 [ext_resource type="Script" path="res://src/items/item_data.gd" id="5_gbaix"]
 
 [sub_resource type="Resource" id="Resource_peivw"]
@@ -11,21 +12,23 @@ script = ExtResource("2_ug7ww")
 id = &"poison_coating"
 texture = ExtResource("3_ek7lj")
 type = &"block"
-grip = Vector2(4, 6)
+grip = Vector2(12, 22)
+detail = 2
 
 [resource]
 script = ExtResource("5_gbaix")
 kind = 11
+drop_size = 16
+badge = ExtResource("6_badge")
 icon = ExtResource("4_kwgs5")
 max_stack = 30
 held = SubResource("Resource_peivw")
 impact_at = 0.2
 buff_name = "Poison Coating"
 buff_description = "Melee hits poison what they hit."
-buff_seconds = 180.0
 buff_poison_hits = 10
 poison_dps = 2.0
 poison_seconds = 4.0
 id = &"poison_coating"
 display_name = "Poison Coating"
-description = "Rub it on your weapon: the next 10 melee hits poison (2 damage a second for 4 s)."
+description = "Coat a weapon: pick it up, then right click a weapon in your inventory. Its next 10 hits poison (2 damage a second for 4 s)."

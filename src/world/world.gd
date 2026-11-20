@@ -89,6 +89,9 @@ var _enemies: Node2D
 var spawner: EnemySpawner
 ## Bed respawn points: character name -> bed anchor tile.
 var spawn_points: Dictionary[String, Vector2i] = {}
+## Where each character last stood in this world (feet, px), so entering it again puts
+## you back there. Saved (meta "positions").
+var player_spots: Dictionary[String, Vector2] = {}
 ## Conjured platforms by the tiles they cover (they count as platform tiles there).
 var conjured: Dictionary[Vector2i, Node] = {}
 ## Enemies slain in this world, by enemy id (saved). Spawn conditions read these.
@@ -228,6 +231,12 @@ func _ready() -> void:
 		var k: Dictionary = WorldSave.read_extra(info.path, WorldSave.META_KILLS)
 		for id: String in k:
 			kills[StringName(id)] = int(k[id])
+		var spots: Dictionary = WorldSave.read_extra(info.path, WorldSave.META_POSITIONS)
+		for who: String in spots:
+			var a: Array = spots[who]
+			player_spots[who] = Vector2(float(a[0]), float(a[1]))
+		if DevCli.spawn_x < 0:
+			_place_at_saved_spot()
 	if is_saved():
 		for d: Dictionary in WorldSave.read_extra(info.path, WorldSave.META_BAGS).get("list", []):
 			_bags.add_child(ItemBag.from_dict(self, d))
@@ -371,7 +380,8 @@ func save() -> Error:
 			WorldSave.META_CONTAINERS: _containers_to_dict(), WorldSave.META_DISPLAYS: _displays_to_dict(),
 			WorldSave.META_FLIPPED: _flipped_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
-			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict()}, objects)
+			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict(),
+			WorldSave.META_POSITIONS: _spots_to_dict()}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
@@ -440,6 +450,46 @@ func respawn_player() -> void:
 	player.revive()
 	player.visible = true
 	player.set_physics_process(true)
+
+
+## Entering the world: back where this character last stood here. If that spot is
+## blocked now (built over or filled in), at their bed instead (or the world spawn), so
+## you can't teleport into a sealed room by leaving and coming back.
+func _place_at_saved_spot() -> void:
+	var who := character.name if character else ""
+	var pos := respawn_position()
+	if player_spots.has(who):
+		var spot: Vector2 = player_spots[who]
+		renderer.load_all_now(spot)
+		if body_fits(spot):
+			pos = spot
+	renderer.load_all_now(pos)
+	teleport_player(pos)
+
+
+## Whether the player's body (3 x 8 tiles, standing with feet at `feet`) is clear of
+## solid blocks and closed doors.
+func body_fits(feet: Vector2) -> bool:
+	var x0 := floori((feet.x - TILE * 1.4) / TILE)
+	var x1 := floori((feet.x + TILE * 1.4) / TILE)
+	var y0 := floori((feet.y - TILE * 7.8) / TILE)
+	var y1 := floori((feet.y - 1.0) / TILE)
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			if blocks_hits(Vector2i(x, y)):
+				return false
+	return true
+
+
+func _spots_to_dict() -> Dictionary:
+	var out := {}
+	if character and player and not player.dead:
+		player_spots[character.name] = player.global_position
+	elif character and player and player.dead:
+		player_spots.erase(character.name)  # died: next time, your bed
+	for who: String in player_spots:
+		out[who] = [player_spots[who].x, player_spots[who].y]
+	return out
 
 
 ## Where the player respawns: next to their bed if it's still there, else the world

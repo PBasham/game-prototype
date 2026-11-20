@@ -62,6 +62,9 @@ const BUFF_SET_SIZE := 6
 ## The movement spell the movement key (F) uses, set in the Equipment window's Movement
 ## slot (empty = Fly if known, else Levitate).
 var movement_spell: StringName = &""
+## Weapons with a coating on them: weapon item id -> [coating item id, hits left].
+## Every weapon of that kind you carry shares it. Saved.
+var coatings: Dictionary[StringName, Array] = {}
 
 var name := DEFAULT_NAME
 var inventory := Inventory.new()
@@ -213,6 +216,40 @@ static func all_quick_slots() -> Array[StringName]:
 	for i in BUFF_SET_SIZE:
 		out.append(buff_slot(i))
 	return out
+
+
+## Coats a weapon with a coating (Poison Coating): its next `buff_poison_hits` melee
+## hits poison. Replaces another coating on it. False if that's not a weapon.
+func coat(weapon_id: StringName, coating: ItemData) -> bool:
+	var weapon := ItemData.find(weapon_id)
+	if weapon == null or weapon.kind != ItemData.Kind.WEAPON or coating == null or coating.buff_poison_hits <= 0:
+		return false
+	coatings[weapon_id] = [coating.id, coating.buff_poison_hits]
+	inventory.changed.emit()
+	return true
+
+
+## The coating on a weapon and its hits left: [ItemData, hits], or [] for none.
+func coating_on(weapon_id: StringName) -> Array:
+	var c: Array = coatings.get(weapon_id, [])
+	if c.is_empty():
+		return []
+	var it := ItemData.find(StringName(c[0]))
+	return [it, int(c[1])] if it else []
+
+
+## A melee hit with a weapon landed: uses one of its coating's hits and returns the
+## coating (null if it has none).
+func use_coating(weapon_id: StringName) -> ItemData:
+	var c := coating_on(weapon_id)
+	if c.is_empty():
+		return null
+	var left: int = c[1] - 1
+	if left <= 0:
+		coatings.erase(weapon_id)
+	else:
+		coatings[weapon_id] = [c[0].id, left]
+	return c[0]
 
 
 ## Sets the movement spell (the Movement slot; &"" = default: Fly, else Levitate).
@@ -520,6 +557,11 @@ static func load_file(path: String) -> CharacterData:
 	c.health = float(d.get("health", -1.0))
 	c.hunger = float(d.get("hunger", -1.0))
 	c.movement_spell = StringName(d.get("movement_spell", ""))
+	var coats: Dictionary = d.get("coatings", {})
+	for wid: String in coats:
+		var e: Array = coats[wid]
+		if e.size() == 2 and ItemData.find(StringName(String(e[0]))) != null:
+			c.coatings[StringName(wid)] = [StringName(String(e[0])), int(e[1])]
 	return c
 
 
@@ -554,6 +596,13 @@ func _migrate_spell_slots(old_book: Array) -> void:
 
 
 ## Dev items and dev spells (debug builds, runtime only) are left out.
+func _coatings_to_dict() -> Dictionary:
+	var out := {}
+	for wid: StringName in coatings:
+		out[String(wid)] = [String(coatings[wid][0]), int(coatings[wid][1])]
+	return out
+
+
 func to_dict() -> Dictionary:
 	var eq := {}
 	for slot: StringName in equipment:
@@ -580,4 +629,4 @@ func to_dict() -> Dictionary:
 	return {"name": name, "inventory": inventory.to_dict(), "equipment": eq,
 		"known_spells": known, "quick": q, "quick_modes": modes, "wheel_last": last,
 		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger,
-		"movement_spell": String(movement_spell)}
+		"movement_spell": String(movement_spell), "coatings": _coatings_to_dict()}

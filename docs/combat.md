@@ -231,9 +231,13 @@ Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 wood.
 - **Enemies** can be poisoned (`Enemy.poison(dps, seconds)`): they take the damage once a
   second in green numbers and tint green. A stronger poison replaces a weaker one; the
   longer time wins.
-- **Poison Coating** (drink it like a potion): the next 10 melee hits within 3 minutes
-  poison for 2 per second over 4 s. Item fields `buff_poison_hits`, `poison_dps`,
-  `poison_seconds`.
+- **Poison Coating** goes on a weapon: pick it up (inventory open), then right click a
+  weapon's slot. That weapon's next 10 melee hits poison for 2 per second over 4 s, with
+  no time limit. A coated weapon shows the coating's drop badge in its slot's bottom
+  right corner, and its tooltip says how many hits are left. A new coating replaces the
+  old one. It can't be drunk. Stored per weapon kind on the character
+  (`CharacterData.coatings`, saved). Item fields `buff_poison_hits`, `poison_dps`,
+  `poison_seconds`. The training dummy can be poisoned too.
 - **Poison Flask**: left click throws it toward the cursor in an arc (`throw_speed`
   22 tiles/s, plus a small lift). It shatters on a block or an enemy into a green cloud
   (`throw_effect` `poison_cloud`, `cloud_tiles` 4x3, `cloud_seconds` 4) that poisons

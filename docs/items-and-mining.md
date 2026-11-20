@@ -68,7 +68,8 @@ placed (a spell shortcut), or the spell wheel is open, clicks don't use items.
 **A spell in hand** shows its icon and name (in blue) under the hotbar, and the spell
 you're concentrating on (Fly, Mend...) shows its icon and name (violet) below that.
 
-**Food and potions:** left or right click eats or drinks.
+**Food and potions:** left click eats or drinks (in the hotbar, or on the mouse with the
+inventory open, where right click throws the stack).
 
 Items with no use (wood, books, conduits) are just held: clicking doesn't swing.
 
