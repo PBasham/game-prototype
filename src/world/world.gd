@@ -363,6 +363,10 @@ func _apply_zoom() -> void:
 	if cam:
 		var z := Settings.camera_zoom()
 		cam.zoom = Vector2(z, z)
+		# Zoomed out, the screen shows more chunks: load enough to fill it plus one.
+		var half := get_viewport().get_visible_rect().size / (z * 2.0)
+		var need := Vector2i(ceili(half.x / (ChunkData.SIZE * TILE)) + 1, ceili(half.y / (ChunkData.SIZE * TILE)) + 1)
+		renderer.load_radius = Vector2i(maxi(load_radius.x, need.x), maxi(load_radius.y, need.y))
 
 
 ## True for worlds that have a save file (not the test course or scripted runs).

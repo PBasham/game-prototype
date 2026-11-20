@@ -69,6 +69,9 @@ placed (a spell shortcut), or the spell wheel is open, clicks don't use items.
 coated weapon's coating and hits left (green), and the spell you're concentrating on
 (Fly, Mend...) with its icon (violet).
 
+Zoomed out, more chunks load around you (enough to fill the screen plus one), so the
+edges of the view are never empty or unlit.
+
 **Tables and shelves:** holding something that can go on display over a free spot shows
 a faint picture of it there; right click puts it down (from the hotbar, a Z X C item, or
 the mouse stack with the inventory open).
