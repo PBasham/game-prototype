@@ -68,42 +68,9 @@ func _show_settings() -> void:
 	box.add_child(value)
 	box.add_child(slider)
 	box.add_child(UiKit.label("Lower shows more of the world.", 8, UiKit.DIM))
-	box.add_child(UiKit.button("Spell controls", func() -> void:
-		Settings.save_settings()
-		_show_spell_controls()))
 	box.add_child(UiKit.button("Back", func() -> void:
 		Settings.save_settings()
 		_show_main()))
-
-
-## Spell control options being tried out (Settings "spells"). Each button flips one.
-const SPELL_OPTIONS: Array[Array] = [
-	["movement_key", "Movement spell key (F)"],
-	["double_jump", "Double jump starts it"],
-	["book_numbers", "Number keys pick book spells (book out)"],
-	["quick_cast", "R + number: quick cast"],
-	["two_hands", "Right click: off-hand spell"],
-]
-
-
-func _show_spell_controls() -> void:
-	var box := _page()
-	box.add_child(UiKit.label("Spell controls", 14))
-	for o: Array in SPELL_OPTIONS:
-		var key: String = o[0]
-		var label: String = o[1]
-		var b := UiKit.button("", func() -> void: pass, 210)
-		var refresh := func() -> void:
-			b.text = "%s: %s" % [label, "On" if Settings.get_value("spells", key) else "Off"]
-		refresh.call()
-		b.pressed.connect(func() -> void:
-			Settings.set_value("spells", key, not bool(Settings.get_value("spells", key)))
-			refresh.call())
-		box.add_child(b)
-	box.add_child(UiKit.label("Details in docs/items-and-mining.md, Spell controls.", 8, UiKit.DIM))
-	box.add_child(UiKit.button("Back", func() -> void:
-		Settings.save_settings()
-		_show_settings()))
 
 
 func _process(delta: float) -> void:

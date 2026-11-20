@@ -299,8 +299,8 @@ func test_spell_index_lists_spells_and_puts_them_in_the_book() -> void:
 	assert_true(hud._spells.visible)
 	assert_gt(hud._spells.position.x, hud._equip.position.x, "opens beside the equipment window")
 	assert_gt(c.known_spells.size(), 0, "the dev kit knows spells")
-	# Pick the first known spell from the index and drop it in book slot 0.
-	c.put_in_book(0, &"")
+	# Pick the first known spell from the index and drop it in the first Q slot.
+	c.set_quick(&"q_0", &"")
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = true
@@ -310,9 +310,9 @@ func test_spell_index_lists_spells_and_puts_them_in_the_book() -> void:
 	var book_click := InputEventMouseButton.new()
 	book_click.button_index = MOUSE_BUTTON_LEFT
 	book_click.pressed = true
-	book_click.position = hud._equip.book_rect(0).get_center()
+	book_click.position = hud._equip.quick_rect(&"q_0").get_center()
 	hud._equip._gui_input(book_click)
-	assert_eq(c.book_loadout()[0], c.known_spells[0], "in the book")
+	assert_eq(c.quick_spell(&"q_0"), c.known_spells[0], "on the Q wheel")
 	assert_eq(hud.cursor_count, 0)
 	hud.set_open(false)
 	assert_false(hud._spells.visible)

@@ -496,7 +496,7 @@ func _spells() -> Array[ItemData]:
 	barrier.projectile_color = Color(0.6, 0.85, 1.0)
 	out.append(barrier)
 
-	var chain := _spell(&"chain_spark", "Chain Spark", "Lightning hits the enemy nearest the cursor, then jumps to up to 3 more nearby, weaker each jump.")
+	var chain := _spell(&"chain_spark", "Chain Spark", "Shoots lightning toward the cursor. If it hits, it jumps to up to 3 more nearby, weaker each jump. If it misses, it misses.")
 	chain.cast = SpellData.Cast.CHAIN
 	chain.damage = 10.0
 	chain.reach_tiles = 12.0
@@ -538,6 +538,32 @@ func _spells() -> Array[ItemData]:
 	out.append(mend)
 	# Learning from a scroll (at a Spell Weaving Table) costs extra: copper bars by tier, or
 	# the spell's own material.
+	# Spell Index tabs.
+	var groups := {
+		&"mining_spell": SpellData.Group.TOOLS,
+		&"chopping_spell": SpellData.Group.TOOLS,
+		&"hyper_drill": SpellData.Group.TOOLS,
+		&"seek_ore": SpellData.Group.TOOLS,
+		&"fly": SpellData.Group.MOVEMENT,
+		&"levitate": SpellData.Group.MOVEMENT,
+		&"blink": SpellData.Group.MOVEMENT,
+		&"conjure_platform": SpellData.Group.MOVEMENT,
+		&"recall": SpellData.Group.MOVEMENT,
+		&"spark": SpellData.Group.ATTACK,
+		&"arcane_bolt": SpellData.Group.ATTACK,
+		&"chain_spark": SpellData.Group.ATTACK,
+		&"air_push": SpellData.Group.ATTACK,
+		&"spark_ward": SpellData.Group.ATTACK,
+		&"familiar": SpellData.Group.ATTACK,
+		&"arcane_edge": SpellData.Group.DEFENSE,
+		&"barrier": SpellData.Group.DEFENSE,
+		&"gel_cushion": SpellData.Group.DEFENSE,
+		&"mend": SpellData.Group.DEFENSE,
+		&"healing_circle": SpellData.Group.DEFENSE,
+		&"light_orb": SpellData.Group.LIGHT,
+		&"wisp": SpellData.Group.LIGHT}
+	for sp in out:
+		(sp as SpellData).group = groups.get(sp.id, SpellData.Group.ATTACK)
 	for sp in out:
 		var spell := sp as SpellData
 		spell.learn_cost.assign(LEARN_COSTS.get(spell.id, {&"copper_bar": LEARN_BARS[clampi(spell.tier, 1, 3) - 1]}))

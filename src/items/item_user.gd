@@ -94,7 +94,7 @@ func _process(delta: float) -> void:
 	# Spell beams drain mana while they run, and stop when it's gone.
 	if _item and _item.beam and _item.is_spell() and p.is_using() and not p.input_blocked \
 			and not p.is_free_spell(_item as SpellData):
-		if not p.spend_mana((_item as SpellData).mana_per_second * p.mana_mult(_item as SpellData) * delta):
+		if not p.spend_mana((_item as SpellData).mana_per_second * delta):
 			p.stop_using()
 			EventBus.debug_message.emit("Out of mana")
 	if _item and _item.beam and mode == Mode.CHOP and p.is_using() and not p.input_blocked and tree != PlantLayer.NONE:
@@ -150,7 +150,7 @@ func _spell_power() -> float:
 	if p.character == null:
 		return 1.0
 	var tome := p.held_item if p.held_item and p.held_item.tome_spell != &"" else null
-	return p.character.spell_power(tome, p.is_unfocused(_item as SpellData)) * (1.0 + p.stat(&"magic_damage"))
+	return p.character.spell_power(tome) * (1.0 + p.stat(&"magic_damage"))
 
 
 ## Where the player is aiming (world px).
@@ -175,7 +175,7 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 		problem = p.character.cast_problem(_item as SpellData, from_tome)
 		var sp := _item as SpellData
 		var turning_off := sp.cast == SpellData.Cast.TOGGLE and p.concentration == sp
-		var need := sp.mana_cost * (sp.charge_min_mana if sp.cast == SpellData.Cast.CHARGED else 1.0) * p.mana_mult(sp)
+		var need := sp.mana_cost * (sp.charge_min_mana if sp.cast == SpellData.Cast.CHARGED else 1.0)
 		if problem == "" and not turning_off and not p.has_mana(maxf(need, minf(sp.mana_per_second * 0.1, 1.0))):
 			problem = "Not enough mana"
 		if p.is_free_spell(sp):
@@ -666,11 +666,11 @@ func _on_impact(item: ItemData) -> void:
 			# Mana is checked before the reagents are used up, so a failed cast costs nothing.
 			# A ritual pays when it completes.
 			var pays := spell.cast != SpellData.Cast.RITUAL
-			var cost := spell.mana_cost * p.mana_mult(spell)
+			var cost := spell.mana_cost
 			if cooldown_left(spell) <= 0.0 and p.has_mana(cost) and p.character.take_reagents(spell):
 				if pays:
 					p.spend_mana(cost)
-				_ready_at[spell.id] = _now() + spell.cooldown * p.cooldown_mult(spell)
+				_ready_at[spell.id] = _now() + spell.cooldown
 				if not cast(spell) and pays:
 					p.mana += cost  # it fizzled (no room, no target): refund
 					_ready_at.erase(spell.id)
@@ -695,6 +695,28 @@ func _on_impact(item: ItemData) -> void:
 					inv.take(p.selected, 1)
 	if not back and (item.kind == ItemData.Kind.TOOL or item.kind == ItemData.Kind.WEAPON):
 		_cut_flowers_in_swing()
+
+
+## Casts a spell straight away, without the casting animation (the buff set, B): the
+## same checks and costs as a normal cast. Returns "" if it went off, else why not.
+func cast_direct(spell: SpellData) -> String:
+	var p := world.player
+	var why := p.character.cast_problem(spell)
+	if why != "":
+		return why
+	if cooldown_left(spell) > 0.0:
+		return "Not ready yet"
+	if not p.has_mana(spell.mana_cost):
+		return "Not enough mana"
+	if not p.character.take_reagents(spell):
+		return "Missing reagents"
+	p.spend_mana(spell.mana_cost)
+	_ready_at[spell.id] = _now() + spell.cooldown
+	if not cast(spell):
+		p.mana += spell.mana_cost
+		_ready_at.erase(spell.id)
+		return "It fizzles"
+	return ""
 
 
 ## Casts a non-toggle spell now (mana and cooldown already handled). False if it
@@ -725,9 +747,7 @@ func cast(spell: SpellData) -> bool:
 				EventBus.debug_message.emit(world.spell_problem if world.spell_problem != "" else "It fizzles")
 				return false
 		SpellData.Cast.CHAIN:
-			if chain(spell, from) == 0:
-				EventBus.debug_message.emit("No target in reach")
-				return false
+			chain(spell, from)  # a miss is still a cast: the bolt flies and fizzles
 		SpellData.Cast.RITUAL:
 			return p.start_ritual(spell)
 	return true
@@ -766,11 +786,11 @@ func release_charge() -> SpellProjectile:
 	queue_redraw()
 	if spell == null:
 		return null
-	var cost := spell.mana_cost * lerpf(spell.charge_min_mana, 1.0, k) * p.mana_mult(spell)
+	var cost := spell.mana_cost * lerpf(spell.charge_min_mana, 1.0, k)
 	if not p.spend_mana(cost):
 		EventBus.debug_message.emit("Not enough mana")
 		return null
-	_ready_at[spell.id] = _now() + spell.cooldown * p.cooldown_mult(spell)
+	_ready_at[spell.id] = _now() + spell.cooldown
 	var from := p.casting_hand_position()
 	var bolt := world.request_spawn_projectile(spell, from, (cursor() - from).normalized(),
 		_spell_power() * lerpf(spell.charge_min_damage, 1.0, k), p)
@@ -780,7 +800,8 @@ func release_charge() -> SpellProjectile:
 	return bolt
 
 
-## Chain Spark: hits the enemy nearest the cursor within reach, then jumps to the nearest
+## Chain Spark: a bolt shoots toward the cursor (out to `reach_tiles`); the first thing it
+## touches is hit, then it jumps to the nearest
 ## one not yet hit within `chain_tiles`, up to `chain_jumps` times, each `chain_falloff`
 ## weaker. Returns how many were hit.
 func chain(spell: SpellData, from: Vector2) -> int:
@@ -789,15 +810,29 @@ func chain(spell: SpellData, from: Vector2) -> int:
 	for n in get_tree().get_nodes_in_group(&"damageable"):
 		if n != p and is_instance_valid(n) and not n.is_queued_for_deletion():
 			targets.append(n)
+	# The bolt shoots toward the cursor, out to its reach: the first thing it touches is
+	# hit (then it jumps); a block stops it; nothing = it fizzles at the end.
 	var reach := spell.reach_tiles * TILE
+	var dir := (cursor() - from).normalized()
+	if dir == Vector2.ZERO:
+		dir = Vector2(p.facing, 0)
 	var first: Node = null
-	var best := INF
-	for n in targets:
-		var c: Vector2 = (n.call(&"hit_rect") as Rect2).get_center()
-		if c.distance_to(p.chest()) <= reach and c.distance_to(cursor()) < best:
-			best = c.distance_to(cursor())
-			first = n
+	var end := from + dir * reach
+	var step := 2.0
+	var travelled := 0.0
+	while travelled <= reach and first == null:
+		var pt := from + dir * travelled
+		if world.is_solid(world.world_to_tile(pt)):
+			end = pt
+			break
+		for n in targets:
+			if (n.call(&"hit_rect") as Rect2).grow(2.0).has_point(pt):
+				first = n
+				break
+		travelled += step
 	if first == null:
+		var miss := SpellEffect.spawn(world.effects, SpellEffect.Kind.ZAP, Vector2.ZERO, Vector2.ZERO, spell.projectile_color)
+		miss.points = PackedVector2Array([from, end])
 		return 0
 	var path := PackedVector2Array([from])
 	var hit: Array[Node] = []
@@ -900,13 +935,6 @@ func _draw() -> void:
 		draw_string_outline(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.7))
 		draw_string(font, aim + Vector2(8, 11), right, HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
 			valid_color if not known else Color(valid_color, 0.5))
-	if _item is SpellData and p.is_unfocused(_item as SpellData) and problem == "":
-		# Cast from outside the book: say so (it costs more).
-		var font := ThemeDB.fallback_font
-		draw_string_outline(font, aim + Vector2(8, 14), "Unfocused (not in your book)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2,
-			Color(0, 0, 0, 0.7))
-		draw_string(font, aim + Vector2(8, 14), "Unfocused (not in your book)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
-			Color(valid_color, 0.6))
 	if mode in [Mode.CAST, Mode.TOGGLE, Mode.CHARGE]:
 		# No target box: just say why it can't be cast, if it can't.
 		if problem != "":

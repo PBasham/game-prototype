@@ -39,17 +39,19 @@ Docs:
 | 1 to 0, mouse wheel | Pick a hotbar slot |
 | Left click | Use the held item on the front layer: mine, chop, place, swing, cast; punch with empty hands |
 | Right click | Interact with what's under the cursor; otherwise the back layer (place background walls, mine them) |
-| E | Interact with the nearest thing (station, chest, door, pickup) |
 | I or Tab | Inventory, equipment (book, conduit) and spells |
 | K | Crafting window (by hand; right click a station for its own list) |
 | P | Equipment window (drag its title bar to move it) |
-| L | Spell Index (all known spells; click one, then a book or hotbar slot) |
-| F | Movement spell on / off (Fly or Levitate; spell control options in Settings) |
-| R | Tap: spellbook out / away. Hold: spell wheel |
+| L | Spell Index (tabs, search; click a spell, then a quick slot in the Equipment window) |
+| Q, E | Hold: that spell wheel. Tap: its last pick again |
+| Z, X, C | Their quick spell |
+| B | Buff set: casts all its buffs at once |
+| R / Ctrl + R | Mining / Chopping Spell in hand (again: put away) |
+| F | Movement spell on / off (Fly or Levitate) |
+| Caps Lock | Walk / run toggle |
 | Ctrl + mouse wheel | Mining / placing area |
-| Q | Throw the selected stack |
 | H | Put the held item away / take it out |
-| B | Debug brush on/off (wheel picks a block, left / right mouse remove / place) |
+| F4 | Debug brush on/off (wheel picks a block, left / right mouse remove / place) |
 | Esc | Pause menu (resume, save, settings with zoom, quit to menu) |
 | ` (~) | Dev console (debug builds): `help` for commands |
 | F3 | Debug overlay |

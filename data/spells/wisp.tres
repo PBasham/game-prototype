@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_tvg2l")
+group = 4
 cast = 5
 cooldown = 0.5
 light_radius = 26.0

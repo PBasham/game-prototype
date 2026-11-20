@@ -1,6 +1,6 @@
 class_name DebugBrush
 extends Node2D
-## Debug builds only: instant digging and placing for building test setups. B toggles it.
+## Debug builds only: instant digging and placing for building test setups. F4 toggles it.
 ## While on: left mouse removes a block, right mouse places one, mouse wheel picks the
 ## block. Goes through World.request_set_block like real gameplay will. While on, empty
 ## hands don't punch; while holding an item (not put away), clicks use the item instead.
@@ -8,7 +8,7 @@ extends Node2D
 const PLACEABLE := [&"dirt", &"stone", &"copper_ore", &"wood_planks", &"wood_platform", &"rope"]
 
 var world: World
-## Brush on (B). Off by default, so empty-hand clicks punch.
+## Brush on (F4). Off by default, so empty-hand clicks punch.
 var active := false
 var _selected := 0
 
@@ -20,7 +20,7 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key and key.pressed and not key.echo and key.physical_keycode == KEY_B:
+	if key and key.pressed and not key.echo and key.physical_keycode == KEY_F4:
 		active = not active
 		_show()
 		queue_redraw()

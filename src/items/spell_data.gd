@@ -1,9 +1,9 @@
 class_name SpellData
 extends ItemData
-## A spell (data/spells/<id>.tres). Spells are learned by the character, put into the
-## equipped spellbook's slots, and cast with the book out (R), from the spell wheel
-## (hold R), a hotbar shortcut, or a tome. The book and conduit multiply their strength
-## (spell_power) and reach (spell_reach_bonus).
+## A spell (data/spells/<id>.tres). Spells are learned by the character, put in quick
+## slots (the Q and E wheels, Z X C, the buff set on B) and cast from there, or from a
+## tome. The equipped book and conduit multiply every spell's strength (spell_power)
+## and reach (spell_reach_bonus); the book's tier limit still applies.
 ##
 ## How a spell works is `cast`:
 ##   TOOL        works on the world like a tool, with ItemData's fields: mining
@@ -33,7 +33,8 @@ extends ItemData
 ##               within `summon_tiles` every `summon_interval` s for `damage` (Familiar).
 ##   CONJURE     a platform `conjure_tiles` wide at the cursor for `duration` (Conjure
 ##               Platform). Only in open air; drops nothing.
-##   CHAIN       hits the enemy nearest the cursor (within reach), then jumps up to
+##   CHAIN       a bolt shoots toward the cursor (out to reach); the first thing it touches
+##               is hit, then it jumps up to
 ##               `chain_jumps` more within `chain_tiles`, losing `chain_falloff` each jump.
 ##   RITUAL      stand still for `ritual_seconds` (moving or getting hurt cancels it), then
 ##               it happens: Recall (&"recall" effect) sends you to your bed or the world
@@ -50,7 +51,15 @@ extends ItemData
 enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT, BUFF, CHARGED, ZONE, WARD, SUMMON, CONJURE,
 	CHAIN, RITUAL, SENSE }
 
+## Spell Index tabs.
+enum Group { TOOLS, MOVEMENT, ATTACK, DEFENSE, LIGHT }
+const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "Light"]
+
 @export var cast := Cast.TOOL
+@export var group := Group.ATTACK
+## From a quick slot (Q/E wheels, Z X C): 0 = by cast (see casts_from_quick_slot),
+## 1 = cast right away, 2 = put it in your hand. The player can flip it per slot.
+@export_enum("By cast", "Cast right away", "Put in hand") var quick_default := 0
 ## How powerful the spell is. The equipped book's max_spell_tier must be at least this.
 @export var tier := 1
 ## Needs an equipped conduit of this type (empty = any or none).
@@ -156,3 +165,23 @@ enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT, BUFF, CHARGED, ZONE, W
 
 func is_spell() -> bool:
 	return true
+
+
+## From a quick slot by default: true = cast right away (buffs, blinks, wards and the
+## like, aimed at the cursor), false = put it in your hand (things you aim and hold:
+## tools, bolts, charged and chained bolts, steered lights).
+func casts_from_quick_slot() -> bool:
+	if quick_default != 0:
+		return quick_default == 1
+	match cast:
+		Cast.TOOL, Cast.PROJECTILE, Cast.CHARGED, Cast.CHAIN:
+			return false
+		Cast.LIGHT:
+			return not light_placed
+	return true
+
+
+## Whether it can go in the buff set (B): a timed effect on you (buffs, a following
+## light, a familiar).
+func fits_buff_set() -> bool:
+	return cast == Cast.BUFF or cast == Cast.SUMMON or (cast == Cast.LIGHT and not light_placed)

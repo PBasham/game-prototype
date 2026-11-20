@@ -256,7 +256,7 @@ Debug builds only (running from the editor counts).
 | Key / tool | What it does |
 | --- | --- |
 | **F3** | Debug overlay: FPS, position, speed, animation frame, chunk counts, timings (frames over 25 / 50 ms, chunk and light job times). |
-| **B** | Debug brush on/off. While on (and with an empty slot or the item put away), clicks dig and place instead of punching. |
+| **F4** | Debug brush on/off. While on (and with an empty slot or the item put away), clicks dig and place instead of punching. |
 | **Mouse wheel** | Debug brush (when on): pick a block type instead of a hotbar slot. |
 | **Left / right mouse** | Debug brush (when on): remove / place a block instantly. |
 | **F6** (in game) | Regenerate the world from `data/worldgen/forest.tres` as saved on disk. |

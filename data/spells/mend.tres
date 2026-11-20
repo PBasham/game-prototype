@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_c431a")
+group = 3
 cast = 2
 effect = &"mend"
 heal_per_second = 3.0

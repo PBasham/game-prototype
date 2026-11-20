@@ -178,36 +178,27 @@ func _register() -> void:
 				if not world.item_user.cast(spell):
 					return
 		_print("Cast %s." % spell.display_name))
-	_add("spellopt", "spellopt [option] [on|off]", "Spell control options (also in Settings).", func(a: PackedStringArray) -> void:
-		var opts: Dictionary = Settings.DEFAULTS["spells"]
-		if a.is_empty():
-			for k: String in opts:
-				_print("  %s: %s" % [k, "on" if Settings.get_value("spells", k) else "off"])
+	_add("quick", "quick <slot> <spell>", "Put a known spell in a quick slot: q1..q8, e1..e8, z, x, c, buff1..buff6 (learns it if needed). \"quick <slot> none\" empties it.", func(a: PackedStringArray) -> void:
+		if a.size() < 2:
+			_print("Usage: quick <slot> <spell>")
 			return
-		if not opts.has(a[0]):
-			_print("Options: %s" % ", ".join(opts.keys()))
+		var slot := _quick_slot(a[0])
+		if slot == &"":
+			_print("Slots: q1..q8, e1..e8, z, x, c, buff1..buff6.")
 			return
-		var v := not bool(Settings.get_value("spells", a[0])) if a.size() < 2 else a[1] == "on"
-		Settings.set_value("spells", a[0], v)
-		_print("%s: %s" % [a[0], "on" if v else "off"]))
-	_add("book", "book <slot> <spell>", "Put a known spell in a book slot (1 = first), replacing what's there.", func(a: PackedStringArray) -> void:
-		if a.size() < 2 or not a[0].is_valid_int():
-			_print("Usage: book <slot> <spell>")
+		var c := world.character
+		if a[1] == "none":
+			c.set_quick(slot, &"")
+			_print("%s emptied." % a[0])
 			return
 		var spell := find_spell(" ".join(a.slice(1)))
 		if spell == null:
 			return
-		var c := world.character
-		if not spell.id in c.known_spells:
-			c.learn_spell(spell.id)
-		var i := int(a[0]) - 1
-		if i < 0 or i >= c.book_slot_count():
-			_print("The book has %d slots." % c.book_slot_count())
-			return
-		if c.put_in_book(i, spell.id):
-			_print("Slot %d: %s." % [i + 1, spell.display_name])
+		c.learn_spell(spell.id)
+		if c.set_quick(slot, spell.id):
+			_print("%s: %s (%s)." % [a[0], spell.display_name, "casts right away" if c.quick_casts(slot) else "in hand"])
 		else:
-			_print("Can't: %s needs a book for tier %d." % [spell.display_name, spell.tier]))
+			_print("Only timed effects on you go in the buff set."))
 	_add("bush", "bush [young]", "Grow a ripe berry bush (full grown, or young) on the grass under the cursor.", func(a: PackedStringArray) -> void:
 		var t := world.world_to_tile(world.item_user.cursor())
 		for g: Vector2i in [t, t + Vector2i.DOWN, t + Vector2i(0, 2)]:
@@ -406,12 +397,21 @@ func _learn(a: PackedStringArray) -> void:
 		return
 	var c := world.character
 	c.learn_spell(spell.id)
-	if not c.in_book(spell.id):
-		var loadout := c.book_loadout()
-		var free := loadout.find(&"")
-		if free >= 0:
-			c.put_in_book(free, spell.id)
-	_print("Learned %s%s." % [spell.display_name, "" if c.in_book(spell.id) else " (book full)"])
+	_print("Learned %s." % spell.display_name)
+
+
+## "q3" -> &"q_2", "z" -> &"z", "buff1" -> &"buff_0"; &"" if it's not a slot.
+static func _quick_slot(text: String) -> StringName:
+	text = text.to_lower()
+	if text in ["z", "x", "c"]:
+		return StringName(text)
+	for prefix: String in ["buff", "q", "e"]:
+		if text.begins_with(prefix) and text.substr(prefix.length()).is_valid_int():
+			var n := int(text.substr(prefix.length()))
+			var most := CharacterData.BUFF_SET_SIZE if prefix == "buff" else CharacterData.WHEEL_SIZE
+			if n >= 1 and n <= most:
+				return StringName("%s_%d" % [prefix, n - 1])
+	return &""
 
 
 func _forget(a: PackedStringArray) -> void:
@@ -419,9 +419,9 @@ func _forget(a: PackedStringArray) -> void:
 	if spell == null:
 		return
 	var c := world.character
-	var at := c.book_spells.find(spell.id)
-	if at >= 0:
-		c.put_in_book(at, &"")
+	for slot: StringName in c.quick.keys():
+		if c.quick[slot] == spell.id:
+			c.set_quick(slot, &"")
 	c.known_spells.erase(spell.id)
 	c.magic_changed.emit()
 	_print("Forgot %s." % spell.display_name)

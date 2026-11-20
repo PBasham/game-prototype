@@ -8,14 +8,13 @@ guesses; the docs listed say where each tunable lives.
 
 | Command | For |
 |---|---|
-| `devkit` | Tools, blocks, all spells (the book gets its free slots filled) |
+| `devkit` | Tools, blocks, all spells (and quick slots filled to try) |
 | `god`, `mana`, `heal` | Survive while testing |
 | `time 21` / `time 12` | Jump to night or noon |
 | `summon green_slime 3`, `summon blue_slime` | Enemies at the cursor |
 | `peaceful`, `butcher`, `spawns`, `kills` | Control and inspect spawning |
-| `book 2 levitate` | Put a spell in a book slot |
-| `equip dev grimoire` | A tier 3 book (8 slots) for Hyper Drill |
-| `spellopt` | List the spell control options (also Esc, Settings, Spell controls) |
+| `quick z levitate` | Put a spell in a quick slot (q1..q8, e1..e8, z, x, c, buff1..buff6) |
+| `equip dev grimoire` | A tier 3 book for Hyper Drill |
 | `give copper bar 30`, `place bed`, `use` | Items, furniture, right click at the cursor |
 
 ## Phase 5: crafting (crafting.md)
@@ -64,13 +63,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Light Orb follows you; Wisp: hold to steer, let go to leave it (3 max).
 - [ ] Mend heals while on.
 
-**Spell controls** (turn each on or off in Esc, Settings, Spell controls)
-- [ ] F toggles your movement spell (it has to be in the book).
-- [ ] Double jump starts it.
-- [ ] Book out (R): number keys pick book spells.
-- [ ] Hold R + number: quick cast, then back to what you held.
-- [ ] (Off by default) right click casts the off-hand spell.
-- [ ] Which of these do you want to keep?
+**Spell controls:** replaced in Phase 11 (Q/E wheels, Z X C, B, R).
 
 **Scrolls**
 - [ ] Paper, Blank Scroll (needs Slime), Spell Weaving Table at the Workbench.
@@ -117,6 +110,22 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Table and Shelf (workbench). Hold a potion, mushroom or bar and right click the
       floor, table top or shelf to display it; right click to take it back. Not on
       stations. Breaking the table drops what's on it.
+
+**Phase 11: spell controls (branch phase-11-spell-controls, on top of Phase 10)**
+- [ ] Hold Q (or E): the wheel opens; let go on a spell. Tap Q: the same spell again.
+- [ ] The panel beside the hotbar shows Q, E, Z, X, C; the gold bolt = casts right away.
+- [ ] Equipment (P), Quick spells: drag spells in from the Spell Index; click a slot's
+      top right corner to flip cast / in hand. Do the defaults feel right?
+- [ ] Z, X, C each cast or equip their spell.
+- [ ] B casts the buff set (dev kit: Arcane Edge, Barrier, Gel Cushion). Out of mana:
+      it says which didn't go off.
+- [ ] R = Mining Spell in hand, Ctrl + R = Chopping Spell; again puts it away.
+- [ ] Spell Index: tabs and search (typing there doesn't move you or open wheels).
+- [ ] Tooltips: name, description, mana, needs.
+- [ ] Chain Spark fires at nothing (and misses); hits chain as before.
+- [ ] Familiar, Light Orb and Wisps show a timer in the buff row; Wisps show 2/3.
+- [ ] No keyboard throw (Q) or interact (E) any more; walk toggle is Caps Lock;
+      the debug brush moved to F4.
 
 **Playtest fixes (your notes)**
 - [ ] Sticks and rocks on grass, cliffs and cave floors; they come back over time

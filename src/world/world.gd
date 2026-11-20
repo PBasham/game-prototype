@@ -530,6 +530,30 @@ func summon_light_orb(spell: SpellData) -> LightOrb:
 	return orb
 
 
+## The lights and familiars a spell has out right now (Light Orb, Wisps, Familiar).
+func summons_of(spell: SpellData) -> Array[Node]:
+	var out: Array[Node] = []
+	if spell == null:
+		return out
+	var group := &"familiars" if spell.cast == SpellData.Cast.SUMMON else &"light_sources"
+	for n in get_tree().get_nodes_in_group(group):
+		if n.is_queued_for_deletion():
+			continue
+		if n is LightOrb and (n as LightOrb).spell_id == spell.id:
+			out.append(n)
+		elif n is Familiar and (n as Familiar).spell == spell:
+			out.append(n)
+	return out
+
+
+## Seconds left on the newest of a spell's lights or familiars (0 = none out).
+func summon_time_left(spell: SpellData) -> float:
+	var best := 0.0
+	for n in summons_of(spell):
+		best = maxf(best, float(n.get(&"time_left")))
+	return best
+
+
 ## Casts the world-placed spells (zone, ward, familiar, conjured platform, ore sense) at
 ## `at` (the cursor). Returns the new node, or null with a reason in `problem`.
 var spell_problem := ""

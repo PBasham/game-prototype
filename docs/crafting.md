@@ -275,7 +275,7 @@ Not playtested yet.
 
 The **Spell Weaving Table** window has two tabs:
 
-- **Craft:** the scroll recipes. A spell you know (learned, in your book or not) costs
+- **Craft:** the scroll recipes. A spell you know costs
   half the materials, rounded up (`World.known_scroll_discount`, 0.5); the Blank Scroll
   is still needed. Those are listed in green with a note. The plain recipes stay until
   scrolls come from loot.

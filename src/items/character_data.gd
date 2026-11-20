@@ -37,10 +37,9 @@ const STATS: Array[StringName] = [&"max_health", &"max_mana", &"mana_regen", &"m
 const HAIR_DIR := "res://assets/sprites/hair"
 const DEFAULT_HAIR := &"short"
 
-## [item id, count] in the dev kit. Hotbar order. "spell:<id>" is a hotbar shortcut
-## to a spell.
+## [item id, count] in the dev kit. Hotbar order.
 const DEV_KIT: Array = [
-	[&"copper_pickaxe", 1], [&"copper_axe", 1], [&"spell:mining_spell", 1], [&"wood", 99],
+	[&"copper_pickaxe", 1], [&"copper_axe", 1], [&"iron_pickaxe", 1], [&"wood", 99],
 	[&"wood_platform", 30], [&"rope", 30], [&"torch", 20], [&"tree_seed", 5], [&"grass_seeds", 10],
 	[&"dirt", 50],
 ]
@@ -49,11 +48,16 @@ const DEV_KIT_EXTRA: Array = [
 	[&"copper_sword", 1], [&"wooden_sword", 1], [&"copper_helmet", 1], [&"copper_chestplate", 1],
 	[&"copper_greaves", 1], [&"bed", 1], [&"berries", 10],
 ]
-## Spells the dev kit teaches and puts in the book (in order).
+## Spells the dev kit teaches (in order); give_dev_kit also fills the quick slots.
 const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark", &"levitate",
 	&"hyper_drill", &"air_push", &"blink", &"light_orb", &"wisp", &"mend", &"gel_cushion",
 	&"arcane_bolt", &"healing_circle", &"spark_ward", &"familiar", &"conjure_platform", &"arcane_edge", &"barrier",
 	&"chain_spark", &"recall", &"seek_ore"]
+
+const WHEELS: Array[StringName] = [&"q", &"e"]
+const WHEEL_SIZE := 8
+const QUICK_KEYS: Array[StringName] = [&"z", &"x", &"c"]
+const BUFF_SET_SIZE := 6
 
 ## The movement spell the movement key (F) and double jump use: the last of Fly or
 ## Levitate you turned on (empty = Fly if known, else Levitate).
@@ -76,9 +80,15 @@ var equipment: Dictionary[StringName, StringName] = {
 }
 ## Spells learned (data/spells ids).
 var known_spells: Array[StringName] = []
-## The equipped book's slots: spell id or &"" per slot. Kept when books are swapped;
-## a smaller book only uses its first slots.
-var book_spells: Array[StringName] = []
+## Quick spells (see docs/items-and-mining.md, "Quick spells"): slot name to spell id.
+## Slots: the Q and E wheels ("q_0".."q_7", "e_0".."e_7"), the Z, X and C keys ("z",
+## "x", "c") and the buff set cast by B ("buff_0".."buff_5").
+var quick: Dictionary[StringName, StringName] = {}
+## Per slot: true = cast right away, false = put it in your hand. A slot that isn't
+## here uses the spell's default (SpellData.casts_from_quick_slot). The buff set always casts.
+var quick_modes: Dictionary[StringName, bool] = {}
+## The slot last picked on each wheel (&"q", &"e"): tapping the key uses it again.
+var wheel_last: Dictionary[StringName, StringName] = {}
 ## Not saved (dev runs and tests use a throwaway character).
 var temporary := false
 
@@ -104,10 +114,20 @@ func give_dev_kit() -> void:
 		inventory.add(e[0], e[1])
 	for s in DEV_SPELLS:
 		learn_spell(s)
-		if not in_book(s):
-			var free := book_loadout().find(&"")
-			if free >= 0:
-				put_in_book(free, s)
+	# A starting loadout to try things with.
+	var q: Array[StringName] = [&"spark", &"arcane_bolt", &"chain_spark", &"air_push", &"familiar",
+		&"spark_ward", &"healing_circle", &"wisp"]
+	var ew: Array[StringName] = [&"blink", &"conjure_platform", &"light_orb", &"seek_ore", &"recall",
+		&"mend", &"hyper_drill", &"levitate"]
+	for i in WHEEL_SIZE:
+		set_quick(wheel_slot(&"q", i), q[i])
+		set_quick(wheel_slot(&"e", i), ew[i])
+	set_quick(&"z", &"blink")
+	set_quick(&"x", &"air_push")
+	set_quick(&"c", &"light_orb")
+	var buffs_in: Array[StringName] = [&"arcane_edge", &"barrier", &"gel_cushion"]
+	for i in buffs_in.size():
+		set_quick(buff_slot(i), buffs_in[i])
 	if OS.is_debug_build():
 		DevHeldItems.add_to(inventory)
 		DevMagic.add_to(self)
@@ -154,50 +174,123 @@ func conduit() -> ItemData:
 	return ItemData.find(equipment[SLOT_CONDUIT]) if equipment[SLOT_CONDUIT] != &"" else null
 
 
-func book_slot_count() -> int:
-	var b := book()
-	return b.spell_slots if b else 4
-
-
-## The spells in the book's usable slots (&"" for empty slots).
-func book_loadout() -> Array[StringName]:
-	var out: Array[StringName] = []
-	for i in book_slot_count():
-		out.append(book_spells[i] if i < book_spells.size() else &"")
-	return out
-
-
 func knows(spell_id: StringName) -> bool:
 	return spell_id in known_spells
 
 
-func in_book(spell_id: StringName) -> bool:
-	return spell_id != &"" and spell_id in book_loadout()
+# --- quick spells ------------------------------------------------------------------------
+
+static func wheel_slot(wheel: StringName, i: int) -> StringName:
+	return StringName("%s_%d" % [wheel, i])
+
+
+static func buff_slot(i: int) -> StringName:
+	return StringName("buff_%d" % i)
+
+
+static func is_buff_slot(slot: StringName) -> bool:
+	return String(slot).begins_with("buff_")
+
+
+## Which group a slot belongs to (&"q", &"e", &"keys", &"buff"): a spell moves within
+## its group instead of being in it twice.
+static func slot_group(slot: StringName) -> StringName:
+	var text := String(slot)
+	if text.begins_with("buff_"):
+		return &"buff"
+	if slot in QUICK_KEYS:
+		return &"keys"
+	return StringName(text.get_slice("_", 0))
+
+
+## Every quick slot name, in order: the Q wheel, the E wheel, Z X C, the buff set.
+static func all_quick_slots() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for w in WHEELS:
+		for i in WHEEL_SIZE:
+			out.append(wheel_slot(w, i))
+	out.append_array(QUICK_KEYS)
+	for i in BUFF_SET_SIZE:
+		out.append(buff_slot(i))
+	return out
+
+
+func quick_spell(slot: StringName) -> StringName:
+	return quick.get(slot, &"")
+
+
+## Puts a known spell in a quick slot (&"" empties it). If it's already in another slot
+## of the same group it moves. The buff set only takes timed effects on you
+## (SpellData.fits_buff_set). False if refused.
+func set_quick(slot: StringName, spell_id: StringName) -> bool:
+	if spell_id == &"":
+		quick.erase(slot)
+		quick_modes.erase(slot)
+		magic_changed.emit()
+		return true
+	var spell := ItemData.find(ItemData.spell_key(spell_id)) as SpellData
+	if spell == null or not knows(spell_id):
+		return false
+	if is_buff_slot(slot) and not spell.fits_buff_set():
+		return false
+	var group := slot_group(slot)
+	for other: StringName in quick.keys():
+		if other != slot and quick[other] == spell_id and slot_group(other) == group:
+			quick.erase(other)
+			quick_modes.erase(other)
+	if quick.get(slot, &"") != spell_id:
+		quick_modes.erase(slot)
+	quick[slot] = spell_id
+	magic_changed.emit()
+	return true
+
+
+## True: the slot casts its spell right away. False: it puts the spell in your hand.
+func quick_casts(slot: StringName) -> bool:
+	if is_buff_slot(slot):
+		return true
+	if quick_modes.has(slot):
+		return quick_modes[slot]
+	var spell := ItemData.find(ItemData.spell_key(quick_spell(slot))) as SpellData
+	return spell.casts_from_quick_slot() if spell else false
+
+
+func toggle_quick_mode(slot: StringName) -> void:
+	if is_buff_slot(slot) or quick_spell(slot) == &"":
+		return
+	quick_modes[slot] = not quick_casts(slot)
+	magic_changed.emit()
+
+
+## The filled slots of a wheel (&"q" or &"e"), in order.
+func wheel(w: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for i in WHEEL_SIZE:
+		var slot := wheel_slot(w, i)
+		if quick_spell(slot) != &"":
+			out.append(slot)
+	return out
+
+
+## The spells in the buff set, in order.
+func buff_set() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for i in BUFF_SET_SIZE:
+		var id := quick_spell(buff_slot(i))
+		if id != &"":
+			out.append(id)
+	return out
+
+
+## Whether a spell is in any quick slot.
+func in_quick(spell_id: StringName) -> bool:
+	return spell_id != &"" and spell_id in quick.values()
 
 
 func learn_spell(spell_id: StringName) -> void:
 	if not knows(spell_id):
 		known_spells.append(spell_id)
 		magic_changed.emit()
-
-
-## Puts a spell into a book slot (moving it if it's in another slot). &"" clears it.
-## Refused (false) when the spell's tier is above what the equipped book can hold.
-func put_in_book(slot: int, spell_id: StringName) -> bool:
-	if slot < 0:
-		return false
-	var spell := ItemData.find(ItemData.spell_key(spell_id)) as SpellData if spell_id != &"" else null
-	if spell and spell.tier > max_spell_tier():
-		return false
-	if spell_id != &"":
-		var at := book_spells.find(spell_id)
-		if at >= 0:
-			book_spells[at] = &""
-	while book_spells.size() <= slot:
-		book_spells.append(&"")
-	book_spells[slot] = spell_id
-	magic_changed.emit()
-	return true
 
 
 ## The highest spell tier the equipped book can hold.
@@ -294,10 +387,10 @@ func take_reagents(spell: SpellData) -> bool:
 	return true
 
 
-## Spell strength multiplier from the book (or the tome) and the conduit. `unfocused`: a
-## known spell cast from outside the book gets no book bonus (the conduit still counts).
-func spell_power(tome: ItemData = null, unfocused: bool = false) -> float:
-	var source := tome if tome else (null if unfocused else book())
+## Spell strength multiplier from the book (or the tome) and the conduit. The book
+## powers every spell you cast.
+func spell_power(tome: ItemData = null) -> float:
+	var source := tome if tome else book()
 	var p := source.spell_power if source else 1.0
 	var c := conduit()
 	return p * (c.spell_power if c else 1.0)
@@ -363,8 +456,20 @@ static func load_file(path: String) -> CharacterData:
 	for s: String in d.get("known_spells", []):
 		if ItemData.find(ItemData.spell_key(StringName(s))) != null:
 			c.known_spells.append(StringName(s))
-	for s: String in d.get("book_spells", []):
-		c.book_spells.append(StringName(s) if c.knows(StringName(s)) else &"")
+	var q: Dictionary = d.get("quick", {})
+	for slot: String in q:
+		var id := StringName(String(q[slot]))
+		if c.knows(id):
+			c.quick[StringName(slot)] = id
+	var modes: Dictionary = d.get("quick_modes", {})
+	for slot: String in modes:
+		if c.quick.has(StringName(slot)):
+			c.quick_modes[StringName(slot)] = bool(modes[slot])
+	var last: Dictionary = d.get("wheel_last", {})
+	for w: String in last:
+		c.wheel_last[StringName(w)] = StringName(String(last[w]))
+	if not d.has("quick"):
+		c._migrate_spell_slots(d.get("book_spells", []))
 	var look: Dictionary = d.get("look", {})
 	var cols: Dictionary = look.get("colors", {})
 	for group: String in cols:
@@ -390,6 +495,22 @@ func save() -> Error:
 	return DirAccess.rename_absolute(tmp, path)
 
 
+## Older saves: the book's spells go on the Q wheel; spell shortcuts in the inventory
+## go on the E wheel (shortcuts are gone).
+func _migrate_spell_slots(old_book: Array) -> void:
+	var qi := 0
+	for s: String in old_book:
+		if s != "" and qi < WHEEL_SIZE and set_quick(wheel_slot(&"q", qi), StringName(s)):
+			qi += 1
+	var ei := 0
+	for i in inventory.size:
+		var item := inventory.item(i)
+		if item and item.is_spell():
+			if ei < WHEEL_SIZE and set_quick(wheel_slot(&"e", ei), item.id):
+				ei += 1
+			inventory.clear(i)
+
+
 ## Dev items and dev spells (debug builds, runtime only) are left out.
 func to_dict() -> Dictionary:
 	var eq := {}
@@ -400,13 +521,21 @@ func to_dict() -> Dictionary:
 	for s in known_spells:
 		if not ItemData.is_runtime(ItemData.spell_key(s)):
 			known.append(String(s))
-	var book_list: Array[String] = []
-	for s in book_spells:
-		book_list.append("" if s == &"" or ItemData.is_runtime(ItemData.spell_key(s)) else String(s))
+	var q := {}
+	for slot: StringName in quick:
+		if not ItemData.is_runtime(ItemData.spell_key(quick[slot])):
+			q[String(slot)] = String(quick[slot])
+	var modes := {}
+	for slot: StringName in quick_modes:
+		if q.has(String(slot)):
+			modes[String(slot)] = quick_modes[slot]
+	var last := {}
+	for w: StringName in wheel_last:
+		last[String(w)] = String(wheel_last[w])
 	var cols := {}
 	for group: StringName in colors:
 		cols[String(group)] = colors[group].to_html(false)
 	return {"name": name, "inventory": inventory.to_dict(), "equipment": eq,
-		"known_spells": known, "book_spells": book_list,
+		"known_spells": known, "quick": q, "quick_modes": modes, "wheel_last": last,
 		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger,
 		"movement_spell": String(movement_spell)}

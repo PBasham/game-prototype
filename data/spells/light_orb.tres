@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_rwl0f")
+group = 4
 cast = 5
 cooldown = 1.0
 mana_cost = 10.0

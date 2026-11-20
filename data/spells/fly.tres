@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_eqpxw")
+group = 1
 cast = 2
 effect = &"fly"
 move_speed = 34.0

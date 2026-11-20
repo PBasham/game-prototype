@@ -3,12 +3,14 @@ extends HudWindow
 ## The Equipment window (P): your character in the middle, armor on the left (head,
 ## chest, legs), trinkets on the right (three accessory slots), the Book and Conduit
 ## underneath, your stats on the far right. Below that, a section you can fold away:
-## Equipped spells (the book's slots), and the Spell Index (L) button.
+## Quick spells (the Q and E wheels, the Z X C keys and the buff set cast by B), and the
+## Spell Index (L) button.
 ##
 ## Click a slot with an item on the mouse to equip it; click an equipped item to pick it
-## up; shift + click (or ctrl + right click) puts it back in the inventory. Book slots
-## work like before: click a spell from the Spell Index, then a book slot; right click
-## empties one.
+## up; shift + click (or ctrl + right click) puts it back in the inventory. Quick slots:
+## click a spell in the Spell Index, then a slot; click a filled slot to pick its spell
+## up; right click empties it. The small corner of a filled slot flips it between
+## "cast right away" (a gold bolt) and "put it in your hand" (no bolt).
 
 const SLOT := Hud.SLOT
 const STEP := Hud.STEP
@@ -21,12 +23,16 @@ const DOLL_H := 82
 const COLUMN_TOP := BODY_TOP + (DOLL_H - (3 * STEP - Hud.GAP)) / 2
 ## Width of the stats column.
 const STATS_W := 96
-## Book slots per row in the Equipped spells section.
-const BOOK_ROW := 10
+## Room for a row's key label (Q, E) before its slots.
+const LABEL_W := 12
+## Slots in a row of the Quick spells section (a wheel is 8).
+const QUICK_ROW := CharacterData.WHEEL_SIZE
+## The corner of a quick slot that flips cast / in hand.
+const MODE_SIZE := 7
 
-enum Part { NONE, SLOT, BOOK, FOLD, INDEX }
+enum Part { NONE, SLOT, QUICK, MODE, FOLD, INDEX }
 
-## Equipped spells section shown (click its header to fold it away).
+## Quick spells section shown (click its header to fold it away).
 var spells_shown := true
 
 var _doll: PaperDoll
@@ -103,21 +109,43 @@ func index_button_rect() -> Rect2:
 	return Rect2(size.x - PAD - 84, _fold_y() - 2, 84, 15)
 
 
-func _book_origin() -> Vector2:
-	return Vector2(PAD, _fold_y() + 26)
+func _quick_origin() -> Vector2:
+	return Vector2(PAD + LABEL_W, _fold_y() + 26)
 
 
-func book_rect(i: int) -> Rect2:
-	return Rect2(_book_origin() + Vector2((i % BOOK_ROW) * STEP, (i / BOOK_ROW) * STEP), Vector2(SLOT, SLOT))
+## Where a quick slot is: Q wheel (row 1), E wheel (row 2), then Z X C and the buff set
+## side by side (row 3).
+func quick_rect(slot: StringName) -> Rect2:
+	var o := _quick_origin()
+	var text := String(slot)
+	var col := 0
+	var row := 0
+	if CharacterData.is_buff_slot(slot):
+		row = 2
+		col = 3 + int(text.get_slice("_", 1))
+		return Rect2(o + Vector2(col * STEP + 14, row * STEP + 8), Vector2(SLOT, SLOT))
+	if slot in CharacterData.QUICK_KEYS:
+		row = 2
+		col = CharacterData.QUICK_KEYS.find(slot)
+		return Rect2(o + Vector2(col * STEP, row * STEP + 8), Vector2(SLOT, SLOT))
+	row = CharacterData.WHEELS.find(StringName(text.get_slice("_", 0)))
+	col = int(text.get_slice("_", 1))
+	return Rect2(o + Vector2(col * STEP, row * STEP), Vector2(SLOT, SLOT))
+
+
+## The corner of a quick slot that flips its mode.
+func mode_rect(slot: StringName) -> Rect2:
+	var r := quick_rect(slot)
+	return Rect2(r.position + Vector2(r.size.x - MODE_SIZE, 0), Vector2(MODE_SIZE, MODE_SIZE))
 
 
 func layout() -> void:
 	var w := _stats_x() + STATS_W + PAD
 	var h := _fold_y() + 14 + PAD
+	var quick_w := PAD * 2 + LABEL_W + (3 + CharacterData.BUFF_SET_SIZE) * STEP + 14 - Hud.GAP
 	if spells_shown:
-		var n := hud.world.character.book_slot_count()
-		h = _book_origin().y + maxi(1, ceili(n / float(BOOK_ROW))) * STEP - Hud.GAP + PAD
-	size = Vector2(maxf(w, PAD * 2 + BOOK_ROW * STEP - Hud.GAP), h)
+		h = _quick_origin().y + 3 * STEP + 8 - Hud.GAP + PAD
+	size = Vector2(maxf(w, quick_w), h)
 
 
 func hit(local: Vector2) -> Array:
@@ -129,9 +157,13 @@ func hit(local: Vector2) -> Array:
 	if fold_rect().has_point(local):
 		return [Part.FOLD, 0]
 	if spells_shown:
-		for i in hud.world.character.book_slot_count():
-			if book_rect(i).has_point(local):
-				return [Part.BOOK, i]
+		var c := hud.world.character
+		for slot in CharacterData.all_quick_slots():
+			if quick_rect(slot).has_point(local):
+				if mode_rect(slot).has_point(local) and c.quick_spell(slot) != &"" \
+						and not CharacterData.is_buff_slot(slot):
+					return [Part.MODE, slot]
+				return [Part.QUICK, slot]
 	return [Part.NONE, -1]
 
 
@@ -177,7 +209,7 @@ func draw_body(font: Font) -> void:
 		else PackedVector2Array([tip + Vector2(-2, -3), tip + Vector2(2, 0), tip + Vector2(-2, 3)])
 	var fold_hot: bool = h[0] == Part.FOLD
 	draw_colored_polygon(arrow, UiSkin.TEXT if fold_hot else UiSkin.GOLD)
-	draw_string(font, fr.position + Vector2(10, 9), "Equipped spells", HORIZONTAL_ALIGNMENT_LEFT, -1, 7,
+	draw_string(font, fr.position + Vector2(10, 9), "Quick spells", HORIZONTAL_ALIGNMENT_LEFT, -1, 7,
 		UiSkin.TEXT if fold_hot else UiSkin.GOLD)
 	var spells_open := hud.spells_open
 	UiSkin.button(self, index_button_rect(), "Spell Index (L)",
@@ -185,16 +217,30 @@ func draw_body(font: Font) -> void:
 	if not spells_shown:
 		return
 	var book := c.book()
-	var book_line := "%s, %d slots" % [book.display_name if book else "Spellbook", c.book_slot_count()]
+	var book_line := "%s: x%s power, up to tier %d.  Bolt = casts right away." % [
+		book.display_name if book else "Spellbook", str(book.spell_power if book else 1.0), c.max_spell_tier()]
 	draw_string(font, Vector2(PAD, _fold_y() + 22), book_line, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.DIM)
-	var loadout := c.book_loadout()
-	for i in loadout.size():
-		var r := book_rect(i)
-		var hot: bool = h[0] == Part.BOOK and h[1] == i
+	var o := _quick_origin()
+	draw_string(font, Vector2(PAD, o.y + 12), "Q", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
+	draw_string(font, Vector2(PAD, o.y + STEP + 12), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
+	draw_string(font, o + Vector2(0, 2 * STEP + 6), "Z  X  C", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.GOLD)
+	draw_string(font, o + Vector2(3 * STEP + 14, 2 * STEP + 6), "Buff set (B): casts them all", HORIZONTAL_ALIGNMENT_LEFT,
+		-1, 6, UiSkin.GOLD)
+	for slot in CharacterData.all_quick_slots():
+		var r := quick_rect(slot)
+		var hot: bool = h[0] in [Part.QUICK, Part.MODE] and h[1] == slot
 		UiSkin.slot(self, r, UiSkin.SlotLook.HOT if hot else UiSkin.SlotLook.MAGIC)
-		var spell := ItemData.find(ItemData.spell_key(loadout[i])) if loadout[i] != &"" else null
-		if spell:
-			hud._draw_item(self, font, r, spell, 1)
+		var id := c.quick_spell(slot)
+		var spell := ItemData.find(ItemData.spell_key(id)) if id != &"" else null
+		if spell == null:
+			continue
+		hud._draw_item(self, font, r, spell, 1)
+		if CharacterData.is_buff_slot(slot):
+			continue
+		if c.quick_casts(slot):
+			hud._draw_cast_mark(self, r)
+		elif h[0] == Part.MODE and h[1] == slot:
+			draw_rect(mode_rect(slot), Color(UiSkin.GOLD, 0.35))
 
 
 ## Your defense and every non-zero stat bonus from equipment, one per line.
@@ -228,11 +274,14 @@ func body_click(mb: InputEventMouseButton) -> void:
 				hud.quick_unequip(slot_id)
 			elif left:
 				hud.click_equipment(slot_id)
-		Part.BOOK:
+		Part.QUICK:
 			if left:
-				hud.click_book_slot(h[1])
+				hud.click_quick_slot(h[1])
 			elif right:
-				hud.world.character.put_in_book(h[1], &"")
+				hud.world.character.set_quick(h[1], &"")
+		Part.MODE:
+			if left:
+				hud.world.character.toggle_quick_mode(h[1])
 		Part.FOLD:
 			if left:
 				spells_shown = not spells_shown
@@ -252,7 +301,14 @@ func tooltip_at(local: Vector2) -> Array:
 			var id: StringName = c.equipment[slot_id]
 			var item := ItemData.find(id) if id != &"" else (c.book() if slot_id == CharacterData.SLOT_BOOK else null)
 			return [item, "" if item else Hud.EQUIP_NAMES[h[1]]]
-		Part.BOOK:
-			var s: StringName = c.book_loadout()[h[1]]
-			return [ItemData.find(ItemData.spell_key(s)) if s != &"" else null, ""]
+		Part.QUICK, Part.MODE:
+			var slot: StringName = h[1]
+			var s := c.quick_spell(slot)
+			var spell := ItemData.find(ItemData.spell_key(s)) as SpellData if s != &"" else null
+			if spell == null:
+				return [null, "%s: empty. Click a spell in the Spell Index (L), then here." % Player.quick_label(slot).capitalize()]
+			var how := "Casts right away" if c.quick_casts(slot) else "Goes in your hand (left click casts)"
+			if not CharacterData.is_buff_slot(slot):
+				how += ". Click the top right corner to change."
+			return [null, Hud.spell_tooltip(spell, c) + "\n" + how]
 	return [null, ""]

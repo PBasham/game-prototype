@@ -2,6 +2,26 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-19: Phase 11, spell controls (branch phase-11-spell-controls)
+
+- **Quick slots instead of the book's slots (Patrick):** spells go on two wheels (Q and
+  E, 8 each; hold to pick, tap for the last pick), three keys (Z, X, C) and a buff set
+  (B, casts all of them at once). Not on the hotbar any more.
+- **Cast or in hand, per slot (Patrick):** a toggle on each slot; the default comes from
+  the spell (things you aim and hold go in hand, the rest cast right away).
+- **Books (Patrick):** they keep their job: power for every spell you cast and the tier
+  limit. No more "unfocused" penalty; `spell_slots` is unused.
+- **R = Mining Spell, Ctrl + R = Chopping Spell, F = movement (Patrick).** Number keys
+  for book slots, R + number quick cast, the off-hand spell and double jump to fly are
+  gone, and so is the Settings "Spell controls" page.
+- **No keyboard throw or interact for now (Patrick):** Q and E became the wheels. The walk
+  toggle moved from C to Caps Lock (C is a quick key) and the debug brush from B to F4.
+- **Spell Index:** tabs by a new `SpellData.group` (Tools, Movement, Attack, Defense,
+  Light) and a search box. Spell tooltips: name, description, mana, needs.
+- **Chain Spark (Patrick):** shoots toward the cursor and can miss, instead of needing a
+  target under the cursor.
+- **Timers:** Familiar, Light Orb and Wisps show in the buff row (Wisps with a count).
+
 ## 2026-11-19: Phase 10, detailed art (branch phase-10-hires-art)
 
 - **More detail, same game (Patrick):** blocks stay 8 world pixels and everything that

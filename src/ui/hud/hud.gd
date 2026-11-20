@@ -82,9 +82,10 @@ var cursor_count := 0
 ## The spell wheel is open (R held): its center and the highlighted spell.
 var wheel_open := false
 var wheel_center := Vector2.ZERO
+## The slot picked on the open wheel (&"" = none), and which wheel is open (&"q", &"e").
 var wheel_choice: StringName = &""
-var _r_down := false
-var _r_held := 0.0
+var wheel_key: StringName = &""
+var _key_held := 0.0
 ## The crafting station (anchor tile) or chest that was opened; NO_TILE = none.
 var station := World.NO_TILE
 var chest := World.NO_TILE
@@ -122,6 +123,8 @@ var _death: Label
 var _fade: ColorRect
 var _death_sub: Label
 var _wheel: Wheel
+## The quick spell keys beside the hotbar: Q and E (their current pick), Z, X, C.
+var _quick: Pane
 var _name_label: Label
 var _tooltip: PanelContainer
 var _tooltip_text: Label
@@ -163,6 +166,8 @@ func _ready() -> void:
 	_spells = SpellWindow.new(self)
 	_spells.close_pressed.connect(toggle_spells)
 	add_child(_spells)
+	_quick = _pane(_draw_quick, func(_p: Pane, _e: InputEvent) -> void: pass)
+	_quick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_buffs = _pane(_draw_buffs, func(_p: Pane, _e: InputEvent) -> void: pass)
 	_buffs.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status = _pane(_draw_status, func(_p: Pane, _e: InputEvent) -> void: pass)
@@ -240,6 +245,7 @@ func _pane(draw_fn: Callable, input_fn: Callable) -> Pane:
 
 func _redraw() -> void:
 	_inv.queue_redraw()
+	_quick.queue_redraw()
 	_status.queue_redraw()
 	_buffs.queue_redraw()
 	_craft.queue_redraw()
@@ -251,6 +257,9 @@ func _redraw() -> void:
 func _input(event: InputEvent) -> void:
 	if _amount_typing and _amount_key(event):
 		get_viewport().set_input_as_handled()  # digits don't pick hotbar slots
+		return
+	if _spells.searching and _spells.search_key(event as InputEventKey):
+		get_viewport().set_input_as_handled()
 		return
 	if open and event.is_action_pressed("ui_cancel"):
 		set_open(false)
@@ -267,7 +276,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	_update_notes(delta)
-	var paused := world.get_tree().paused or (world.console != null and world.console.open)
+	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
 		set_open(not open)
@@ -459,6 +468,8 @@ func _layout() -> void:
 	else:
 		_inv.size = Vector2(PAD * 2 + 10 * STEP - GAP, PAD * 2 + SLOT)
 	_name_label.position = MARGIN + Vector2(2, _inv.size.y + 2)
+	_quick.size = Vector2(PAD * 2 + QUICK_KEYS_SHOWN.size() * STEP - GAP + 4, PAD * 2 + SLOT)
+	_quick.position = _inv.position + Vector2(_inv.size.x + 4, 0)
 	var view := _view_size()
 	_status.position = Vector2(MARGIN.x, view.y - STATUS_SIZE.y - MARGIN.y)
 	_buffs.size = Vector2(STATUS_SIZE.x, BUFF_STEP)
@@ -480,6 +491,8 @@ func _layout() -> void:
 		_spells.show_at(_spell_window_spot())
 	else:
 		_spells.visible = false
+		if _spells.searching:
+			_spells.set_searching(false)
 	_redraw()
 
 
@@ -492,7 +505,7 @@ func _layout() -> void:
 func _equip_spot() -> Vector2:
 	var at := _equip.centered()
 	var below := _inv.position.y + _inv.size.y + 4
-	if at.y < below and below + _equip.size.y <= _view_size().y:
+	if at.y < below and below + _equip.size.y <= _status.position.y - 4:
 		at.y = below
 	return at
 
@@ -586,6 +599,45 @@ func slot_at(local: Vector2) -> int:
 	return h[1] if h[0] == Area.INVENTORY else -1
 
 
+# --- drawing: quick spell keys -----------------------------------------------------------
+
+const QUICK_KEYS_SHOWN: Array[StringName] = [&"q", &"e", &"z", &"x", &"c"]
+
+
+## The spell a quick key stands for right now: a wheel's last pick (or its first
+## spell), or the Z X C slot. [slot, spell id] (&"" when empty).
+func quick_key_spell(key: StringName) -> Array:
+	var c := world.character
+	var slot := key
+	if key in CharacterData.WHEELS:
+		slot = c.wheel_last.get(key, &"")
+		if slot == &"" or c.quick_spell(slot) == &"":
+			var filled := c.wheel(key)
+			slot = filled[0] if not filled.is_empty() else &""
+	return [slot, c.quick_spell(slot) if slot != &"" else &""]
+
+
+func _draw_quick(g: Control) -> void:
+	var c := world.character
+	var p := world.player
+	var font := ThemeDB.fallback_font
+	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
+	var in_hand: StringName = p.held_item.id if p.selected < 0 and p.held_item and p.held_item.is_spell() else &""
+	for i in QUICK_KEYS_SHOWN.size():
+		var key := QUICK_KEYS_SHOWN[i]
+		# A small gap between the wheels (Q E) and the keys (Z X C).
+		var r := Rect2(Vector2(PAD + i * STEP + (4 if i >= 2 else 0), PAD), Vector2(SLOT, SLOT))
+		var pick := quick_key_spell(key)
+		var spell := ItemData.find(ItemData.spell_key(pick[1])) as SpellData if pick[1] != &"" else null
+		UiSkin.slot(g, r, UiSkin.SlotLook.SELECTED if spell and spell.id == in_hand else UiSkin.SlotLook.MAGIC)
+		if spell:
+			_draw_item(g, font, r, spell, 1)
+			if c.quick_casts(pick[0]):
+				_draw_cast_mark(g, r)
+		g.draw_string(font, r.position + Vector2(3, 8), String(key).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
+			Color(UiSkin.DIM, 0.9))
+
+
 # --- drawing: inventory ------------------------------------------------------------------
 
 func _draw_inventory(g: Control) -> void:
@@ -648,8 +700,7 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 		g.draw_texture_rect(item.badge, Rect2(r.position + Vector2(r.size.x - b - 1.5, 1.5), Vector2(b, b)), false,
 			Color(1, 1, 1, alpha))
 	if item.is_spell():
-		# Spell shortcut: a small mark, and red when it can't be cast right now.
-		g.draw_rect(Rect2(r.position + Vector2(SLOT - 6, 2), Vector2(4, 4)), Color("7fd4ff"))
+		# Red when it can't be cast right now.
 		if world.character.cast_problem(item as SpellData) != "":
 			g.draw_rect(r.grow(-2), BAD)
 	elif count > 1:
@@ -673,38 +724,68 @@ const BUFF_STEP := 20
 
 ## Buffs on you, left to right, above the status panel: the spell's icon in a slot and
 ## the time left under it. Hover one for what it does.
-func _draw_buffs(g: Control) -> void:
+## What the buff row shows: your buffs, then your lights and familiars that are out.
+## Each: [key, spell, seconds left, timed, count text ("2/3" for Wisps, else "")].
+func buff_entries() -> Array[Array]:
 	var p := world.player
-	var font := ThemeDB.fallback_font
-	var i := 0
+	var out: Array[Array] = []
 	for effect: StringName in p.buffs:
 		var spell: SpellData = p.buff_spells.get(effect)
+		out.append([effect, spell, p.buffs[effect], spell == null or spell.duration > 0.0, ""])
+	for id in world.character.known_spells:
+		var spell := ItemData.find(ItemData.spell_key(id)) as SpellData
+		if spell == null or not spell.cast in [SpellData.Cast.SUMMON, SpellData.Cast.LIGHT]:
+			continue
+		var n := world.summons_of(spell).size()
+		if n == 0:
+			continue
+		var most := maxi(spell.light_max, 1) if spell.light_placed else 1
+		out.append([StringName("summon_" + String(id)), spell, world.summon_time_left(spell), true,
+			"%d/%d" % [n, most] if most > 1 else ""])
+	return out
+
+
+func _draw_buffs(g: Control) -> void:
+	var font := ThemeDB.fallback_font
+	var entries := buff_entries()
+	for i in entries.size():
+		var e: Array = entries[i]
+		var spell: SpellData = e[1]
+		var left: float = e[2]
+		var timed: bool = e[3]  # auras (Cozy) have no timer
 		var r := Rect2(i * BUFF_STEP, 0, BUFF_STEP - 2, BUFF_STEP - 2)
 		UiSkin.slot(g, r, UiSkin.SlotLook.MAGIC)
-		var timed := spell == null or spell.duration > 0.0  # auras (Cozy) have no timer
 		if spell and spell.icon:
 			# Blinks in its last 10 seconds.
-			var left: float = p.buffs[effect]
 			var a := 1.0 if not timed or left > 10.0 or fmod(left, 0.5) > 0.2 else 0.35
 			g.draw_texture_rect(spell.icon, Rect2(r.position + Vector2(1, 1), Vector2(16, 16)), false, Color(1, 1, 1, a))
-		var text := _clock(p.buffs[effect]) if timed else ""
+		var count: String = e[4]
+		if count != "":
+			g.draw_string_outline(font, r.position + Vector2(1, 6), count, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2,
+				Color(0, 0, 0, 0.8))
+			g.draw_string(font, r.position + Vector2(1, 6), count, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.GOLD)
+		var text := _clock(left) if timed else ""
 		var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
 		g.draw_string_outline(font, r.position + Vector2((r.size.x - tw) * 0.5, r.size.y + 6), text,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 6, 2, Color(0, 0, 0, 0.8))
 		g.draw_string(font, r.position + Vector2((r.size.x - tw) * 0.5, r.size.y + 6), text,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.TEXT)
-		i += 1
 
 
-## The buff under the mouse (effect id), or &"".
-func _buff_at_mouse() -> StringName:
+## The buff row entry under the mouse (see buff_entries), or [].
+func _buff_entry_at_mouse() -> Array:
 	var local := _buffs.get_local_mouse_position()
-	var i := 0
-	for effect: StringName in world.player.buffs:
+	var entries := buff_entries()
+	for i in entries.size():
 		if Rect2(i * BUFF_STEP, 0, BUFF_STEP - 2, BUFF_STEP - 2).has_point(local):
-			return effect
-		i += 1
-	return &""
+			return entries[i]
+	return []
+
+
+## The buff under the mouse (its key), or &"".
+func _buff_at_mouse() -> StringName:
+	var e := _buff_entry_at_mouse()
+	return e[0] if not e.is_empty() else &""
 
 
 ## Seconds as m:ss.
@@ -1327,8 +1408,8 @@ func _move_stack(from: Inventory, slot: int, to: Inventory) -> void:
 func click_slot(slot: int, inv: Inventory = null) -> void:
 	if inv == null:
 		inv = world.character.inventory
-	elif _cursor_is_spell():
-		return  # spell shortcuts don't go in chests
+	if _cursor_is_spell():
+		return  # spells go in quick slots (Equipment window), not the inventory
 	if cursor_count == 0:
 		if not inv.is_empty(slot):
 			cursor_id = inv.ids[slot]
@@ -1359,7 +1440,7 @@ func click_slot(slot: int, inv: Inventory = null) -> void:
 func right_click_slot(slot: int, inv: Inventory = null) -> void:
 	if inv == null:
 		inv = world.character.inventory
-	elif _cursor_is_spell():
+	if _cursor_is_spell():
 		return
 	if cursor_count == 0:
 		if inv.is_empty(slot):
@@ -1424,27 +1505,29 @@ func quick_unequip(eq: StringName) -> void:
 	c.inventory.add(item_id, 1)
 
 
-func click_book_slot(i: int) -> void:
+## A quick slot (Equipment window): with a spell picked up, puts it there; with
+## nothing, picks its spell up.
+func click_quick_slot(slot: StringName) -> void:
 	var c := world.character
 	if _cursor_is_spell():
-		if c.put_in_book(i, _cursor_spell()):
+		if c.set_quick(slot, _cursor_spell()):
 			_clear_cursor()
 		else:
-			EventBus.debug_message.emit("Too powerful for this spellbook (needs a book for higher tiers)")
+			EventBus.debug_message.emit("Only timed effects on you go in the buff set (buffs, Light Orb, Familiar)")
 	elif cursor_count == 0:
-		var loadout := c.book_loadout()
-		if loadout[i] != &"":
-			cursor_id = ItemData.spell_key(loadout[i])
+		var id := c.quick_spell(slot)
+		if id != &"":
+			cursor_id = ItemData.spell_key(id)
 			cursor_count = 1
-			c.put_in_book(i, &"")
+			c.set_quick(slot, &"")
 
 
-func click_known_spell(i: int) -> void:
+func click_known_spell(spell_id: StringName) -> void:
 	if cursor_count > 0:
 		if _cursor_is_spell():
 			_clear_cursor()
 		return
-	cursor_id = ItemData.spell_key(_known()[i])
+	cursor_id = ItemData.spell_key(spell_id)
 	cursor_count = 1
 
 
@@ -1499,51 +1582,51 @@ func _clear_cursor() -> void:
 # --- spell wheel -------------------------------------------------------------------------
 
 func _update_wheel(paused: bool) -> void:
-	# R: tap = take the spellbook out (or put it back), hold = spell wheel.
-	if Input.is_action_just_pressed("spellbook") and not paused and not open:
-		_r_held = 0.0
-		_r_down = true
-		world.player.r_combo_used = false
-	if _r_down:
-		_r_held += get_process_delta_time()
-		if not wheel_open and _r_held >= wheel_hold_seconds and not world.player.r_combo_used:
-			wheel_open = true
-			wheel_center = _wheel.get_local_mouse_position()
-			wheel_choice = &""
-		if not Input.is_action_pressed("spellbook"):
-			_r_down = false
-			if world.player.r_combo_used:
-				# R + number was a quick cast: letting go of R does nothing else.
-				wheel_open = false
-				wheel_choice = &""
-				_wheel.visible = false
-				return
-			if not wheel_open:
-				world.player.toggle_spellbook()
-	if not wheel_open:
+	# Q and E: hold = that wheel (move toward a spell, let go), tap = its last pick again.
+	if wheel_key == &"" and not paused and not open:
+		for w: StringName in CharacterData.WHEELS:
+			if Input.is_action_just_pressed(StringName("wheel_" + String(w))):
+				wheel_key = w
+				_key_held = 0.0
+				break
+	if wheel_key == &"":
 		_wheel.visible = false
 		return
+	var action := StringName("wheel_" + String(wheel_key))
+	var down := Input.is_action_pressed(action)
+	_key_held += get_process_delta_time()
+	if not wheel_open and down and _key_held >= wheel_hold_seconds:
+		wheel_open = true
+		wheel_center = _wheel.get_local_mouse_position()
+		wheel_choice = &""
+	if not down:
+		var w := wheel_key
+		var was_open := wheel_open
+		var choice := wheel_choice
+		wheel_key = &""
+		wheel_open = false
+		wheel_choice = &""
+		_wheel.visible = false
+		if not was_open:
+			world.player.tap_wheel(w)
+		elif choice != &"":
+			world.player.use_quick(choice)
+		_redraw()
+		return
+	if not wheel_open:
+		return
 	_wheel.visible = true
-	var spells := wheel_spells()
+	var slots := wheel_slots()
 	var d := _wheel.get_local_mouse_position() - wheel_center
 	wheel_choice = &""
-	if d.length() > 8.0 and not spells.is_empty():
-		wheel_choice = spells[wheel_index(d.angle(), spells.size())]
+	if d.length() > 8.0 and not slots.is_empty():
+		wheel_choice = slots[wheel_index(d.angle(), slots.size())]
 	_wheel.queue_redraw()
-	if not _r_down:
-		wheel_open = false
-		_wheel.visible = false
-		if wheel_choice != &"":
-			world.player.ready_spell(wheel_choice)
 
 
-## The spells on the wheel: the book's slots that have one.
-func wheel_spells() -> Array[StringName]:
-	var out: Array[StringName] = []
-	for s in world.character.book_loadout():
-		if s != &"":
-			out.append(s)
-	return out
+## The filled slots of the open wheel.
+func wheel_slots() -> Array[StringName]:
+	return world.character.wheel(wheel_key) if wheel_key != &"" else ([] as Array[StringName])
 
 
 ## Which of `n` wheel segments an angle (radians, 0 = right) falls in. Segment 0 is at
@@ -1554,32 +1637,49 @@ static func wheel_index(angle: float, n: int) -> int:
 
 
 func draw_wheel(w: Control) -> void:
-	var spells := wheel_spells()
+	var slots := wheel_slots()
+	var c := world.character
 	var font := ThemeDB.fallback_font
 	w.draw_circle(wheel_center, wheel_radius + 14.0, Color(0.03, 0.04, 0.06, 0.55))
-	if spells.is_empty():
-		w.draw_string(font, wheel_center + Vector2(-40, 3), "No spells in your book", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
+	var key := String(wheel_key).to_upper()
+	var kw := font.get_string_size(key, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x
+	w.draw_string(font, wheel_center + Vector2(-kw * 0.5, 3), key, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiSkin.GOLD)
+	if slots.is_empty():
+		var empty := "Nothing on %s (Equipment window, P)" % key
+		var ew := font.get_string_size(empty, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+		w.draw_string(font, wheel_center + Vector2(-ew * 0.5, wheel_radius + 26.0), empty, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
 		return
-	for i in spells.size():
-		var a := -PI * 0.5 + TAU * i / spells.size()
+	for i in slots.size():
+		var a := -PI * 0.5 + TAU * i / slots.size()
 		var at := wheel_center + Vector2.from_angle(a) * wheel_radius
-		var spell := ItemData.find(ItemData.spell_key(spells[i])) as SpellData
+		var spell := ItemData.find(ItemData.spell_key(c.quick_spell(slots[i]))) as SpellData
 		var r := Rect2(at - Vector2(SLOT, SLOT) * 0.5, Vector2(SLOT, SLOT))
-		var chosen := spells[i] == wheel_choice
+		var chosen := slots[i] == wheel_choice
 		UiSkin.slot(w, r, UiSkin.SlotLook.SELECTED if chosen else UiSkin.SlotLook.MAGIC)
 		if spell and spell.icon:
 			w.draw_texture_rect(spell.icon, r.grow(-2), false)
-		if spell and world.character.cast_problem(spell) != "":
+		if spell and c.cast_problem(spell) != "":
 			w.draw_rect(r.grow(-1), BAD)
+		if c.quick_casts(slots[i]):
+			_draw_cast_mark(w, r)
 	var label := "Pick a spell"
 	if wheel_choice != &"":
-		var chosen_spell := ItemData.find(ItemData.spell_key(wheel_choice)) as SpellData
+		var chosen_spell := ItemData.find(ItemData.spell_key(c.quick_spell(wheel_choice))) as SpellData
 		label = chosen_spell.display_name if chosen_spell else String(wheel_choice)
-		var why := world.character.cast_problem(chosen_spell)
+		label += " (cast)" if c.quick_casts(wheel_choice) else " (in hand)"
+		var why := c.cast_problem(chosen_spell)
 		if why != "":
-			label += " (%s)" % why
+			label += ": " + why
 	var lw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 	w.draw_string(font, wheel_center + Vector2(-lw * 0.5, wheel_radius + 26.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
+
+
+## The "casts right away" mark on a quick slot: a small gold bolt in the top right corner.
+func _draw_cast_mark(g: CanvasItem, r: Rect2) -> void:
+	var o := r.position + Vector2(r.size.x - 6, 1)
+	var bolt := PackedVector2Array([o + Vector2(3, 0), o + Vector2(0, 3), o + Vector2(2, 3), o + Vector2(1, 6),
+		o + Vector2(5, 2), o + Vector2(3, 2), o + Vector2(4, 0)])
+	g.draw_colored_polygon(bolt, UiSkin.GOLD)
 
 
 # --- tooltips and notes ------------------------------------------------------------------
@@ -1598,10 +1698,12 @@ func _update_tooltip(over: Control) -> void:
 		elif over == _craft:
 			h = _craft_hit(over.get_local_mouse_position())
 		elif over == _buffs:
-			var effect := _buff_at_mouse()
-			var spell: SpellData = world.player.buff_spells.get(effect)
-			if spell:
-				extra_only = "%s, %s left\n%s" % [spell.display_name, _clock(world.player.buffs[effect]), spell.description]
+			var e := _buff_entry_at_mouse()
+			if not e.is_empty() and e[1] != null:
+				var spell: SpellData = e[1]
+				var count: String = e[4]
+				extra_only = "%s%s, %s left\n%s" % [spell.display_name, (" (%s out)" % count) if count != "" else "",
+					_clock(e[2]), spell.description]
 		elif over is HudWindow:
 			var t: Array = (over as HudWindow).tooltip_at(over.get_local_mouse_position())
 			item = t[0]
@@ -1630,6 +1732,8 @@ func _update_tooltip(over: Control) -> void:
 
 
 static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
+	if item is SpellData:
+		return spell_tooltip(item as SpellData, c)
 	var lines := PackedStringArray([item.display_name])
 	if item.mining_damage > 0.0:
 		var area: String = str(item.mining_area) if item.mining_area_max <= item.mining_area \
@@ -1642,22 +1746,14 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 		lines.append("Reach %s tiles" % str(item.reach_tiles))
 	match item.kind:
 		ItemData.Kind.BOOK:
-			lines.append("Spellbook: %d slots, spell power x%s" % [item.spell_slots, str(item.spell_power)])
+			lines.append("Spellbook: spell power x%s for every spell, spells up to tier %d" % [str(item.spell_power), item.max_spell_tier])
 		ItemData.Kind.CONDUIT:
 			lines.append("Conduit (%s): spell power x%s, +%s reach" % [String(item.conduit_type),
 				str(item.spell_power), str(item.spell_reach_bonus)])
 		ItemData.Kind.TOME:
 			var s := ItemData.find(ItemData.spell_key(item.tome_spell))
 			lines.append("Tome: casts %s" % (s.display_name if s else String(item.tome_spell)))
-	if item is SpellData:
-		var spell := item as SpellData
-		if spell.requires_conduit != &"":
-			lines.append("Needs a %s conduit" % String(spell.requires_conduit))
-		if c and c.cast_problem(spell) != "":
-			lines.append("Can't cast now: %s" % c.cast_problem(spell))
-		elif c and c.knows(spell.id) and not c.in_book(spell.id) and item.tome_spell == &"":
-			lines.append("Not in your book: casts unfocused (1.5x mana and cooldown, no book bonus)")
-	elif item.places_wall != &"":
+	if item.places_wall != &"":
 		lines.append("Right click: place as a back wall")
 	if item.teaches_spell != &"":
 		lines.append_array(scroll_lines(item, c))
@@ -1665,6 +1761,41 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 	if item.description != "":
 		lines.append(item.description)
 	return "\n".join(lines)
+
+
+## A spell's tooltip: name, description, mana cost, then what else it needs (reagents,
+## a conduit, a book tier) and why it can't be cast right now.
+static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
+	var lines := PackedStringArray([spell.display_name])
+	if spell.description != "":
+		lines.append(spell.description)
+	var mana := PackedStringArray()
+	if spell.cast == SpellData.Cast.CHARGED:
+		mana.append("%s to %s mana" % [_num(spell.mana_cost * spell.charge_min_mana), _num(spell.mana_cost)])
+	elif spell.mana_cost > 0.0:
+		mana.append("%s mana" % _num(spell.mana_cost))
+	if spell.mana_per_second > 0.0:
+		mana.append("%s mana per second" % _num(spell.mana_per_second))
+	lines.append("Mana: " + (", ".join(mana) if not mana.is_empty() else "none"))
+	var needs := PackedStringArray()
+	for id: StringName in spell.reagents:
+		var it := ItemData.find(id)
+		needs.append("%d %s" % [spell.reagents[id], it.display_name if it else String(id)])
+	if spell.requires_conduit != &"":
+		needs.append("a %s conduit" % String(spell.requires_conduit))
+	if spell.tier > 1:
+		needs.append("a tier %d book" % spell.tier)
+	if not needs.is_empty():
+		lines.append("Needs: " + ", ".join(needs))
+	if spell.cooldown > 0.0:
+		lines.append("Cooldown %s s" % _num(spell.cooldown))
+	if c and c.knows(spell.id) and c.cast_problem(spell) != "":
+		lines.append("Can't cast now: %s" % c.cast_problem(spell))
+	return "\n".join(lines)
+
+
+static func _num(v: float) -> String:
+	return str(roundi(v)) if is_equal_approx(v, roundf(v)) else "%.1f" % v
 
 
 ## What a scroll does, for its tooltip: both buttons, how long it lasts, one use.

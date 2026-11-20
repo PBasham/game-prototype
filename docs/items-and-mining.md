@@ -14,16 +14,19 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **1 to 0**, mouse wheel | Pick a hotbar slot |
 | **Left click** | Use the held item on the **front** layer: swing, mine, chop, place a block, plant. Hold to repeat. |
 | **Right click** | On something you can interact with (stations, chests, doors, sticks and rocks on the ground): interact. Otherwise use the held item on the **back** layer: place the block as a background wall, mine background walls (also behind blocks). |
-| **E** | Interact with the nearest thing in reach (a station, chest or door, else the nearest forageable or ripe berry bush) |
 | **I** or **Tab** | Open / close the inventory |
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
-| **P** | Equipment window (armor, accessories, book, conduit, stats, equipped spells); see [combat.md](combat.md) |
-| **L** | Spell Index (every spell you know) |
-| **F** | Movement spell (Fly or Levitate) on or off; see Spell controls |
-| **R** (tap) | Take the spellbook out (like Starbound's matter manipulator), with the last spell you used; tap again to go back to your hotbar slot |
-| **R** (hold) | Spell wheel: move the mouse toward a spell, let go to cast with it |
+| **P** | Equipment window (armor, accessories, book, conduit, stats, quick spells); see [combat.md](combat.md) |
+| **L** | Spell Index (every spell you know: tabs and a search box) |
+| **Q**, **E** (hold) | That spell wheel: move the mouse toward a spell, let go. It's cast or put in your hand by its slot's mode (see Quick spells) |
+| **Q**, **E** (tap) | The wheel's last pick again |
+| **Z**, **X**, **C** | Their quick spell (cast or put in hand, by the slot's mode) |
+| **B** | The buff set: casts every spell in it at once |
+| **R** | Mining Spell in hand (again: put it away, back to your hotbar slot) |
+| **Ctrl + R** | Chopping Spell in hand (same) |
+| **F** | Movement spell (Fly or Levitate) on or off |
+| **Caps Lock** | Walk / run toggle |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
-| **Q** | Throw the selected stack |
 | **H** | Put the held item away / take it out |
 
 Inventory panel (I): rows of 10, the top row is the hotbar. The number of slots is the
@@ -43,11 +46,11 @@ the panel lays itself out from it.
 - **Equipment window (P)**, `src/ui/hud/equipment_window.gd`: your character in the
   middle (a live preview; armor isn't drawn on it yet), armor on the left (head, chest,
   legs), trinkets on the right (3 accessory slots), Book and Conduit underneath, stats on
-  the far right. Below: **Equipped spells** (the book's slots), folded away by clicking
-  its header, and the **Spell Index (L)** button.
+  the far right. Below: **Quick spells** (the Q and E wheels, Z X C, the buff set),
+  folded away by clicking its header, and the **Spell Index (L)** button.
 - **Spell Index (L)**, `src/ui/hud/spell_window.gd`: every spell you know with its tier
-  and description; "In book" marks the ones in your book. Mouse wheel scrolls
-  (`rows_shown`, 7). Click a spell, then a book slot or a hotbar slot.
+  and description, tabs by group and a search box; "On Q, Z" says which quick slots hold
+  it. Mouse wheel scrolls (`rows_shown`, 7). Click a spell, then a quick slot.
 - Both are movable windows (`HudWindow`, `src/ui/hud/hud_window.gd`): drag the title
   bar. The Equipment window opens in the middle (below the inventory when there's
   room); the Spell Index opens beside it, and if you haven't moved the Equipment window
@@ -177,7 +180,7 @@ How a spell works is its `cast`:
 | WARD | A rune on the ground under the cursor (within 12 tiles down); the first enemy to touch it takes `damage` and `knockback`. Up to `max_active`, the oldest goes | `damage`, `knockback`, `duration`, `max_active` |
 | SUMMON | A familiar that follows you and shoots the nearest enemy in range. One at a time | `damage`, `summon_interval`, `summon_tiles`, `duration`, projectile fields |
 | CONJURE | A temporary platform at the cursor (only in open air). Works like a platform tile (Down + Jump drops through), drops nothing, blinks in its last 3 s | `conjure_tiles`, `duration` |
-| CHAIN | Hits the damageable thing nearest the cursor within `reach_tiles` of you, then jumps | `damage`, `chain_jumps`, `chain_tiles`, `chain_falloff` |
+| CHAIN | A bolt shoots toward the cursor out to `reach_tiles`; the first thing it touches is hit, then it jumps. A block stops it; if it misses, it fizzles (mana spent) | `damage`, `chain_jumps`, `chain_tiles`, `chain_falloff` |
 | RITUAL | Stand still for `ritual_seconds` (moving or getting hurt cancels it); mana is paid when it completes. Effect `recall`: back to your bed or the world spawn | `ritual_seconds`, `effect` |
 | SENSE | Outlines every `sense_block` tile within `sense_tiles` of you, above the darkness, for `duration` (a snapshot when cast) | `sense_block`, `sense_tiles`, `duration` |
 | LIGHT | A floating light: follows you (one at a time; casting again refreshes it), or with `light_placed` you steer it with the cursor while the button is held and it stays where you let go | `light_radius`, `light_color`, `duration`, `light_placed`, `light_max` |
@@ -208,7 +211,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Conjure Platform | CONJURE | 6 tiles wide at the cursor for 30 s. 10 mana. |
 | Arcane Edge | BUFF | Melee damage x1.5 for 60 s. 20 mana. |
 | Barrier | BUFF (reactive) | Waits up to 5 minutes. When a hit would leave you under 25% health it pops: a shield soaks the next 30 damage for 10 s (a bubble, "blocked" when it soaks a whole hit). 30 mana. |
-| Chain Spark | CHAIN | 10 damage to the target nearest the cursor within 12 tiles, then up to 3 jumps of 6 tiles, 20% weaker each. 12 mana. |
+| Chain Spark | CHAIN | Lightning toward the cursor, up to 12 tiles: 10 damage to the first thing it touches, then up to 3 jumps of 6 tiles, 20% weaker each. A miss still costs the 12 mana. |
 | Recall | RITUAL | 3 s standing still, then home (your bed, else the world spawn). 40 mana at the end. |
 | Seek Ore | SENSE | Copper ore within 30 tiles glows through everything for 15 s. 15 mana. |
 | Mend | TOGGLE | Heals 3 health per second (times spell power) while on. 6 mana/s. |
@@ -216,53 +219,63 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 Damageable things are nodes in the `damageable` group with `hit_rect()` and
 `take_damage(amount, from)`; enemies will use the same.
 
-- **Book or not:** any spell you know can be cast, also from a hotbar slot (put it
-  there from the Spell Index). Spells in your book are **focused**; known spells outside
-  it are **unfocused**: 1.5x mana and cooldown, and no book bonus to their power
-  (`Player.unfocused_mana_mult`, `unfocused_cooldown_mult`). The book's tier limit
-  applies either way. A hint by the cursor and the tooltip say when a spell is
-  unfocused. R, the spell wheel, book number keys and quick cast use the book.
+- **Any spell you know can be cast**, from a quick slot (below), R / Ctrl + R, or a tome.
+  The equipped book powers every spell (`spell_power`) and limits the tier you can cast
+  (`max_spell_tier`). Spells don't go in the book any more, and not on the hotbar.
 - **Spells you know** are kept on the character. A new character knows none. You learn
   one from its **scroll** (made at the Spell Weaving Table, crafting.md).
 - **Scrolls are one use.** Hold one:
   - **Left click: cast the spell once, free:** no mana, reagents, book or tier
-    needed; it does share the spell's cooldown with casting it from the book (a tier 3 spell works before you have a tier 3 book). Concentration spells
+    needed; it does share the spell's cooldown with casting it normally (a tier 3 spell works before you have a tier 3 book). Concentration spells
     run free for 60 s (`Player.scroll_concentration_seconds`) and held beams can be used
     for 15 s (`scroll_beam_seconds`), both shown as a buff that ends the spell (a beam
-    not in your book is put away). A charged bolt fires at full charge; a ritual still
+    you don't know is put away). A charged bolt fires at full charge; a ritual still
     needs you to stand still. If the spell can't go off (no room, no target), the
     scroll isn't used. A scroll item's `scroll_seconds` overrides the time.
   - **Right click, at a Spell Weaving Table: learn it** (it joins your known spells; put
-    it in your book to cast it normally). Learning also uses the spell's `learn_cost`:
+    it in a quick slot to cast it). Learning also uses the spell's `learn_cost`:
     copper bars by tier (4, 10, 20), or 20 Slime for Gel Cushion. If you already know it,
     or you're short, nothing is used.
-  - The tooltip and a hint by the cursor spell both out. Console `devkit` teaches them all and fills the
-  book's free slots; `book <slot> <spell>` puts one in a slot. How you learn spells in the real game
+  - The tooltip and a hint by the cursor spell both out. Console `devkit` teaches them all; `quick <slot> <spell>` puts one
+  in a quick slot (q1..q8, e1..e8, z, x, c, buff1..buff6). How you learn spells in the real game
   comes later.
 - **The spellbook is part of the character**, not a hotbar item: the **Book** slot in
-  the Equipment window. Empty = the Basic Spellbook (4 slots). Other books can have more
-  slots and `spell_power`. Your loadout stays when you swap books; a smaller book just
-  uses its first slots.
-- **Putting spells in the book:** open the Spell Index (L), click a spell, then click a
-  slot under "Equipped spells" in the Equipment window (P). Right click a book slot to
-  empty it. Only
-  spells in the book can be cast (from the wheel or a shortcut).
-- **Casting:**
-  - **R, the spellbook key:** tap R to take the book out with the last spell you used
-    (or the book's first), tap again to put it away and go back to your hotbar slot.
-    Hold R for the **spell wheel**: move toward a spell, let go. While the book is
-    out the hotbar shows no selection; picking a slot also puts it away.
-  - **Hotbar shortcuts:** click a known spell, then a hotbar slot. Number keys and the
-    wheel then pick it like an item. A small blue mark shows it's a shortcut; it turns
-    red when the spell can't be cast (not in the book, missing conduit). Shortcuts
-    can't be thrown into the world; throwing one just removes it.
-  - Left click casts on the front layer, right click on the back layer.
+  the Equipment window. Empty = the Basic Spellbook (x1 power, tier 1). Other books have
+  more `spell_power` and a higher `max_spell_tier`. (`spell_slots` on books is unused now.)
+- **Quick spells** (Equipment window, P, "Quick spells"): click a spell in the Spell
+  Index (L), then a slot. Click a filled slot to pick its spell up; right click empties it.
+  - **Q and E wheels**, 8 slots each. Hold Q (or E): the wheel opens; move toward a spell
+    and let go. Tap Q: the last spell picked on that wheel again (or its first). The
+    small panel beside the hotbar shows what Q and E would pick, and Z, X, C.
+  - **Z, X, C**: one spell each.
+  - **Cast or in hand:** each wheel slot and Z X C either **casts right away** (aimed at
+    the cursor, then you're back to what you held; a toggle spell just toggles) or **puts
+    the spell in your hand** (left click casts, like a tool). A small gold bolt in the
+    slot's top right corner means "casts right away"; click that corner to flip it. The
+    default comes from the spell (`SpellData.quick_default`; by cast: bolts, beams, charged
+    and chain spells and steered lights go in hand, everything else casts).
+  - **Buff set (B)**, 6 slots, only timed effects on you (buffs, Light Orb, Familiar). B
+    casts them all at once, in order, without the casting animation. One that's already
+    on is skipped; one that can't go off (mana, cooldown, reagents) is skipped and named.
+  - The same spell can be on both wheels and a key; within one wheel (or Z X C, or the
+    buff set) putting it in a new slot moves it.
+  - Saved with the character (`quick`, `quick_modes`, `wheel_last`). Older characters:
+    the book's spells went on the Q wheel and hotbar spell shortcuts on the E wheel.
+- **Casting from your hand:** left click casts on the front layer, right click on the
+  back layer (mining and chopping spells). Picking a hotbar slot puts the spell away.
+- **Timers:** buffs, and your Familiar, Light Orb and Wisps while they're out, show in
+  the row above the health panel with the time left (Wisps also show how many are out,
+  like 2/3). Hover for details.
+- **Spell Index (L):** tabs (All, Tools, Movement, Attack, Defense, Light: the spell's
+  `group`) and a search box (click it and type; Enter or Esc stops). Each row says which
+  quick slots hold the spell. Spell tooltips: name, description, mana, then what else
+  it needs (reagents, a conduit, a book tier) and its cooldown.
 - **Conduit** slot: the focus your casting hand uses. `spell_power` and
   `spell_reach_bonus` boost every spell; `conduit_type` unlocks spells that require it.
   Swap conduits by dragging them in and out of the slot. A spell that needs a conduit
   you don't have shows the reason by the cursor and in its tooltip.
-- **Tomes:** a hotbar item that casts one spell (`tome_spell`) without needing it in
-  the book (a conduit requirement still applies). Strength uses the tome's
+- **Tomes:** a hotbar item that casts one spell (`tome_spell`) without needing to know
+  it (a conduit requirement still applies). Strength uses the tome's
   `spell_power` instead of the book's.
 - **The book is your building tool too:** placing blocks, walls and seeds uses the
   book's `build_reach_tiles` (12, plus the conduit's reach bonus) and the shared area
@@ -272,9 +285,10 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
 - **Mana:** 100, refills after a short pause. See [crafting.md](crafting.md).
 
 Debug builds add test magic (runtime only, never saved, not real content) in the third
-inventory row: **Dev Grimoire** (8 slots, x1.5), **Dev Focus** (a "focus" conduit,
-x1.25, +4 reach), **Dev Tome**, and the spell **Dev Wide Beam** (wider, needs the focus).
-Try: put Dev Wide Beam in your book, see it red on the wheel, equip Dev Focus, cast it.
+inventory row: **Dev Grimoire** (x1.5, tier 3), **Dev Focus** (a "focus" conduit,
+x1.25, +4 reach), **Dev Tome**, and the spell **Dev Wide Beam** (tier 2, wider, needs the
+focus). Try: put Dev Wide Beam on a wheel, see it red, equip the Dev Grimoire and the Dev
+Focus, cast it. The dev kit fills both wheels, Z X C and the buff set to try things with.
 
 ## Starting state, dev kit and the character file
 
@@ -408,16 +422,3 @@ Armor (head, chest, legs), three accessory slots and melee weapons are covered i
 with `melee_damage > 0`.
 
 
-## Spell controls (options being tried out)
-
-Five ways to switch spells faster. Each can be turned on or off in **Esc, Settings,
-Spell controls** (saved), or with the console `spellopt [option] [on|off]`. Code:
-`Player._number_key`, `toggle_movement_spell`, `quick_cast`, `_offhand_cast`.
-
-| Option | Default | What it does |
-|---|---|---|
-| `movement_key` | on | **F** turns your movement spell on or off: the last of Fly or Levitate you used (Fly first). It needs the mana for it (unfocused, 1.5x, if it's not in your book). You keep whatever is in your hand. |
-| `double_jump` | on | Jumping again in the air (after 0.12 s) turns the movement spell on. |
-| `book_numbers` | on | With the spellbook out (R), the number keys pick the book's slots instead of the hotbar. R again goes back to the hotbar. |
-| `quick_cast` | on | Hold R and tap a number: casts that book slot once, then you're back to what you held. Concentration spells just toggle. The wheel doesn't open after a quick cast. |
-| `two_hands` | off | With the spellbook out, right click casts the **off-hand spell**: book slot 2, or slot 1 when slot 2 is in your hand. Not while holding a mining or chopping spell (right click stays the back layer). Off by default because it takes right click from the back layer for other spells. |

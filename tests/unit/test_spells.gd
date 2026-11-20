@@ -145,10 +145,6 @@ func test_cooldowns() -> void:
 	assert_gt(u.cooldown_left(blink), 0.5)
 
 
-func _set_opt(key: String, on: bool) -> void:
-	Settings.set_value("spells", key, on)
-
-
 func test_wisp_follows_the_cursor_then_stays() -> void:
 	var p := w.player
 	var u := w.item_user
@@ -216,9 +212,8 @@ func test_known_spells_craft_cheaper_and_copy_needs_a_strong_mage() -> void:
 	assert_eq(plain.inputs[&"copper_bar"], 10, "the real recipe is untouched")
 	var other := Registry.get_def(&"recipes", &"wooden_sword") as RecipeData
 	assert_eq(Crafting.for_crafter(other, c, 0.5), other, "not a scroll: unchanged")
-	# Copy tab: every known spell (not only the book), for a Blank Scroll, if your max mana
-	# is big enough for the spell's tier. No mana is used.
-	c.book_spells.erase(&"hyper_drill")
+	# Copy tab: every known spell, for a Blank Scroll, if your max mana is big enough for
+	# the spell's tier. No mana is used.
 	var copies := Crafting.copy_recipes(c, [100.0, 200.0, 300.0] as Array[float])
 	var with_scrolls := c.known_spells.filter(func(id: StringName) -> bool:
 		return ItemData.find(StringName("scroll_" + String(id))) != null)
@@ -238,33 +233,24 @@ func test_known_spells_craft_cheaper_and_copy_needs_a_strong_mage() -> void:
 	assert_eq(p.mana, 40.0, "no mana used")
 
 
-func test_unfocused_casting_outside_the_book() -> void:
+func test_every_known_spell_casts_with_the_book_power() -> void:
 	var c := w.character
 	var p := w.player
 	var u := w.item_user
 	var spark := _spell(&"spark")
-	c.book_spells.erase(&"spark")
-	assert_eq(c.cast_problem(spark), "", "a known spell can be cast from outside the book")
+	assert_eq(c.cast_problem(spark), "", "known: castable from anywhere")
 	c.known_spells.erase(&"blink")
 	assert_eq(c.cast_problem(_spell(&"blink")), "You don't know this spell")
-	assert_true(p.is_unfocused(spark))
-	assert_eq(p.mana_mult(spark), 1.5)
-	assert_eq(p.cooldown_mult(spark), 1.5)
 	# Tier still counts: a tier 3 spell needs a tier 3 book.
 	assert_ne(c.cast_problem(_spell(&"hyper_drill")), "", "the basic book can't handle tier 3")
-	# Power: no book bonus.
-	assert_almost_eq(c.spell_power(null, true), c.spell_power(null) / (c.book().spell_power if c.book() else 1.0), 0.001)
-	# Casting it from a hotbar slot costs 1.5x.
-	c.inventory.set_slot(4, ItemData.spell_key(&"spark"), 1)
-	p.select_slot(4)
+	# Full price, whatever slot it comes from.
+	p.ready_spell(&"spark")
 	p.mana = 100.0
 	p.infinite_mana = false
 	await wait_seconds(0.2)
 	u.cursor_override = p.chest() + Vector2(40, 0)
 	u._on_impact(spark)
-	assert_almost_eq(p.mana, 100.0 - spark.mana_cost * 1.5, 0.01, "1.5x mana")
-	c.put_in_book(0, &"spark")
-	assert_false(p.is_unfocused(spark), "in the book: focused")
+	assert_almost_eq(p.mana, 100.0 - spark.mana_cost, 0.01, "normal mana")
 	u.cursor_override = Vector2.INF
 
 
@@ -282,11 +268,8 @@ func test_scroll_casts_share_the_cooldown() -> void:
 	u.cursor_override = Vector2.INF
 
 
-func test_movement_key_and_double_jump() -> void:
+func test_movement_key() -> void:
 	var p := w.player
-	_set_opt("movement_key", true)
-	_set_opt("double_jump", true)
-	w.character.put_in_book(3, &"levitate")  # movement spells must be in the book too
 	assert_eq(p.movement_spell_id(), &"fly")
 	assert_true(p.toggle_movement_spell())
 	assert_true(p.is_flying())
@@ -294,67 +277,79 @@ func test_movement_key_and_double_jump() -> void:
 	assert_eq(w.character.movement_spell, &"levitate", "remembers the last movement spell")
 	assert_true(p.toggle_movement_spell(), "F turns it off")
 	assert_false(p.is_levitating())
-	# Double jump: jump, then jump again in the air.
-	Input.action_press("jump")
-	await wait_physics_frames(2)
-	Input.action_release("jump")
-	await wait_seconds(0.25)
-	Input.action_press("jump")
-	await wait_physics_frames(2)
-	Input.action_release("jump")
-	assert_true(p.is_levitating(), "double jump starts the movement spell")
-	p.toggle_concentration(_spell(&"levitate"))
 
 
-func test_book_number_keys_and_quick_cast() -> void:
+func test_quick_slots_cast_or_equip() -> void:
 	var p := w.player
 	var c := w.character
-	_set_opt("book_numbers", true)
-	_set_opt("quick_cast", true)
-	c.put_in_book(3, &"spark")
-	p.select_slot(2)
-	p.ready_spell(c.book_loadout()[0])
-	p._number_key(3)
-	assert_eq(p.held_item.id, &"spark", "book out: number keys pick book slots")
 	p.select_slot(2)
 	var held_before := p.held_item
-	# Quick cast (as if R is held): casts and goes back to the hotbar item.
-	assert_true(p.quick_cast(&"spark"))
+	c.set_quick(&"q_1", &"spark")
+	assert_false(c.quick_casts(&"q_1"))
+	assert_true(p.use_quick(&"q_1"))
+	assert_eq(p.held_item.id, &"spark", "in hand")
+	assert_eq(p.selected, -1)
+	assert_eq(c.wheel_last[&"q"], &"q_1", "the wheel remembers it")
+	p.put_spell_away()
+	assert_eq(p.selected, 2)
+	assert_true(p.tap_wheel(&"q"), "tapping Q uses the last pick")
 	assert_eq(p.held_item.id, &"spark")
+	p.select_slot(2)
+	# Cast mode: casts once and goes back to what you held.
+	c.toggle_quick_mode(&"q_1")
+	w.item_user.cursor_override = p.chest() + Vector2(40 * p.facing, 0)
+	assert_true(p.use_quick(&"q_1"))
 	await wait_seconds(0.6)
 	assert_eq(p.selected, 2, "back to the hotbar slot")
 	assert_eq(p.held_item, held_before)
-	_set_opt("book_numbers", false)
-	p.ready_spell(&"spark")
-	p._number_key(4)
-	assert_eq(p.selected, 4, "option off: number keys pick hotbar slots")
-	_set_opt("book_numbers", true)
+	# A toggle just toggles.
+	c.set_quick(&"z", &"mend")
+	assert_true(c.quick_casts(&"z"))
+	assert_true(p.use_quick(&"z"))
+	assert_eq(p.concentration, _spell(&"mend"))
+	p.use_quick(&"z")
+	assert_null(p.concentration)
+	c.set_quick(&"x", &"")
+	assert_false(p.use_quick(&"x"), "empty")
+	w.item_user.cursor_override = Vector2.INF
 
 
-func test_offhand_spell() -> void:
+func test_r_takes_out_the_mining_spell_and_ctrl_r_chopping() -> void:
+	var p := w.player
+	p.select_slot(1)
+	p.toggle_tool_spell(&"mining_spell")
+	assert_eq(p.held_item.id, &"mining_spell")
+	p.toggle_tool_spell(&"chopping_spell")
+	assert_eq(p.held_item.id, &"chopping_spell", "switches straight over")
+	p.toggle_tool_spell(&"chopping_spell")
+	assert_eq(p.selected, 1, "again: put away, back to the hotbar")
+
+
+func test_buff_set_casts_them_all() -> void:
 	var p := w.player
 	var c := w.character
-	c.put_in_book(0, &"spark")
-	c.put_in_book(1, &"mend")
-	_set_opt("two_hands", true)
-	p.ready_spell(&"spark")
-	assert_eq(p.offhand_spell(), &"mend")
-	assert_true(p._offhand_cast())
-	assert_eq(p.concentration, _spell(&"mend"), "right click cast the off-hand spell")
-	assert_eq(p.held_item.id, &"spark", "still holding the main spell")
-	p.toggle_concentration(_spell(&"mend"))
-	p.ready_spell(&"mining_spell")
-	assert_false(p._offhand_cast(), "mining spells keep right click for the back layer")
-	_set_opt("two_hands", false)
-	p.ready_spell(&"spark")
-	assert_false(p._offhand_cast(), "option off")
+	for i in CharacterData.BUFF_SET_SIZE:
+		c.set_quick(CharacterData.buff_slot(i), &"")
+	c.set_quick(&"buff_0", &"arcane_edge")
+	c.set_quick(&"buff_1", &"light_orb")
+	c.set_quick(&"buff_2", &"barrier")
+	p.mana = 1000.0
+	assert_eq(p.cast_buff_set(), 3)
+	assert_true(p.has_buff(&"arcane_edge"))
+	assert_true(p.has_buff(&"barrier"))
+	assert_gt(w.summon_time_left(_spell(&"light_orb")), 0.0)
+	assert_eq(p.cast_buff_set(), 0, "already on: skipped")
+	p.end_buff(&"arcane_edge")
+	p.infinite_mana = false
+	p.mana = 0.0
+	assert_eq(p.cast_buff_set(), 0, "no mana: nothing")
+	assert_false(p.has_buff(&"arcane_edge"))
 
 
 func test_gel_cushion_needs_slime_and_saves_one_fall() -> void:
 	var p := w.player
 	var c := w.character
 	var gel := _spell(&"gel_cushion")
-	c.put_in_book(3, &"gel_cushion")
 	c.inventory.remove(&"slime", c.inventory.count_of(&"slime"))
 	assert_eq(c.cast_problem(gel), "Needs 5 Slime")
 	c.inventory.add(&"slime", 7)
@@ -402,7 +397,6 @@ func _slime_at(offset: Vector2) -> Enemy:
 func test_arcane_bolt_grows_with_charge() -> void:
 	var u := w.item_user
 	var p := w.player
-	w.character.put_in_book(3, &"arcane_bolt")
 	p.ready_spell(&"arcane_bolt")
 	await wait_seconds(0.2)  # a few idle frames (several physics steps can run first)
 	assert_eq(u.mode, ItemUser.Mode.CHARGE)
@@ -532,6 +526,33 @@ func test_chain_spark_jumps() -> void:
 	w.item_user.cursor_override = Vector2.INF
 
 
+func test_chain_spark_fires_without_a_target() -> void:
+	var p := w.player
+	var u := w.item_user
+	var chain := _spell(&"chain_spark")
+	u.cursor_override = p.chest() + Vector2(8 * World.TILE * p.facing, -2 * World.TILE)
+	p.mana = 100.0
+	p.infinite_mana = false
+	assert_eq(u.chain(chain, p.casting_hand_position()), 0, "nothing there: a miss")
+	assert_true(u.cast(chain), "but it still goes off")
+	u.cursor_override = Vector2.INF
+
+
+func test_summon_and_light_timers_show() -> void:
+	var p := w.player
+	var wisp := _spell(&"wisp")
+	assert_eq(w.summon_time_left(wisp), 0.0)
+	w.summon_light_orb(wisp)
+	w.summon_light_orb(wisp)
+	await wait_physics_frames(1)
+	assert_eq(w.summons_of(wisp).size(), 2)
+	assert_gt(w.summon_time_left(wisp), 0.0)
+	var shown := w.hud.buff_entries().filter(func(e: Array) -> bool: return e[1] == wisp)
+	assert_eq(shown.size(), 1)
+	assert_eq(shown[0][4], "2/3", "how many are out")
+	assert_true(p.is_spell_active(wisp))
+
+
 func test_recall_ritual() -> void:
 	var p := w.player
 	var home := w.respawn_position()
@@ -539,7 +560,6 @@ func test_recall_ritual() -> void:
 	p.reset_physics_interpolation()
 	await wait_seconds(1.0)
 	var recall := _spell(&"recall")
-	w.character.put_in_book(0, &"recall")  # focused: 40 mana (unfocused would be 60)
 	p.mana = 100.0
 	assert_true(p.start_ritual(recall))
 	Input.action_press("move_right")
@@ -579,8 +599,7 @@ func test_scroll_left_click_casts_free() -> void:
 	var p := w.player
 	var c := w.character
 	var u := w.item_user
-	# Blink from a scroll: no mana, not in the book, the scroll is used.
-	c.put_in_book(0, &"mining_spell")
+	# Blink from a scroll: no mana, the scroll is used.
 	c.inventory.set_slot(0, &"scroll_blink", 2)
 	p.select_slot(0)
 	p.mana = 0.0
@@ -619,7 +638,7 @@ func test_scroll_fly_runs_free_then_stops() -> void:
 func test_scroll_beam_then_back_to_the_hotbar() -> void:
 	var p := w.player
 	var c := w.character
-	c.book_spells.erase(&"hyper_drill")
+	c.known_spells.erase(&"hyper_drill")  # a beam you don't know is put away after
 	c.inventory.set_slot(2, &"scroll_hyper_drill", 1)
 	p.select_slot(2)
 	assert_true(w.item_user.cast_scroll())

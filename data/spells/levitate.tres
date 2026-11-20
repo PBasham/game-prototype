@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_0ncnh")
+group = 1
 cast = 2
 effect = &"levitate"
 move_speed = 30.0

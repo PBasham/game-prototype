@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_n236g")
+group = 0
 tier = 3
 projectile_color = Color(1, 0.55, 0.3, 1)
 mana_per_second = 30.0

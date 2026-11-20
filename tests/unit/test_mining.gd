@@ -73,7 +73,7 @@ func test_pickaxe_mines_the_area_under_the_cursor() -> void:
 
 
 func test_spell_area_toggle() -> void:
-	w.player.select_slot(2)
+	w.player.toggle_tool_spell(&"mining_spell")
 	var spell := w.player.held_item
 	assert_eq(spell.id, &"mining_spell")
 	var u := w.item_user
@@ -287,16 +287,6 @@ func test_drops_dont_fly_off_when_the_player_leaves() -> void:
 	assert_lt(moved, 6.0 * World.TILE, "slid at most a few tiles")
 
 
-func test_r_takes_the_spellbook_out_and_back() -> void:
-	var p := w.player
-	p.select_slot(1)
-	p.toggle_spellbook()
-	assert_eq(p.selected, -1)
-	assert_eq(p.held_item.id, &"mining_spell", "the book's first spell")
-	p.toggle_spellbook()
-	assert_eq(p.selected, 1, "back to the slot you had")
-
-
 func test_building_uses_the_spellbook_reach_and_shared_area() -> void:
 	var u := w.item_user
 	w.player.select_slot(3)  # planks
@@ -306,7 +296,7 @@ func test_building_uses_the_spellbook_reach_and_shared_area() -> void:
 	w.player.area_scrolled.emit(1)
 	w.player.area_scrolled.emit(1)
 	assert_eq(u.area_size(planks), 3, "up to the book's build_area_max")
-	w.player.select_slot(2)  # mining spell shortcut
+	w.player.toggle_tool_spell(&"mining_spell")  # R
 	assert_eq(u.area_size(w.player.use_item()), 3, "the spell shares the area")
 	w.player.select_slot(0)
 	assert_eq(u.area_size(w.player.held_item), 2, "the pickaxe keeps its own")
@@ -372,7 +362,7 @@ func test_dev_console() -> void:
 	con.run("forget mining spell")
 	assert_false(w.character.knows(&"mining_spell"))
 	con.run("learn mining_spell")
-	assert_true(w.character.in_book(&"mining_spell"))
+	assert_true(w.character.knows(&"mining_spell"))
 	assert_false(con.run("nonsense"))
 
 

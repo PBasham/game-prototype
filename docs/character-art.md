@@ -235,7 +235,7 @@ and drag points. The x axis is time through the motion (0 = start, 1 = end).
 | spell | the equipped spellbook in the back hand, held still (like spell_book) | Channel (front arm straight at the cursor; loops while held) | hidden |
 
 Empty hands use the **unarmed** type: clicking punches (jab, cross, uppercut combo). The punches aim: the arm turns toward the cursor, up to 60 degrees up or down (`aim_limit_degrees` on each motion).
-`unarmed_attacks` on the Player turns it off; the debug brush (B) also takes over
+`unarmed_attacks` on the Player turns it off; the debug brush (F4) also takes over
 empty-hand clicks while it's on.
 
 To regenerate the defaults: `godot --headless --path . --script res://tools/make_item_types.gd -- --force`

@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_b1ts6")
+group = 3
 cast = 6
 cooldown = 1.0
 projectile_color = Color(0.6, 0.85, 1, 1)
