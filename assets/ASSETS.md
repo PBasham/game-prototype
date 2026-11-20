@@ -249,3 +249,5 @@ or .ogg); the generator never overwrites without `--force`.
 | items/badges/{heal,mana}.png | 8x8 inventory badges (heart, star) |
 | objects/{workbench,furnace,copper_anvil,campfire,alchemy_table,spell_weaving_table}.png | Stations at 2x detail (`ObjectDef.detail = 2`): the 1x art through `art/concepts/stations/detail2x.py` (Scale2x, 1 px lit and shaded edges, wood grain, grit) |
 | objects/{table,shelf}.png, items/{icons,held}/{table,shelf}.png | Table (64x48, 4x3 tiles) and Shelf (48x16, 3x1, on a back wall), drawn at 1x in the workbench's wood colors by `art/concepts/stations/furn.py`, then the same 2x pass |
+| objects/scribes_desk.png, items/{icons,held}/scribes_desk.png | Scribe's Desk (4x3 tiles, detail 2): a writing desk with an open scroll, inkwell and quill, candle. Hand-drawn placeholder (PIL) |
+| items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |

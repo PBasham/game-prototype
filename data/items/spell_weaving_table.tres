@@ -24,4 +24,4 @@ places_object = &"spell_weaving_table"
 place_area_max = 1
 id = &"spell_weaving_table"
 display_name = "Spell Weaving Table"
-description = "A crafting station: writes spells onto blank scrolls."
+description = "A crafting station: learn spells (and later, empower them)."

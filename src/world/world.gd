@@ -818,6 +818,35 @@ func enemies_near(pos: Vector2, tiles: float) -> Array[Enemy]:
 
 
 ## A tile inside a building: a built (player placed) back wall behind it.
+## Biggest spawn_safe_tiles of any object (cached), so the scan box stays small.
+var _safe_reach := -1.0
+
+
+## Whether something near a tile keeps enemies from spawning there (a bed or a campfire
+## within its spawn_safe_tiles).
+func near_spawn_safe(tile: Vector2i) -> bool:
+	if _safe_reach < 0.0:
+		_safe_reach = 0.0
+		for id in range(1, objects.size()):
+			var od := objects.def(id) as ObjectDef
+			if od:
+				_safe_reach = maxf(_safe_reach, od.spawn_safe_tiles)
+	var r := ceili(_safe_reach)
+	if r <= 0:
+		return false
+	for y in range(tile.y - r, tile.y + r + 1):
+		if not data.in_bounds_y(y):
+			continue
+		for x in range(tile.x - r, tile.x + r + 1):
+			var id := data.get_object(x, y)
+			if id <= 0:
+				continue
+			var od := objects.def(id) as ObjectDef
+			if od and od.spawn_safe_tiles > 0.0 and Vector2(x - tile.x, y - tile.y).length() <= od.spawn_safe_tiles:
+				return true
+	return false
+
+
 func is_indoors(tile: Vector2i) -> bool:
 	var w := data.get_wall(wrap_tile(tile).x, tile.y) if data.in_bounds_y(tile.y) else 0
 	if w <= 0:

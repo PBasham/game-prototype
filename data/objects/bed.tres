@@ -13,5 +13,6 @@ needs_floor = true
 bed = true
 health = 1.0
 drop_item = &"bed"
+spawn_safe_tiles = 14.0
 id = &"bed"
 display_name = "Bed"

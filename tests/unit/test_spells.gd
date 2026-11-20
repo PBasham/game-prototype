@@ -183,7 +183,7 @@ func test_spell_weaving_table_teaches_spells() -> void:
 	var a := w.world_to_tile(p.global_position) + Vector2i(4, -1)
 	assert_true(w.request_place_object(a, w.objects.index_of(&"spell_weaving_table")))
 	assert_true(w.try_interact_at(w.tile_to_world(a + Vector2i(1, -1)) + Vector2(4, 4), p))
-	assert_eq(w.hud._tabs(), ["Spells", "Scrolls"])
+	assert_eq(w.hud._tabs(), [], "just learning (scrolls are at the Scribe's Desk)")
 	w.hud.craft_tab = 0
 	var learn := w.hud.recipes()
 	var names := learn.map(func(r: RecipeData) -> StringName: return r.teaches)
@@ -215,15 +215,17 @@ func test_spell_weaving_table_teaches_spells() -> void:
 	w.hud.weave_group = SpellData.Group.MOVEMENT
 	assert_true(w.hud.recipes().all(func(r: RecipeData) -> bool: return Hud.recipe_spell(r).group == SpellData.Group.MOVEMENT))
 	w.hud.weave_group = -1
+	# The Scribe's Desk scribes scrolls, with the same filters.
+	w.hud.close_window()
+	var desk := w.world_to_tile(p.global_position) + Vector2i(-8, -1)
+	assert_true(w.request_place_object(desk, w.objects.index_of(&"scribes_desk")))
+	assert_true(w.try_interact_at(w.tile_to_world(desk + Vector2i(1, -1)) + Vector2(4, 4), p))
 	w.hud.weave_search = "blin"
-	w.hud.craft_tab = 1
 	assert_eq(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.output), [&"scroll_blink"] as Array)
 	w.hud.weave_search = ""
-	w.hud.craft_tab = 1
-	assert_has(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.output), &"scroll_blink", "Scrolls tab")
 	var drill := Registry.get_def(&"recipes", &"scroll_hyper_drill") as RecipeData
 	assert_eq(drill.inputs[&"copper_bar"], 10, "tier 3 costs 10 bars")
-	assert_eq(drill.station, &"spell_weaving")
+	assert_eq(drill.station, &"scribing")
 
 
 func test_scrolls_tab_scribes_known_spells_at_full_cost() -> void:

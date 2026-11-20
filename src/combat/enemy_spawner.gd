@@ -145,7 +145,7 @@ func find_spot(data: EnemyData) -> Vector2:
 				if world.is_solid(above) or world.is_indoors(above):
 					room = false
 					break
-			if room and not _in_view(world.tile_to_world(t) + Vector2(4.0, 0.0), data):
+			if room and not world.near_spawn_safe(t) and not _in_view(world.tile_to_world(t) + Vector2(4.0, 0.0), data):
 				return world.tile_to_world(world.wrap_tile(t)) + Vector2(4.0, 0.0)
 			break
 	return Vector2.INF

@@ -49,7 +49,7 @@ const LIST_W := 134
 ## Stations whose window has tabs: station kind to tab names. The Spell Weaving Table:
 ## Spells (learn spells) and Scrolls (scribe spells you know). Create and Empower come
 ## with Magic progression.
-const STATION_TABS := {&"spell_weaving": ["Spells", "Scrolls"], &"alchemy": ["Potions", "Coatings", "Flasks"]}
+const STATION_TABS := { &"alchemy": ["Potions", "Coatings", "Flasks"]}
 const TAB_H := 14
 const ROW_H := 18
 ## Craft buttons: how many each makes (0 = as many as you can).
@@ -1164,14 +1164,14 @@ func recipes() -> Array[RecipeData]:
 	if key == _recipe_key:
 		return _recipe_cache
 	var list: Array[RecipeData] = []
-	if def and def.station == &"spell_weaving" and craft_tab == 0:
+	if def and def.station == &"spell_weaving":
 		list = Crafting.learn_recipes(c)
-	elif def and def.station == &"spell_weaving":
+	elif def and def.station == &"scribing":
 		list = Crafting.scroll_recipes(c, world.scroll_max_mana_by_tier, world.scribe_cost_mult)
 	else:
 		var base := Crafting.recipes_for(def.station, def.station_tier) if def and def.station != &"" \
 			else Crafting.recipes_for(&"")
-		var tabs: Array = STATION_TABS.get(def.station, []) if def and def.station != &"spell_weaving" else []
+		var tabs: Array = STATION_TABS.get(def.station, []) if def else []
 		for r in base:
 			if not tabs.is_empty():
 				var t := r.tab if r.tab != "" else String(tabs[0])
@@ -1203,11 +1203,11 @@ func _body_top() -> float:
 ## The Spell Weaving Table shows group buttons and a search box above its lists.
 func _weave_filters_shown() -> bool:
 	var def := _station_def()
-	return def != null and def.station == &"spell_weaving"
+	return def != null and def.station in [&"spell_weaving", &"scribing"]
 
 
 func _filter_top() -> float:
-	return 22.0 + TAB_H + 3.0
+	return 22.0 + (TAB_H + 3.0 if not _tabs().is_empty() else 0.0)
 
 
 func _group_rect(i: int) -> Rect2:
@@ -1401,7 +1401,9 @@ func _draw_crafting(g: Control) -> void:
 	if list.is_empty():
 		var empty := "Nothing to craft here yet"
 		if _station_def() and _station_def().station == &"spell_weaving":
-			empty = ["Nothing left to learn here", "Learn a spell to scribe its scroll"][craft_tab]
+			empty = "Nothing left to learn here"
+		elif _station_def() and _station_def().station == &"scribing":
+			empty = "Learn a spell to scribe its scroll"
 		g.draw_string(font, lr.position + Vector2(4, 12), empty, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
 	for i in range(_craft_scroll, mini(_entry_count(), _craft_scroll + _rows_shown())):
 		var rect := _row_rect(i)

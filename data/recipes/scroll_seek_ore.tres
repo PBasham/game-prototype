@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_15n7v")
-station = &"spell_weaving"
+station = &"scribing"
 inputs = Dictionary[StringName, int]({
 &"blank_scroll": 1,
 &"copper_bar": 2

@@ -45,7 +45,7 @@ static func learn_recipes(c: CharacterData) -> Array[RecipeData]:
 	return out
 
 
-## The Spell Weaving Table's Scrolls tab: a scroll for each spell you know (only those),
+## The Scribe's Desk: a scroll for each spell you know (only those),
 ## from its scroll recipe (data/recipes, output `scroll_<spell>`) with the materials
 ## times `cost_mult` (rounded up, at least 1; the Blank Scroll stays 1), or just a Blank
 ## Scroll when the spell has no recipe. Your max mana must be at least
@@ -57,7 +57,7 @@ static func scroll_recipes(c: CharacterData, max_mana_by_tier: Array[float], cos
 	var by_output := {}
 	for d in Registry.get_all(&"recipes"):
 		var rd := d as RecipeData
-		if rd and rd.station == &"spell_weaving":
+		if rd and String(rd.output).begins_with("scroll_"):
 			by_output[rd.output] = rd
 	for id in c.known_spells:
 		var spell := ItemData.find(ItemData.spell_key(id)) as SpellData
@@ -74,7 +74,7 @@ static func scroll_recipes(c: CharacterData, max_mana_by_tier: Array[float], cos
 			r.id = scroll
 			r.inputs[&"blank_scroll"] = 1
 		r.display_name = "Scroll: %s" % spell.display_name
-		r.station = &"spell_weaving"
+		r.station = &"scribing"
 		r.output = scroll
 		r.output_count = maxi(1, r.output_count)
 		var tier := clampi(spell.tier, 1, maxi(max_mana_by_tier.size(), 1)) - 1

@@ -67,6 +67,9 @@ enum Style {
 ## its hinge.
 enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 @export var sprite_align := SpriteAlign.CENTER
+## Enemies don't spawn within this many tiles of it (a bed, a campfire), so an open
+## camp is safe without walls. Kept small so it doesn't clear a whole area. 0 = none.
+@export var spawn_safe_tiles := 0.0
 ## Right click takes it down (a torch off the wall): it's removed and drops its item.
 @export var right_click_takes := false
 ## Furniture: mirrored when you place it while facing left, so it faces the way you

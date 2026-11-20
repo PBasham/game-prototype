@@ -192,7 +192,8 @@ func _items() -> Array[ItemData]:
 			[&"copper_anvil", "Copper Anvil", "A crafting station: copper tools."],
 			[&"chest", "Chest", "Stores 40 stacks. Right click or E to open."],
 			[&"door", "Door", "Right click or E to open and close."],
-			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: writes spells onto blank scrolls."],
+			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: learn spells (and later, empower them)."],
+			[&"scribes_desk", "Scribe's Desk", "A crafting station: scribe scrolls of the spells you know onto blank scrolls."],
 			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
 			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."],
 			[&"table", "Table", "Put things on display on top: hold an item and right click the table top."],
@@ -593,6 +594,7 @@ func _objects() -> Array[ObjectDef]:
 	for f: Array in [[&"workbench", "Workbench", 5, 4, &"workbench"], [&"furnace", "Furnace", 4, 5, &"furnace"],
 			[&"copper_anvil", "Copper Anvil", 3, 3, &"anvil"], [&"chest", "Chest", 3, 3, &""],
 			[&"door", "Door", 1, 8, &""], [&"spell_weaving_table", "Spell Weaving Table", 6, 3, &"spell_weaving"],
+			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"],
 			[&"campfire", "Campfire", 4, 3, &"cooking"], [&"alchemy_table", "Alchemy Table", 5, 3, &"alchemy"],
 			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""]]:
 		var o := ObjectDef.new()
@@ -807,6 +809,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"paper", &"workbench", {&"wood": 1}, &"paper", 3, []],
 		[&"blank_scroll", &"workbench", {&"paper": 3, &"slime": 1}, &"blank_scroll", 1, []],
 		[&"spell_weaving_table", &"workbench", {&"wood": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
+		[&"scribes_desk", &"workbench", {&"wood": 15, &"paper": 5, &"copper_bar": 2}, &"scribes_desk", 1, []],
 	]
 	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by
 	# tier (placeholder until each spell gets its own materials). Only spells you know can
@@ -815,7 +818,7 @@ func _recipes() -> Array[RecipeData]:
 		var spell := sp as SpellData
 		var cost: Dictionary = SCROLL_COSTS.get(spell.id,
 			{&"blank_scroll": 1, &"copper_bar": SCROLL_BARS[clampi(spell.tier, 1, 3) - 1]})
-		table.append([StringName("scroll_" + String(spell.id)), &"spell_weaving", cost,
+		table.append([StringName("scroll_" + String(spell.id)), &"scribing", cost,
 			StringName("scroll_" + String(spell.id)), 1, []])
 
 	for e: Array in table:

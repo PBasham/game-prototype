@@ -20,5 +20,6 @@ aura_name = "Cozy"
 aura_description = "Near a campfire: health refills faster."
 health = 1.0
 drop_item = &"campfire"
+spawn_safe_tiles = 12.0
 id = &"campfire"
 display_name = "Campfire"
