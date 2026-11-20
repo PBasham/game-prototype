@@ -1,7 +1,8 @@
-# Playtest checklist: Phases 5 to 9
+# Playtest checklist: Phases 5 to 11
 
-Check out `phase-09-underground`: it contains main plus Phases 5 to 8, so it's the only
-branch to test. Phases 5 to 7 haven't been fully playtested yet. Numbers are first
+Check out `phase-11-spell-controls`: each phase branch is built on the one before, so it
+contains main plus Phases 5 to 10 and is the only branch to test. Phases 5 to 7 haven't
+been fully playtested yet. Numbers are first
 guesses; the docs listed say where each tunable lives.
 
 ## Handy console commands (the ~ key)
@@ -46,9 +47,8 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Wooden and Copper Swords: reach and when the hit lands.
 - [ ] Copper armor: defense lowers damage; it looks right on the character (helmet,
   chestplate, greaves).
-- [ ] Equipment window (P): character preview, slots, stats, folding Equipped spells,
+- [ ] Equipment window (P): character preview, slots, stats, folding Quick spells,
   dragging it around.
-- [ ] Spell Index (L): learn by clicking a spell then a book or hotbar slot.
 
 **Beds**
 - [ ] Right click by day sets the spawn point; at night you sleep to morning.
