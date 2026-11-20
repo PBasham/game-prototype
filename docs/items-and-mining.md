@@ -18,13 +18,13 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
 | **P** | Equipment window (armor, accessories, book, conduit, stats, quick spells); see [combat.md](combat.md) |
 | **L** | Spell Index (every spell you know: tabs and a search box) |
-| **Q**, **E** (hold) | That spell wheel: move the mouse toward a spell, let go. It's cast or put in your hand by its slot's mode (see Quick spells) |
+| **Q**, **E** (hold) | That spell wheel: move the mouse toward a spell, let go. That spell becomes the wheel's tap spell; a cast-right-away spell isn't cast by the pick (tap to cast), an in-hand one goes in your hand |
 | **Q**, **E** (tap) | The wheel's last pick again |
-| **Z**, **X**, **C** | Their quick spell (cast or put in hand, by the slot's mode) |
+| **Z**, **X**, **C** | Their quick spell (cast or put in hand, by the slot's mode), or the item they're a shortcut to |
 | **B** | The buff set: casts every spell in it at once |
 | **R** | Mining Spell in hand (again: put it away, back to your hotbar slot) |
 | **Ctrl + R** | Chopping Spell in hand (same) |
-| **F** | Movement spell (Fly or Levitate) on or off |
+| **F** | Movement spell on or off (the one in the Equipment window's Movement slot; empty = Fly, else Levitate) |
 | **Caps Lock** | Walk / run toggle |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
 | **H** | Put the held item away / take it out |
@@ -246,9 +246,19 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
 - **Quick spells** (Equipment window, P, "Quick spells"): click a spell in the Spell
   Index (L), then a slot. Click a filled slot to pick its spell up; right click empties it.
   - **Q and E wheels**, 8 slots each. Hold Q (or E): the wheel opens; move toward a spell
-    and let go. Tap Q: the last spell picked on that wheel again (or its first). The
-    small panel beside the hotbar shows what Q and E would pick, and Z, X, C.
-  - **Z, X, C**: one spell each.
+    and let go: that spell becomes the tap spell (a cast-right-away one isn't cast by
+    the pick). Tap Q: the last spell picked on that wheel again (or its first). The
+    small panel beside the hotbar shows what Q and E would pick, and Z, X, C, with each
+    key's letter above its square.
+  - **Z, X, C**: one spell each, **or a shortcut to any item**: click the slot with an
+    item on the mouse (the stack stays on the mouse; right click clears). Food and
+    potions are used right away; anything else (a block, a station, a tool) goes in your
+    hand like picking its hotbar slot, from the backpack too (`CharacterData.quick_item`,
+    saved as `item:<id>`). The square shows how many you have (faded at none).
+  - **Movement slot** (under the buff set): the spell F and the double jump turn on.
+    Click a movement toggle (Fly, Levitate: `SpellData.fits_movement_slot`) from the
+    Spell Index, then the slot. Empty shows the default faded (Fly, else Levitate);
+    right click goes back to it (`CharacterData.movement_spell`).
   - **Cast or in hand:** each wheel slot and Z X C either **casts right away** (aimed at
     the cursor, then you're back to what you held; a toggle spell just toggles) or **puts
     the spell in your hand** (left click casts, like a tool). A small gold bolt in the

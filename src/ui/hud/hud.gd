@@ -391,6 +391,7 @@ func _open_crafting() -> void:
 	open = true
 	crafting = true
 	selected_recipe = 0
+	craft_amount = 1
 	_craft_scroll = 0
 	craft_tab = 0
 	_layout()
@@ -494,7 +495,7 @@ func _layout() -> void:
 	else:
 		_inv.size = Vector2(PAD * 2 + 10 * STEP - GAP, PAD * 2 + SLOT)
 	_name_label.position = MARGIN + Vector2(2, _inv.size.y + 2)
-	_quick.size = Vector2(PAD * 2 + QUICK_KEYS_SHOWN.size() * STEP - GAP + 4, PAD * 2 + SLOT)
+	_quick.size = Vector2(PAD * 2 + QUICK_KEYS_SHOWN.size() * STEP - GAP + 4, PAD * 2 + SLOT + QUICK_LABEL_H)
 	_quick.position = _inv.position + Vector2(_inv.size.x + 4, 0)
 	var view := _view_size()
 	_status.position = Vector2(MARGIN.x, view.y - STATUS_SIZE.y - MARGIN.y)
@@ -630,6 +631,8 @@ func slot_at(local: Vector2) -> int:
 # --- drawing: quick spell keys -----------------------------------------------------------
 
 const QUICK_KEYS_SHOWN: Array[StringName] = [&"q", &"e", &"z", &"x", &"c"]
+## The strip above the quick slots that holds their key letters.
+const QUICK_LABEL_H := 8
 
 
 ## The spell a quick key stands for right now: a wheel's last pick (or its first
@@ -654,16 +657,24 @@ func _draw_quick(g: Control) -> void:
 	for i in QUICK_KEYS_SHOWN.size():
 		var key := QUICK_KEYS_SHOWN[i]
 		# A small gap between the wheels (Q E) and the keys (Z X C).
-		var r := Rect2(Vector2(PAD + i * STEP + (4 if i >= 2 else 0), PAD), Vector2(SLOT, SLOT))
+		var r := Rect2(Vector2(PAD + i * STEP + (4 if i >= 2 else 0), PAD + QUICK_LABEL_H), Vector2(SLOT, SLOT))
 		var pick := quick_key_spell(key)
 		var spell := ItemData.find(ItemData.spell_key(pick[1])) as SpellData if pick[1] != &"" else null
-		UiSkin.slot(g, r, UiSkin.SlotLook.SELECTED if spell and spell.id == in_hand else UiSkin.SlotLook.MAGIC)
+		var shortcut := ItemData.find(c.quick_item(key)) if key in CharacterData.QUICK_KEYS and c.quick_item(key) != &"" else null
+		UiSkin.slot(g, r, UiSkin.SlotLook.SELECTED if spell and spell.id == in_hand else
+			(UiSkin.SlotLook.NORMAL if shortcut else UiSkin.SlotLook.MAGIC))
+		if shortcut:
+			var n := c.inventory.count_of(shortcut.id)
+			_draw_item(g, font, r, shortcut, n, 1.0 if n > 0 else 0.35)
 		if spell:
 			_draw_item(g, font, r, spell, 1)
 			if c.quick_casts(pick[0]):
 				_draw_cast_mark(g, r)
-		g.draw_string(font, r.position + Vector2(3, 8), String(key).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
-			Color(UiSkin.DIM, 0.9))
+		# The key letter above its slot, not over the icon.
+		var label := String(key).to_upper()
+		var lw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+		g.draw_string(font, Vector2(r.position.x + (SLOT - lw) * 0.5, PAD + 6), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7,
+			UiSkin.TEXT)
 
 
 # --- drawing: inventory ------------------------------------------------------------------
@@ -1061,6 +1072,7 @@ func _weave_search_key(k: InputEventKey) -> bool:
 	else:
 		return true
 	selected_recipe = 0
+	craft_amount = 1
 	_craft_scroll = 0
 	_recipe_key = ""
 	_craft.queue_redraw()
@@ -1461,10 +1473,12 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 		Area.TAB:
 			craft_tab = h[1]
 			selected_recipe = 0
+			craft_amount = 1
 			_craft_scroll = 0
 		Area.GROUP:
 			weave_group = h[1]
 			selected_recipe = 0
+			craft_amount = 1
 			_craft_scroll = 0
 		Area.SEARCH:
 			set_weave_searching(not weave_searching)
@@ -1500,7 +1514,11 @@ func craft_selected(shift: bool = false, ctrl: bool = false) -> int:
 	if selected_recipe >= recipes().size():
 		return 0
 	var r := recipes()[selected_recipe]
-	return craft(r, mini(_asked(r, shift, ctrl), _times(r)))
+	var made := craft(r, mini(_asked(r, shift, ctrl), _times(r)))
+	if made > 0:
+		craft_amount = 1  # the amount is for one craft; it doesn't stick
+		_amount_typing = false
+	return made
 
 
 ## How many crafts the Craft button asks for: the amount box, 10 with Shift, a stack of
@@ -1727,12 +1745,28 @@ func click_quick_slot(slot: StringName) -> void:
 			_clear_cursor()
 		else:
 			EventBus.debug_message.emit("Only timed effects on you go in the buff set (buffs, Light Orb, Familiar)")
+	elif cursor_count > 0:
+		# An item: Z X C become a shortcut to it (the stack stays on the mouse).
+		if not c.set_quick_item(slot, cursor_id):
+			EventBus.debug_message.emit("Only Z, X and C take items")
 	elif cursor_count == 0:
 		var id := c.quick_spell(slot)
 		if id != &"":
 			cursor_id = ItemData.spell_key(id)
 			cursor_count = 1
 			c.set_quick(slot, &"")
+
+
+## The Movement slot (Equipment window): a movement spell on the mouse becomes the
+## one the movement key and double jump use.
+func click_movement_slot() -> void:
+	var c := world.character
+	if not _cursor_is_spell():
+		return
+	if c.set_movement_spell(_cursor_spell()):
+		_clear_cursor()
+	else:
+		EventBus.debug_message.emit("Only Fly-style movement spells go here (Fly, Levitate)")
 
 
 func click_known_spell(spell_id: StringName) -> void:
@@ -1841,7 +1875,7 @@ func _update_wheel(paused: bool) -> void:
 		if not was_open:
 			world.player.tap_wheel(w)
 		elif choice != &"":
-			world.player.use_quick(choice)
+			world.player.pick_wheel(choice)
 		_redraw()
 		return
 	if not wheel_open:

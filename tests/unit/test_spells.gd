@@ -309,9 +309,9 @@ func test_movement_key() -> void:
 	assert_true(p.toggle_movement_spell())
 	assert_true(p.is_flying())
 	p.toggle_concentration(_spell(&"levitate"))
-	assert_eq(w.character.movement_spell, &"levitate", "remembers the last movement spell")
-	assert_true(p.toggle_movement_spell(), "F turns it off")
-	assert_false(p.is_levitating())
+	assert_eq(p.movement_spell_id(), &"fly", "the Movement slot decides, not the last one used")
+	assert_true(p.toggle_movement_spell(), "F swaps back to Fly")
+	assert_true(p.is_flying())
 
 
 func test_quick_slots_cast_or_equip() -> void:
@@ -699,3 +699,60 @@ func test_scroll_beam_then_back_to_the_hotbar() -> void:
 	p.buffs[&"scroll_hyper_drill"] = 0.05
 	await wait_seconds(0.2)
 	assert_eq(p.selected, 2, "put away when the time is up")
+
+
+func test_z_x_c_take_item_shortcuts() -> void:
+	var p := w.player
+	var c := w.character
+	var inv := c.inventory
+	inv.remove(&"berries", 999)
+	inv.remove(&"wood_platform", 999)
+	inv.set_slot(25, &"berries", 3)
+	inv.set_slot(26, &"wood_platform", 5)
+	assert_false(c.set_quick_item(&"q_0", &"berries"), "wheels are spells only")
+	assert_true(c.set_quick_item(&"z", &"berries"))
+	assert_eq(c.quick_spell(&"z"), &"", "an item, not a spell")
+	assert_eq(c.quick_item(&"z"), &"berries")
+	p.hunger = 10.0
+	assert_true(p.use_quick(&"z"), "food is eaten right away")
+	assert_eq(inv.count_of(&"berries"), 2)
+	# A block from the backpack goes in your hand and places from there.
+	assert_true(c.set_quick_item(&"x", &"wood_platform"))
+	assert_true(p.use_quick(&"x"))
+	assert_eq(p.held_item.id, &"wood_platform")
+	assert_eq(p.held_count(), 5)
+	assert_true(p.take_held())
+	assert_eq(inv.counts[26], 4)
+	# Saved and loaded.
+	var d := c.to_dict()
+	assert_eq(String(d["quick"]["z"]), "item:berries")
+	# Used up: the hand empties.
+	inv.set_slot(26, &"", 0)
+	assert_null(p.held_item)
+
+
+func test_movement_slot_picks_the_movement_spell() -> void:
+	var p := w.player
+	var c := w.character
+	assert_true(c.knows(&"fly") and c.knows(&"levitate"))
+	c.set_movement_spell(&"")
+	assert_eq(p.movement_spell_id(), &"fly", "default")
+	assert_true(c.set_movement_spell(&"levitate"))
+	assert_eq(p.movement_spell_id(), &"levitate")
+	assert_false(c.set_movement_spell(&"blink"), "not a movement toggle")
+	p.toggle_concentration(_spell(&"fly"))
+	p.toggle_concentration(_spell(&"fly"))
+	assert_eq(p.movement_spell_id(), &"levitate", "using Fly doesn't change the choice")
+
+
+func test_wheel_pick_doesnt_cast() -> void:
+	var p := w.player
+	var c := w.character
+	c.set_quick(&"q_2", &"mend")
+	assert_true(c.quick_casts(&"q_2"))
+	p.pick_wheel(&"q_2")
+	assert_null(p.concentration, "picking didn't cast")
+	assert_eq(c.wheel_last[&"q"], &"q_2", "it's the tap spell now")
+	assert_true(p.tap_wheel(&"q"))
+	assert_eq(p.concentration, _spell(&"mend"), "tapping casts it")
+	p.toggle_concentration(_spell(&"mend"))

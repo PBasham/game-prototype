@@ -367,6 +367,8 @@ func use_quick(slot: StringName) -> bool:
 	if character == null or dead:
 		return false
 	var id := character.quick_spell(slot)
+	if id == &"" and character.quick_item(slot) != &"":
+		return use_quick_item(character.quick_item(slot))
 	if id == &"":
 		EventBus.debug_message.emit("Nothing on %s" % quick_label(slot))
 		return false
@@ -379,6 +381,58 @@ func use_quick(slot: StringName) -> bool:
 	return true
 
 
+## Z X C set to an item: food and potions are used right away; anything else goes in
+## your hand like picking its hotbar slot (from the backpack too). False if you have none.
+func use_quick_item(item_id: StringName) -> bool:
+	var item := ItemData.find(item_id)
+	var inv := character.inventory
+	if item == null or inv.count_of(item_id) <= 0:
+		EventBus.debug_message.emit("No %s left" % (item.display_name if item else String(item_id)))
+		return false
+	if item.kind == ItemData.Kind.FOOD:
+		return world != null and world.item_user.eat_from(_slot_of(item_id))
+	for i in Inventory.HOTBAR:
+		if inv.ids[i] == item_id and not inv.is_empty(i):
+			if i != selected or stowed:
+				select_slot(i)
+			return true
+	ready_item(item)
+	return true
+
+
+## Takes an item from the backpack in hand (a Z X C shortcut), like a readied spell.
+func ready_item(item: ItemData) -> void:
+	if selected >= 0:
+		_slot_before_book = selected
+	selected = -1
+	_readied = item
+	stowed = false
+	_doll.stowed = false
+	refresh_held()
+	selection_changed.emit(selected)
+
+
+## The first inventory slot holding an item (or -1).
+func _slot_of(item_id: StringName) -> int:
+	var inv := character.inventory
+	for i in inv.size:
+		if inv.ids[i] == item_id and not inv.is_empty(i):
+			return i
+	return -1
+
+
+## The inventory slot the held item comes from: the hotbar slot, or for an item taken
+## out with Z X C, the first slot holding it. -1 for spells or nothing.
+func held_slot() -> int:
+	if character == null:
+		return -1
+	if selected >= 0:
+		return selected
+	if _readied and not _readied.is_spell():
+		return _slot_of(_readied.id)
+	return -1
+
+
 ## A quick slot's key, for messages: "Q", "E 3", "Z".
 static func quick_label(slot: StringName) -> String:
 	var text := String(slot)
@@ -387,6 +441,22 @@ static func quick_label(slot: StringName) -> String:
 	if "_" in text:
 		return "%s %d" % [text.get_slice("_", 0).to_upper(), int(text.get_slice("_", 1)) + 1]
 	return text.to_upper()
+
+
+## Picking a slot on an open wheel: it becomes the wheel's tap spell. A cast-right-away
+## spell isn't cast by the pick (tap Q / E to cast it); an equip one goes in your hand.
+func pick_wheel(slot: StringName) -> void:
+	if character == null or character.quick_spell(slot) == &"":
+		return
+	var group := CharacterData.slot_group(slot)
+	if group in CharacterData.WHEELS:
+		character.wheel_last[group] = slot
+	if character.quick_casts(slot):
+		var spell := ItemData.find(ItemData.spell_key(character.quick_spell(slot)))
+		EventBus.debug_message.emit("%s: tap %s to cast %s" % [quick_label(slot), String(group).to_upper(),
+			spell.display_name if spell else "it"])
+		return
+	use_quick(slot)
 
 
 ## Tapping Q or E: uses the slot last picked on that wheel (or its first spell).
@@ -449,6 +519,8 @@ var mouse_left: Callable
 ## Holds whatever is in the selected slot (after the inventory or equipment changed).
 func refresh_held() -> void:
 	var item: ItemData = _readied if selected < 0 else (character.inventory.item(selected) if character else null)
+	if selected < 0 and item and not item.is_spell() and character and character.inventory.count_of(item.id) <= 0:
+		item = null  # used up the item Z X C took out
 	if mouse_stack:
 		item = mouse_stack
 	var new_look := _look_for(item)
@@ -534,14 +606,22 @@ func pick_up(item_id: StringName, count: int) -> int:
 func held_count() -> int:
 	if mouse_stack:
 		return int(mouse_left.call()) if mouse_left.is_valid() else 0
-	return character.inventory.counts[selected] if character and selected >= 0 else 0
+	if character and selected < 0 and _readied and not _readied.is_spell():
+		return character.inventory.count_of(_readied.id)
+	var slot := held_slot()
+	return character.inventory.counts[slot] if slot >= 0 else 0
 
 
 ## Uses up one of the held item (placing): from the mouse stack, else the hotbar slot.
 func take_held() -> bool:
 	if mouse_stack:
 		return mouse_take.is_valid() and bool(mouse_take.call())
-	return character != null and selected >= 0 and character.inventory.take(selected, 1) > 0
+	var slot := held_slot()
+	if slot < 0 or character.inventory.take(slot, 1) <= 0:
+		return false
+	if selected < 0:
+		refresh_held()  # the last of a Z X C item: the hand empties
+	return true
 
 
 ## Puts the held item away or takes it back out (H).
@@ -1035,8 +1115,6 @@ func toggle_concentration(spell: SpellData) -> void:
 		buffs.erase(_scroll_key(before))
 		buff_spells.erase(_scroll_key(before))
 	EventBus.sound_requested.emit(&"toggle_on" if concentration else &"toggle_off", global_position)
-	if character and concentration and concentration.effect in [&"fly", &"levitate"]:
-		character.movement_spell = concentration.id
 	if not is_flying() and not is_levitating():
 		_rising_jump = false
 		_peak_y = global_position.y  # no fall damage from where the flight ended
@@ -1261,8 +1339,8 @@ func _end_attack(finished: bool) -> void:
 
 # --- spell controls ---------------------------------------------------------------------
 
-## The spell the movement key and double jump turn on: the last movement spell used,
-## else Fly, else Levitate (among the ones you know).
+## The spell the movement key and double jump turn on: the one in the Movement slot
+## (Equipment window), else Fly, else Levitate (among the ones you know).
 func movement_spell_id() -> StringName:
 	if character == null:
 		return &""

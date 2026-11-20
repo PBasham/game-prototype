@@ -144,6 +144,13 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Inventory open, pick up blocks / a wall / a chest / a sapling: over the world they
       show the placement preview and click to place from the mouse stack; non-placeables
       still throw.
+- [ ] Mouse stack: blocks, platforms and ropes place too (even with an empty hotbar slot).
+- [ ] Craft amount goes back to 1 after crafting / another recipe / reopening.
+- [ ] Z X C: put an item there (click the slot with it on the mouse). Food eats, a block or
+      station goes in hand (from the backpack too).
+- [ ] Equipment window Movement slot: put Levitate there; F and double jump use it.
+- [ ] Picking a cast-right-away spell on a wheel doesn't cast it; tapping does.
+- [ ] Quick panel: key letters above the squares.
 - [ ] Swords and punches don't hit through closed doors or walls; still hit downhill.
 - [ ] A magic bag on top of a workbench: right click opens the bag (and it's outlined).
 - [ ] Right click a buff (Arcane Edge, Familiar, Wisps) in the buff row: it ends.

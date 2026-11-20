@@ -357,14 +357,14 @@ func _reachable(from: Vector2, r: Rect2) -> bool:
 func cast_scroll() -> bool:
 	var p := world.player
 	var item := p.held_item
-	if item == null or item.teaches_spell == &"" or p.selected < 0 or p.character == null:
+	if item == null or item.teaches_spell == &"" or p.held_slot() < 0 or p.character == null:
 		return false
 	var spell := ItemData.find(ItemData.spell_key(item.teaches_spell)) as SpellData
 	if spell == null:
 		return false
 	if cooldown_left(spell) > 0.0:
 		return false  # shares the spell's cooldown with casting it from the book
-	var slot := p.selected
+	var slot := p.held_slot()
 	var ok := true
 	match spell.cast:
 		SpellData.Cast.TOGGLE:
@@ -396,17 +396,23 @@ func cast_scroll() -> bool:
 ## Eats or drinks one of the held food or potion (hunger, health, mana, a buff).
 ## Returns true if it was used up.
 func eat_held() -> bool:
+	return eat_from(world.player.held_slot())
+
+
+## Eats or drinks one from an inventory slot (held, or a Z X C shortcut).
+func eat_from(slot: int) -> bool:
 	var p := world.player
-	var item := p.held_item
-	if item == null or item.kind != ItemData.Kind.FOOD or p.selected < 0:
+	var item := p.character.inventory.item(slot) if slot >= 0 else null
+	if item == null or item.kind != ItemData.Kind.FOOD:
 		return false
 	var why := p.cant_consume(item)
 	if why != "":
 		EventBus.debug_message.emit(why)
 		return false
 	var inv := p.character.inventory
-	if inv.take(p.selected, 1) <= 0:
+	if inv.take(slot, 1) <= 0:
 		return false
+	p.refresh_held()
 	p.consume(item)
 	var drink := item.mana_value > 0.0 or item.sickness != &"" or item.food_value <= 0.0
 	EventBus.debug_message.emit("%s %s" % ["Drank" if drink else "Ate", item.display_name])
@@ -419,9 +425,9 @@ func eat_held() -> bool:
 func throw_held() -> bool:
 	var p := world.player
 	var item := p.held_item
-	if item == null or item.throw_speed <= 0.0 or p.selected < 0 or not Game.is_authority():
+	if item == null or item.throw_speed <= 0.0 or p.held_slot() < 0 or not Game.is_authority():
 		return false
-	if p.character.inventory.take(p.selected, 1) <= 0:
+	if not p.take_held():
 		return false
 	var from := p.chest() + Vector2(p.facing * 6.0, -4.0)
 	var dir := (cursor() - from).normalized()
@@ -600,7 +606,7 @@ func _furniture_at(t: Vector2i) -> bool:
 ## Can't place more than the selected stack holds.
 func _limit_to_stack() -> void:
 	var p := world.player
-	var have := p.character.inventory.counts[p.selected] if p.character and p.selected >= 0 else 0
+	var have := p.held_count()
 	if valid.size() > have:
 		valid.resize(have)
 

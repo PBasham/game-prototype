@@ -184,6 +184,12 @@ func casts_from_quick_slot() -> bool:
 	return true
 
 
+## Whether it can be your movement spell (the Movement slot): a movement toggle you
+## stay in (Fly, Levitate).
+func fits_movement_slot() -> bool:
+	return cast == Cast.TOGGLE and group == Group.MOVEMENT
+
+
 ## Whether it can go in the buff set (B): a timed effect on you (buffs, a following
 ## light, a familiar).
 func fits_buff_set() -> bool:

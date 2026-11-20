@@ -709,3 +709,32 @@ func test_placeable_stack_on_the_mouse_places_with_the_inventory_open() -> void:
 	hud.set_open(false)
 	await wait_process_frames(3)
 	assert_null(p.mouse_stack)
+
+
+func test_mouse_stack_places_with_an_empty_hotbar_slot_selected() -> void:
+	var hud := w.hud
+	var p := w.player
+	var inv := w.character.inventory
+	inv.set_slot(9, &"", 0)
+	p.select_slot(9)
+	hud.set_open(true)
+	hud.cursor_id = &"wood_platform"
+	hud.cursor_count = 3
+	await wait_process_frames(3)
+	if hud._over_pane() != null:
+		pending("the headless mouse sits over a window")
+		return
+	var u := w.item_user
+	var feet := w.world_to_tile(p.global_position)
+	var t := Vector2i(feet.x + 4, feet.y - 1)
+	var at := Vector2(t * World.TILE) + Vector2(4, 4)
+	u.cursor_override = at
+	u.update_target(at, false)
+	assert_eq(u.valid.size(), 1, "not limited by the empty hotbar slot")
+	p.use_impact.emit(p.held_item)
+	assert_eq(w.data.get_block(t.x, t.y), w.blocks.index_of(&"wood_platform"))
+	assert_eq(hud.cursor_count, 2)
+	hud.cursor_count = 0
+	hud.cursor_id = &""
+	hud.set_open(false)
+	u.cursor_override = Vector2.INF

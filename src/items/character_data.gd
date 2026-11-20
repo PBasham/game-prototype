@@ -215,8 +215,47 @@ static func all_quick_slots() -> Array[StringName]:
 	return out
 
 
+## Sets the movement spell (the Movement slot; &"" = default: Fly, else Levitate).
+func set_movement_spell(spell_id: StringName) -> bool:
+	if spell_id != &"":
+		var spell := ItemData.find(ItemData.spell_key(spell_id)) as SpellData
+		if spell == null or not knows(spell_id) or not spell.fits_movement_slot():
+			return false
+	movement_spell = spell_id
+	magic_changed.emit()
+	return true
+
+
+## Z X C can also hold a shortcut to an item (stored as "item:<id>").
+const ITEM_SHORTCUT := "item:"
+
+
+## The spell in a quick slot (&"" when empty or an item shortcut).
 func quick_spell(slot: StringName) -> StringName:
-	return quick.get(slot, &"")
+	var v: StringName = quick.get(slot, &"")
+	return &"" if String(v).begins_with(ITEM_SHORTCUT) else v
+
+
+## The item a Z X C slot is a shortcut to (&"" when empty or a spell).
+func quick_item(slot: StringName) -> StringName:
+	var v := String(quick.get(slot, &""))
+	return StringName(v.trim_prefix(ITEM_SHORTCUT)) if v.begins_with(ITEM_SHORTCUT) else &""
+
+
+## Makes Z, X or C a shortcut to an item in your inventory (any item: food is eaten,
+## a block or tool goes in your hand). Only the Z X C keys take items. False if refused.
+func set_quick_item(slot: StringName, item_id: StringName) -> bool:
+	var item := ItemData.find(item_id)
+	if not slot in QUICK_KEYS or item == null or item.is_spell():
+		return false
+	var v := StringName(ITEM_SHORTCUT + String(item_id))
+	for other: StringName in QUICK_KEYS:
+		if other != slot and quick.get(other, &"") == v:
+			quick.erase(other)
+	quick_modes.erase(slot)
+	quick[slot] = v
+	magic_changed.emit()
+	return true
 
 
 ## Puts a known spell in a quick slot (&"" empties it). If it's already in another slot
@@ -459,7 +498,10 @@ static func load_file(path: String) -> CharacterData:
 	var q: Dictionary = d.get("quick", {})
 	for slot: String in q:
 		var id := StringName(String(q[slot]))
+		var item_id := String(id).trim_prefix(ITEM_SHORTCUT)
 		if c.knows(id):
+			c.quick[StringName(slot)] = id
+		elif String(id).begins_with(ITEM_SHORTCUT) and ItemData.find(StringName(item_id)) != null:
 			c.quick[StringName(slot)] = id
 	var modes: Dictionary = d.get("quick_modes", {})
 	for slot: String in modes:
@@ -523,7 +565,7 @@ func to_dict() -> Dictionary:
 			known.append(String(s))
 	var q := {}
 	for slot: StringName in quick:
-		if not ItemData.is_runtime(ItemData.spell_key(quick[slot])):
+		if String(quick[slot]).begins_with(ITEM_SHORTCUT) or not ItemData.is_runtime(ItemData.spell_key(quick[slot])):
 			q[String(slot)] = String(quick[slot])
 	var modes := {}
 	for slot: StringName in quick_modes:

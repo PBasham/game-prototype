@@ -30,7 +30,7 @@ const QUICK_ROW := CharacterData.WHEEL_SIZE
 ## The corner of a quick slot that flips cast / in hand.
 const MODE_SIZE := 7
 
-enum Part { NONE, SLOT, QUICK, MODE, FOLD, INDEX }
+enum Part { NONE, SLOT, QUICK, MODE, FOLD, INDEX, MOVE }
 
 ## Quick spells section shown (click its header to fold it away).
 var spells_shown := true
@@ -133,6 +133,11 @@ func quick_rect(slot: StringName) -> Rect2:
 	return Rect2(o + Vector2(col * STEP, row * STEP), Vector2(SLOT, SLOT))
 
 
+## The Movement slot (row 4): the spell the movement key and double jump turn on.
+func move_rect() -> Rect2:
+	return Rect2(_quick_origin() + Vector2(0, 3 * STEP + 16), Vector2(SLOT, SLOT))
+
+
 ## The corner of a quick slot that flips its mode.
 func mode_rect(slot: StringName) -> Rect2:
 	var r := quick_rect(slot)
@@ -144,7 +149,7 @@ func layout() -> void:
 	var h := _fold_y() + 14 + PAD
 	var quick_w := PAD * 2 + LABEL_W + (3 + CharacterData.BUFF_SET_SIZE) * STEP + 14 - Hud.GAP
 	if spells_shown:
-		h = _quick_origin().y + 3 * STEP + 8 - Hud.GAP + PAD
+		h = move_rect().end.y + PAD
 	size = Vector2(maxf(w, quick_w), h)
 
 
@@ -158,6 +163,8 @@ func hit(local: Vector2) -> Array:
 		return [Part.FOLD, 0]
 	if spells_shown:
 		var c := hud.world.character
+		if move_rect().has_point(local):
+			return [Part.MOVE, 0]
 		for slot in CharacterData.all_quick_slots():
 			if quick_rect(slot).has_point(local):
 				if mode_rect(slot).has_point(local) and c.quick_spell(slot) != &"" \
@@ -226,11 +233,25 @@ func draw_body(font: Font) -> void:
 	draw_string(font, o + Vector2(0, 2 * STEP + 6), "Z  X  C", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.GOLD)
 	draw_string(font, o + Vector2(3 * STEP + 14, 2 * STEP + 6), "Buff set (B): casts them all", HORIZONTAL_ALIGNMENT_LEFT,
 		-1, 6, UiSkin.GOLD)
+	# The Movement slot: empty shows the default (Fly, else Levitate) faded.
+	var mr := move_rect()
+	draw_string(font, mr.position + Vector2(0, -3), "Movement (key / double jump)", HORIZONTAL_ALIGNMENT_LEFT, -1, 6,
+		UiSkin.GOLD)
+	UiSkin.slot(self, mr, UiSkin.SlotLook.HOT if h[0] == Part.MOVE else UiSkin.SlotLook.MAGIC)
+	var move_id := hud.world.player.movement_spell_id()
+	var move := ItemData.find(ItemData.spell_key(move_id)) if move_id != &"" else null
+	if move:
+		hud._draw_item(self, font, mr, move, 1, 1.0 if c.movement_spell == move_id else 0.4)
 	for slot in CharacterData.all_quick_slots():
 		var r := quick_rect(slot)
 		var hot: bool = h[0] in [Part.QUICK, Part.MODE] and h[1] == slot
-		UiSkin.slot(self, r, UiSkin.SlotLook.HOT if hot else UiSkin.SlotLook.MAGIC)
 		var id := c.quick_spell(slot)
+		var shortcut := ItemData.find(c.quick_item(slot)) if c.quick_item(slot) != &"" else null
+		UiSkin.slot(self, r, UiSkin.SlotLook.HOT if hot else (UiSkin.SlotLook.NORMAL if shortcut else UiSkin.SlotLook.MAGIC))
+		if shortcut:
+			var n := c.inventory.count_of(shortcut.id)
+			hud._draw_item(self, font, r, shortcut, n, 1.0 if n > 0 else 0.35)
+			continue
 		var spell := ItemData.find(ItemData.spell_key(id)) if id != &"" else null
 		if spell == null:
 			continue
@@ -282,6 +303,11 @@ func body_click(mb: InputEventMouseButton) -> void:
 		Part.MODE:
 			if left:
 				hud.world.character.toggle_quick_mode(h[1])
+		Part.MOVE:
+			if left:
+				hud.click_movement_slot()
+			elif right:
+				hud.world.character.set_movement_spell(&"")
 		Part.FOLD:
 			if left:
 				spells_shown = not spells_shown
@@ -301,12 +327,24 @@ func tooltip_at(local: Vector2) -> Array:
 			var id: StringName = c.equipment[slot_id]
 			var item := ItemData.find(id) if id != &"" else (c.book() if slot_id == CharacterData.SLOT_BOOK else null)
 			return [item, "" if item else Hud.EQUIP_NAMES[h[1]]]
+		Part.MOVE:
+			var id := hud.world.player.movement_spell_id()
+			var spell := ItemData.find(ItemData.spell_key(id)) as SpellData if id != &"" else null
+			var how := "Chosen here. Right click: back to the default." if c.movement_spell != &"" \
+				else "Default (Fly, else Levitate). Click a movement spell from the Spell Index, then here."
+			return [null, ("%s\n" % spell.display_name if spell else "No movement spell known.\n") + how]
 		Part.QUICK, Part.MODE:
 			var slot: StringName = h[1]
+			var item_id := c.quick_item(slot)
+			if item_id != &"":
+				var it := ItemData.find(item_id)
+				return [it, "%s: shortcut (you have %d). Food is used right away; anything else goes in your hand. Right click clears." % [
+					Player.quick_label(slot), c.inventory.count_of(item_id)]]
 			var s := c.quick_spell(slot)
 			var spell := ItemData.find(ItemData.spell_key(s)) as SpellData if s != &"" else null
 			if spell == null:
-				return [null, "%s: empty. Click a spell in the Spell Index (L), then here." % Player.quick_label(slot).capitalize()]
+				return [null, "%s: empty. Click a spell in the Spell Index (L), then here.%s" % [Player.quick_label(slot).capitalize(),
+					" Or any item from your inventory." if slot in CharacterData.QUICK_KEYS else ""]]
 			var how := "Casts right away" if c.quick_casts(slot) else "Goes in your hand (left click casts)"
 			if not CharacterData.is_buff_slot(slot):
 				how += ". Click the top right corner to change."

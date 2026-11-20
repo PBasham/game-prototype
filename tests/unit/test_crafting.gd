@@ -335,6 +335,7 @@ func test_craft_amount_field_shift_and_ctrl() -> void:
 	hud.set_craft_amount(3)
 	var before := w.character.inventory.count_of(&"wood_platform")
 	assert_eq(hud.craft_selected(), 3, "crafts the amount in the field")
+	assert_eq(hud.craft_amount, 1, "the amount resets after crafting")
 	assert_eq(hud.craft_selected(true), 10, "Shift: 10")
 	var r: RecipeData = hud.recipes()[i]
 	var left := hud._times(r)

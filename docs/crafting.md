@@ -299,6 +299,9 @@ Under the tabs: group buttons (All, Tools, Movement, Attack, Defense, Light, the
 groups as the Spell Index) and a search box (click it and type; Esc, Enter or a click
 elsewhere stops typing). They filter all three tabs by the spell each recipe is about.
 
+The craft amount (`-` / `+` / typed) is for one craft: it goes back to 1 after you craft,
+when you pick another recipe, and when the window opens.
+
 Tabs per station are `Hud.STATION_TABS` (Create and Empower join later). A recipe's
 `requires_max_mana` is checked, never used up.
 

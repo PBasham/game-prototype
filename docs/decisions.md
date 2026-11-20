@@ -39,6 +39,16 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Mouse stack placing, take 2 (Patrick):** blocks, platforms and ropes were limited
+  by the selected hotbar slot's count (0 on an empty slot), so only furniture placed.
+- **Craft amount resets (Patrick)** after crafting, on another recipe and on opening.
+- **Z X C take items (Patrick):** a shortcut to any item. Food is used right away;
+  anything else goes in your hand, from the backpack too.
+- **Movement slot (Patrick):** pick the F / double jump spell in the Equipment window
+  instead of "the last one used".
+- **Wheel picks don't cast (Patrick):** picking a cast-right-away spell on a wheel makes
+  it the tap spell; tap to cast.
+- **Quick panel:** key letters above the squares instead of over the icons.
 - **No melee through walls (bug, Patrick):** the swing box ignored terrain, so a sword
   hit a slime through a closed door. Hits now need a clear line (blocks and closed doors
   stop it).
