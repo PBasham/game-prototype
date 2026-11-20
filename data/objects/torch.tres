@@ -13,6 +13,7 @@ light_color = Color(1, 0.86, 0.62, 1)
 light_radius = 32.0
 collision = 0
 health = 1.0
+right_click_takes = true
 drop_item = &"torch"
 id = &"torch"
 display_name = "Torch"

@@ -774,3 +774,34 @@ func test_air_ledge_climb_onto_a_floor_edge() -> void:
 	p._air_ledge_climb(1.0, 1.0 / 60.0)
 	assert_lte(p.global_position.y, top_y + 0.01, "lifted onto the ledge")
 	assert_false(p.test_move(p.global_transform, Vector2(2, 0)), "free to step on")
+
+
+func test_resting_drops_merge_and_are_capped() -> void:
+	var p := w.player
+	var at := p.global_position + Vector2(12 * World.TILE, -8)
+	var a := w.request_spawn_drop(&"stone", 3, at)
+	var b := w.request_spawn_drop(&"stone", 4, at + Vector2(4, 0))
+	var c := w.request_spawn_drop(&"wood", 2, at + Vector2(2, 0))
+	await wait_seconds(2.0)
+	var stones := 0
+	var stacks := 0
+	for d in w._drops.get_children():
+		var drop := d as ItemDrop
+		if drop and drop.item_id == &"stone" and not drop.is_queued_for_deletion():
+			stones += drop.count
+			stacks += 1
+	assert_eq(stones, 7)
+	assert_eq(stacks, 1, "merged into one")
+	assert_true(is_instance_valid(c) and not c.is_queued_for_deletion(), "other items stay apart")
+	var keep := w.max_drops
+	w.max_drops = w.drop_count() + 2
+	for i in 5:
+		w.request_spawn_drop(&"dirt", 1, at + Vector2(0, -40 - i * 10))
+	assert_lte(w._drops.get_child_count(), w.max_drops, "capped")
+	w.max_drops = keep
+	for d in w._drops.get_children():
+		d.queue_free()
+	if is_instance_valid(a):
+		pass
+	if is_instance_valid(b):
+		pass

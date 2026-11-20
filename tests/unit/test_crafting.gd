@@ -463,3 +463,28 @@ func test_dev_items_window_gives_stacks() -> void:
 	hud.cursor_id = &""
 	hud.toggle_dev_items()
 	hud.set_open(false)
+
+
+func test_chest_names_and_quick_stack() -> void:
+	var hud := w.hud
+	var inv := w.character.inventory
+	var a := _floor_spot(4)
+	assert_true(w.request_place_object(a, w.objects.index_of(&"chest")))
+	assert_eq(w.container_name(a), "Chest")
+	w.request_rename_chest(a, "Ores")
+	assert_eq(w.container_name(a), "Ores")
+	assert_true(w._names_to_dict().values().has("Ores"), "saved")
+	var store := w.container_at(a)
+	store.add(&"stone", 1)
+	inv.remove(&"stone", 99999)
+	inv.remove(&"wood", 99999)
+	inv.set_slot(20, &"stone", 30)
+	inv.set_slot(21, &"wood", 10)
+	inv.set_slot(3, &"stone", 5)
+	hud.chest = a
+	hud.quick_stack(store)
+	assert_eq(store.count_of(&"stone"), 31, "stone it already had")
+	assert_eq(inv.count_of(&"wood"), 10, "not wood")
+	assert_eq(inv.counts[3], 5, "hotbar stays")
+	hud.chest = World.NO_TILE
+	assert_true(w.request_remove_object(a) or true)

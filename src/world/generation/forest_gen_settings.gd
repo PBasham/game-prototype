@@ -90,6 +90,12 @@ extends GameData
 ## depth) it narrows to this share of tunnel_width before it ends. Low = long crawl
 ## spaces at tunnel ends; 1 = tunnels end at full height.
 @export_range(0.0, 1.0) var tunnel_taper := 0.8
+## Tunnels break into pieces about this long (tiles), some shorter and some longer, so
+## not every tunnel goes on and on. Bigger = longer runs.
+@export var tunnel_length := 160.0
+## How much of each tunnel's run is cut away into gaps: 0 = no breaks (one long
+## ribbon wherever the coverage allows), higher = shorter, more separate tunnels.
+@export_range(0.0, 0.9) var tunnel_breaks := 0.35
 
 @export_group("Caves: caverns")
 ## Large open caverns start this deep.

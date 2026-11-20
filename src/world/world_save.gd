@@ -28,6 +28,8 @@ const META_CONTAINERS := "containers"
 const META_DISPLAYS := "displays"
 ## Furniture placed facing left (drawn mirrored): {"x,y": true}.
 const META_FLIPPED := "flipped"
+## Names given to chests: {"x,y": name}.
+const META_CHEST_NAMES := "chest_names"
 ## Magic bags left where characters died: {"list": [ItemBag.to_dict()...]}.
 const META_BAGS := "bags"
 ## The clock: {"time": fraction of the day, "day": n}.

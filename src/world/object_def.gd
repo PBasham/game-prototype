@@ -67,6 +67,8 @@ enum Style {
 ## its hinge.
 enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 @export var sprite_align := SpriteAlign.CENTER
+## Right click takes it down (a torch off the wall): it's removed and drops its item.
+@export var right_click_takes := false
 ## Furniture: mirrored when you place it while facing left, so it faces the way you
 ## did (a bed's headboard, a workbench's vise). Off for things that mustn't flip.
 ## Doors never flip (they open toward a side already).

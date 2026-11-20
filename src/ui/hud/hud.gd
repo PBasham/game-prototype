@@ -33,7 +33,7 @@ const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
 enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CHEST, CHEST_TAKE,
-	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH }
+	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
 const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
@@ -339,6 +339,9 @@ func _input(event: InputEvent) -> void:
 		toggle_dev_items()
 		get_viewport().set_input_as_handled()
 		return
+	if renaming and _rename_key(key):
+		get_viewport().set_input_as_handled()
+		return
 	if _dev_items.searching and _dev_items.search_key(key):
 		get_viewport().set_input_as_handled()
 		return
@@ -376,7 +379,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	_update_notes(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
-		or _dev_items.searching \
+		or _dev_items.searching or renaming \
 		or weave_searching
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
@@ -539,6 +542,8 @@ func _open_crafting() -> void:
 
 ## Closes the crafting or chest window, keeping the inventory open.
 func close_window() -> void:
+	if renaming:
+		set_renaming(false)
 	crafting = false
 	station = World.NO_TILE
 	chest = World.NO_TILE
@@ -1098,12 +1103,18 @@ func _chest_hit(local: Vector2) -> Array:
 		return [Area.CHEST_TAKE, 0]
 	if b[1].has_point(local):
 		return [Area.CHEST_DEPOSIT, 0]
+	if b[2].has_point(local):
+		return [Area.CHEST_STACK, 0]
+	if b[3].has_point(local) and bag == null:
+		return [Area.CHEST_RENAME, 0]
 	return [Area.NONE, -1]
 
 
+## Take all, Deposit all, Quick stack, Rename.
 func _chest_buttons() -> Array[Rect2]:
 	var y := _chest.size.y - PAD - 16
-	return [Rect2(PAD, y, 60, 16), Rect2(PAD + 64, y, 70, 16)]
+	return [Rect2(PAD, y, 48, 16), Rect2(PAD + 50, y, 60, 16), Rect2(PAD + 112, y, 60, 16),
+		Rect2(PAD + 174, y, 44, 16)]
 
 
 func _draw_chest(g: Control) -> void:
@@ -1112,7 +1123,10 @@ func _draw_chest(g: Control) -> void:
 	var font := ThemeDB.fallback_font
 	var hover := _chest_hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
 	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
-	var title := def.display_name if def else "Chest"
+	var title := world.container_name(chest) if def else "Chest"
+	if renaming:
+		var blink := fmod(Time.get_ticks_msec() / 500.0, 2.0) < 1.0
+		title = _rename_text + ("_" if blink else "")
 	var right := "%d slots" % store.size if store else ""
 	if bag != null and is_instance_valid(bag):
 		title = "Magic Bag"
@@ -1129,8 +1143,10 @@ func _draw_chest(g: Control) -> void:
 	var b := _chest_buttons()
 	UiSkin.button(g, b[0], "Take all", UiSkin.Btn.HOT if hover[0] == Area.CHEST_TAKE else UiSkin.Btn.NORMAL)
 	UiSkin.button(g, b[1], "Deposit all", UiSkin.Btn.HOT if hover[0] == Area.CHEST_DEPOSIT else UiSkin.Btn.NORMAL)
-	g.draw_string(font, Vector2(b[1].end.x + 6, b[1].position.y + 11), "Shift + click: move a stack",
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.DIM)
+	UiSkin.button(g, b[2], "Quick stack", UiSkin.Btn.HOT if hover[0] == Area.CHEST_STACK else UiSkin.Btn.NORMAL)
+	if bag == null:
+		UiSkin.button(g, b[3], "Done" if renaming else "Rename",
+			UiSkin.Btn.PRESSED if renaming else (UiSkin.Btn.HOT if hover[0] == Area.CHEST_RENAME else UiSkin.Btn.NORMAL))
 	_draw_cursor_stack(g)
 
 
@@ -1623,7 +1639,58 @@ func _chest_input(pane: Pane, event: InputEvent) -> void:
 		Area.CHEST_DEPOSIT:
 			if left and store:
 				deposit_all(store)
+		Area.CHEST_STACK:
+			if left and store:
+				quick_stack(store)
+		Area.CHEST_RENAME:
+			if left:
+				set_renaming(not renaming)
 	_redraw()
+
+
+## Quick stack: moves only the items the chest already holds out of your backpack (not
+## the hotbar), like Terraria's.
+func quick_stack(store: Inventory) -> int:
+	var inv := _inventory()
+	var moved := 0
+	for i in range(Inventory.HOTBAR, inv.size):
+		if inv.is_empty(i) or store.count_of(inv.ids[i]) <= 0:
+			continue
+		var before := inv.counts[i]
+		_move_stack(inv, i, store)
+		moved += before - (inv.counts[i] if not inv.is_empty(i) else 0)
+	return moved
+
+
+## Typing a chest's name (Rename in the chest window). Enter or Done saves it, Esc
+## cancels.
+var renaming := false
+var _rename_text := ""
+
+
+func set_renaming(on: bool, keep: bool = true) -> void:
+	if on and chest != World.NO_TILE:
+		_rename_text = world.chest_names.get(world.wrap_tile(chest), "")
+	elif renaming and keep and chest != World.NO_TILE:
+		world.request_rename_chest(chest, _rename_text)
+	renaming = on and chest != World.NO_TILE
+	world.player.typing = renaming
+	_redraw()
+
+
+func _rename_key(k: InputEventKey) -> bool:
+	if not renaming or k == null or not k.pressed:
+		return false
+	if k.keycode in [KEY_ENTER, KEY_KP_ENTER]:
+		set_renaming(false)
+	elif k.keycode == KEY_ESCAPE:
+		set_renaming(false, false)
+	elif k.keycode == KEY_BACKSPACE:
+		_rename_text = _rename_text.substr(0, maxi(0, _rename_text.length() - 1))
+	elif k.unicode >= 32 and _rename_text.length() < 24:
+		_rename_text += char(k.unicode)
+	_redraw()
+	return true
 
 
 ## Moves everything below the hotbar into a chest (topping up stacks it already has).
@@ -2221,6 +2288,12 @@ func _update_tooltip(over: Control) -> void:
 					var r: RecipeData = recipes()[h[1]]
 					item = ItemData.find(r.output)
 					extra = "\nDouble click: craft 1"
+	if over == null and cursor_count == 0 and not world.player.input_blocked:
+		# Hovering a chest in the world: its name.
+		var a := world.object_anchor_visual(world.world_to_tile(world.get_global_mouse_position()))
+		var def := world.object_at(a) if a != World.NO_TILE else null
+		if def and def.container_slots > 0:
+			extra_only = world.container_name(a)
 	_tooltip.visible = item != null or extra_only != ""
 	if not _tooltip.visible:
 		return

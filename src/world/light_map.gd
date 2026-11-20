@@ -39,6 +39,13 @@ var _cooldown := 0.0
 var _job: LightJob
 var _texture: ImageTexture
 var _last_sky := Color.WHITE
+## The tile rect the shown light covers. Outside it (moving fast, zoomed out) a rough
+## stand-in is drawn: the sky's light above the ground, dark below.
+var _shown_rect := Rect2i()
+## Tiles of stand-in light drawn around the real light map.
+@export var outside_margin_tiles := 160
+## Columns per stand-in strip (coarser = cheaper).
+@export var outside_strip_tiles := 4
 
 
 func _ready() -> void:
@@ -72,6 +79,8 @@ func _process(delta: float) -> void:
 	var sky := _sky()
 	if absf(sky.r - _last_sky.r) + absf(sky.g - _last_sky.g) + absf(sky.b - _last_sky.b) > sky_change:
 		_dirty = true
+	if world and world.renderer and world.renderer.loaded_tile_rect() != _shown_rect:
+		_dirty = true  # more of the world came into view: light it soon
 	if _dirty and _job == null and _cooldown <= 0.0:
 		rebuild()
 
@@ -165,6 +174,40 @@ func _make_job() -> LightJob:
 	return job
 
 
+## Around the real light map: sky light above the natural ground, dark below, so
+## ground that comes into view before the light catches up isn't lit up bright.
+func _draw() -> void:
+	if world == null or _shown_rect.size.x <= 0:
+		return
+	var w := _shown_rect.size.x
+	var h := _shown_rect.size.y
+	var m := outside_margin_tiles
+	var dark := Color(ambient, ambient, ambient)
+	var sky := _last_sky
+	var step := maxi(outside_strip_tiles, 1)
+	# Local coords are tiles from the map's corner. Left and right of it, column strips.
+	for x in range(-m, w + m, step):
+		var inside_x := x >= 0 and x < w
+		var ground := _surface(_shown_rect.position.x + x) - _shown_rect.position.y
+		var top := -m
+		var bottom := h + m
+		if inside_x:
+			# Above and below the map only.
+			_strip(x, step, top, 0, ground, sky, dark)
+			_strip(x, step, h, bottom, ground, sky, dark)
+		else:
+			_strip(x, step, top, bottom, ground, sky, dark)
+
+
+## A column strip from y0 to y1 (tiles): sky light down to `ground`, dark under it.
+func _strip(x: int, w: int, y0: int, y1: int, ground: int, sky: Color, dark: Color) -> void:
+	var split := clampi(ground, y0, y1)
+	if split > y0:
+		draw_rect(Rect2(x, y0, w, split - y0), sky)
+	if y1 > split:
+		draw_rect(Rect2(x, split, w, y1 - split), dark)
+
+
 ## Main thread: uploads the result and moves the overlay onto its rectangle.
 func _apply(job: LightJob) -> void:
 	var t := Time.get_ticks_usec()
@@ -177,4 +220,6 @@ func _apply(job: LightJob) -> void:
 	else:
 		_texture.update(image)
 	position = Vector2(job.rect.position * World.TILE)
+	_shown_rect = job.rect
+	queue_redraw()
 	PerfStats.add("light apply (main)", Time.get_ticks_usec() - t)

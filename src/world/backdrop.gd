@@ -69,6 +69,18 @@ func _ready() -> void:
 	sun.texture = load(DIR + "/sun.png") as Texture2D
 	sun.position = Vector2(150, -40)
 	sun.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The rays reach the picture's edges: fade them out toward every edge so the glow
+	# never ends in a straight line (sunrise near the screen edge showed it).
+	var fade := ShaderMaterial.new()
+	fade.shader = Shader.new()
+	fade.shader.code = """shader_type canvas_item;
+void fragment() {
+	vec2 d = min(UV, 1.0 - UV);
+	float k = smoothstep(0.0, 0.22, d.x) * smoothstep(0.0, 0.22, d.y);
+	COLOR = texture(TEXTURE, UV);
+	COLOR.a *= k;
+}"""
+	sun.material = fade
 	_root.add_child(sun)
 	_sun = sun
 	_moon = TextureRect.new()

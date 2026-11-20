@@ -165,6 +165,23 @@ func blocks_placement(tile: Vector2i) -> bool:
 
 
 ## Where a tree seed would be planted for a cursor tile (the grass under it), or NONE.
+## Whether a berry bush fits on this grass tile: it takes 3 tiles of open grass (this
+## one and one each side), none of them already holding a plant.
+func bush_room(ground: Vector2i) -> bool:
+	var grass := world.blocks.index_of(&"grass")
+	for dx in range(-1, 2):
+		var g := ground + Vector2i(dx, 0)
+		if world.data.get_block(g.x, g.y) != grass or world.data.get_block(g.x, g.y - 1) != WorldData.AIR:
+			return false
+		if plant_at(world.wrap_tile(g)) != null:
+			return false
+	for dx in [-2, 2]:  # a bush beside it would overlap
+		var near := plant_at(world.wrap_tile(ground + Vector2i(dx, 0)))
+		if near and near.kind == Kind.BUSH:
+			return false
+	return true
+
+
 func sapling_spot(tile: Vector2i) -> Vector2i:
 	for g: Vector2i in [tile, tile + Vector2i.DOWN]:
 		if world.data.get_block(g.x, g.y) == _grass_id and world.data.get_block(g.x, g.y - 1) == WorldData.AIR:

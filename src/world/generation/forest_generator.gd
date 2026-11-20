@@ -43,6 +43,8 @@ var _cliff_t: float
 var _cliff_k: float
 var _tunnel_t: float
 var _tunnel_mask_t: float
+var _tunnel_cut: FastNoiseLite
+var _tunnel_cut_t: float
 var _dirt_pocket_t: float
 var _stone_pocket_t: float
 var _grove_t: float
@@ -70,6 +72,7 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	_stone_pockets = _noise(8, 1.0 / 10.0, 2)
 	_tunnels = _noise(9, 1.0 / s.tunnel_spacing, 2)
 	_tunnel_mask = _noise(10, 1.0 / (s.tunnel_spacing * 2.0))
+	_tunnel_cut = _noise(14, 1.0 / maxf(s.tunnel_length, 20.0), 2)
 	_caverns = _noise(11, 1.0 / s.cavern_size, 3)
 	_groves = _noise(12, 1.0 / s.grove_width, 2)
 
@@ -80,6 +83,7 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	# |noise| < t gives ribbons about tunnel_width tall.
 	_tunnel_t = s.tunnel_width / s.tunnel_spacing * 0.9
 	_tunnel_mask_t = _calibrate(_tunnel_mask, s.tunnel_coverage, true, 0.5)
+	_tunnel_cut_t = _calibrate(_tunnel_cut, 1.0 - s.tunnel_breaks, true, 0.5)
 	_dirt_pocket_t = _calibrate(_dirt_pockets, s.dirt_pocket_amount, true)
 	_stone_pocket_t = _calibrate(_stone_pockets, s.stone_pocket_amount, true)
 	_grove_t = _calibrate(_groves, s.grove_amount, false)
@@ -231,6 +235,9 @@ func _carved(x: int, y: int, depth: int, col: PackedFloat32Array, entrances: Arr
 	var yy := y * s.cave_flatten
 	# Tunnels: thin ribbons where the noise crosses zero, only inside the coverage mask.
 	var cover := smoothstep(_tunnel_mask_t, _tunnel_mask_t + 0.15, _tunnel_mask.get_noise_3d(px, py, yy * 0.5))
+	if s.tunnel_breaks > 0.0:
+		# Random gaps cut tunnels into runs of different lengths (tunnel_length).
+		cover *= smoothstep(_tunnel_cut_t, _tunnel_cut_t + 0.12, _tunnel_cut.get_noise_3d(px, py, yy * 0.5))
 	if cover > 0.0:
 		# Tunnels fade in over their first few tiles of depth, and narrow (to
 		# tunnel_taper of their height) where the coverage runs out, then end.

@@ -51,6 +51,8 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 var free_crafting := false
 ## Dev console `infinite`: blocks, furniture, food and throwables aren't used up.
 var infinite_items := false
+## Loose items on the ground at most; past this the oldest disappear. 0 = no limit.
+@export var max_drops := 400
 
 @export_group("Spell scrolls")
 ## Scribing a scroll (Spell Weaving Table, Scrolls tab: only spells you know) uses its
@@ -109,6 +111,8 @@ var containers: Dictionary[Vector2i, Inventory] = {}
 var displays: Dictionary[Vector2i, StringName] = {}
 ## Furniture placed facing left (anchor -> true), drawn mirrored. Saved (meta "flipped").
 var flipped: Dictionary[Vector2i, bool] = {}
+## Names given to chests (anchor -> name). Saved (meta "chest_names").
+var chest_names: Dictionary[Vector2i, String] = {}
 ## Damaged tiles: (x, y, layer 0 = block / 1 = wall) -> [damage, seconds until healed].
 var _damage: Dictionary[Vector3i, Array] = {}
 ## Debug builds only (B toggles it); null otherwise.
@@ -177,6 +181,10 @@ func _ready() -> void:
 		plants.from_dict(WorldSave.read_extra(info.path, WorldSave.META_PLANTS), not saved_forage.is_empty())
 		_containers_from_dict(WorldSave.read_extra(info.path, WorldSave.META_CONTAINERS))
 		_displays_from_dict(WorldSave.read_extra(info.path, WorldSave.META_DISPLAYS))
+		var names: Dictionary = WorldSave.read_extra(info.path, WorldSave.META_CHEST_NAMES)
+		for key: String in names:
+			var np := key.split(",")
+			chest_names[Vector2i(int(np[0]), int(np[1]))] = String(names[key])
 		for key: String in WorldSave.read_extra(info.path, WorldSave.META_FLIPPED):
 			var parts := key.split(",")
 			flipped[Vector2i(int(parts[0]), int(parts[1]))] = true
@@ -382,7 +390,7 @@ func save() -> Error:
 	var err := WorldSave.save(info.path, info, modified, blocks, walls,
 		{WorldSave.META_PLANTS: plants.to_dict(coords), WorldSave.META_FORAGE: forage.to_dict(coords),
 			WorldSave.META_CONTAINERS: _containers_to_dict(), WorldSave.META_DISPLAYS: _displays_to_dict(),
-			WorldSave.META_FLIPPED: _flipped_to_dict(),
+			WorldSave.META_FLIPPED: _flipped_to_dict(), WorldSave.META_CHEST_NAMES: _names_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict(),
 			WorldSave.META_POSITIONS: _spots_to_dict()}, objects)
@@ -1032,6 +1040,13 @@ static func can_flip(def: ObjectDef) -> bool:
 		and def.toggles_to == &"" and def.toggles_to_left == &""
 
 
+func _names_to_dict() -> Dictionary:
+	var out := {}
+	for t: Vector2i in chest_names:
+		out["%d,%d" % [t.x, t.y]] = chest_names[t]
+	return out
+
+
 func _flipped_to_dict() -> Dictionary:
 	var out := {}
 	for t: Vector2i in flipped:
@@ -1086,6 +1101,7 @@ func request_remove_object(tile: Vector2i) -> bool:
 		request_set_object(a, WorldData.AIR)
 	containers.erase(a)
 	flipped.erase(wrap_tile(a))
+	chest_names.erase(wrap_tile(a))
 	_drop_for(def, a)
 	if def.display_surface:
 		# What was on display on top falls off.
@@ -1273,6 +1289,24 @@ func _can_toggle_into(anchor: Vector2i, def: ObjectDef, old_tiles: Array[Vector2
 		if rect.intersects(body):
 			return false  # standing in the doorway
 	return true
+
+
+## A chest's name: the one given to it, else its kind ("Chest").
+func container_name(anchor: Vector2i) -> String:
+	var def := object_at(anchor)
+	var given: String = chest_names.get(wrap_tile(anchor), "")
+	return given if given != "" else (def.display_name if def else "Chest")
+
+
+## Names a chest ("" = back to its kind's name).
+func request_rename_chest(anchor: Vector2i, chest_name: String) -> void:
+	if not Game.is_authority():
+		return
+	var t := wrap_tile(anchor)
+	if chest_name.strip_edges() == "":
+		chest_names.erase(t)
+	else:
+		chest_names[t] = chest_name.strip_edges()
 
 
 ## The chests within `tiles` of a point, closest first (their inventories).
@@ -1561,14 +1595,17 @@ func try_interact_near(who: Player) -> bool:
 
 
 static func _usable(def: ObjectDef) -> bool:
-	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &"" or def.bed or def.display
+	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &"" or def.bed or def.display \
+		or def.right_click_takes
 
 
 func _interact_object(anchor: Vector2i) -> bool:
 	var def := object_at(anchor)
 	if def == null or not _usable(def):
 		return false
-	if def.display:
+	if def.right_click_takes:
+		request_remove_object(anchor)  # a torch: off the wall, it drops
+	elif def.display:
 		request_take_display(anchor, player)
 	elif def.bed:
 		use_bed(anchor)
@@ -1609,6 +1646,11 @@ func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vect
 	drop.setup(self, item_id, count, vel, thrown)
 	drop.position = pos
 	_drops.add_child(drop)
+	# Too many loose items: the oldest go (Terraria keeps at most 400).
+	while max_drops > 0 and _drops.get_child_count() > max_drops:
+		var oldest := _drops.get_child(0)
+		_drops.remove_child(oldest)
+		oldest.queue_free()
 	return drop
 
 

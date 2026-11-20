@@ -42,6 +42,12 @@ var _magnetized := false
 var _sprite: Sprite2D
 ## Drawn size in px (from the item's drop_pixels()).
 var _size := 10.0
+## Tiles: resting drops of the same item this close merge into one stack (like
+## Terraria), up to a full stack.
+@export var merge_tiles := 1.5
+## Seconds between merge checks (spread out so they don't all check on one frame).
+@export var merge_every := 0.5
+var _merge_left := randf() * 0.5
 
 
 func setup(w: World, id: StringName, n: int, vel: Vector2, thrown: bool) -> void:
@@ -97,6 +103,16 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.limit_length(max_loose_speed * TILE)
 	# On the ground? (checked before gravity, which makes velocity.y non-zero again)
 	var grounded := _on_ground()
+	if grounded and velocity == Vector2.ZERO:
+		# Resting: no physics to do (cheap when the ground is covered in drops), now and
+		# then merge with the same item lying close by.
+		_merge_left -= delta
+		if _merge_left <= 0.0:
+			_merge_left = merge_every
+			_merge_nearby()
+		_bob += delta * 3.0
+		_sprite.position.y = -_size * 0.5 - absf(sin(_bob)) * 1.0
+		return
 	velocity.y = minf(velocity.y + gravity * TILE * delta, max_fall * TILE)
 	velocity.x = move_toward(velocity.x, 0.0, (ground_friction if grounded else air_friction) * TILE * delta)
 	var next := global_position + velocity * delta
@@ -117,6 +133,30 @@ func _physics_process(delta: float) -> void:
 	global_position = next
 	_bob += delta * 3.0
 	_sprite.position.y = -_size * 0.5 - (absf(sin(_bob)) * 1.0 if _on_ground() else 0.0)
+
+
+## Takes in resting drops of the same item within merge_tiles (up to a full stack).
+func _merge_nearby() -> void:
+	if is_queued_for_deletion():
+		return
+	var cap := Inventory.max_stack(item_id)
+	if count >= cap:
+		return
+	for n in get_parent().get_children():
+		var other := n as ItemDrop
+		if other == null or other == self or other.item_id != item_id or other.is_queued_for_deletion():
+			continue
+		if other.velocity != Vector2.ZERO or other._magnetized:
+			continue
+		if other.global_position.distance_to(global_position) > merge_tiles * TILE:
+			continue
+		var take := mini(other.count, cap - count)
+		count += take
+		other.count -= take
+		if other.count <= 0:
+			other.queue_free()
+		if count >= cap:
+			break
 
 
 func _on_ground() -> bool:

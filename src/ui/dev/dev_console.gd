@@ -209,8 +209,7 @@ func _register() -> void:
 	_add("bush", "bush [young]", "Grow a ripe berry bush (full grown, or young) on the grass under the cursor.", func(a: PackedStringArray) -> void:
 		var t := world.world_to_tile(world.item_user.cursor())
 		for g: Vector2i in [t, t + Vector2i.DOWN, t + Vector2i(0, 2)]:
-			if world.data.get_block(g.x, g.y) == world.blocks.index_of(&"grass") and world.data.get_block(g.x, g.y - 1) == WorldData.AIR \
-					and world.plants.plant_at(g) == null:
+			if world.plants.bush_room(g):
 				var young := a.size() > 0 and a[0] == "young"
 				var bush := world.plants._add(world.wrap_tile(g), PlantLayer.Kind.BUSH,
 					PlantLayer.BUSH_YOUNG if young else PlantLayer.BUSH_GROWN)
@@ -219,7 +218,7 @@ func _register() -> void:
 					world.plants._young.append(world.wrap_tile(g))
 				_print("A berry bush at %d, %d." % [g.x, g.y])
 				return
-		_print("Needs open grass under the cursor."))
+		_print("Needs 3 tiles of open grass under the cursor, away from other bushes."))
 	_add("time", "time [hour | day | night | dusk | dawn | speed <x>]", "Show or set the time of day (24 minute days).", _time)
 	_add("summon", "summon <enemy> [count]", "Spawn enemies at the cursor (green_slime).", func(a: PackedStringArray) -> void:
 		if a.is_empty() or not Registry.has_def(&"enemies", StringName(a[0])):
