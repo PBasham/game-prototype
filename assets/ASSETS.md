@@ -252,6 +252,6 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/{workbench,furnace,copper_anvil,campfire,alchemy_table,spell_weaving_table}.png | Stations at 2x detail (`ObjectDef.detail = 2`): the 1x art through `art/concepts/stations/detail2x.py` (Scale2x, 1 px lit and shaded edges, wood grain, grit) |
 | objects/{table,shelf}.png, items/{icons,held}/{table,shelf}.png | Table (64x48, 4x3 tiles) and Shelf (48x16, 3x1, on a back wall), drawn at 1x in the workbench's wood colors by `art/concepts/stations/furn.py`, then the same 2x pass |
 | objects/scribes_desk.png, items/{icons,held}/scribes_desk.png | Scribe's Desk (4x3 tiles, detail 2): a writing desk with an open scroll, inkwell and quill, candle. Hand-drawn placeholder (PIL) |
-| objects/lumber_rack.png, items/{icons,held}/lumber_rack.png | Lumber Rack (3x3 tiles, detail 2): 11 frames of 48x48, empty to full in 10% steps, log ends in flat layers. Placeholder from `art/concepts/storage/make_storage.py` |
+| objects/lumber_rack.png, items/{icons,held}/lumber_rack.png | Lumber Rack (3x3 tiles, detail 2): 11 frames of 48x48, empty to full in 10% steps, log ends in staggered rows (5, 4, 5, 4, 5) filled a layer at a time. Placeholder from `art/concepts/storage/make_storage.py` |
 | objects/potion_cabinet.png, items/{icons,held}/potion_cabinet.png | Potion Cabinet (3x4 tiles, detail 2): 48x64 empty cabinet; bottles are drawn in code in each item's `shelf_color`. Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |

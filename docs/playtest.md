@@ -206,7 +206,7 @@ guesses; the docs listed say where each tunable lives.
 
 **Phase 12: home and storage (branch phase-12-home-storage)**
 - [ ] Lumber Rack (workbench: 25 wood + 4 logs): only wood and logs go in, 10 stacks of
-      100 (1,000). The pile grows in flat layers every 10%.
+      100 (1,000). The pile grows a full staggered layer at a time, every 10%.
 - [ ] Potion Cabinet (workbench: 20 wood + 2 copper bars + 2 clay flasks): only potions,
       coatings and flasks, 10 stacks. The shelves fill with bottles the color of what's
       inside (red healing, blue mana, green poison).
@@ -215,6 +215,11 @@ guesses; the docs listed say where each tunable lives.
 - [ ] `stock <item> [count]` puts items in the chest you have open.
 - [ ] New world: raspberry (pink) and blueberry (blue) bushes among the red ones.
       `bush raspberry` / `bush blueberry` in the console.
+- [ ] Hits on blocks make their sound again (it was lost west of spawn).
+- [ ] Slimes spawn everywhere again, including far left of spawn.
+- [ ] Pickaxe in hand, right click an outlined stick or rock in front of a back wall:
+      you pick it up (the wall stays).
+- [ ] Lumber Rack: logs in staggered rows, filling a full layer at a time.
 - [ ] Raspberries fill more (+14), blueberries heal more (+4 health).
 - [ ] Campfire: Raspberry Compote (4 + a bowl, Mending: +1 health/s for 4 min) and
       Blueberry Mash (4 + a bowl, Light Step: +15% speed for 4 min).

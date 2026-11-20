@@ -794,7 +794,7 @@ func request_spawn_enemy(data: EnemyData, pos: Vector2) -> Enemy:
 		return null
 	var e := Enemy.new()
 	e.setup(self, data)
-	e.position = pos
+	e.position = Vector2(near_player_x(pos.x), pos.y)
 	_enemies.add_child(e)
 	return e
 
@@ -907,6 +907,17 @@ func world_to_tile(p: Vector2) -> Vector2i:
 
 
 ## Tile coords to the pixel position of the tile's top-left corner.
+## The copy of world x `x` (px) closest to the player. The world wraps sideways and the
+## player's x isn't wrapped (walk left from spawn and it goes below 0), so things made
+## at a wrapped position (a bush's berries, a new slime) are moved next to the player
+## instead of a whole world away.
+func near_player_x(x: float) -> float:
+	if player == null or data == null:
+		return x
+	var w := float(data.width * TILE)
+	return player.global_position.x + wrapf(x - player.global_position.x, -w * 0.5, w * 0.5)
+
+
 func tile_to_world(tile: Vector2i) -> Vector2:
 	return Vector2(tile * TILE)
 
@@ -1168,10 +1179,10 @@ func can_display_at(tile: Vector2i, item: ItemData) -> bool:
 func request_place_display(tile: Vector2i, item_id: StringName) -> bool:
 	if not Game.is_authority() or not can_display_at(tile, ItemData.find(item_id)):
 		return false
+	EventBus.sound_requested.emit(&"block_place", tile_to_world(tile))
 	tile = wrap_tile(tile)
 	displays[tile] = item_id
 	request_set_object(tile, objects.index_of(&"display"))
-	EventBus.sound_requested.emit(&"block_place", tile_to_world(tile))
 	return true
 
 
@@ -1479,8 +1490,10 @@ func request_damage_wall(tile: Vector2i, amount: float) -> bool:
 func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	if not Game.is_authority():
 		return false
-	tile = wrap_tile(tile)
+	# The sound goes where the tile is drawn (unwrapped, near the camera), not at its
+	# wrapped position, which can be a whole world away from the listener.
 	EventBus.sound_requested.emit(&"mine_hit", tile_to_world(tile))
+	tile = wrap_tile(tile)
 	var id := data.get_wall(tile.x, tile.y) if wall else data.get_block(tile.x, tile.y)
 	# Front-layer mining takes a tile object first when there's no solid block there
 	# (rope on a platform, a torch). Objects break in one hit.
@@ -1690,7 +1703,7 @@ func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vect
 		return null  # spell shortcuts aren't things; throwing one just removes it
 	var drop := ItemDrop.new()
 	drop.setup(self, item_id, count, vel, thrown)
-	drop.position = pos
+	drop.position = Vector2(near_player_x(pos.x), pos.y)
 	_drops.add_child(drop)
 	# Too many loose items: the oldest go (Terraria keeps at most 400).
 	while max_drops > 0 and _drops.get_child_count() > max_drops:

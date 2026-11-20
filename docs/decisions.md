@@ -6,8 +6,14 @@ Newest first. Each entry: what was decided, why, and what it affects.
 
 - **Special storage (Patrick's idea and concept):** Lumber Rack (wood and logs, 10 x 100)
   and Potion Cabinet (potions, coatings, flasks, 10 stacks). Names picked by Claude;
-  Patrick liked them. The rack fills in 10% steps with flat layers (not a pyramid); the
+  Patrick liked them. The rack fills in 10% steps with staggered rows filled a layer at a time (no pyramid top); the
   cabinet only shows bottles of the colors actually inside.
+- **Wrapped positions (bug, Patrick: no hit sounds, no slimes):** the player's x isn't
+  wrapped, so west of x = 0 new slimes, drops and the hit sound were made a whole world
+  away. `World.near_player_x` now moves spawned enemies and drops to the copy next to
+  the player; the hit sound plays where the tile is drawn.
+- **Right click priority (Patrick):** anything outlined (pickups, ripe bushes,
+  furniture) beats the held item's back layer action.
 - **Berry kinds (Patrick):** raspberry and blueberry bushes besides the plain berry bush.
   They differ in food value (raspberries fill, blueberries heal) and each cooks into a
   buff food (Raspberry Compote: Mending, regen; Blueberry Mash: Light Step, speed). No

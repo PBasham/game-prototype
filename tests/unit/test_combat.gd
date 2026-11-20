@@ -30,6 +30,19 @@ func _floor_spot(dx: int) -> Vector2i:
 	return Vector2i(feet.x + dx, feet.y - 1)
 
 
+func test_things_made_at_a_wrapped_spot_appear_next_to_the_player() -> void:
+	var width := float(w.data.width * World.TILE)
+	var p := w.player.global_position
+	# The player walked left past x = 0: a slime or drop made at the wrapped x
+	# (a whole world to the right) shows up beside them instead.
+	w.player.global_position = Vector2(-80.0, p.y)
+	var e := w.request_spawn_enemy(_slime(), Vector2(width - 40.0, p.y))
+	assert_almost_eq(e.position.x, -40.0, 0.01)
+	var d := w.request_spawn_drop(&"stone", 1, Vector2(width - 120.0, p.y))
+	assert_almost_eq(d.position.x, -120.0, 0.01)
+	w.player.global_position = p
+
+
 func test_slime_data_and_loot() -> void:
 	var d := _slime()
 	assert_not_null(d)

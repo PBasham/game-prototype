@@ -13,7 +13,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | --- | --- |
 | **1 to 0**, mouse wheel | Pick a hotbar slot |
 | **Left click** | Use the held item on the **front** layer: swing, mine, chop, place a block, plant. Hold to repeat. |
-| **Right click** | If the held item has a back layer action here (place the block as a background wall; mine a background wall with a pickaxe or mining spell), that comes first, unless usable furniture (a door, chest, station, bed, display) is under the cursor. Otherwise interact (furniture, sticks and rocks, bushes, mushrooms), put a small item on display, or use the back layer. |
+| **Right click** | If the held item has a back layer action here (place the block as a background wall; mine a background wall with a pickaxe or mining spell), that comes first, unless something outlined is under the cursor (a door, chest, station, bed, display, a stick, rock or mushroom, a ripe bush): that gets picked up or used instead. Otherwise interact (furniture, sticks and rocks, bushes, mushrooms), put a small item on display, or use the back layer. |
 | **I** or **Tab** | Open / close the inventory |
 | **K** | Crafting window (hand crafting); see [crafting.md](crafting.md) |
 | **P** | Equipment window (armor, accessories, book, conduit, stats, quick spells); see [combat.md](combat.md) |

@@ -1,5 +1,5 @@
 """Placeholder art for the Lumber Rack (11 fill frames, 0% to 100% in 10% steps, logs
-stacked in flat layers) and the Potion Cabinet (empty; the game draws the bottles in
+stacked in staggered rows that fill a layer at a time) and the Potion Cabinet (empty; the game draws the bottles in
 the colors of what's inside). Detailed art: 2 art pixels per world pixel."""
 import os
 from PIL import Image, ImageDraw
@@ -15,8 +15,13 @@ def rack_frame(fill):
     for x0 in (2, 42):
         d.rectangle([x0, 8, x0 + 3, 44], fill=post); d.line([(x0, 8), (x0, 44)], fill=postl); d.line([(x0 + 3, 8), (x0 + 3, 44)], fill=postd)
         d.rectangle([x0 - 1, 6, x0 + 4, 8], fill=postl)
-    # 5 rows of 5 log ends, filled bottom row first, left to right: flat layers.
-    spots = [(9 + i * 7, 37 - row * 7) for row in range(5) for i in range(5)]
+    # Staggered rows (5, 4, 5, 4, 5 log ends, each row sitting in the dips of the one
+    # below, like a real pile), filled bottom row first: it grows in flat layers.
+    spots = []
+    for row in range(5):
+        n = 5 if row % 2 == 0 else 4
+        x0 = 9 if row % 2 == 0 else 12.5
+        spots += [(x0 + i * 7, 38 - row * 6) for i in range(n)]
     for cx, cy in spots[:round(len(spots) * fill)]:
         d.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=(150, 104, 60), outline=(82, 52, 28))
         d.ellipse([cx - 1, cy - 1, cx + 1, cy + 1], outline=(196, 150, 96))

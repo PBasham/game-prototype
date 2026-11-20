@@ -1345,7 +1345,10 @@ func _update_use(delta: float) -> void:
 		var clicked := _just("use_primary")
 		# With a stack on the mouse (inventory open), right click throws it (the HUD does).
 		if not clicked and _just("use_secondary") and mouse_stack == null:
-			var back_first: bool = held_item != null and not stowed and world != null \
+			# Anything outlined under the cursor (furniture, a stick or rock, a ripe bush)
+			# wins over the back layer, so you pick it up instead of mining the wall.
+			var outlined: bool = world != null and world.hover_outline != null and world.hover_outline.hovered() != null
+			var back_first: bool = held_item != null and not stowed and world != null and not outlined \
 				and not world.usable_object_at(aim_point()) and use_check.is_valid() and use_check.call(true)
 			if not back_first:
 				if world and world.try_interact_at(aim_point(), self):

@@ -234,7 +234,7 @@ can't mine the floor under furniture.
   `ItemData.storage_tags`: wood and logs are `lumber`; healing and mana potions, poison
   coatings and flasks, and clay flasks are `potion`), `container_stack_cap` (a stack size
   that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (the sprite sheet
-  has 11 frames, 0% to 100% in 10% steps: the Lumber Rack's logs stack in flat layers)
+  has 11 frames, 0% to 100% in 10% steps: the Lumber Rack's logs sit in staggered rows and fill a layer at a time)
   or `BOTTLES` (the Potion Cabinet draws one bottle per item kind on its shelves, in that
   item's `shelf_color`; filled shelves follow the stacks inside). The window shows
   "used / total" and a fill bar. Art from `art/concepts/storage/make_storage.py`.
