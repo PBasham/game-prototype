@@ -390,3 +390,44 @@ func test_build_against_a_door() -> void:
 	# Opened, it still counts.
 	assert_true(w.request_toggle_object(a))
 	assert_true(u._anchored(top, false))
+
+
+func test_crafting_uses_nearby_chests_after_the_inventory() -> void:
+	var hud := w.hud
+	var inv := w.character.inventory
+	inv.remove(&"wood", 99999)
+	var a := _floor_spot(4)
+	assert_true(w.request_place_object(a, w.objects.index_of(&"chest")))
+	var chest := w.container_at(a)
+	chest.add(&"wood", 10)
+	inv.add(&"wood", 3)
+	var r := RecipeData.new()
+	r.inputs = {&"wood": 4}
+	r.output = &"torch"
+	r.output_count = 1
+	assert_eq(hud._times(r), 3, "13 wood across the inventory and the chest")
+	assert_eq(hud.craft(r, 1), 1)
+	assert_eq(inv.count_of(&"wood"), 0, "the inventory is used first")
+	assert_eq(chest.count_of(&"wood"), 9, "then the chest")
+	# Far chests don't count.
+	w.player.global_position.x += 40 * World.TILE
+	w.player.reset_physics_interpolation()
+	await wait_physics_frames(2)
+	assert_eq(hud._times(r), 0, "the chest is too far")
+
+
+func test_freecraft_needs_no_materials() -> void:
+	var hud := w.hud
+	var inv := w.character.inventory
+	inv.remove(&"wood", 99999)
+	var r := RecipeData.new()
+	r.inputs = {&"wood": 4}
+	r.output = &"torch"
+	r.output_count = 1
+	assert_eq(hud._times(r), 0)
+	w.free_crafting = true
+	assert_gt(hud._times(r), 100)
+	var torches := inv.count_of(&"torch")
+	assert_eq(hud.craft(r, 2), 2)
+	assert_eq(inv.count_of(&"torch"), torches + 2)
+	w.free_crafting = false

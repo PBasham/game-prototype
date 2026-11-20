@@ -138,6 +138,9 @@ guesses; the docs listed say where each tunable lives.
 - [ ] New caves (F6 or unexplored areas): tunnels tall enough to walk and hop through.
 - [ ] Craft window: hold Shift or Ctrl, the amount and costs change to match.
 - [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).
+- [ ] Cave edges in shadow: no checkerboard blocks.
+- [ ] Crafting with materials in a nearby chest (within 12 tiles): inventory used first.
+- [ ] Console `freecraft`: craft anything with no materials; again turns it off.
 - [ ] Flying or jumping over a slime: a sword can't hit it far below you.
 - [ ] Healing Circle: casting again moves it (no stacking).
 - [ ] Book tooltip: name and Tier on top, Spell power, modifiers. No "Holds 4 spells".

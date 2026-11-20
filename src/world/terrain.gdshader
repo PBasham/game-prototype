@@ -66,7 +66,10 @@ int nat(ivec2 t) {
 float occ_b(ivec2 t) { return blk(t) > 0 ? 1.0 : 0.0; }
 float occ_w(ivec2 t) { return wal(t) > 0 ? 1.0 : 0.0; }
 
-vec4 nzv(vec2 p) { return texture(noise_tex, (mod(p, TEXP) + 0.5) / TEXP); }
+// The noise is per world pixel, read with texelFetch: with detailed art `p` moves in
+// half pixels, and sampling at a texel's edge made some GPUs pick either side, which
+// speckled the dirt / stone mixing and the edges into a checkerboard.
+vec4 nzv(vec2 p) { return texelFetch(noise_tex, ivec2(mod(floor(p), TEXP)), 0); }
 
 float nz(vec2 p) {
 	vec4 n = nzv(p);

@@ -134,6 +134,9 @@ var _quick: Pane
 var _name_label: Label
 var _tooltip: PanelContainer
 var _tooltip_text: Label
+## Crafting's materials (inventory + nearby chests), rebuilt each frame (craft_stock).
+var _stock: CraftStock
+var _stock_frame := -1
 ## The tooltip's title line and its right side (a book's tier).
 var _tooltip_title: Label
 var _tooltip_right: Label
@@ -1122,8 +1125,20 @@ func _max_mana() -> float:
 	return world.player.max_mana
 
 
+## What crafting draws from: your inventory, then chests near you (free with the dev
+## console's `freecraft`). Built once per frame.
+func craft_stock() -> CraftStock:
+	var frame := Engine.get_process_frames()
+	if _stock == null or _stock_frame != frame or _stock.free != world.free_crafting:
+		var from: Array[Inventory] = [world.character.inventory]
+		from.append_array(world.chests_near(world.player.chest(), world.craft_chest_tiles))
+		_stock = CraftStock.new(from, world.free_crafting)
+		_stock_frame = frame
+	return _stock
+
+
 func _times(r: RecipeData) -> int:
-	var n := Crafting.times_craftable(_inventory(), r, _max_mana())
+	var n := Crafting.times_craftable(craft_stock(), r, INF if world.free_crafting else _max_mana())
 	return mini(n, 1) if r.teaches != &"" else n
 
 
@@ -1199,7 +1214,7 @@ func _craft_hit(local: Vector2) -> Array:
 
 
 func _draw_crafting(g: Control) -> void:
-	var inv := _inventory()
+	var inv := craft_stock()  # inventory + nearby chests
 	var font := ThemeDB.fallback_font
 	var def := _station_def()
 	var hover := _craft_hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
@@ -1293,7 +1308,7 @@ func _draw_icon(g: Control, tex: Texture2D, at: Vector2, alpha: float = 1.0) -> 
 
 
 func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover: Array) -> void:
-	var inv := _inventory()
+	var inv := craft_stock()  # inventory + nearby chests
 	var out := ItemData.find(r.output)
 	var big := Rect2(d.position, Vector2(36, 36))
 	UiSkin.slot(g, big)
@@ -1386,7 +1401,7 @@ func _upgrade_def() -> ObjectDef:
 
 
 func _draw_upgrade_detail(g: Control, font: Font, d: Rect2, def: ObjectDef, hover: Array) -> void:
-	var inv := _inventory()
+	var inv := craft_stock()  # inventory + nearby chests
 	var next := _upgrade_def()
 	g.draw_string(font, d.position + Vector2(0, 10), "Upgrade to %s" % (next.display_name if next else "?"),
 		HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 8, UiSkin.TEXT)
@@ -1615,7 +1630,8 @@ func craft(r: RecipeData, times: int) -> int:
 		return 0
 	if r.teaches != &"":
 		return learn(r)
-	var result := Crafting.craft(world.character.inventory, r, times, _max_mana())
+	var result := Crafting.craft(craft_stock(), r, times, INF if world.free_crafting else _max_mana())
+	_stock = null  # counts changed
 	if int(result[1]) > 0:
 		world.request_spawn_drop(r.output, int(result[1]), world.player.chest(), Vector2.ZERO, true)
 	if int(result[0]) > 0:
@@ -1627,10 +1643,12 @@ func craft(r: RecipeData, times: int) -> int:
 ## A Spells tab recipe: pays the learn cost and teaches the spell. 1 if learned.
 func learn(r: RecipeData) -> int:
 	var c := world.character
-	if c.knows(r.teaches) or Crafting.times_craftable(c.inventory, r) <= 0:
+	var stock := craft_stock()
+	if c.knows(r.teaches) or Crafting.times_craftable(stock, r) <= 0:
 		return 0
 	for k: StringName in r.inputs:
-		c.inventory.remove(k, r.inputs[k])
+		stock.remove(k, r.inputs[k])
+	_stock = null
 	c.learn_spell(r.teaches)
 	var spell := ItemData.find(r.output)
 	EventBus.debug_message.emit("You learned %s. Put it in a quick slot (Equipment, P)." % (spell.display_name if spell else String(r.teaches)))
@@ -1644,7 +1662,7 @@ func _can_upgrade() -> bool:
 	if def == null or def.upgrade_to == &"":
 		return false
 	for k: StringName in def.upgrade_cost:
-		if world.character.inventory.count_of(k) < def.upgrade_cost[k]:
+		if craft_stock().count_of(k) < def.upgrade_cost[k]:
 			return false
 	return true
 
@@ -1658,7 +1676,7 @@ func upgrade_station() -> bool:
 	if next <= 0:
 		return false
 	for k: StringName in def.upgrade_cost:
-		world.character.inventory.remove(k, def.upgrade_cost[k])
+		craft_stock().remove(k, def.upgrade_cost[k])
 	world.request_set_object(station, next)
 	return true
 

@@ -108,6 +108,13 @@ left). **K** (or the **Craft (K)** button in the inventory) opens **hand craftin
 right click (or E) a station to open that station's list instead. The window closes
 with its **x**, K, Esc, closing the inventory, or walking out of reach.
 
+**Materials from chests:** crafting (and station upgrades and learning spells) also uses
+what's in chests within `World.craft_chest_tiles` (12) of you. Your inventory is used
+first, then the closest chest, then the next. The "have / need" counts include them.
+Crafted items go to your inventory (`CraftStock`, src/items/craft_stock.gd).
+Dev console **`freecraft`** toggles free crafting: no materials or max mana needed and
+nothing is used up.
+
 - **Left:** the recipe list. Each row is the output icon and name; the green number is
   how many you can make right now; rows you can't make are dimmed. Mouse wheel scrolls.
 - **Right:** the selected recipe: a big icon, the description, **Needs** (have / need,

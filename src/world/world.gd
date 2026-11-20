@@ -45,6 +45,10 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 @export var block_heal_seconds := 5.0
 ## E interacts with things this close (tiles).
 @export var interact_tiles := 6.0
+## Crafting also uses what's in chests this close to you (tiles), after your inventory.
+@export var craft_chest_tiles := 12.0
+## Dev console `freecraft`: crafting needs no materials (and nothing is used up).
+var free_crafting := false
 
 @export_group("Spell scrolls")
 ## Scribing a scroll (Spell Weaving Table, Scrolls tab: only spells you know) uses its
@@ -1162,6 +1166,25 @@ func _can_toggle_into(anchor: Vector2i, def: ObjectDef, old_tiles: Array[Vector2
 		if rect.intersects(body):
 			return false  # standing in the doorway
 	return true
+
+
+## The chests within `tiles` of a point, closest first (their inventories).
+func chests_near(point: Vector2, tiles: float) -> Array[Inventory]:
+	var found: Array = []
+	for a: Vector2i in containers:
+		var def := object_at(a)
+		var w := def.width_tiles if def else 1
+		var h := def.height_tiles if def else 1
+		var mid := tile_to_world(a) + Vector2(w, -h + 1) * TILE * 0.5
+		mid.x += roundf((point.x - mid.x) / (data.width * TILE)) * data.width * TILE  # the world wraps
+		var d := mid.distance_to(point)
+		if d <= tiles * TILE:
+			found.append([d, containers[a]])
+	found.sort_custom(func(x: Array, y: Array) -> bool: return x[0] < y[0])
+	var out: Array[Inventory] = []
+	for f: Array in found:
+		out.append(f[1])
+	return out
 
 
 ## The container (chest) at a tile, or null.

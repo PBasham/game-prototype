@@ -39,6 +39,13 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Speckled edges in shadow (bug, Patrick):** some blocks at cave edges looked like a
+  checkerboard. With detailed art the terrain shader reads its noise texture every half
+  pixel, which lands on texel edges, and some GPUs pick either side there. The noise is
+  now read per world pixel (texelFetch), like before detailed art. I couldn't see it on
+  the software renderer, so this is the likely cause, not a confirmed one.
+- **Crafting from chests (Patrick):** inventory first, then chests within 12 tiles,
+  closest first. Dev `freecraft` makes crafting free.
 - **Swings in the air (bug, Patrick):** flying above a slime still hit it (the swing
   reaches 3 tiles below your feet for downhill enemies). Off the ground it stops at
   your feet now.

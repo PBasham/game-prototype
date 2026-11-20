@@ -303,6 +303,11 @@ func _register() -> void:
 	_add("devkit", "devkit", "Tools, blocks, torches, all spells and the dev test items.", func(_a: PackedStringArray) -> void:
 		world.character.give_dev_kit()
 		_print("Dev kit given."))
+	_add("freecraft", "freecraft", "Toggle free crafting: no materials (or max mana) needed, nothing used up.", func(_a: PackedStringArray) -> void:
+		world.free_crafting = not world.free_crafting
+		if world.hud:
+			world.hud._recipe_key = ""
+		_print("Free crafting %s." % ("on" if world.free_crafting else "off")))
 	_add("mana", "mana", "Toggle infinite mana.", func(_a: PackedStringArray) -> void:
 		world.player.infinite_mana = not world.player.infinite_mana
 		world.player.mana = world.player.max_mana
