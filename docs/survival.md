@@ -124,7 +124,8 @@ in your inventory goes into a **magic bag** (`ItemBag`, src/items/item_bag.gd) t
 tossed up where you died, then falls, bounces and settles like a Terraria tombstone.
 Spell shortcuts, your equipped book and conduit, and the spells you know stay with you.
 Right click or E on the bag opens it like a chest (Take all, Shift + click); it vanishes
-once empty. Bags are saved with the world. Bag exports: `gravity`, `bounce`,
+once empty. A bag on top of furniture (a workbench, say) opens before the furniture.
+Bags are saved with the world. Bag exports: `gravity`, `bounce`,
 `settle_speed`, `ground_friction`. Art: `assets/objects/magic_bag.png` (12x12).
 
 **On death: Keep items** keeps everything in your inventory.

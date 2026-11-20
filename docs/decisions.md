@@ -39,6 +39,11 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Magic bag over furniture (Patrick):** clicking a bag that landed on a workbench opened
+  the workbench. Interactable nodes (the bag) now come first, and the hover outline
+  shows the bag.
+- **Ending buffs (Patrick):** right click a buff, summon or light in the buff row to end
+  it. Not potion sickness (that would skip its wait) or auras.
 - **Placing from the mouse stack (Patrick):** with the inventory open, a placeable
   stack on the mouse is held and placed like a hotbar item instead of being thrown.
 

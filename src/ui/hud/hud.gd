@@ -312,7 +312,10 @@ func _process(delta: float) -> void:
 		if place and p.stowed:
 			p.toggle_stowed()  # placing takes the hand back out
 		p.refresh_held()
-	p.input_blocked = over != null or (cursor_count > 0 and place == null) or paused or wheel_open
+	var on_buff := _buff_at_mouse() != &""
+	p.input_blocked = over != null or (cursor_count > 0 and place == null) or paused or wheel_open or on_buff
+	if on_buff and not paused and Input.is_action_just_pressed("use_secondary"):
+		dismiss_buff(_buff_entry_at_mouse())
 	_update_tooltip(over if over else (_buffs if _buff_at_mouse() != &"" else null))
 	if (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
 		close_window()  # walked away from the station or chest
@@ -805,6 +808,22 @@ func _buff_entry_at_mouse() -> Array:
 		if Rect2(i * BUFF_STEP, 0, BUFF_STEP - 2, BUFF_STEP - 2).has_point(local):
 			return entries[i]
 	return []
+
+
+## Right click in the buff row: ends that buff, or sends its summons away. Sickness
+## and auras (Cozy) can't be ended. True when something ended.
+func dismiss_buff(entry: Array) -> bool:
+	if entry.is_empty():
+		return false
+	var key: StringName = entry[0]
+	var timed: bool = entry[3]
+	if String(key).begins_with("summon_"):
+		world.request_dismiss_summons(entry[1])
+		return true
+	if not timed or String(key).begins_with("sick_"):
+		return false
+	world.player.end_buff(key)
+	return true
 
 
 ## The buff under the mouse (its key), or &"".
@@ -1916,6 +1935,8 @@ func _update_tooltip(over: Control) -> void:
 				var count: String = e[4]
 				extra_only = "%s%s, %s left\n%s" % [spell.display_name, (" (%s out)" % count) if count != "" else "",
 					_clock(e[2]), spell.description]
+				if (e[3] and not String(e[0]).begins_with("sick_")) or String(e[0]).begins_with("summon_"):
+					extra_only += "\nRight click: end it"
 		elif over is HudWindow:
 			var t: Array = (over as HudWindow).tooltip_at(over.get_local_mouse_position())
 			item = t[0]

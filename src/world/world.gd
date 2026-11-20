@@ -547,6 +547,14 @@ func summons_of(spell: SpellData) -> Array[Node]:
 
 
 ## Seconds left on the newest of a spell's lights or familiars (0 = none out).
+## Sends a spell's summons or lights away now (right click in the buff row).
+func request_dismiss_summons(spell: SpellData) -> void:
+	if not Game.is_authority():
+		return
+	for n in summons_of(spell):
+		n.queue_free()
+
+
 func summon_time_left(spell: SpellData) -> float:
 	var best := 0.0
 	for n in summons_of(spell):
@@ -1316,6 +1324,8 @@ func _heal_blocks(delta: float) -> void:
 ## within interact_tiles of the player. Returns true if something was used.
 ## Whether usable furniture (a door, chest, station, bed, display) is at a point.
 func usable_object_at(point: Vector2) -> bool:
+	if interactable_node_at(point):
+		return true  # a magic bag on top counts too
 	var a := object_anchor_visual(world_to_tile(point))
 	if a == NO_TILE:
 		return false
@@ -1326,6 +1336,11 @@ func usable_object_at(point: Vector2) -> bool:
 func try_interact_at(point: Vector2, who: Player) -> bool:
 	if who and point.distance_to(who.chest()) > (interact_tiles + 2.0) * TILE:
 		return false
+	# Interactable nodes (the magic bag) sit on top of furniture, so they come first.
+	var node := interactable_node_at(point)
+	if node:
+		node.call(&"interact", who)
+		return true
 	var tile := world_to_tile(point)
 	var a := object_anchor_visual(tile)
 	if a != NO_TILE and _interact_object(a):
@@ -1334,11 +1349,15 @@ func try_interact_at(point: Vector2, who: Player) -> bool:
 		return true
 	if plants and plants.request_pick_up(tile, who):
 		return true
+	return false
+
+
+## The interactable node (a magic bag) under a point, or null.
+func interactable_node_at(point: Vector2) -> Node:
 	for node in get_tree().get_nodes_in_group(&"interactable"):
 		if node.has_method(&"interact_rect") and (node.call(&"interact_rect") as Rect2).has_point(point):
-			node.call(&"interact", who)
-			return true
-	return false
+			return node
+	return null
 
 
 ## E: interacts with the nearest usable furniture (or pickup, or interactable node)

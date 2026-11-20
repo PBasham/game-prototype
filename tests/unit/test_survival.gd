@@ -142,6 +142,15 @@ func test_dying_drops_a_magic_bag_and_respawns() -> void:
 	# Take all empties it, and it vanishes.
 	w.teleport_player(bag.global_position)
 	await wait_physics_frames(2)
+	# On top of a workbench, a click on the bag opens the bag, not the bench.
+	var bench := w.world_to_tile(bag.global_position) + Vector2i(-1, 0)
+	w.request_place_object(bench, w.objects.index_of(&"workbench"))
+	var at := (bag.call(&"interact_rect") as Rect2).get_center()
+	assert_true(w.usable_object_at(at))
+	var opened: Array = []
+	w.bag_opened.connect(func(b: ItemBag) -> void: opened.append(b))
+	assert_true(w.try_interact_at(at, p))
+	assert_eq(opened, [bag], "the bag wins over furniture under it")
 	w.hud._on_bag_opened(bag)
 	assert_true(w.hud._chest.visible)
 	for i in bag.inventory.size:

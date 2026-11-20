@@ -586,6 +586,22 @@ func test_summon_and_light_timers_show() -> void:
 	assert_eq(shown.size(), 1)
 	assert_eq(shown[0][4], "2/3", "how many are out")
 	assert_true(p.is_spell_active(wisp))
+	# Right click in the buff row sends them away.
+	assert_true(w.hud.dismiss_buff(shown[0]))
+	await wait_physics_frames(1)
+	assert_eq(w.summons_of(wisp).size(), 0)
+
+
+func test_right_click_ends_buffs_but_not_sickness() -> void:
+	var p := w.player
+	p.add_buff(_spell(&"arcane_edge"))
+	var entry: Array = w.hud.buff_entries().filter(func(e: Array) -> bool: return e[0] == &"arcane_edge")[0]
+	assert_true(w.hud.dismiss_buff(entry))
+	assert_false(p.has_buff(&"arcane_edge"))
+	p._timed_buff(&"sick_healing", "Healing Sickness", "", 30.0, null)
+	entry = w.hud.buff_entries().filter(func(e: Array) -> bool: return e[0] == &"sick_healing")[0]
+	assert_false(w.hud.dismiss_buff(entry))
+	assert_true(p.has_buff(&"sick_healing"))
 
 
 func test_recall_ritual() -> void:

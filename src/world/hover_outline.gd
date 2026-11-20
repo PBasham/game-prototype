@@ -91,19 +91,19 @@ func _find_target() -> void:
 	if point.distance_to(p.chest()) > (world.interact_tiles + 2.0) * World.TILE:
 		return
 	var tile := world.world_to_tile(point)
-	if _object(tile) or _plant(tile):
+	var node := world.interactable_node_at(point)  # on top of furniture, so first
+	if node == null and (_object(tile) or _plant(tile)):
 		return
-	for node in get_tree().get_nodes_in_group(&"interactable"):
-		if node.has_method(&"interact_rect") and (node.call(&"interact_rect") as Rect2).has_point(point):
-			for c in node.get_children():
-				var s := c as Sprite2D
-				if s and s.texture:
-					_tex = s.texture
-					_det = 1
-					_src = Rect2(Vector2.ZERO, s.texture.get_size())
-					var top_left := s.global_position - (_src.size * 0.5 if s.centered else Vector2.ZERO)
-					_dest = Rect2(top_left + s.offset, _src.size)
-					return
+	if node:
+		for c in node.get_children():
+			var s := c as Sprite2D
+			if s and s.texture:
+				_tex = s.texture
+				_det = 1
+				_src = Rect2(Vector2.ZERO, s.texture.get_size())
+				var top_left := s.global_position - (_src.size * 0.5 if s.centered else Vector2.ZERO)
+				_dest = Rect2(top_left + s.offset, _src.size)
+				return
 
 
 func _object(tile: Vector2i) -> bool:

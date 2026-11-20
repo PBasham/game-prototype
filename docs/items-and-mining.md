@@ -266,7 +266,8 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
   back layer (mining and chopping spells). Picking a hotbar slot puts the spell away.
 - **Timers:** buffs, and your Familiar, Light Orb and Wisps while they're out, show in
   the row above the health panel with the time left (Wisps also show how many are out,
-  like 2/3). Hover for details.
+  like 2/3). Hover for details. **Right click** one to end it now (summons and lights
+  vanish); potion sickness and auras like Cozy can't be ended (`Hud.dismiss_buff`).
 - **Spell Index (L):** tabs (All, Tools, Movement, Attack, Defense, Light: the spell's
   `group`) and a search box (click it and type; Enter or Esc stops). Each row says which
   quick slots hold the spell. Spell tooltips: name, description, mana, then what else
