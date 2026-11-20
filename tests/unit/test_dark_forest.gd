@@ -21,7 +21,7 @@ func _gen(width: int) -> ForestGenerator:
 
 func test_patches_scale_with_the_world_and_keep_spawn_clear() -> void:
 	var s := ForestGenerator.default_settings()
-	for size: Array in [[1024, 1], [6400, 2]]:
+	for size: Array in [[1024, 1], [6400, 3]]:
 		var g := _gen(size[0])
 		var patches := g.dark_forests()
 		assert_eq(patches.size(), size[1], "%d wide: %d patches" % size)
@@ -73,6 +73,25 @@ func test_darkwood_trees_drop_dark_logs_and_logs_make_darkwood() -> void:
 	assert_eq(ItemData.find(&"darkwood").places_block, &"darkwood_planks")
 	assert_true(w.blocks.index_of(&"darkwood_planks") > 0)
 	assert_true(w.walls.index_of(&"darkwood_wall") > 0)
+
+
+func test_darkwood_saplings_grow_darkwood_trees() -> void:
+	w = await _world()
+	var feet := w.world_to_tile(w.player.global_position)
+	var ground := w.wrap_tile(Vector2i(feet.x + 12, feet.y))
+	w.data.set_block(ground.x, ground.y, w.blocks.index_of(&"grass"))
+	assert_eq(ItemData.find(&"darkwood_sapling").plants, &"darkwood")
+	assert_true(w.plants.request_plant_tree(ground, PlantLayer.SAPLING_DARKWOOD))
+	w.plants._grow(w.plants._days(w.plants.grow_max_days) + 1.0)
+	var tree := w.plants.plant_at(ground)
+	assert_eq(tree.kind, PlantLayer.Kind.TREE)
+	assert_eq(w.plants.log_of(tree), &"dark_log", "a darkwood tree")
+	w.plants._break(ground, tree)
+	var saplings := 0
+	for d in w._drops.get_children():
+		if (d as ItemDrop).item_id == &"darkwood_sapling":
+			saplings += (d as ItemDrop).count
+	assert_gt(saplings, 0, "darkwood trees drop darkwood saplings")
 
 
 func test_forest_spirit_charges_and_shoots_you() -> void:

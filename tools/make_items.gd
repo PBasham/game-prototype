@@ -102,6 +102,11 @@ func _items() -> Array[ItemData]:
 	dwood.places_block = &"darkwood_planks"
 	dwood.held.grip = Vector2(3, 5)
 	out.append(dwood)
+	var dsap := _small(&"darkwood_sapling", "Darkwood Sapling", "Plant on grass to grow a darkwood tree (Dark Logs).")
+	dsap.kind = ItemData.Kind.SEED
+	dsap.plants = &"darkwood"
+	dsap.place_area_max = 1
+	out.append(dsap)
 	out.append(_small(&"magic_essence", "Magic Essence", "A wisp of magic left by a Forest Spirit."))
 	out.append(_small(&"spirit_core", "Spirit Core", "The glowing heart of a Forest Spirit. Rare."))
 	# Platforms and rope go one at a time (line placing may come later).
@@ -408,13 +413,13 @@ func _spells() -> Array[ItemData]:
 	drill.projectile_color = Color(1.0, 0.55, 0.3)
 	out.append(drill)
 
-	var push := _spell(&"air_push", "Air Push", "A gust toward the cursor that shoves enemies away. In the air, it pushes you back too.")
+	var push := _spell(&"air_push", "Air Push", "A gust toward the cursor that shoves enemies away. Walls stop it. It pushes you back too: in the air, or aimed down at the ground for a gust jump.")
 	push.cast = SpellData.Cast.GUST
 	push.damage = 2.0
 	push.gust_tiles = 8.0
 	push.gust_angle = 35.0
-	push.gust_push = 24.0
-	push.gust_recoil = 12.0
+	push.gust_push = 36.0
+	push.gust_recoil = 26.0
 	push.mana_cost = 8.0
 	push.cooldown = 0.6
 	push.impact_at = 0.3

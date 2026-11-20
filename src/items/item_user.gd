@@ -597,7 +597,7 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.PLACE_BLOCK
 	if item.places_object != &"":
 		return Mode.PLACE_OBJECT
-	if item.plants == &"tree":
+	if item.plants in [&"tree", &"darkwood"]:
 		return Mode.PLANT_TREE
 	if item.plants == &"grass":
 		return Mode.PLANT_GRASS
@@ -750,7 +750,8 @@ func _on_impact(item: ItemData) -> void:
 					p.take_held()
 		Mode.PLANT_TREE:
 			for g in valid:
-				if p.held_count() > 0 and world.plants.request_plant_tree(g):
+				var kind := PlantLayer.SAPLING_DARKWOOD if item.plants == &"darkwood" else PlantLayer.SAPLING_PINE
+				if p.held_count() > 0 and world.plants.request_plant_tree(g, kind):
 					p.take_held()
 		Mode.PLANT_GRASS:
 			var grass := world.blocks.index_of(&"grass")
@@ -954,13 +955,21 @@ func gust(spell: SpellData, from: Vector2, dir: Vector2) -> int:
 			continue
 		if d > 1.0 and rad_to_deg(absf(dir.angle_to(to))) > spell.gust_angle:
 			continue
+		if not world.line_clear(from, r.get_center()):
+			continue  # walls and closed doors stop the gust
 		if spell.damage > 0.0:
 			node.call(&"take_damage", spell.damage * _spell_power(), p)
 		if node.has_method(&"knock_back"):
 			node.call(&"knock_back", from, spell.gust_push)
 		hit += 1
-	if not p.is_on_floor() and spell.gust_recoil > 0.0:
-		p.velocity -= dir * spell.gust_recoil * TILE
+	# The push back on you: full in the air; on the ground only a gust aimed down lifts
+	# you (a gust jump).
+	if spell.gust_recoil > 0.0:
+		if not p.is_on_floor():
+			p.velocity -= dir * spell.gust_recoil * TILE
+		elif dir.y > 0.4:
+			p.velocity.y = minf(p.velocity.y, -dir.y * spell.gust_recoil * TILE)
+			p.velocity.x -= dir.x * spell.gust_recoil * TILE
 	SpellEffect.spawn(world.effects, SpellEffect.Kind.GUST, from, dir * reach_px, spell.projectile_color,
 		spell.gust_angle)
 	return hit

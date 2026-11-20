@@ -94,6 +94,7 @@ var _trees: Array[Texture2D] = []
 var _pines := 12
 var _flowers: Array[Texture2D] = []
 var _sapling_tex: Texture2D
+var _dark_sapling_tex: Texture2D
 ## [young, grown ripe, grown picked].
 ## Bush kinds by save_index (data/bushes/), and the kinds in worldgen order.
 var _bushes: Dictionary[int, BushData] = {}
@@ -118,6 +119,7 @@ func setup(w: World) -> void:
 	for i in 5:
 		_flowers.append(load("res://assets/decor/flower_%d.png" % i) as Texture2D)
 	_sapling_tex = load("res://assets/decor/sapling.png") as Texture2D
+	_dark_sapling_tex = load("res://assets/decor/darkwood_sapling.png") as Texture2D
 	for d: GameData in Registry.get_all(&"bushes"):
 		var b := d as BushData
 		_bushes[b.save_index] = b
@@ -229,11 +231,18 @@ func request_hit_tree(ground: Vector2i, damage: float, from_x: float) -> bool:
 	return true
 
 
-## Plants a sapling on the grass tile `ground`. Returns true if it was planted.
-func request_plant_tree(ground: Vector2i) -> bool:
+## Sapling variants: what it grows into (and drops when broken).
+const SAPLING_PINE := 0
+const SAPLING_DARKWOOD := 1
+const SAPLING_ITEMS: Array[StringName] = [&"tree_seed", &"darkwood_sapling"]
+
+
+## Plants a sapling on the grass tile `ground` (`kind`: SAPLING_PINE or
+## SAPLING_DARKWOOD). Returns true if it was planted.
+func request_plant_tree(ground: Vector2i, kind: int = SAPLING_PINE) -> bool:
 	if not Game.is_authority() or sapling_spot(ground) != world.wrap_tile(ground):
 		return false
-	var p := _add(world.wrap_tile(ground), Kind.SAPLING, 0)
+	var p := _add(world.wrap_tile(ground), Kind.SAPLING, kind)
 	p.grow_left = _days(randf_range(grow_min_days, grow_max_days))
 	return true
 
@@ -454,7 +463,8 @@ func _grow(delta: float) -> void:
 			continue
 		_saplings.erase(g)
 		_remove(g)
-		var tree := _add(g, Kind.TREE, randi() % _pines)
+		var dark := p.variant == SAPLING_DARKWOOD and _trees.size() > _pines
+		var tree := _add(g, Kind.TREE, _pines + randi() % (_trees.size() - _pines) if dark else randi() % _pines)
 		tree.health = tree_health
 
 
@@ -606,7 +616,7 @@ func _break(g: Vector2i, p: Plant) -> void:
 		Kind.TREE:
 			_drop_tree(pos, 0.0, _height_tiles(p), log_of(p))
 		Kind.SAPLING:
-			world.request_spawn_drop(&"tree_seed", 1, pos, _pop())
+			world.request_spawn_drop(SAPLING_ITEMS[clampi(p.variant, 0, SAPLING_ITEMS.size() - 1)], 1, pos, _pop())
 		Kind.FLOWER:
 			if randf() < grass_seed_chance:
 				world.request_spawn_drop(&"grass_seeds", 1, pos, _pop())
@@ -657,7 +667,8 @@ func _drop_tree(base: Vector2, dir: float, height_tiles: float, log_id: StringNa
 		var pos := base + Vector2(along, 0.0 if dir != 0.0 else float(-i * TILE))
 		world.request_spawn_drop(log_id, 1, pos, _pop())
 	var seeds := 1 + (1 if randf() < extra_seed_chance else 0)
-	world.request_spawn_drop(&"tree_seed", seeds, base + Vector2(dir * length * 0.6, 0), _pop())
+	var seed_id := &"darkwood_sapling" if log_id == &"dark_log" else &"tree_seed"
+	world.request_spawn_drop(seed_id, seeds, base + Vector2(dir * length * 0.6, 0), _pop())
 
 
 func _pop() -> Vector2:
@@ -695,7 +706,7 @@ func _texture(p: Plant) -> Texture2D:
 		Kind.TREE:
 			return _trees[p.variant % _trees.size()]
 		Kind.SAPLING:
-			return _sapling_tex
+			return _dark_sapling_tex if p.variant == SAPLING_DARKWOOD and _dark_sapling_tex else _sapling_tex
 		Kind.BUSH:
 			var b := bush_kind(p)
 			if b == null:

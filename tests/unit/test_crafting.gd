@@ -461,6 +461,37 @@ func test_dev_items_window_gives_stacks() -> void:
 	assert_eq(hud.cursor_count, Inventory.max_stack(&"wood_platform"), "never past a stack")
 	hud.cursor_count = 0
 	hud.cursor_id = &""
+	# Clicks: 1, Shift 10, Ctrl a stack; right click an infinite stack.
+	var cell := win.cell(0).get_center()
+	var click := func(button: MouseButton, shift: bool, ctrl: bool) -> void:
+		var mb := InputEventMouseButton.new()
+		mb.button_index = button
+		mb.pressed = true
+		mb.position = cell
+		mb.shift_pressed = shift
+		mb.ctrl_pressed = ctrl
+		win.body_click(mb)
+	click.call(MOUSE_BUTTON_LEFT, false, false)
+	assert_eq(hud.cursor_count, 1)
+	click.call(MOUSE_BUTTON_LEFT, true, false)
+	assert_eq(hud.cursor_count, 11)
+	click.call(MOUSE_BUTTON_LEFT, false, true)
+	assert_eq(hud.cursor_count, Inventory.max_stack(&"wood_platform"))
+	hud.cursor_count = 0
+	click.call(MOUSE_BUTTON_RIGHT, false, false)
+	assert_true(hud.cursor_meta.get("infinite", false), "infinite stack")
+	var p := w.player
+	var before := hud.cursor_count
+	p.mouse_stack = ItemData.find(&"wood_platform")
+	p.mouse_take = hud._take_cursor_one
+	p.mouse_left = func() -> int: return hud.cursor_count
+	p.mouse_meta = func() -> Dictionary: return hud.cursor_meta
+	assert_true(p.take_held())
+	assert_eq(hud.cursor_count, before, "never used up")
+	p.mouse_stack = null
+	hud.cursor_count = 0
+	hud.cursor_id = &""
+	hud.cursor_meta = {}
 	hud.toggle_dev_items()
 	hud.set_open(false)
 

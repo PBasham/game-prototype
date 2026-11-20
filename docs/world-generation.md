@@ -309,8 +309,8 @@ the daylight, and Forest Spirits (combat.md). The edges fade over a few dozen ti
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `dark_forest_share` | 0.15 | Share of the world's width that is Dark Forest (0 = none). |
-| `dark_forest_patch_tiles` | 480 | About this wide per patch: Tiny 1 patch (154 tiles), Small 2 (480 each), Medium 3, Large 4. |
+| `dark_forest_share` | 0.25 | Share of the world's width that is Dark Forest (0 = none). |
+| `dark_forest_patch_tiles` | 640 | About this wide per patch: Tiny 1 patch (256 tiles), Small 3 (533 each), Medium 4 (600), Large 5 (640). |
 | `dark_forest_spawn_clear` | 300 | No Dark Forest closer to spawn than this (tiles to the patch's edge). |
 | `dark_forest_edge_tiles` | 40 | The fade at each edge. |
 | `dark_tree_spacing` | 5 | One dark tree spot per this many columns (pines: 9). |

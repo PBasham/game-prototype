@@ -261,3 +261,4 @@ or .ogg); the generator never overwrites without `--force`.
 | terrain/darkwood_planks.png, terrain/darkwood_planks_wall.png | 64x64 darkwood planks (block, back wall) |
 | items/{icons,held}: dark_log, darkwood, magic_essence, spirit_core | 16x16 icons, same script |
 | enemies/forest_spirit.png | 72x24: three 24x24 frames (drifting, charging, shooting) |
+| decor/darkwood_sapling.png, items/{icons,held}/darkwood_sapling.png | 9x14 darkwood sapling (and its icon). Same script, `--sapling` |

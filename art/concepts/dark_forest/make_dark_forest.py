@@ -253,3 +253,34 @@ def backdrops():
 
 if __name__ == "__main__" and "--backdrops" in sys.argv:
     backdrops()
+
+
+def sapling():
+    """Darkwood sapling, 9x14 like the pine sapling: a purple stem, a round dark tuft."""
+    im = Image.new("RGBA", (9, 14))
+    px = im.load()
+    for y in range(5, 14):
+        px[4, y] = BARK[2] + (255,)
+    px[3, 13] = BARK[1] + (255,)
+    px[5, 13] = BARK[1] + (255,)
+    for y in range(0, 7):
+        for x in range(9):
+            if (x - 4) ** 2 + ((y - 3) * 1.2) ** 2 < 11:
+                c = LEAF[3] if x < 4 and y < 3 else (LEAF[2] if (x + y) % 3 else LEAF[1])
+                px[x, y] = c + (255,)
+    for p in [(1, 8), (2, 8), (6, 9), (7, 9)]:
+        px[p] = LEAF[2] + (255,)
+    return im
+
+
+def sapling_icon():
+    icon = Image.new("RGBA", (16, 16))
+    s = sapling()
+    icon.alpha_composite(s, (4, 1))
+    return icon
+
+
+if __name__ == "__main__" and "--sapling" in sys.argv:
+    save(sapling(), "assets/decor/darkwood_sapling.png")
+    save(sapling_icon(), "assets/items/icons/darkwood_sapling.png")
+    save(sapling_icon().resize((9, 9), Image.NEAREST), "assets/items/held/darkwood_sapling.png")

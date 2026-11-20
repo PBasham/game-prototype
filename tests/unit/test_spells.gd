@@ -101,6 +101,20 @@ func test_air_push_shoves_what_is_in_front() -> void:
 	assert_gt(front.velocity.x * p.facing, 10.0 * World.TILE, "pushed away")
 	assert_lt(front.health, front.data.max_health, "a little damage")
 	assert_eq(behind.health, behind.data.max_health)
+	# A wall between: the gust stops there.
+	var wall_x := w.world_to_tile(from).x + 3 * p.facing
+	var feet := w.world_to_tile(p.global_position)
+	for y in range(feet.y - 10, feet.y):
+		w.request_set_block(Vector2i(wall_x, y), w.blocks.index_of(&"stone"))
+	var hp := front.health
+	front.global_position = p.global_position + Vector2(5 * World.TILE * p.facing, 0)
+	await wait_physics_frames(1)
+	assert_eq(w.item_user.gust(push, from, Vector2(p.facing, 0)), 0, "blocked by the wall")
+	assert_eq(front.health, hp)
+	# Aimed down on the ground: a gust jump.
+	if p.is_on_floor():
+		w.item_user.gust(push, from, Vector2(0, 1))
+		assert_lt(p.velocity.y, -10.0 * World.TILE, "lifted")
 
 
 func test_blink_moves_toward_the_cursor_but_not_into_ground() -> void:
@@ -825,3 +839,10 @@ func test_dev_books_for_each_tier() -> void:
 		assert_not_null(b)
 		assert_eq(b.max_spell_tier, t)
 		assert_eq(b.kind, ItemData.Kind.BOOK)
+
+
+func test_tooltips_say_which_spells_have_their_own_key() -> void:
+	assert_string_contains(Hud.spell_tooltip(_spell(&"mining_spell")), "own key (R)")
+	assert_string_contains(Hud.spell_tooltip(_spell(&"chopping_spell")), "own key (Ctrl + R)")
+	assert_string_contains(Hud.spell_tooltip(_spell(&"fly")), "Movement slot")
+	assert_false(Hud.spell_tooltip(_spell(&"spark")).contains("own key"))

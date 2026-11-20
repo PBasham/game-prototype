@@ -506,7 +506,7 @@ func toggle_dev_items() -> void:
 
 ## Puts `count` of an item on the mouse (the Dev items window). The same item adds up
 ## to a stack; something else on the mouse goes back to the inventory first.
-func give_cursor(item_id: StringName, count: int) -> void:
+func give_cursor(item_id: StringName, count: int, meta: Dictionary = {}) -> void:
 	if cursor_count > 0 and cursor_id != item_id:
 		if _cursor_is_spell():
 			_clear_cursor()
@@ -517,6 +517,8 @@ func give_cursor(item_id: StringName, count: int) -> void:
 				_throw_cursor()
 			_clear_cursor()
 	var cap := Inventory.max_stack(item_id)
+	if cursor_id != item_id or cursor_count == 0 or not meta.is_empty():
+		cursor_meta = meta.duplicate()
 	cursor_count = mini(cap, (cursor_count if cursor_id == item_id else 0) + count)
 	cursor_id = item_id
 	_redraw()
@@ -2329,7 +2331,8 @@ func _update_tooltip(over: Control) -> void:
 	_tooltip_types.text = spell_types(item as SpellData) if item is SpellData else ""
 	_tooltip_types.visible = _tooltip_types.text != ""
 	_tooltip.reset_size()
-	var at := over.get_global_mouse_position() + Vector2(10, 8)
+	# Hovering a chest in the world, no window is under the mouse.
+	var at := (over if over else _tooltip).get_global_mouse_position() + Vector2(10, 8)
 	var view := _view_size()
 	at.x = minf(at.x, view.x - _tooltip.size.x - 2)
 	at.y = minf(at.y, view.y - _tooltip.size.y - 2)
@@ -2362,6 +2365,8 @@ static func tooltip_for(item: ItemData, c: CharacterData = null, meta: Dictionar
 	if item is SpellData:
 		return spell_tooltip(item as SpellData, c)
 	var lines := PackedStringArray([item.display_name])
+	if meta.get("infinite", false):
+		lines.append("Infinite (dev): never runs out")
 	if item.mining_damage > 0.0:
 		var area: String = str(item.mining_area) if item.mining_area_max <= item.mining_area \
 			else "%d to %d" % [item.mining_area, item.mining_area_max]
@@ -2442,7 +2447,25 @@ static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
 		lines.append("Cooldown %s s" % _num(spell.cooldown))
 	if c and c.knows(spell.id) and c.cast_problem(spell) != "":
 		lines.append("Can't cast now: %s" % c.cast_problem(spell))
+	var key := dedicated_key(spell, c)
+	if key != "":
+		lines.append("Has its own key (%s): no need to put it on a wheel, unless you want to." % key)
 	return "\n".join(lines)
+
+
+## The key a spell already has without a quick slot: R (Mining Spell), Ctrl + R
+## (Chopping Spell), F (the Movement spell). Empty for the rest.
+static func dedicated_key(spell: SpellData, c: CharacterData = null) -> String:
+	match spell.id:
+		&"mining_spell":
+			return "R"
+		&"chopping_spell":
+			return "Ctrl + R"
+	if c and c.movement_spell == spell.id:
+		return "F"
+	if spell.cast == SpellData.Cast.TOGGLE and spell.effect in [&"fly", &"levitate"]:
+		return "F, in the Movement slot"
+	return ""
 
 
 static func _num(v: float) -> String:

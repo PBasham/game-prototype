@@ -4,11 +4,12 @@ Newest first. Each entry: what was decided, why, and what it affects.
 
 ## 2026-11-20: Phase 14, Dark Forest
 
-- **Size (Patrick):** biomes scale with the world: 15% of its width in patches of about
-  480 tiles (Small 2, Medium 3, Large 4), never within 300 tiles of spawn.
+- **Size (Patrick):** biomes scale with the world: 25% of its width (raised from 15%,
+  Patrick: the world wraps, so it should be bigger) in patches of about 640 tiles
+  (Small 3, Medium 4, Large 5), never within 300 tiles of spawn.
 - **Darkwood (Patrick: "sounds great"):** Dark Logs from darkwood trees, 1 = 4 Darkwood,
   a block and back wall for now. Station upgrades maybe later. Darkwood trees drop
-  ordinary tree seeds (a darkwood seed would be new content: ask first).
+  Darkwood Saplings (Patrick) that grow darkwood trees.
 - **Forest Spirit (Patrick):** darts, stops, charges 1 s, shoots for 15. Drops Magic
   Essence and a rare Spirit Core. What they're for (a summoning scroll, found recipes)
   waits on Patrick's answer to the brief.

@@ -245,8 +245,18 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Costs 3 mana a second; stops when you're out.
 - [ ] Mine a far wall with the Mining Spell, then Tele Grab the ore.
 
+**Fixes from your Phase 12 notes**
+- [ ] Place a chest, Lumber Rack or Potion Cabinet: no error (the hover name tooltip
+      crashed with no window under the mouse).
+- [ ] Mining Spell, Chopping Spell, Fly / Levitate tooltips: "Has its own key".
+- [ ] Dev items (F7): click 1, Shift 10, Ctrl a stack, right click an infinite stack
+      (place or eat from it forever; its tooltip says so).
+- [ ] Air Push: no hits through walls; stronger push; aim down on the ground: a gust jump.
+
 **Phase 14: Dark Forest (branch phase-14-dark-forest)**
-- [ ] New world (Small: 2 patches about 480 wide, away from spawn). `tp` there or walk.
+- [ ] New world (Small: 3 patches about 530 wide, a quarter of the world, away from
+      spawn). `tp` there or walk.
+- [ ] Darkwood trees drop Darkwood Saplings; planted, they grow darkwood trees.
       The map preview shows them as purple trees.
 - [ ] Tall darkwood trees close together, dark trunks backdrop, half the daylight; the
       edge fades in and out.

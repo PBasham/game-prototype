@@ -186,9 +186,9 @@ extends GameData
 @export_group("Dark forest")
 ## Share of the world's width that is Dark Forest (0 = none). It's split into patches
 ## of about dark_forest_patch_tiles each, spread around the world, so bigger worlds get
-## more patches (Small: 2, Medium: 3, Large: 4 by default).
-@export_range(0.0, 0.6) var dark_forest_share := 0.15
-@export var dark_forest_patch_tiles := 480
+## more patches (Small: 3, Medium: 4, Large: 5 by default).
+@export_range(0.0, 0.6) var dark_forest_share := 0.25
+@export var dark_forest_patch_tiles := 640
 ## No Dark Forest closer to spawn than this (tiles from spawn to the patch's edge).
 @export var dark_forest_spawn_clear := 300
 ## The patch fades in and out over this many tiles at each edge (trees, darkness, sky).

@@ -644,6 +644,8 @@ func held_count() -> int:
 func take_held() -> bool:
 	if world and world.infinite_items and held_count() > 0:
 		return true  # dev: nothing is used up
+	if held_count() > 0 and held_meta().get("infinite", false):
+		return true  # a dev window infinite stack (right click there)
 	if mouse_stack:
 		return mouse_take.is_valid() and bool(mouse_take.call())
 	var slot := held_slot()

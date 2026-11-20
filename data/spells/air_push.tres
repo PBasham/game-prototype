@@ -6,6 +6,8 @@
 [resource]
 script = ExtResource("2_rjuso")
 cast = 3
+gust_push = 36.0
+gust_recoil = 26.0
 cooldown = 0.6
 damage = 2.0
 projectile_color = Color(0.85, 0.95, 1, 1)
@@ -19,4 +21,4 @@ max_stack = 1
 impact_at = 0.3
 id = &"air_push"
 display_name = "Air Push"
-description = "A gust toward the cursor that shoves enemies away. In the air, it pushes you back too."
+description = "A gust toward the cursor that shoves enemies away. Walls stop it. It pushes you back too: in the air, or aimed down at the ground for a gust jump."

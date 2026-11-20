@@ -225,7 +225,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Spark | PROJECTILE | 8 damage (times spell power), 40 tiles/s, 20 tiles. Hold to keep casting (one per 0.3 s). 2 mana. |
 | Levitate | TOGGLE | Hovers 5 tiles (`hover_tiles`) above the ground under you and follows it; 30 tiles/s sideways. Down lowers you to the ground; you can't rise above the hover height. With no ground within 40 tiles you sink slowly. No fall damage. 4 mana/s. Tunables on the Player: `levitate_accel_time`, `levitate_follow`, `levitate_max_vertical`, `levitate_scan_tiles`, `levitate_sink`. |
 | Hyper Drill | TOOL beam | Tier 3 (needs the Dev Grimoire for now). 400 mining per second on every tile in a circle 5 tiles out from the center (`mining_area` 11, `mining_round`), reach 24. Right click: back walls. 30 mana/s. |
-| Air Push | GUST | Cone 8 tiles long, 35 degrees each side. 2 damage, push 24 tiles/s; in the air you get pushed back 12 tiles/s. 8 mana, 0.6 s cooldown. |
+| Air Push | GUST | Cone 8 tiles long, 35 degrees each side; walls and closed doors stop it. 2 damage, push 36 tiles/s. It pushes you back 26 tiles/s: in the air, or on the ground when aimed down (a gust jump). 8 mana, 0.6 s cooldown. |
 | Blink | BLINK | Up to 12 tiles toward the cursor (your middle goes there), stopping at the farthest spot you fit; nothing happens if there's no room. 15 mana, 1 s cooldown. |
 | Light Orb | LIGHT | A warm light (radius 10) floating by your head for 3 minutes, fading at the end. Not concentration, so it works while you fly. 10 mana. |
 | Wisp | LIGHT (placed) | Hold to steer a cool light with the cursor (within 24 tiles of you), let go to leave it there. Radius 9, 5 minutes, up to 3 at once (the oldest goes). 12 mana, 0.5 s cooldown. |
@@ -435,7 +435,9 @@ Sticks and rocks lying around are the `Forage` node (crafting.md).
 - **Darkwood trees** (the Dark Forest, tree variants after the 12 pines) drop **Dark
   Logs** instead, more of them (they're 22 to 35 tiles tall). 1 Dark Log = 4
   **Darkwood** by hand; Darkwood places Darkwood Planks (block, 70 health) and, with
-  right click, a Darkwood Wall. Saplings always grow pines.
+  right click, a Darkwood Wall. They also drop **Darkwood Saplings** (plant like a Tree
+  Seed; it grows a darkwood tree anywhere). Tree Seeds grow pines. Saved as the
+  sapling's variant (0 pine, 1 darkwood).
 - **Saplings:** plant a tree seed on grass with `tree_spacing` (3) tiles to the next
   tree. It grows in `grow_min_seconds` to `grow_max_seconds` (60 to 150) while the
   world runs, once there are `grow_clearance` (10) clear tiles above it.
