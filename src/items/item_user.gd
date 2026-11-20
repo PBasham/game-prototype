@@ -69,6 +69,8 @@ var back := false
 ## Why the held spell can't be cast ("" = it can).
 var problem := ""
 var _item: ItemData
+## The frame something was last eaten (a right click asks twice in one frame).
+var _eat_frame := -1
 ## When each spell (by id) can be cast again (seconds, engine time), for cooldowns.
 var _ready_at: Dictionary[StringName, float] = {}
 
@@ -272,7 +274,8 @@ func can_use(on_back: bool = false) -> bool:
 				return false
 			return cooldown_left(_item as SpellData) <= 0.0
 		Mode.EAT:
-			if not on_back and Input.is_action_just_pressed("use_primary"):
+			if on_back and Input.is_action_just_pressed("use_secondary") and _eat_frame != Engine.get_process_frames():
+				_eat_frame = Engine.get_process_frames()  # asked twice in one click: eat once
 				eat_held()
 			return false  # no swing
 		Mode.PAGE:
@@ -387,14 +390,13 @@ func read_page() -> bool:
 func cast_scroll() -> bool:
 	var p := world.player
 	var item := p.held_item
-	if item == null or item.teaches_spell == &"" or p.held_slot() < 0 or p.character == null:
+	if item == null or item.teaches_spell == &"" or p.held_count() <= 0 or p.character == null:
 		return false
 	var spell := ItemData.find(ItemData.spell_key(item.teaches_spell)) as SpellData
 	if spell == null:
 		return false
 	if cooldown_left(spell) > 0.0:
 		return false  # shares the spell's cooldown with casting it from the book
-	var slot := p.held_slot()
 	var ok := true
 	match spell.cast:
 		SpellData.Cast.TOGGLE:
@@ -402,7 +404,7 @@ func cast_scroll() -> bool:
 			p.start_scroll_spell(spell, secs)
 		SpellData.Cast.TOOL:
 			var secs := item.scroll_seconds if item.scroll_seconds > 0.0 else p.scroll_beam_seconds
-			p.character.inventory.take(slot, 1)
+			p.take_held()
 			p.start_scroll_spell(spell, secs)
 			EventBus.debug_message.emit("%s: free for %d seconds" % [spell.display_name, roundi(secs)])
 			return true
@@ -418,7 +420,7 @@ func cast_scroll() -> bool:
 		_:
 			ok = cast(spell)
 	if ok:
-		p.character.inventory.take(slot, 1)
+		p.take_held()
 		_ready_at[spell.id] = _now() + spell.cooldown
 	return ok
 
@@ -426,7 +428,21 @@ func cast_scroll() -> bool:
 ## Eats or drinks one of the held food or potion (hunger, health, mana, a buff).
 ## Returns true if it was used up.
 func eat_held() -> bool:
-	return eat_from(world.player.held_slot())
+	var p := world.player
+	if p.mouse_stack:
+		var item := p.mouse_stack
+		if item.kind != ItemData.Kind.FOOD:
+			return false
+		var why := p.cant_consume(item)
+		if why != "":
+			EventBus.debug_message.emit(why)
+			return false
+		if not p.take_held():
+			return false
+		p.consume(item)
+		EventBus.sound_requested.emit(&"eat", p.chest())
+		return true
+	return eat_from(p.held_slot())
 
 
 ## Eats or drinks one from an inventory slot (held, or a Z X C shortcut).
@@ -455,7 +471,7 @@ func eat_from(slot: int) -> bool:
 func throw_held() -> bool:
 	var p := world.player
 	var item := p.held_item
-	if item == null or item.throw_speed <= 0.0 or p.held_slot() < 0 or not Game.is_authority():
+	if item == null or item.throw_speed <= 0.0 or p.held_count() <= 0 or not Game.is_authority():
 		return false
 	if not p.take_held():
 		return false
@@ -523,7 +539,7 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 	if item.mining_damage > 0.0:
 		return Mode.MINE
 	if item.kind == ItemData.Kind.FOOD:
-		return Mode.EAT if not on_back else Mode.NONE
+		return Mode.EAT if on_back else Mode.NONE  # right click, like Terraria's quick use
 	if item.throw_speed > 0.0:
 		return Mode.THROW if not on_back else Mode.NONE
 	if item.teaches_spell != &"":

@@ -132,6 +132,8 @@ var _wheel: Wheel
 ## The quick spell keys beside the hotbar: Q and E (their current pick), Z, X, C.
 var _quick: Pane
 var _name_label: Label
+## The held spell's icon, left of its name (a spell in hand).
+var _name_icon: TextureRect
 var _tooltip: PanelContainer
 var _tooltip_text: Label
 ## Crafting's materials (inventory + nearby chests), rebuilt each frame (craft_stock).
@@ -198,6 +200,12 @@ func _ready() -> void:
 	_name_label.add_theme_color_override("font_color", UiSkin.TEXT)
 	_name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
 	add_child(_name_label)
+	_name_icon = TextureRect.new()
+	_name_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_name_icon.size = Vector2(12, 12)
+	_name_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_name_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_name_icon)
 	_tooltip = PanelContainer.new()
 	_tooltip.add_theme_stylebox_override("panel", UiSkin.box("panel", 6.0))
 	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -300,10 +308,11 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# A click on the world with a stack on the mouse throws it.
+	# Right click on the world with a stack on the mouse throws it (left click uses it,
+	# like Terraria). A spell shortcut on the mouse is thrown away with either button.
 	var mb := event as InputEventMouseButton
-	if open and mb and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and cursor_count > 0 \
-			and _cursor_placeable() == null:
+	if open and mb and mb.pressed and cursor_count > 0 and (mb.button_index == MOUSE_BUTTON_RIGHT
+			or (mb.button_index == MOUSE_BUTTON_LEFT and _cursor_placeable() == null)):
 		_throw_cursor()
 		get_viewport().set_input_as_handled()
 
@@ -324,7 +333,7 @@ func _process(delta: float) -> void:
 	_update_wheel(paused)
 	var p := world.player
 	var over := _over_pane()
-	# A placeable stack on the mouse places into the world like the hotbar (with the preview).
+	# The stack on the mouse is held and used like the hotbar (placing shows the preview).
 	var place := _cursor_placeable() if over == null and not paused and not wheel_open else null
 	if p.mouse_stack != place:
 		p.mouse_stack = place
@@ -347,6 +356,12 @@ func _process(delta: float) -> void:
 	_redraw()  # mana bar, recipe counts, hover
 	var item := p.held_item
 	_name_label.text = item.display_name if item else ""
+	# A spell in hand: its icon before the name, in a magic blue.
+	var spell_in_hand := item != null and item.is_spell() and not p.stowed
+	_name_icon.visible = spell_in_hand and item.icon != null
+	_name_icon.texture = item.icon if spell_in_hand else null
+	_name_label.position.x = MARGIN.x + 2 + (14 if _name_icon.visible else 0)
+	_name_label.add_theme_color_override("font_color", Color("9fd4ff") if spell_in_hand else UiSkin.TEXT)
 	if p.concentration:
 		_name_label.text += ("\n" if _name_label.text != "" else "") + "Concentrating: %s" % p.concentration.display_name
 
@@ -517,6 +532,7 @@ func _layout() -> void:
 	else:
 		_inv.size = Vector2(PAD * 2 + 10 * STEP - GAP, PAD * 2 + SLOT)
 	_name_label.position = MARGIN + Vector2(2, _inv.size.y + 2)
+	_name_icon.position = MARGIN + Vector2(2, _inv.size.y + 3)
 	_quick.size = Vector2(PAD * 2 + QUICK_KEYS_SHOWN.size() * STEP - GAP + 4, PAD * 2 + SLOT + QUICK_LABEL_H)
 	_quick.position = _inv.position + Vector2(_inv.size.x + 4, 0)
 	var view := _view_size()
@@ -1868,12 +1884,13 @@ func _cursor_spell() -> StringName:
 	return StringName(String(cursor_id).trim_prefix(ItemData.SPELL_PREFIX))
 
 
-## The stack on the mouse if it places something in the world (inventory open), else null.
+## The stack on the mouse if it can be used in the world (inventory open): any item
+## but a spell shortcut. Else null.
 func _cursor_placeable() -> ItemData:
 	if not open or cursor_count <= 0:
 		return null
 	var item := ItemData.find(cursor_id)
-	return item if item and item.is_placeable() else null
+	return item if item and not item.is_spell() else null
 
 
 ## Uses up one item of the mouse stack (it was placed). False when it's empty.
@@ -2071,9 +2088,13 @@ func _update_tooltip(over: Control) -> void:
 	_tooltip.position = at
 
 
-## The right side of a tooltip's title line: "Tier N" for spellbooks.
+## The right side of a tooltip's title line: "Tier N" for spellbooks, the kind for conduits.
 static func tooltip_right(item: ItemData) -> String:
-	return "Tier %d" % item.max_spell_tier if item and item.kind == ItemData.Kind.BOOK else ""
+	if item and item.kind == ItemData.Kind.BOOK:
+		return "Tier %d" % item.max_spell_tier
+	if item and item.kind == ItemData.Kind.CONDUIT and item.conduit_type != &"":
+		return String(item.conduit_type).capitalize()
+	return ""
 
 
 ## A stat bonus as a line: "+10% Magic damage", "+20 Max mana".
@@ -2104,15 +2125,18 @@ static func tooltip_for(item: ItemData, c: CharacterData = null) -> String:
 		ItemData.Kind.BOOK:
 			# Name | Tier (the title line), spell power, then its modifiers.
 			lines.append("Spell power x%s" % str(item.spell_power))
-			for k: StringName in item.stats:
-				if item.stats[k] != 0.0:
-					lines.append(stat_text(k, item.stats[k]))
 		ItemData.Kind.CONDUIT:
-			lines.append("Conduit (%s): spell power x%s, +%s reach" % [String(item.conduit_type),
-				str(item.spell_power), str(item.spell_reach_bonus)])
+			# Just what it changes.
+			lines.append("Spell power x%s" % str(item.spell_power))
+			if item.spell_reach_bonus != 0.0:
+				lines.append("%+d spell reach" % roundi(item.spell_reach_bonus))
 		ItemData.Kind.TOME:
 			var s := ItemData.find(ItemData.spell_key(item.tome_spell))
 			lines.append("Tome: casts %s" % (s.display_name if s else String(item.tome_spell)))
+	# Modifiers (books, conduits, accessories): "+10% Magic damage".
+	for k: StringName in item.stats:
+		if item.stats[k] != 0.0:
+			lines.append(stat_text(k, item.stats[k]))
 	if item.places_wall != &"":
 		lines.append("Right click: place as a back wall")
 	if item.teaches_spell != &"":

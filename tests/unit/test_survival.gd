@@ -75,6 +75,9 @@ func test_eating_berries() -> void:
 	p.health = p.max_health
 	assert_false(w.item_user.eat_held(), "full: doesn't eat")
 	assert_eq(inv.counts[0], 2)
+	# Right click eats (like Terraria's quick use); left click doesn't.
+	assert_eq(w.item_user._mode_for(ItemData.find(&"berries"), true), ItemUser.Mode.EAT)
+	assert_eq(w.item_user._mode_for(ItemData.find(&"berries"), false), ItemUser.Mode.NONE)
 
 
 func test_berry_bushes_pick_and_regrow() -> void:

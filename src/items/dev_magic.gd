@@ -40,7 +40,7 @@ static func _register() -> void:
 	book.held = _look(&"dev_grimoire", book.icon)
 	ItemData.register_runtime(book)
 
-	var focus := _item(&"dev_focus", "Dev Focus (dev)", "Conduit (focus): spell power x1.25, +4 reach.", ItemData.Kind.CONDUIT)
+	var focus := _item(&"dev_focus", "Dev Focus (dev)", "", ItemData.Kind.CONDUIT)
 	focus.conduit_type = &"focus"
 	focus.spell_power = 1.25
 	focus.spell_reach_bonus = 4.0

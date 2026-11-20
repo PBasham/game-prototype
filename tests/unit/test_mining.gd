@@ -698,12 +698,26 @@ func test_placeable_stack_on_the_mouse_places_with_the_inventory_open() -> void:
 	assert_eq(w.data.get_block(t.x, t.y), w.blocks.index_of(&"dirt"))
 	assert_eq(hud.cursor_count, 1, "taken from the mouse stack")
 	assert_eq(w.character.inventory.counts, slot_counts, "not from the hotbar")
-	# A non-placeable stack still blocks and throws as before.
-	hud.cursor_id = &"stick"
+	# Any item on the mouse is held and used (a sword swings); a spell shortcut isn't.
+	hud.cursor_id = &"copper_sword"
 	hud.cursor_count = 1
+	await wait_process_frames(3)
+	assert_eq(p.mouse_stack, ItemData.find(&"copper_sword"))
+	assert_false(p.input_blocked)
+	hud.cursor_id = &"spell:spark"
 	await wait_process_frames(3)
 	assert_null(p.mouse_stack)
 	assert_true(p.input_blocked)
+	# Right click on the world throws the stack.
+	hud.cursor_id = &"stone"
+	hud.cursor_count = 4
+	var e := InputEventMouseButton.new()
+	e.button_index = MOUSE_BUTTON_RIGHT
+	e.pressed = true
+	var drops := w.drop_count()
+	hud._unhandled_input(e)
+	assert_eq(hud.cursor_count, 0)
+	assert_eq(w.drop_count(), drops + 1, "thrown")
 	hud.cursor_count = 0
 	hud.cursor_id = &""
 	hud.set_open(false)

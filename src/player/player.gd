@@ -424,7 +424,7 @@ func _slot_of(item_id: StringName) -> int:
 ## The inventory slot the held item comes from: the hotbar slot, or for an item taken
 ## out with Z X C, the first slot holding it. -1 for spells or nothing.
 func held_slot() -> int:
-	if character == null:
+	if character == null or mouse_stack:
 		return -1
 	if selected >= 0:
 		return selected
@@ -509,8 +509,9 @@ func is_spell_active(spell: SpellData) -> bool:
 	return false
 
 
-## A placeable stack on the mouse (inventory open): held and placed from instead of the
-## hotbar slot, with the same preview. The HUD sets it; `mouse_take` takes from it.
+## The stack on the mouse (inventory open, over the world): held and used instead of
+## the hotbar slot, like Terraria (left click swings, mines, places with the preview).
+## The HUD sets it; `mouse_take` takes from it.
 var mouse_stack: ItemData = null
 var mouse_take: Callable
 var mouse_left: Callable
@@ -1293,7 +1294,8 @@ func _update_use(delta: float) -> void:
 		# item on display, or the back layer.
 		var back := false
 		var clicked := _just("use_primary")
-		if not clicked and _just("use_secondary"):
+		# With a stack on the mouse (inventory open), right click throws it (the HUD does).
+		if not clicked and _just("use_secondary") and mouse_stack == null:
 			var back_first: bool = held_item != null and not stowed and world != null \
 				and not world.usable_object_at(aim_point()) and use_check.is_valid() and use_check.call(true)
 			if not back_first:

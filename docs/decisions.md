@@ -39,6 +39,12 @@ Newest first. Each entry: what was decided, why, and what it affects.
   learned this way.
 - **Spell Weaving Table filters (Patrick):** group buttons and search, like the Spell
   Index, on all three tabs.
+- **Mouse stack is used (Patrick):** with the inventory open, any item on the mouse is
+  held and used over the world (left click); right click throws the stack.
+- **Food and potions on right click (Patrick).**
+- **Tooltips say what changes (Patrick):** conduits show "Spell power x1.25", "+4 spell
+  reach" (their kind on the right), and any item's stats show as modifier lines.
+- **Spell in hand:** icon and name under the hotbar.
 - **Speckled edges in shadow (bug, Patrick):** some blocks at cave edges looked like a
   checkerboard. With detailed art the terrain shader reads its noise texture every half
   pixel, which lands on texel edges, and some GPUs pick either side there. The noise is

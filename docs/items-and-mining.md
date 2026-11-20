@@ -39,11 +39,12 @@ the panel lays itself out from it.
 - Shift + left click: move a stack between the hotbar and the rest.
 - Ctrl + right click: equip armor, an accessory, a book or a conduit (swaps with the
   equipped one). On an equipment slot (or shift + click it): back into the inventory.
-- Click the world with a stack on the mouse: throw it. Closing the panel puts it back.
-  A **placeable** stack (blocks, walls, furniture, saplings, grass seeds) isn't thrown:
-  over the world your hand holds it, with the usual placement preview, and left / right
-  click place it from the mouse stack (not the hotbar), like a hotbar item
-  (`Player.mouse_stack`, set by the HUD; placing uses `Player.take_held`).
+- A stack on the mouse, over the world, is **held and used** like Terraria: left click
+  swings a sword, mines with a pickaxe, places blocks or furniture (with the usual
+  preview), from the mouse stack, not the hotbar (`Player.mouse_stack`, set by the HUD;
+  placing uses `Player.take_held`). **Right click throws the stack.** Closing the panel
+  puts it back. A spell shortcut on the mouse can't be used; a click on the world drops
+  it.
 - Hover a slot for its tooltip.
 - To the right: the **Craft (K)**, **Equip (P)** and **Spells (L)** buttons. The
   inventory holds items only.
@@ -62,7 +63,12 @@ the panel lays itself out from it.
   opens the inventory; closing the inventory closes them.
 
 While the mouse is over the hotbar or panel, you're carrying a stack that can't be
-placed, or the spell wheel is open, clicks don't use items.
+placed (a spell shortcut), or the spell wheel is open, clicks don't use items.
+
+**Food and potions** are used with **right click** (left click does nothing with them),
+like Terraria's quick use, so swinging never wastes a potion.
+
+**A spell in hand** shows its icon and name (in blue) under the hotbar.
 
 Items with no use (wood, books, conduits) are just held: clicking doesn't swing.
 

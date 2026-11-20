@@ -138,6 +138,11 @@ guesses; the docs listed say where each tunable lives.
 - [ ] New caves (F6 or unexplored areas): tunnels tall enough to walk and hop through.
 - [ ] Craft window: hold Shift or Ctrl, the amount and costs change to match.
 - [ ] Night in a cave: slimes on the surface above stay up there (and despawn when far).
+- [ ] Inventory open, sword or pickaxe on the mouse: left click swings / mines; right
+      click throws the stack.
+- [ ] Food and potions: right click eats / drinks; left click doesn't.
+- [ ] Dev Focus tooltip: just the changes, "Focus" on the right.
+- [ ] Spell in hand: icon and name under the hotbar.
 - [ ] Cave edges in shadow: no checkerboard blocks.
 - [ ] Crafting with materials in a nearby chest (within 12 tiles): inventory used first.
 - [ ] Console `freecraft`: craft anything with no materials; again turns it off.
