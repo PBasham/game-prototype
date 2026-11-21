@@ -259,7 +259,7 @@ guesses; the docs listed say where each tunable lives.
       The map preview shows them as purple trees.
 - [ ] Tall darkwood trees close together, dark trunks backdrop, half the daylight; the
       edge fades in and out.
-- [ ] Chop a darkwood tree: Dark Logs; 1 Dark Log = 4 Darkwood (by hand); Darkwood
+- [ ] Chop a darkwood tree: Darkwood Logs; 1 Darkwood Log = 4 Darkwood (by hand); Darkwood
       builds blocks and back walls.
 - [ ] Forest Spirits: dart about, stop, charge (sparks) for 1 s, shoot (15 damage).
       Walls block their shots; they don't shoot what they can't see.

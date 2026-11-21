@@ -438,8 +438,8 @@ Sticks and rocks lying around are the `Forage` node (crafting.md).
   it falls away from you over `fall_time` and breaks into Logs along its trunk (one per
   `tiles_per_log`, 6, tiles of height: 2 to 4) and 1 seed (`extra_seed_chance` of a second). Removing the grass under a tree breaks
   it on the spot.
-- **Darkwood trees** (the Dark Forest, tree variants after the 12 pines) drop **Dark
-  Logs** (Darkwood Logs) instead, more of them (they're 22 to 35 tiles tall). They build
+- **Darkwood trees** (the Dark Forest, tree variants after the 12 pines) drop **Darkwood
+  Logs** (`dark_log`) instead, more of them (they're 22 to 35 tiles tall). They build
   a Darkwood Log block and back wall like Logs do. 1 Darkwood Log = 4
   **Darkwood** by hand; Darkwood places Darkwood Planks (block, 70 health) and, with
   right click, a Darkwood Wall. They also drop **Darkwood Saplings** (plant like a pine
