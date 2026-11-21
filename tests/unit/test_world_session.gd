@@ -164,3 +164,34 @@ func test_you_come_back_where_you_stood() -> void:
 	w2.queue_free()
 	await wait_physics_frames(2)
 	WorldSave.delete(SPOT_PATH)
+
+
+func test_the_world_map_fills_in_around_you_and_is_saved() -> void:
+	var info := WorldInfo.create("MapTest", WorldData.Size.TINY, 31)
+	info.temporary = true
+	var w := _start(info)
+	await wait_physics_frames(3)
+	var m := w.world_map
+	assert_not_null(m)
+	var t := w.world_to_tile(w.player.chest())
+	m.reveal_around(t, 20.0)
+	var c := Vector2i(posmod(t.x, w.data.width), t.y) / WorldMap.CELL
+	assert_true(m.is_explored(c.x, c.y), "around you")
+	assert_false(m.is_explored(posmod(c.x + m.size.x / 2, m.size.x), c.y), "far away: not yet")
+	# Dig a hole: the map shows it the next time it looks.
+	var below := t + Vector2i(0, 12)
+	assert_ne(m.cell_color(below.x / WorldMap.CELL, below.y / WorldMap.CELL), WorldMap.CAVE)
+	# Saved and loaded as the picture.
+	var back := WorldMap.new()
+	back.setup(w)
+	back.from_dict(m.to_dict())
+	assert_true(back.is_explored(c.x, c.y))
+	assert_eq(back.image.get_pixel(c.x, c.y), m.image.get_pixel(c.x, c.y))
+	back.free()
+	# The map screen opens and closes.
+	w.hud.toggle_map()
+	assert_true(w.hud.map_view.visible)
+	w.hud.toggle_map()
+	assert_false(w.hud.map_view.visible)
+	w.queue_free()
+	await wait_physics_frames(2)

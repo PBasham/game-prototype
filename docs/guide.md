@@ -327,6 +327,16 @@ same look through `UiSkin.theme()`.
 godot --headless --path . --script res://tools/make_ui_art.gd
 ```
 
+**World map (N):** a full screen map of what you've explored, like Terraria's
+(`WorldMap`, src/world/world_map.gd; the screen is `MapView`, src/ui/hud/map_view.gd).
+Everything within `reveal_tiles` (48) of you fills in as you go (checked every
+`reveal_every`, 0.4 s, and redrawn, so digging shows), one pixel per 2x2 tiles. Block
+colors are the average of their terrain texture, walls darker, open air sky blue above
+the original surface and dark below. Wheel zooms at the cursor, drag pans, N or Esc
+closes; it wraps sideways like the world. Markers: you (blue dot) and your respawn
+point (gold square). Saved with the world as the picture (`WorldSave.META_MAP`).
+Bare bones for now: no trees, chests or pins yet.
+
 The inventory is a **satchel** (`SatchelLook`, `src/ui/satchel_look.gd`, Patrick's
 moonweave concept): a rounded bag of blue cloth that darkens toward the middle, cells
 set apart only by a faint hue change (no lines), a soft glow on the selected and

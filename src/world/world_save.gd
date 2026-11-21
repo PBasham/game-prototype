@@ -28,6 +28,8 @@ const META_CONTAINERS := "containers"
 const META_DISPLAYS := "displays"
 ## Furniture placed facing left (drawn mirrored): {"x,y": true}.
 const META_FLIPPED := "flipped"
+## The world map's picture (what's explored): WorldMap.to_dict().
+const META_MAP := "map"
 ## Names given to chests: {"x,y": name}.
 const META_CHEST_NAMES := "chest_names"
 ## Magic bags left where characters died: {"list": [ItemBag.to_dict()...]}.

@@ -103,6 +103,8 @@ var craft_amount := 1
 ## The amount field is taking typed digits (clicked); the next digit replaces it.
 var _amount_typing := false
 var _amount_fresh := false
+## The full screen world map (N).
+var map_view: MapView
 ## Which tab of a station with tabs is shown (STATION_TABS).
 var craft_tab := 0
 ## Spell Weaving Table filters (like the Spell Index): -1 = All, else a SpellData.Group,
@@ -193,6 +195,7 @@ func _ready() -> void:
 	_equip = EquipmentWindow.new(self)
 	_equip.close_pressed.connect(toggle_equipment)
 	add_child(_equip)
+	map_view = MapView.new(world)
 	_spells = SpellWindow.new(self)
 	_spells.close_pressed.connect(toggle_spells)
 	add_child(_spells)
@@ -363,6 +366,10 @@ func _input(event: InputEvent) -> void:
 	var mod := event as InputEventKey
 	if mod and mod.keycode in [KEY_SHIFT, KEY_CTRL, KEY_META] and _craft.visible:
 		_craft.queue_redraw()  # the amount and costs follow Shift / Ctrl
+	if map_view.visible and event.is_action_pressed("ui_cancel"):
+		toggle_map()
+		get_viewport().set_input_as_handled()
+		return
 	if open and event.is_action_pressed("ui_cancel"):
 		set_open(false)
 		get_viewport().set_input_as_handled()
@@ -382,6 +389,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+## Opens or closes the world map (N).
+func toggle_map() -> void:
+	if map_view.get_parent() == null:
+		add_child(map_view)
+	map_view.toggle()
+
+
 func _process(delta: float) -> void:
 	_update_notes(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
@@ -396,6 +410,10 @@ func _process(delta: float) -> void:
 		toggle_equipment()
 	if Input.is_action_just_pressed("spells") and not paused:
 		toggle_spells()
+	if Input.is_action_just_pressed("map") and not paused:
+		toggle_map()
+	if map_view.visible:
+		paused = true  # the map covers the screen: no playing under it
 	_update_wheel(paused)
 	var p := world.player
 	var over := _over_pane()

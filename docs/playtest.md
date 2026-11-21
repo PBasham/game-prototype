@@ -286,6 +286,8 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Each works once per time in the air, and re-arms when you land.
 - [ ] Spell Weaving Table: Learn and Empower tabs. Empower: "Spark: Efficient 1/5" for
       2 Magic Essence; the tooltip's mana goes down 5% per rank.
+- [ ] N opens the world map: what you've seen fills in as you walk; wheel zooms, drag
+      pans, N or Esc closes. Save, quit, come back: still explored.
 
 ## Known
 

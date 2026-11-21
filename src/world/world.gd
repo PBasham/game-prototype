@@ -86,6 +86,8 @@ var hover_outline: HoverOutline
 var character: CharacterData
 var item_user: ItemUser
 var hud: Hud
+## What you've explored (the map screen, N).
+var world_map: WorldMap
 var _drops: Node2D
 var _bags: Node2D
 var _enemies: Node2D
@@ -113,6 +115,7 @@ var displays: Dictionary[Vector2i, StringName] = {}
 var flipped: Dictionary[Vector2i, bool] = {}
 ## Names given to chests (anchor -> name). Saved (meta "chest_names").
 var chest_names: Dictionary[Vector2i, String] = {}
+var _saved_map: Dictionary = {}
 ## Damaged tiles: (x, y, layer 0 = block / 1 = wall) -> [damage, seconds until healed].
 var _damage: Dictionary[Vector3i, Array] = {}
 ## Debug builds only (B toggles it); null otherwise.
@@ -185,6 +188,7 @@ func _ready() -> void:
 		for key: String in names:
 			var np := key.split(",")
 			chest_names[Vector2i(int(np[0]), int(np[1]))] = String(names[key])
+		_saved_map = WorldSave.read_extra(info.path, WorldSave.META_MAP)
 		for key: String in WorldSave.read_extra(info.path, WorldSave.META_FLIPPED):
 			var parts := key.split(",")
 			flipped[Vector2i(int(parts[0]), int(parts[1]))] = true
@@ -288,6 +292,13 @@ func _ready() -> void:
 	Settings.changed.connect(func(section: String, key: String, _v: Variant) -> void:
 		if section == "display" and key == "zoom":
 			_apply_zoom())
+
+	world_map = WorldMap.new()
+	world_map.name = "WorldMap"
+	world_map.setup(self)
+	world_map.from_dict(_saved_map)
+	_saved_map = {}
+	add_child(world_map)
 
 	hud = Hud.new()
 	hud.name = "Hud"
@@ -399,7 +410,8 @@ func save() -> Error:
 			WorldSave.META_FLIPPED: _flipped_to_dict(), WorldSave.META_CHEST_NAMES: _names_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict(),
-			WorldSave.META_POSITIONS: _spots_to_dict()}, objects)
+			WorldSave.META_POSITIONS: _spots_to_dict(),
+			WorldSave.META_MAP: world_map.to_dict() if world_map else {}}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
 		push_error("World: saving %s failed: %s" % [info.path, error_string(err)])
