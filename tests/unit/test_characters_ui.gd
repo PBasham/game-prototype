@@ -65,15 +65,16 @@ func test_old_characters_get_the_default_look() -> void:
 func test_inventory_size_is_data() -> void:
 	var small := Inventory.new(20)
 	assert_eq(small.size, 20)
-	small.add(&"dirt", 999 * 25)
-	assert_eq(small.count_of(&"dirt"), 999 * 20, "only 20 slots")
+	var full := Inventory.max_stack(&"dirt")
+	small.add(&"dirt", full * 25)
+	assert_eq(small.count_of(&"dirt"), full * 20, "only 20 slots")
 	var d := small.to_dict()
 	var back := Inventory.new()
 	back.from_dict(d)
 	assert_eq(back.size, 20, "the saved size wins")
 	back.resize(30)
 	assert_eq(back.size, 30)
-	assert_eq(back.room_for(&"dirt"), 999 * 10, "a bag's worth of new slots")
+	assert_eq(back.room_for(&"dirt"), full * 10, "a bag's worth of new slots")
 
 
 func test_stations_are_hip_height() -> void:

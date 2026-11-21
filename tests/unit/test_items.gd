@@ -33,15 +33,16 @@ func test_tiles_drop_items_that_exist() -> void:
 
 func test_inventory_stacks_and_fills_hotbar_first() -> void:
 	var inv := Inventory.new()
-	assert_eq(inv.add(&"dirt", 1500), 0)
-	assert_eq(inv.counts[0], 999)
+	var full := Inventory.max_stack(&"dirt")  # blocks: 9999
+	assert_eq(inv.add(&"dirt", full + 501), 0)
+	assert_eq(inv.counts[0], full)
 	assert_eq(inv.counts[1], 501)
 	assert_eq(inv.add(&"copper_pickaxe", 2), 0)
 	assert_eq(inv.ids[2], &"copper_pickaxe")
 	assert_eq(inv.counts[3], 1, "tools don't stack")
 	assert_eq(inv.add(&"dirt", 10), 0)
 	assert_eq(inv.counts[1], 511, "tops up the existing stack")
-	assert_eq(inv.count_of(&"dirt"), 1510)
+	assert_eq(inv.count_of(&"dirt"), full + 511)
 	assert_eq(inv.take(1, 600), 511)
 	assert_true(inv.is_empty(1))
 

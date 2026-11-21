@@ -1113,6 +1113,7 @@ func _look(item_id: StringName, type_id: StringName, grip: Vector2) -> HeldItemL
 func _block(item_id: StringName, label: String, text: String, wall: StringName = &"") -> ItemData:
 	var item := _base(item_id, label, text)
 	item.kind = ItemData.Kind.BLOCK
+	item.max_stack = 9999  # blocks stack to 9999 (Patrick)
 	item.places_block = item_id
 	item.places_wall = wall
 	item.impact_at = 0.2  # placed early in the quick Place reach

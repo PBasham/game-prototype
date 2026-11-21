@@ -15,6 +15,7 @@ grip = Vector2(3, 5)
 
 [resource]
 script = ExtResource("5_2xpfs")
+max_stack = 9999
 kind = 1
 icon = ExtResource("4_23kc5")
 held = SubResource("Resource_o3vbe")

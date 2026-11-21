@@ -135,7 +135,7 @@ Each item is an `ItemData` (`src/items/item_data.gd`). Open one in the Inspector
 | --- | --- |
 | `kind` | MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON (sorting and tooltips) |
 | `icon` | 16x16 inventory icon |
-| `max_stack` | 999 for blocks and materials, 1 for tools |
+| `max_stack` | 9999 for blocks (dirt, stone, wood, ores, torches, platforms...), 999 for materials, 1 for tools |
 | `held` | How it looks in hand: texture, grip pixel, item type (`data/item_types/`) |
 | **Mining** | |
 | `mining_damage` | Damage to blocks per hit, or per second for a beam |

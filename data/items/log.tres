@@ -15,6 +15,7 @@ grip = Vector2(3, 5)
 
 [resource]
 script = ExtResource("5_rbwf8")
+max_stack = 9999
 storage_tags = Array[StringName]([&"lumber"])
 kind = 1
 icon = ExtResource("4_ug1t7")

@@ -455,7 +455,7 @@ func test_dev_items_window_gives_stacks() -> void:
 	assert_false(win.all_items().any(func(it: ItemData) -> bool: return it.is_spell()), "no spells")
 	win.search = "wood platform"
 	assert_eq(win.shown().map(func(it: ItemData) -> StringName: return it.id), [&"wood_platform"] as Array)
-	hud.give_cursor(&"wood_platform", 999)
+	hud.give_cursor(&"wood_platform", 99999)
 	assert_eq(hud.cursor_count, Inventory.max_stack(&"wood_platform"), "a full stack")
 	hud.give_cursor(&"wood_platform", 1)
 	assert_eq(hud.cursor_count, Inventory.max_stack(&"wood_platform"), "never past a stack")

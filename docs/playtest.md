@@ -291,6 +291,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Workbench: Upgrade (20 Darkwood + 3 Iron Bars) turns it into a Darkwood Workbench;
       it makes Reinforced Wood and Reinforced Darkwood (4 + 1 Iron Bar), sturdy blocks
       and walls.
+- [ ] Blocks stack to 9999.
 
 ## Known
 
