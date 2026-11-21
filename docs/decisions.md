@@ -8,9 +8,6 @@ Newest first. Each entry: what was decided, why, and what it affects.
   and Potion Cabinet (potions, coatings, flasks, 10 stacks). Names picked by Claude;
   Patrick liked them. The rack fills in 10% steps with staggered rows filled a layer at a time (no pyramid top); the
   cabinet only shows bottles of the colors actually inside.
-- **Round 2 (Patrick):** Dev items clicks like crafting (1 / 10 / stack) and right click
-  an infinite stack; Air Push stopped by walls, more push, and a small ground dash;
-  spells with their own key or slot say they don't need a wheel slot.
 - **Wrapped positions (bug, Patrick: no hit sounds, no slimes):** the player's x isn't
   wrapped, so west of x = 0 new slimes, drops and the hit sound were made a whole world
   away. `World.near_player_x` now moves spawned enemies and drops to the copy next to

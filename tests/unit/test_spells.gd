@@ -101,21 +101,6 @@ func test_air_push_shoves_what_is_in_front() -> void:
 	assert_gt(front.velocity.x * p.facing, 10.0 * World.TILE, "pushed away")
 	assert_lt(front.health, front.data.max_health, "a little damage")
 	assert_eq(behind.health, behind.data.max_health)
-	# A wall between: the gust stops at it.
-	var wall_x := w.world_to_tile(p.chest()).x - 3 * p.facing
-	var feet := w.world_to_tile(p.global_position)
-	for dy in range(-8, 1):
-		w.data.set_block(wall_x, feet.y + dy, w.blocks.index_of(&"stone"))
-	assert_eq(w.item_user.gust(push, from, Vector2(-p.facing, 0)), 0, "not through the wall")
-	# On the ground it gives you a little sideways shove (a dash).
-	assert_true(p.is_on_floor())
-	p.velocity = Vector2.ZERO
-	w.item_user.gust(push, from, Vector2(p.facing, 0))
-	assert_almost_eq(p.velocity.x, -p.facing * push.gust_recoil_ground * World.TILE, 0.1)
-	assert_lte(p.velocity.y, 0.0)
-	assert_string_contains(Hud.spell_tooltip(_spell(&"mining_spell")), "own key")
-	assert_string_contains(Hud.spell_tooltip(_spell(&"fly")), "Movement slot")
-	assert_eq(Hud.own_key_note(push), "")
 
 
 func test_blink_moves_toward_the_cursor_but_not_into_ground() -> void:

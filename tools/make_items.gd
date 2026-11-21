@@ -404,8 +404,8 @@ func _spells() -> Array[ItemData]:
 	push.damage = 2.0
 	push.gust_tiles = 8.0
 	push.gust_angle = 35.0
-	push.gust_push = 36.0
-	push.gust_recoil = 20.0
+	push.gust_push = 24.0
+	push.gust_recoil = 12.0
 	push.mana_cost = 8.0
 	push.cooldown = 0.6
 	push.impact_at = 0.3

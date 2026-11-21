@@ -97,11 +97,9 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## Tiles the cone reaches, and its half angle in degrees.
 @export var gust_tiles := 8.0
 @export var gust_angle := 35.0
-## Push on what it hits (tiles/s), and the push back on you while airborne (and, a
-## little, on the ground: Air Push doubles as a dash).
-@export var gust_push := 36.0
-@export var gust_recoil := 20.0
-@export var gust_recoil_ground := 8.0
+## Push on what it hits (tiles/s), and the push back on you while airborne.
+@export var gust_push := 24.0
+@export var gust_recoil := 12.0
 
 @export_group("Charged (Arcane Bolt)")
 ## Seconds to full charge. Damage, bolt size and mana go from the `charge_min_*` share
