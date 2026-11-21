@@ -184,11 +184,16 @@ extends GameData
 @export var flower_variants := 5
 
 @export_group("Dark forest")
-## Share of the world's width that is Dark Forest (0 = none). It's split into patches
-## of about dark_forest_patch_tiles each, spread around the world, so bigger worlds get
-## more patches (Small: 3, Medium: 4, Large: 5 by default).
+## Share of the world's width that is Dark Forest (0 = none). By default it's one big
+## region, like Terraria's jungle: on Small, about 1,600 tiles wide.
 @export_range(0.0, 0.6) var dark_forest_share := 0.25
+## How many regions to split it into (1 = one big one). 0 = by size instead: patches of
+## about dark_forest_patch_tiles each, spread evenly around the world.
+@export var dark_forest_patches := 1
 @export var dark_forest_patch_tiles := 640
+## With one region: how far its middle is from spawn, as a share of the world's width
+## (0.3 on Small = 1,920 tiles). The side (east or west) comes from the seed.
+@export_range(0.1, 0.5) var dark_forest_distance := 0.3
 ## No Dark Forest closer to spawn than this (tiles from spawn to the patch's edge).
 @export var dark_forest_spawn_clear := 300
 ## The patch fades in and out over this many tiles at each edge (trees, darkness, sky).

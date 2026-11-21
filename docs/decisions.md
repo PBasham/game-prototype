@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-20: Dark Forest is one big region
+
+- **Patrick:** big biomes (Dark Forest, like Terraria's jungle or corruption) are one
+  large region, not several patches; smaller ones (a desert later) may repeat. Default
+  `dark_forest_patches` 1, a quarter of the world, 0.3 of the world from spawn. Worlds
+  may need to grow as biomes are added.
+
 ## 2026-11-20: Phase 15, satchel, trash and the Forest Spirit's uses
 
 - **Inventory (Patrick, moonweave v4 approved):** the satchel look in code

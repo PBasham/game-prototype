@@ -105,12 +105,19 @@ func _place_dark_forests() -> void:
 	var total := s.dark_forest_share * width
 	if total < 20.0:
 		return
-	var count := maxi(1, roundi(total / maxf(s.dark_forest_patch_tiles, 50)))
+	var count := s.dark_forest_patches
+	if count <= 0:
+		count = maxi(1, roundi(total / maxf(s.dark_forest_patch_tiles, 50)))
 	var half := total / count * 0.5
 	var step := float(width) / count
 	for i in count:
 		var c := s.spawn_x + step * (i + 0.5)
-		c += (GenUtil.hash01(i, 21, seed) - 0.5) * maxf(step - half * 2.0, 0.0) * 0.5
+		if count == 1:
+			# One big region on one side of spawn (east or west by seed).
+			var side := 1.0 if GenUtil.hash01(0, 25, seed) < 0.5 else -1.0
+			c = s.spawn_x + side * s.dark_forest_distance * width
+		else:
+			c += (GenUtil.hash01(i, 21, seed) - 0.5) * maxf(step - half * 2.0, 0.0) * 0.5
 		# Keep spawn clear: push the patch away from it if it came too close.
 		var d := float(wrap_delta(roundi(c), s.spawn_x))
 		var need := half + s.dark_forest_spawn_clear

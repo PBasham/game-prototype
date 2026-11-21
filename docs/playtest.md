@@ -254,8 +254,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Air Push: no hits through walls; stronger push; aim down on the ground: a gust jump.
 
 **Phase 14: Dark Forest (branch phase-14-dark-forest)**
-- [ ] New world (Small: 3 patches about 530 wide, a quarter of the world, away from
-      spawn). `tp` there or walk.
+- [ ] New world: the Dark Forest (one big region since Phase 15). `tp` there or walk.
 - [ ] Darkwood trees drop Darkwood Saplings; planted, they grow darkwood trees.
       The map preview shows them as purple trees.
 - [ ] Tall darkwood trees close together, dark trunks backdrop, half the daylight; the
@@ -271,6 +270,8 @@ guesses; the docs listed say where each tunable lives.
       knot and crystal on the right when open.
 - [ ] Trash (bin, bottom right): drop a stack on it, or Ctrl + click a slot. Click it
       with an empty mouse to take the last one back.
+- [ ] New world: one big Dark Forest (a quarter of the world) on one side of spawn,
+      about 1,900 tiles away on Small. The map preview shows it.
 - [ ] Pine trees drop "Sapling" (was Tree Seed).
 - [ ] Kill Forest Spirits until a Spirit Core drops: "New recipe: Scroll: Call Spirit";
       it's at the Scribe's Desk (Blank Scroll + 3 Essence + 1 Core).

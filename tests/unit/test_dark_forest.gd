@@ -21,7 +21,7 @@ func _gen(width: int) -> ForestGenerator:
 
 func test_patches_scale_with_the_world_and_keep_spawn_clear() -> void:
 	var s := ForestGenerator.default_settings()
-	for size: Array in [[1024, 1], [6400, 3]]:
+	for size: Array in [[1024, 1], [6400, 1], [12800, 1]]:
 		var g := _gen(size[0])
 		var patches := g.dark_forests()
 		assert_eq(patches.size(), size[1], "%d wide: %d patches" % size)

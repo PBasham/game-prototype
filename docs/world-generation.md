@@ -303,14 +303,16 @@ ground stay bare. Placement rules live in `tree_at` / `flower_at`; the chunk bui
 
 ### Dark Forest
 
-Patches of Dark Forest spread evenly around the world, away from spawn. Inside: tall
+One big Dark Forest region (like Terraria's jungle) on one side of spawn. Inside: tall
 darkwood trees packed close together, a dark backdrop of trunks under a canopy, half
 the daylight, and Forest Spirits (combat.md). The edges fade over a few dozen tiles.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
 | `dark_forest_share` | 0.25 | Share of the world's width that is Dark Forest (0 = none). |
-| `dark_forest_patch_tiles` | 640 | About this wide per patch: Tiny 1 patch (256 tiles), Small 3 (533 each), Medium 4 (600), Large 5 (640). |
+| `dark_forest_patches` | 1 | How many regions (1 = one big one: Small 1,600 tiles, Medium 2,400, Large 3,200). 0 = split by `dark_forest_patch_tiles` and spread evenly. |
+| `dark_forest_patch_tiles` | 640 | Patch width when `dark_forest_patches` is 0. |
+| `dark_forest_distance` | 0.3 | With one region: its middle's distance from spawn, as a share of the world's width (east or west by seed). |
 | `dark_forest_spawn_clear` | 300 | No Dark Forest closer to spawn than this (tiles to the patch's edge). |
 | `dark_forest_edge_tiles` | 40 | The fade at each edge. |
 | `dark_tree_spacing` | 5 | One dark tree spot per this many columns (pines: 9). |
