@@ -9,7 +9,7 @@ Newest first. Each entry: what was decided, why, and what it affects.
   each switchable from the console to compare. All are switches (`doll` command), off by
   default, so today's look is unchanged until Patrick picks.
 - 2x is drawn at half size, so the Scholar stays ~3 by 8 tiles; doll math stays in
-  original art pixels. Overlays (hair, armor) are only nearest doubled for now.
+  original art pixels. Overlays (hair, armor) are doubled with the same steps as the sheet.
 - RotSprite is approximated (4x Scale2x, shrunk with nearest), not the full algorithm.
 - Hand-drawn poses: a `Sit` / `SitFloor` tag wins over the code pose for the legs.
 - Two random tests were made steadier (more tries, a longer wait).

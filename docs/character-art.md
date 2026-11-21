@@ -184,8 +184,9 @@ anchor and pivots; `DollRig` divides back so all doll math stays in original art
 Rerun the script after reimporting the Aseprite file. To use a hand-refined 2x sheet,
 draw over `scholar@x2s_parts.png` and keep the json next to it.
 
-**Limits:** hair and armor overlays are doubled with nearest only (blocky at 2x until
-drawn at 2x). Sitting in the long robe still needs drawn frames (below).
+Hair and armor overlays are doubled the same way as the sheet (`rig.upscale_steps`,
+`PaperDoll.scale2x`), so with 2x_smooth they're rounded like the body. Drawn 2x
+overlays will still look better. Sitting in the long robe still needs drawn frames (below).
 
 **Hand-drawn key poses:** add a tag `Sit` or `SitFloor` (or `legs/Sit`, `legs/SitFloor`)
 to the Aseprite file, one frame, and that frame is shown for the pose instead of the

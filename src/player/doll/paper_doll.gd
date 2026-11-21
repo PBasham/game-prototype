@@ -268,7 +268,7 @@ func add_overlay(part_name: String, texture: Texture2D, group: StringName = &"")
 	if pi < 0:
 		push_warning("PaperDoll: no part named %s" % part_name)
 		return null
-	texture = upscaled(texture, rig.art_scale)
+	texture = upscaled(texture, rig.art_scale, rig.upscale_steps)
 	var s := Sprite2D.new()
 	s.texture = texture
 	s.region_enabled = true
@@ -752,7 +752,7 @@ func _apply_look() -> void:
 	_material.set_shader_parameter(&"swap", tex)
 	_material.set_shader_parameter(&"count", tex.get_width() if tex else 0)
 	if _hair:
-		_hair.texture = upscaled(look.hair, rig.art_scale) if look else null
+		_hair.texture = upscaled(look.hair, rig.art_scale, rig.upscale_steps) if look else null
 		_hair.scale = Vector2.ONE / float(rig.art_scale)
 		_hair.visible = not hair_hidden
 
@@ -867,16 +867,61 @@ static var _upscaled: Dictionary = {}
 
 ## An overlay (armor, hair) drawn for an upscaled sheet: each pixel a k x k block (fast,
 ## at load). The sheet itself may be smoothed (Scale2x); overlays stay blocky for now.
-static func upscaled(tex: Texture2D, k: int) -> Texture2D:
+static func upscaled(tex: Texture2D, k: int, steps: PackedStringArray = PackedStringArray()) -> Texture2D:
 	if tex == null or k <= 1:
 		return tex
-	var key := "%s|%d" % [tex.get_rid(), k]
+	var key := "%s|%d|%s" % [tex.get_rid(), k, ",".join(steps)]
 	if _upscaled.has(key):
 		return _upscaled[key]
 	var img := tex.get_image()
 	if img.is_compressed():
 		img.decompress()
-	img.resize(img.get_width() * k, img.get_height() * k, Image.INTERPOLATE_NEAREST)
+	img.convert(Image.FORMAT_RGBA8)
+	if steps.is_empty():
+		img.resize(img.get_width() * k, img.get_height() * k, Image.INTERPOLATE_NEAREST)
+	else:
+		# The same steps as the body sheet (tools/upscale_doll.py): "n" doubles, "s" Scale2x.
+		for step in steps:
+			img = scale2x(img) if step == "s" else _nearest2x(img)
 	var out := ImageTexture.create_from_image(img)
 	_upscaled[key] = out
+	return out
+
+
+static func _nearest2x(img: Image) -> Image:
+	var out := img.duplicate() as Image
+	out.resize(img.get_width() * 2, img.get_height() * 2, Image.INTERPOLATE_NEAREST)
+	return out
+
+
+## Scale2x (EPX): doubles an image, rounding diagonals, using only its own colors (so the
+## palette swap still works). Same rules as tools/upscale_doll.py.
+static func scale2x(img: Image) -> Image:
+	var w := img.get_width()
+	var h := img.get_height()
+	var out := Image.create(w * 2, h * 2, false, Image.FORMAT_RGBA8)
+	for y in h:
+		for x in w:
+			var p := img.get_pixel(x, y)
+			var a := img.get_pixel(x, y - 1) if y > 0 else Color(0, 0, 0, 0)  # outside: clear
+			var b := img.get_pixel(x + 1, y) if x < w - 1 else Color(0, 0, 0, 0)
+			var c := img.get_pixel(x - 1, y) if x > 0 else Color(0, 0, 0, 0)
+			var d := img.get_pixel(x, y + 1) if y < h - 1 else Color(0, 0, 0, 0)
+			var e0 := p
+			var e1 := p
+			var e2 := p
+			var e3 := p
+			if a != d and c != b:
+				if c == a:
+					e0 = a
+				if a == b:
+					e1 = b
+				if d == c:
+					e2 = c
+				if b == d:
+					e3 = d
+			out.set_pixel(x * 2, y * 2, e0)
+			out.set_pixel(x * 2 + 1, y * 2, e1)
+			out.set_pixel(x * 2, y * 2 + 1, e2)
+			out.set_pixel(x * 2 + 1, y * 2 + 1, e3)
 	return out

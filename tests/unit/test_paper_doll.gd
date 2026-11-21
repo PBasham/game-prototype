@@ -362,3 +362,21 @@ func test_landing_squashes_and_springs_back() -> void:
 		d._update_extras(0.016)
 	assert_ne(d._sway_angle, 0.0, "the hair swings when moving")
 	assert_lte(absf(d._sway_angle), d.sway_max)
+
+
+func test_overlays_are_smoothed_like_the_sheet() -> void:
+	# A diagonal step: Scale2x rounds the inside corner, nearest keeps it square.
+	var img := Image.create(2, 2, false, Image.FORMAT_RGBA8)
+	var ink := Color(1, 0, 0, 1)
+	img.set_pixel(0, 0, ink)
+	img.set_pixel(1, 0, ink)
+	img.set_pixel(0, 1, ink)
+	var out := PaperDoll.scale2x(img)
+	assert_eq(out.get_size(), Vector2i(4, 4))
+	assert_eq(out.get_pixel(2, 2), ink, "the corner is filled in")
+	assert_eq(out.get_pixel(3, 3).a, 0.0, "the far corner stays clear")
+	var tex := ImageTexture.create_from_image(img)
+	var smooth := PaperDoll.upscaled(tex, 2, PackedStringArray(["s"]))
+	var plain := PaperDoll.upscaled(tex, 2)
+	assert_eq(smooth.get_image().get_pixel(2, 2), ink)
+	assert_eq(plain.get_image().get_pixel(2, 2).a, 0.0, "nearest leaves the step")
