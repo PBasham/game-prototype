@@ -115,6 +115,30 @@ drawn arms, so that's fine. Only code-posed moves (attacks, aiming) reach from t
 shoulders while standing, where the back arm can end up behind the torso. If that ever
 bothers you, a `Stand` tag (side view) replaces Breath while an item is out.
 
+## Legs posed in code (rig test, Phase 17)
+
+The legs can be posed by code like the arms: each leg is already two layers
+(`<Front|Back> Leg Upper`, `... Leg Lower`), so code finds the hip, knee and foot in
+the rest frame (`DollRig.legs`) and bends the knee to put the foot where it should go
+(inverse kinematics, the same two-bone solve as the arms; the knee bends forward).
+"Front" and "Back" are the near and far leg (drawing order), not ahead and behind.
+
+`PaperDoll.leg_mode` (an export on the Player's `Doll` node; console `legs drawn |
+planted | posed`) picks how:
+
+| Mode | Standing | Running | Jumping |
+| --- | --- | --- | --- |
+| `DRAWN` (default) | your frames | your frames | your frames |
+| `PLANTED` | each foot set on the ground under it (steps, slopes; hips drop up to `max_hip_drop` so the lower foot reaches) | your frames, each leg nudged up or down (up to `max_leg_nudge` px) to the ground under its foot | your frames |
+| `POSED` | feet planted like PLANTED | a walk made in code: each foot slides back on the ground, then swings forward in an arc (`stride_px`, `step_lift_px`, `stance_px`) | feet tucked (`air_tuck`) |
+
+The ground comes from `Player._ground_under_doll` (the same smoothed ground the feet
+follow on stairs). Posed legs are drawn from the rest frame's pixels, rotated, so very
+bent legs show the boot turned; that's the trade-off against drawn frames. New poses
+(crouch, sitting, a kick) become numbers in code instead of frames once the gait is
+settled. Code: `_foot_targets` and `_pose_leg` in `src/player/doll/paper_doll.gd`,
+`_measure_leg` in `doll_rig.gd`.
+
 ## Joints (pivots)
 
 Code needs the shoulder, elbow and hand of each arm.

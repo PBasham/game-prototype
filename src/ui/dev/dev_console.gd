@@ -363,6 +363,14 @@ func _register() -> void:
 		var n := int(a[1]) if a.size() > 1 else it.max_stack
 		var left := store.add(it.id, n)
 		_print("Stocked %d %s%s." % [n - left, it.display_name, " (the rest didn't fit)" if left > 0 else ""]))
+	_add("legs", "legs [drawn|planted|posed]", "Leg rig test: drawn frames, drawn frames with feet planted on the ground, or a walk made in code.", func(a: PackedStringArray) -> void:
+		var modes := {"drawn": PaperDoll.LegMode.DRAWN, "planted": PaperDoll.LegMode.PLANTED, "posed": PaperDoll.LegMode.POSED}
+		var doll := world.player.get_node("Doll") as PaperDoll
+		if a.is_empty() or not modes.has(a[0]):
+			_print("Legs: %s. legs drawn | planted | posed" % String(PaperDoll.LegMode.keys()[doll.leg_mode]).to_lower())
+			return
+		doll.leg_mode = modes[a[0]]
+		_print("Legs: %s" % a[0]))
 	_add("place", "place <object>", "Place a tile object (torch, rope, workbench, chest...) at the cursor, no item needed.", _place)
 	_add("forage", "forage <type>", "Put a forageable (stick, rock, field_mushroom, red_cap, duskcap, glowcap) on the ground under the cursor.", func(a: PackedStringArray) -> void:
 		var def := Registry.get_def(&"forage", StringName(" ".join(a))) as ForageData

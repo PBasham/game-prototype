@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-21: Phase 17, leg rig test
+
+- **Legs posed in code (Patrick: "start testing"):** two-bone IK legs like the arms, as
+  a switch (`PaperDoll.leg_mode`: DRAWN default, PLANTED, POSED) so both can be compared
+  in game. PLANTED keeps the drawn run and only plants standing feet; POSED is a fully
+  code-made walk. Which becomes the default is Patrick's call after testing.
+
 ## 2026-11-21: Phase 16, jump spells, Empower, world map, darkwood
 
 - **Readied jump spells (Patrick):** Air Step (double jump, better air control) and

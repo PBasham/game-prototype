@@ -300,7 +300,8 @@ colors) and `src/ui/hud/map_view.gd` (the screen: `zoom`, markers). Key N.
 The player is drawn by `src/player/doll/paper_doll.gd` from Aseprite layers
 (`art/Scholar-casual.aseprite`, imported to `assets/sprites/scholar` with
 `tools/import_aseprite.gd`). Arms are posed in code (`arm_track.gd`, `doll_rig.gd`);
-legs, body and head are frames. Held item motion: `data/item_types/`. Colors:
+legs, body and head are frames, or legs can be posed in code too (`PaperDoll.leg_mode`,
+console `legs`, see "Legs posed in code"). Held item motion: `data/item_types/`. Colors:
 `tools/make_character_palette.gd`. Everything is in [character-art.md](character-art.md).
 
 ## Sounds

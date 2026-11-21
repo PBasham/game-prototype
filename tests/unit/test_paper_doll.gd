@@ -277,3 +277,43 @@ func test_book_stays_put_while_casting_at_different_angles() -> void:
 		spots.append(d.hands[&"back"])
 	assert_almost_eq(spots[0].distance_to(spots[1]), 0.0, 0.01)
 	assert_almost_eq(spots[0].distance_to(spots[2]), 0.0, 0.01)
+
+
+func test_legs_are_measured_and_can_be_posed_in_code() -> void:
+	for side: StringName in [&"front", &"back"]:
+		assert_true(rig.legs.has(side), "%s leg split upper / lower" % side)
+		var leg: Dictionary = rig.legs[side]
+		assert_lt(leg.hip.y, leg.knee.y, "hip above knee")
+		assert_lt(leg.knee.y, leg.foot.y, "knee above foot")
+		assert_eq(rig.drawn_feet[side].size(), rig.frame_count)
+	var d := _doll()
+	d.play(&"Breath")
+	# PLANTED, standing on a step: the back foot's ground is 6 px lower.
+	d.leg_mode = PaperDoll.LegMode.PLANTED
+	var back: Dictionary = rig.legs[&"back"]
+	var front: Dictionary = rig.legs[&"front"]
+	var mid: float = (front.foot.x + back.foot.x) * 0.5 - rig.anchor.x
+	d.ground_probe = func(x: float) -> float: return 6.0 if x < mid else 0.0
+	d._update()
+	var feet := d._foot_targets(rig.tag_range(&"legs", &"Breath").x, rig.tag_range(&"body", &"Breath").x)
+	for side: StringName in [&"front", &"back"]:
+		var want := 6.0 if feet[side].x < mid else 0.0
+		assert_almost_eq(feet[side].y, want, 0.01, "%s foot on the ground under it" % side)
+	assert_ne(feet[&"front"].y, feet[&"back"].y, "one up a step, one down")
+	assert_gt(feet[&"drop"], 0.0, "hips lower a little so it reaches")
+	assert_ne(d._slots[back.lower].rotation, 0.0, "the leg is bent to reach, not a frame")
+	# POSED: walking moves the feet in turns; one is lifted while the other is down.
+	d.leg_mode = PaperDoll.LegMode.POSED
+	d.ground_probe = func(_x: float) -> float: return 0.0
+	d.walked = d.stride_px * 0.5  # mid step: the back foot swings
+	var f := d._foot_targets(0, 0)
+	assert_lt(f[&"back"].y, f[&"front"].y, "the swinging foot is lifted")
+	d.walked += d.stride_px
+	var g := d._foot_targets(0, 0)
+	assert_lt(g[&"front"].y, g[&"back"].y, "then the other one")
+	d.walked += d.stride_px * 0.5
+	assert_ne(f[&"front"].x, d._foot_targets(0, 0)[&"front"].x, "the feet travel")
+	# DRAWN: legs are the frames again.
+	d.leg_mode = PaperDoll.LegMode.DRAWN
+	d._update()
+	assert_eq(d._slots[front.lower].rotation, 0.0)

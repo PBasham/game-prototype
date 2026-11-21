@@ -296,6 +296,12 @@ guesses; the docs listed say where each tunable lives.
       grows as stacks fill (5 full stacks = half).
 - [ ] Darkwood Log (from darkwood trees) places a darkwood log block; right click a wall.
 
+**Phase 17: leg rig test (branch phase-17-leg-rig)**
+- [ ] Console `legs planted`: stand on a slope or a step: each foot on its own ground,
+      the lower one reaching down. Running: your frames, nudged onto the ground.
+- [ ] `legs posed`: walk, run, jump with a code-made gait. Compare with `legs drawn`.
+- [ ] Tune live: Remote, Player > Doll, the "Legs (rig test)" exports.
+
 ## Known
 
 - `test_spawns_ahead_when_moving_and_despawn_waits` (test_combat.gd) fails now and

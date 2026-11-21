@@ -45,6 +45,13 @@ var rest_frame := 0
 ## Per arm side (&"front" / &"back"): {upper: int part, lower: int part, shoulder,
 ## elbow, hand: Vector2 in rest-frame pixels}. Missing if the art has no such arm.
 var arms: Dictionary[StringName, Dictionary] = {}
+## Legs ("front", "back"): parts {upper, lower} and the rest frame's hip, knee and foot
+## (the middle of the sole), frame-local, like arms. Code-posed legs (PaperDoll
+## leg_mode) bend them at the knee.
+var legs: Dictionary[StringName, Dictionary] = {}
+## Per leg, the sole's middle in every frame (frame-local): where the drawn foot is, for
+## planting it on the ground.
+var drawn_feet: Dictionary[StringName, PackedVector2Array] = {}
 ## Torso position per frame relative to the rest frame (how far the body bobs), so
 ## stowed items move with it.
 var body_offset := PackedVector2Array()
@@ -131,6 +138,16 @@ func _load(base_path: String) -> void:
 			arms[side] = arm
 			shoulders[side] = _measure_shoulders(img, side, arm)
 
+	for side: StringName in [&"front", &"back"]:
+		var leg := _measure_leg(img, side)
+		if not leg.is_empty():
+			legs[side] = leg
+			var feet := PackedVector2Array()
+			for fi in frame_count:
+				var r := _rect(leg.lower, fi)
+				feet.append(_row_center(img, leg.lower, fi, r.end.y - 1) if r.size != Vector2i.ZERO else leg.foot)
+			drawn_feet[side] = feet
+
 	var torso := _first_part_with(["Torso", "Body", "Chest"])
 	var head := _first_part_with(["Head"])
 	for fi in frame_count:
@@ -193,6 +210,32 @@ func _measure_arm(img: Image, side: StringName) -> Dictionary:
 	if pv.has("%s_hand" % side):
 		hand = Vector2(pv["%s_hand" % side][0], pv["%s_hand" % side][1])
 	return {"upper": upper, "lower": lower, "shoulder": shoulder, "elbow": elbow, "hand": hand}
+
+
+## Hip, knee and foot of one leg in the rest frame (layers "<Front|Back> Leg Upper" and
+## "... Leg Lower"). Empty if the art doesn't split the leg.
+func _measure_leg(img: Image, side: StringName) -> Dictionary:
+	var upper := -1
+	var lower := -1
+	for i in part_names.size():
+		var n := part_names[i].to_lower()
+		if part_channels[i] != &"legs" or not n.contains(String(side)):
+			continue
+		if n.contains("upper"):
+			upper = i
+		elif n.contains("lower"):
+			lower = i
+	if upper < 0 or lower < 0:
+		return {}
+	var f := rest_frame
+	var ur := _rect(upper, f)
+	var lr := _rect(lower, f)
+	if ur.size == Vector2i.ZERO or lr.size == Vector2i.ZERO:
+		return {}
+	var hip := _row_center(img, upper, f, ur.position.y) + Vector2(0, 1)
+	var knee := _row_center(img, upper, f, ur.end.y - 1)
+	var foot := _row_center(img, lower, f, lr.end.y - 1)
+	return {"upper": upper, "lower": lower, "hip": hip, "knee": knee, "foot": foot}
 
 
 func _measure_shoulders(img: Image, side: StringName, arm: Dictionary) -> PackedVector2Array:

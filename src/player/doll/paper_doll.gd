@@ -41,6 +41,36 @@ const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 ## attacking, aiming, between combo hits), instead of jumping there.
 @export var blend_time := 0.07
 
+@export_group("Legs (rig test)")
+## How the legs are drawn. DRAWN: the Aseprite frames as they are. PLANTED: standing,
+## each foot is set on the ground under it (steps and slopes), the leg bent at the knee
+## to reach (inverse kinematics, like the arms); running, the drawn frames, each leg
+## nudged up or down to the ground under its foot. POSED: no leg frames at all: a walk
+## cycle made in code (stride, lift), feet planted on the ground.
+enum LegMode { DRAWN, PLANTED, POSED }
+@export var leg_mode := LegMode.DRAWN
+## POSED: how far a foot travels per step (px), how high it lifts, and how far apart
+## the feet stand (px, front foot ahead).
+@export var stride_px := 10.0
+@export var step_lift_px := 3.0
+@export var stance_px := 5.0
+## PLANTED while running: the most a drawn leg is moved up or down (px).
+@export var max_leg_nudge := 4.0
+## In the air (POSED): how far the feet tuck up and forward.
+@export var air_tuck := Vector2(2.0, -4.0)
+## The most the hips may drop (px) so a foot can reach a lower step.
+@export var max_hip_drop := 6.0
+@export_group("")
+
+## The ground under a point: called with a doll-local x (px, before the facing flip),
+## returns the doll-local y of the ground there (0 = level with the feet), or INF if
+## there's none. Set by the Player; without it, the ground is flat.
+var ground_probe: Callable
+## For POSED legs: how far the doll has walked (px, set by the Player each frame), and
+## whether it's in the air.
+var walked := 0.0
+var airborne := false
+
 var rig: DollRig
 var palette: CharacterPalette
 var look: CharacterLook:
@@ -292,12 +322,29 @@ func _update() -> void:
 		_last_in_hand = in_hand
 	hands.clear()
 
+	var posed_legs := leg_mode != LegMode.DRAWN and rig.legs.size() == 2
+	var nudge := {}
+	if posed_legs and leg_mode == LegMode.PLANTED and (airborne or animation in [&"Jog", &"Jump"]):
+		posed_legs = false  # running or jumping: the drawn frames (nudged onto the ground)
+		if not airborne and ground_probe.is_valid() and rig.legs.size() == 2:
+			for side: StringName in [&"front", &"back"]:
+				var g: float = ground_probe.call((rig.drawn_feet[side][legs_abs] - rig.anchor).x)
+				nudge[rig.legs[side].upper] = clampf(g, -max_leg_nudge, max_leg_nudge) if not is_inf(g) else 0.0
+				nudge[rig.legs[side].lower] = nudge[rig.legs[side].upper]
+	var feet := {}
+	if posed_legs:
+		feet = _foot_targets(legs_abs, body_abs)
+		shift.y += feet.get(&"drop", 0.0)  # hips lower so the low foot reaches its step
 	for pi in rig.part_names.size():
 		var ch := rig.part_channels[pi]
 		if ch == &"legs":
-			_show_frame(pi, legs_abs, Vector2.ZERO)
+			if not posed_legs:
+				_show_frame(pi, legs_abs, Vector2(0.0, nudge.get(pi, 0.0)))
 		elif ch == &"body":
 			_show_frame(pi, body_abs, shift)
+	if posed_legs:
+		for side: StringName in [&"back", &"front"]:
+			_pose_leg(side, body_abs, shift, feet[side])
 	_pose_arms(legs_abs, body_abs, shift)
 
 	if _hair and _hair.texture and _head_part >= 0:
@@ -571,3 +618,67 @@ func _apply_look() -> void:
 	if _hair:
 		_hair.texture = look.hair if look else null
 		_hair.visible = not hair_hidden
+
+
+# --- Legs posed in code (rig test) ---------------------------------------------------
+
+## Where each foot goes (doll-local, the sole's middle), plus "drop": how much to lower
+## the hips so both feet reach.
+func _foot_targets(legs_abs: int, body_abs: int) -> Dictionary:
+	var out := {}
+	var lowest := 0.0
+	for side: StringName in [&"front", &"back"]:
+		var leg: Dictionary = rig.legs[side]
+		var target: Vector2
+		var lift := 0.0
+		if leg_mode == LegMode.PLANTED:
+			# Standing: the rest pose's foot, a little apart, set on the ground.
+			target = Vector2(leg.foot) - rig.anchor
+			target.x += stance_px * (0.5 if side == &"front" else -0.5)
+		else:
+			var rest: Vector2 = Vector2(leg.foot) - rig.anchor
+			rest.x += stance_px * (0.5 if side == &"front" else -0.5)
+			if airborne:
+				target = rest + Vector2(air_tuck.x * (1.0 if side == &"front" else -0.5), air_tuck.y)
+				out[side] = target
+				continue
+			# A two beat walk: each foot is on the ground half the cycle, sliding back,
+			# then swings forward in an arc. Standing still, both feet stay put.
+			var cycle := fposmod(walked / (stride_px * 2.0) + (0.0 if side == &"front" else 0.5), 1.0)
+			if cycle < 0.5:
+				target = rest + Vector2(lerpf(stride_px * 0.5, -stride_px * 0.5, cycle * 2.0), 0.0)
+			else:
+				var k := (cycle - 0.5) * 2.0
+				lift = -sin(k * PI) * step_lift_px
+				target = rest + Vector2(lerpf(-stride_px * 0.5, stride_px * 0.5, k), 0.0)
+		if ground_probe.is_valid() and not airborne:
+			var g: float = ground_probe.call(target.x)
+			if not is_inf(g):
+				target.y = g + lift
+				lowest = maxf(lowest, g)
+		else:
+			target.y += 0.0
+		out[side] = target
+	out[&"drop"] = minf(lowest * 0.5, max_hip_drop) if lowest > 0.0 else 0.0
+	return out
+
+
+## Draws one leg bent at the knee to put its foot on `foot` (doll-local): hip from the
+## rest frame, following the body's bob. The knee bends forward.
+func _pose_leg(side: StringName, body_abs: int, shift: Vector2, foot: Vector2) -> void:
+	var leg: Dictionary = rig.legs[side]
+	var h0 := Vector2(leg.hip)
+	var k0 := Vector2(leg.knee)
+	var f0 := Vector2(leg.foot)
+	var bob: Vector2 = rig.body_offset[body_abs] if body_abs < rig.body_offset.size() else Vector2.ZERO
+	var hip := h0 - rig.anchor + Vector2(0.0, bob.y) + shift
+	var l1 := (k0 - h0).length()
+	var l2 := (f0 - k0).length()
+	var to := foot - hip
+	var d := clampf(to.length(), absf(l1 - l2) + 0.01, l1 + l2 - 0.01)
+	var bend := acos(clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0))
+	var a1 := to.angle() - bend  # knee forward (counterclockwise of hip-to-foot)
+	var knee := hip + Vector2.from_angle(a1) * l1
+	var sole := hip + to.normalized() * d
+	_bone(leg.upper, h0, hip, a1 - (k0 - h0).angle())
+	_bone(leg.lower, k0, knee, (sole - knee).angle() - (f0 - k0).angle())

@@ -1520,6 +1520,13 @@ func _animate(delta: float) -> void:
 	# Falling = off the ground a moment, or jumped. Brief bumps keep the run going.
 	var airborne := not is_on_floor() and (_air_time > air_grace_time or velocity.y < 0.0)
 	_doll.scale.x = float(facing)
+	# Code-posed legs (PaperDoll.leg_mode, a rig test): how far we've walked, and the
+	# ground under each foot.
+	_doll.airborne = airborne or is_flying() or (is_levitating() and not is_on_floor())
+	if is_on_floor():
+		_doll.walked += get_real_velocity().x * float(facing) * delta
+	if not _doll.ground_probe.is_valid():
+		_doll.ground_probe = _ground_under_doll
 	_doll.speed_scale = 1.0
 	_doll.reverse = is_aiming() and velocity.x != 0.0 and signf(velocity.x) != float(facing)
 	_doll.dip = 0.0
@@ -1603,6 +1610,20 @@ func jump_frame_for(count: int) -> int:
 ## Pixels to draw the body lower (+) or higher (-) so the feet sit on the slope: the
 ## ground height is interpolated between the two nearest tile columns, which is how
 ## the terrain shader draws 1-tile steps (as a slope). 0 on flat ground and at cliffs.
+## The ground under a doll-local x (px, before the facing flip), in doll-local y; INF
+## if there's none near the feet. For planting code-posed feet.
+func _ground_under_doll(local_x: float) -> float:
+	if world == null or not is_on_floor():
+		return INF
+	var x := global_position.x + local_x * float(facing)
+	var h := _ramp_at(x, global_position.y)
+	if is_inf(h):
+		h = _ground_top(floori(x / TILE), global_position.y)
+	if is_inf(h):
+		return INF
+	return h - (global_position.y + _doll.position.y)
+
+
 func _slope_offset() -> float:
 	if world == null:
 		return 0.0
