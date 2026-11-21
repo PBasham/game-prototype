@@ -22,5 +22,5 @@ held = SubResource("Resource_abx5x")
 plants = &"tree"
 place_area_max = 1
 id = &"tree_seed"
-display_name = "Tree Seed"
-description = "Plant on grass to grow a tree."
+display_name = "Sapling"
+description = "From pine trees. Plant on grass to grow a pine."

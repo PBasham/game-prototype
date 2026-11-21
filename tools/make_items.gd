@@ -251,7 +251,7 @@ func _items() -> Array[ItemData]:
 		furn.place_area_max = 1
 		furn.max_stack = 99
 		out.append(furn)
-	var acorn := _small(&"tree_seed", "Tree Seed", "Plant on grass to grow a tree.")
+	var acorn := _small(&"tree_seed", "Sapling", "From pine trees. Plant on grass to grow a pine.")
 	acorn.kind = ItemData.Kind.SEED
 	acorn.plants = &"tree"
 	acorn.place_area_max = 1

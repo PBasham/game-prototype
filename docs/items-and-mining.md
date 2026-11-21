@@ -37,6 +37,9 @@ the panel lays itself out from it.
 - Left click: pick up a stack, put it down, merge or swap.
 - Right click: take half, or put one down from the stack on the mouse.
 - Shift + left click: move a stack between the hotbar and the rest.
+- Ctrl + left click: **trash** it. The trash slot (bottom right, a bin) also takes the
+  stack on the mouse; it keeps the last thing thrown away (click it to take it back)
+  until the next one replaces it. Saved with the character (`CharacterData.trash`).
 - Ctrl + right click: equip armor, an accessory, a book or a conduit (swaps with the
   equipped one). On an equipment slot (or shift + click it): back into the inventory.
 - A stack on the mouse, over the world, is **held and used** like Terraria: left click
@@ -169,7 +172,7 @@ Current items:
 | Copper Ore, Wood Platform | Blocks (front only) |
 | Rope, Torch | Tile objects |
 | Basic Spellbook | The book used when the Book slot is empty: power x1, tier 1 |
-| Tree Seed | Plant on grass; grows into a tree |
+| Sapling (`tree_seed`) | From pines; plant on grass; grows into a pine |
 | Grass Seeds | Plant on dirt that touches air; turns it into grass |
 
 The defaults come from `tools/make_items.gd`. It never overwrites a file you edited
@@ -339,7 +342,7 @@ play any world. A new character starts with **nothing**: no items, no spells (se
 [crafting.md](crafting.md) for how to get going).
 
 Console `devkit` gives the old starting kit: copper pickaxe and axe, a Mining Spell
-shortcut, 99 wood, 30 platforms, 30 rope, 20 torches, 5 tree seeds, 10 grass seeds,
+shortcut, 99 wood, 30 platforms, 30 rope, 20 torches, 5 saplings, 10 grass seeds,
 50 dirt, and teaches Mining, Chopping, Fly and Spark (put in the book). It's
 `DEV_KIT` / `DEV_SPELLS` in `src/items/character_data.gd`. Scripted runs (DevCli) start
 with it. In debug builds it also adds the placeholder weapons and test magic, which
@@ -435,10 +438,10 @@ Sticks and rocks lying around are the `Forage` node (crafting.md).
 - **Darkwood trees** (the Dark Forest, tree variants after the 12 pines) drop **Dark
   Logs** instead, more of them (they're 22 to 35 tiles tall). 1 Dark Log = 4
   **Darkwood** by hand; Darkwood places Darkwood Planks (block, 70 health) and, with
-  right click, a Darkwood Wall. They also drop **Darkwood Saplings** (plant like a Tree
-  Seed; it grows a darkwood tree anywhere). Tree Seeds grow pines. Saved as the
+  right click, a Darkwood Wall. They also drop **Darkwood Saplings** (plant like a pine
+  Sapling; it grows a darkwood tree anywhere). Saplings (`tree_seed`) grow pines. Saved as the
   sapling's variant (0 pine, 1 darkwood).
-- **Saplings:** plant a tree seed on grass with `tree_spacing` (3) tiles to the next
+- **Saplings:** plant a sapling on grass with `tree_spacing` (3) tiles to the next
   tree. It grows in `grow_min_seconds` to `grow_max_seconds` (60 to 150) while the
   world runs, once there are `grow_clearance` (10) clear tiles above it.
 - **Flowers:** any tool or weapon swing cuts flowers in front of you; mining or

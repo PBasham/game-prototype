@@ -33,7 +33,7 @@ const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
 enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CHEST, CHEST_TAKE,
-	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME }
+	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME, TRASH }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
 const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
@@ -777,7 +777,43 @@ func hit(local: Vector2) -> Array:
 		return [Area.EQUIP_BUTTON, 0]
 	if _spells_button_rect().has_point(local):
 		return [Area.SPELLS_BUTTON, 0]
+	if trash_rect().has_point(local):
+		return [Area.TRASH, 0]
 	return [Area.NONE, -1]
+
+
+## The trash slot: bottom right of the open inventory, level with the last row.
+func trash_rect() -> Rect2:
+	var last := _cell(_grid_origin(), _inventory().size - 1)
+	return Rect2(Vector2(_equip_origin().x + EQUIP_W - 2 - SLOT, last.position.y), Vector2(SLOT, SLOT))
+
+
+## Puts the stack on the mouse in the trash (the one there before is gone for good), or
+## takes the trashed stack back onto an empty mouse.
+func click_trash() -> void:
+	var t := world.character.trash
+	if cursor_count > 0:
+		if _cursor_is_spell():
+			return
+		t.set_slot(0, cursor_id, cursor_count, cursor_meta)
+		_clear_cursor()
+		EventBus.sound_requested.emit(&"ui_click", world.player.global_position)
+	elif t.counts[0] > 0:
+		cursor_id = t.ids[0]
+		cursor_count = t.counts[0]
+		cursor_meta = t.metas[0]
+		t.set_slot(0, &"", 0, {})
+	_redraw()
+
+
+## Ctrl + click an inventory slot: straight to the trash (like Terraria).
+func trash_slot(slot: int) -> void:
+	var inv := _inventory()
+	if inv.counts[slot] <= 0:
+		return
+	world.character.trash.set_slot(0, inv.ids[slot], inv.counts[slot], inv.metas[slot])
+	inv.set_slot(slot, &"", 0, {})
+	_redraw()
 
 
 ## Inventory slot under a point in the inventory panel (or -1).
@@ -871,17 +907,19 @@ func _draw_inventory(g: Control) -> void:
 	var c := world.character
 	var inv := c.inventory
 	var font := ThemeDB.fallback_font
-	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
 	var hover := hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
 	var n := inv.size if open else Inventory.HOTBAR
+	# The satchel (Patrick's moonweave concept): soft blue cloth, darker toward the
+	# middle, cells set apart only by a faint hue change; tied off on the right when open.
+	SatchelLook.draw_bag(g, g.size, _grid_origin(), n, SLOT, STEP)
+	if open:
+		SatchelLook.draw_knot(g, Vector2(g.size.x - 6.0, 60.0))
 	for i in n:
 		var r := _cell(_grid_origin(), i)
-		var look := UiSkin.SlotLook.NORMAL
 		if i == world.player.selected:
-			look = UiSkin.SlotLook.SELECTED
+			SatchelLook.draw_cell_glow(g, r, true)
 		elif hover[0] == Area.INVENTORY and hover[1] == i:
-			look = UiSkin.SlotLook.HOT
-		UiSkin.slot(g, r, look)
+			SatchelLook.draw_cell_glow(g, r, false)
 		var item := inv.item(i)
 		if item:
 			_draw_item(g, font, r, item, inv.counts[i], 1.0, inv.metas[i])
@@ -898,6 +936,12 @@ func _draw_inventory(g: Control) -> void:
 		var sr := _spells_button_rect()
 		state = UiSkin.Btn.PRESSED if spells_open else (UiSkin.Btn.HOT if hover[0] == Area.SPELLS_BUTTON else UiSkin.Btn.NORMAL)
 		UiSkin.button(g, sr, "Spells (L)", state)
+		# The trash: a dimmer cell with a bin drawn in it until something's thrown away.
+		var tr := trash_rect()
+		var trash := c.trash
+		SatchelLook.draw_trash(g, tr, hover[0] == Area.TRASH, trash.counts[0] <= 0)
+		if trash.counts[0] > 0:
+			_draw_item(g, font, tr, trash.item(0), trash.counts[0], 0.8, trash.metas[0])
 	_draw_cursor_stack(g)
 
 
@@ -1605,6 +1649,8 @@ func _inventory_input(pane: Pane, event: InputEvent) -> void:
 					world.player.select_slot(slot)  # hotbar click selects
 			elif right and mb.ctrl_pressed:
 				quick_equip(slot)
+			elif left and (mb.ctrl_pressed or mb.meta_pressed):
+				trash_slot(slot)
 			elif left and mb.shift_pressed:
 				if _store_open():
 					_move_stack(_inventory(), slot, _store())
@@ -1623,6 +1669,9 @@ func _inventory_input(pane: Pane, event: InputEvent) -> void:
 		Area.SPELLS_BUTTON:
 			if left:
 				toggle_spells()
+		Area.TRASH:
+			if left:
+				click_trash()
 	_redraw()
 
 
@@ -2302,6 +2351,13 @@ func _update_tooltip(over: Control) -> void:
 			Area.INVENTORY:
 				item = c.inventory.item(h[1])
 				meta = c.inventory.metas[h[1]]
+			Area.TRASH:
+				item = c.trash.item(0)
+				meta = c.trash.metas[0]
+				if item:
+					extra = "\nTrashed: click to take it back. The next thing trashed replaces it."
+				else:
+					extra_only = "Trash\nDrop something here (or Ctrl + click it) to throw it away."
 			Area.CHEST:
 				var store := _store()
 				item = store.item(h[1]) if store else null

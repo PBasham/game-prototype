@@ -327,6 +327,13 @@ same look through `UiSkin.theme()`.
 godot --headless --path . --script res://tools/make_ui_art.gd
 ```
 
+The inventory is a **satchel** (`SatchelLook`, `src/ui/satchel_look.gd`, Patrick's
+moonweave concept): a rounded bag of blue cloth that darkens toward the middle, cells
+set apart only by a faint hue change (no lines), a soft glow on the selected and
+hovered cell, and, open, a tied knot with a cord and a violet crystal off its right
+side. The pictures are made in code and cached; colors and amounts are the consts at
+the top (`RIM`, `MIDDLE`, `CELL_HUE`, `CELL_VALUE`). Other windows keep the UiSkin look.
+
 In game, the HUD (`src/ui/hud/hud.gd`) has the inventory panel top left, the
 **health, mana and hunger** panel bottom left (pickup notes stack above it), and
 separate windows on the right (crafting, chests). See [survival.md](survival.md) for how

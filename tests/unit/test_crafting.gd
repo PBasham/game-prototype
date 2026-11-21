@@ -547,3 +547,31 @@ func test_special_storage_takes_only_its_kind_and_fills_up() -> void:
 	var cab := ItemData.find(&"healing_potion")
 	assert_true(&"potion" in cab.storage_tags)
 	assert_eq(ObjectLayer.shelf_color(cab), cab.shelf_color)
+
+
+func test_trash_slot_keeps_the_last_thing_thrown_away() -> void:
+	var hud := w.hud
+	var c := w.character
+	var inv := c.inventory
+	hud.set_open(true)
+	inv.set_slot(30, &"stone", 12)
+	hud.trash_slot(30)
+	assert_eq(inv.counts[30], 0)
+	assert_eq(c.trash.ids[0], &"stone")
+	assert_eq(c.trash.counts[0], 12)
+	# Something else trashed from the mouse replaces it.
+	hud.give_cursor(&"dirt", 5)
+	hud.click_trash()
+	assert_eq(hud.cursor_count, 0)
+	assert_eq(c.trash.ids[0], &"dirt")
+	# Click with an empty mouse: take it back.
+	hud.click_trash()
+	assert_eq(hud.cursor_id, &"dirt")
+	assert_eq(hud.cursor_count, 5)
+	assert_eq(c.trash.counts[0], 0)
+	hud.click_trash()
+	# Saved with the character.
+	var d := c.to_dict()
+	assert_eq(d["trash"], c.trash.to_dict())
+	assert_true(hud.trash_rect().size.x > 0.0)
+	hud.set_open(false)

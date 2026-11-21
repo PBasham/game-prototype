@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-20: Phase 15, satchel, trash and the Forest Spirit's uses
+
+- **Inventory (Patrick, moonweave v4 approved):** the satchel look in code
+  (`SatchelLook`), placeholders until real art.
+- **Trash slot (Patrick, like Terraria):** one slot, keeps the last thing trashed.
+- **Tree Seed is now "Sapling"** (Patrick: regular trees drop saplings too); id unchanged.
+
 ## 2026-11-20: Phase 14, Dark Forest
 
 - **Size (Patrick):** biomes scale with the world: 25% of its width (raised from 15%,

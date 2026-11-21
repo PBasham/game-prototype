@@ -62,6 +62,8 @@ const BUFF_SET_SIZE := 6
 ## The movement spell the movement key (F) uses, set in the Equipment window's Movement
 ## slot (empty = Fly if known, else Levitate).
 var movement_spell: StringName = &""
+## The trash slot (like Terraria's): the last item thrown away, until another replaces it.
+var trash := Inventory.new(1)
 
 var name := DEFAULT_NAME
 var inventory := Inventory.new()
@@ -490,6 +492,8 @@ static func load_file(path: String) -> CharacterData:
 	var c := CharacterData.new()
 	c.name = String(d.get("name", DEFAULT_NAME))
 	c.inventory.from_dict(d.get("inventory", {}))
+	if d.has("trash"):
+		c.trash.from_dict(d["trash"])
 	var eq: Dictionary = d.get("equipment", {})
 	for slot: StringName in ALL_SLOTS:
 		var item_id := StringName(eq.get(String(slot), ""))
@@ -583,4 +587,4 @@ func to_dict() -> Dictionary:
 	return {"name": name, "inventory": inventory.to_dict(), "equipment": eq,
 		"known_spells": known, "quick": q, "quick_modes": modes, "wheel_last": last,
 		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger,
-		"movement_spell": String(movement_spell), "ghost": ghost}
+		"movement_spell": String(movement_spell), "ghost": ghost, "trash": trash.to_dict()}

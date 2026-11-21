@@ -266,6 +266,13 @@ guesses; the docs listed say where each tunable lives.
       Walls block their shots; they don't shoot what they can't see.
 - [ ] They drop Magic Essence, and a Spirit Core now and then. `summon forest_spirit`.
 
+**Phase 15: satchel, trash, discovered recipes, Call Spirit (branch phase-15-satchel-spirits)**
+- [ ] The inventory is the blue cloth satchel: darker toward the middle, no cell lines,
+      knot and crystal on the right when open.
+- [ ] Trash (bin, bottom right): drop a stack on it, or Ctrl + click a slot. Click it
+      with an empty mouse to take the last one back.
+- [ ] Pine trees drop "Sapling" (was Tree Seed).
+
 ## Known
 
 - `test_spawns_ahead_when_moving_and_despawn_waits` (test_combat.gd) fails now and
