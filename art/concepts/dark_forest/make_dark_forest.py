@@ -284,3 +284,53 @@ if __name__ == "__main__" and "--sapling" in sys.argv:
     save(sapling(), "assets/decor/darkwood_sapling.png")
     save(sapling_icon(), "assets/items/icons/darkwood_sapling.png")
     save(sapling_icon().resize((9, 9), Image.NEAREST), "assets/items/held/darkwood_sapling.png")
+
+
+def darkwood_workbench():
+    """The Workbench recolored to darkwood, keeping its grain (tier 2)."""
+    im = Image.open("assets/objects/workbench.png").convert("RGBA")
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a == 0 or not (r > g + 12 and r > b + 12):
+                continue  # only the wood; the tools stay
+            lum = (0.3 * r + 0.55 * g + 0.15 * b) / 255
+            t = min(max((lum - 0.15) / 0.6, 0.0), 1.0)
+            lo, hi = (40, 22, 38), (128, 82, 108)
+            px[x, y] = tuple(int(lo[i] + (hi[i] - lo[i]) * t) for i in range(3)) + (a,)
+    return im
+
+
+def reinforced(src, dst, wall):
+    """Planks with iron straps and rivets (64x64)."""
+    im = Image.open(src).convert("RGBA")
+    px = im.load()
+    W, H = im.size
+    iron, light, dark = (110, 114, 124), (170, 174, 186), (62, 64, 72)
+    k = 0.6 if wall else 1.0
+    for y in range(H):
+        for x in range(W):
+            band = (x % 32) in (14, 15, 16, 17)
+            if band:
+                c = light if (x % 32) == 14 else (dark if (x % 32) == 17 else iron)
+                if y % 16 == 7 and (x % 32) in (15, 16):
+                    c = (210, 214, 224)  # rivet
+                px[x, y] = tuple(int(v * k) for v in c) + (255,)
+    im.save(dst)
+    print("wrote", dst)
+
+
+def phase16():
+    save(darkwood_workbench(), "assets/objects/darkwood_workbench.png")
+    for name, src in (("reinforced_wood", "planks"), ("reinforced_darkwood", "darkwood_planks")):
+        for wall in (False, True):
+            dst = "assets/terrain/%s%s.png" % (name, "_wall" if wall else "")
+            if os.path.exists(dst) and not FORCE:
+                print("kept", dst)
+                continue
+            reinforced("assets/terrain/%s%s.png" % (src, "_wall" if wall else ""), dst, wall)
+
+
+if __name__ == "__main__" and "--phase16" in sys.argv:
+    phase16()

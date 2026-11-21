@@ -11,6 +11,9 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **World map (bare bones, Patrick):** key N (M is quick mana). Reveals within 48
   tiles of you, terrain colors from the textures, saved as a picture. Pins, trees,
   chests and teleporting are later.
+- **Darkwood and stations (Patrick):** darkwood upgrades the Workbench to the
+  Darkwood Workbench (tier 2, 20 Darkwood + 3 Iron Bars), which makes Reinforced Wood
+  and Reinforced Darkwood (both for now; one may go later).
 - **Empower (bare bones, Patrick):** one first node on every spell's tree, Efficient
   (-5% mana per rank, 5 ranks). Paid in Magic Essence (2 x rank) by default; tree
   nodes are data so more can be added with `requires`.

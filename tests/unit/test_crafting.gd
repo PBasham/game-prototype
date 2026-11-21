@@ -575,3 +575,25 @@ func test_trash_slot_keeps_the_last_thing_thrown_away() -> void:
 	assert_eq(d["trash"], c.trash.to_dict())
 	assert_true(hud.trash_rect().size.x > 0.0)
 	hud.set_open(false)
+
+
+func test_darkwood_workbench_upgrade_makes_reinforced_wood() -> void:
+	var bench := Registry.get_def(&"objects", &"workbench") as ObjectDef
+	assert_eq(bench.upgrade_to, &"darkwood_workbench")
+	assert_eq(bench.upgrade_cost, {&"darkwood": 20, &"iron_bar": 3})
+	var dark := Registry.get_def(&"objects", &"darkwood_workbench") as ObjectDef
+	assert_eq(dark.station, &"workbench")
+	assert_eq(dark.station_tier, 2)
+	var ids := func(tier: int) -> Array: return Crafting.recipes_for(&"workbench", tier).map(
+		func(r: RecipeData) -> StringName: return r.id)
+	assert_false(ids.call(1).has(&"reinforced_wood"), "not at a plain Workbench")
+	assert_true(ids.call(2).has(&"reinforced_wood"))
+	assert_true(ids.call(2).has(&"reinforced_darkwood"))
+	assert_true(ids.call(2).has(&"chest"), "still makes everything a Workbench does")
+	for id: StringName in [&"reinforced_wood", &"reinforced_darkwood"]:
+		var it := ItemData.find(id)
+		assert_eq(it.places_block, id)
+		assert_eq(it.places_wall, StringName(String(id) + "_wall"))
+		assert_gt(w.blocks.index_of(id), 0)
+		assert_gt(w.walls.index_of(StringName(String(id) + "_wall")), 0)
+		assert_gt(w.blocks.def(w.blocks.index_of(id)).health, w.blocks.def(w.blocks.index_of(&"wood_planks")).health)

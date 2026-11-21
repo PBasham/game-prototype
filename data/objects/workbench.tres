@@ -12,6 +12,11 @@ height_tiles = 4
 width_tiles = 5
 needs_floor = true
 station = &"workbench"
+upgrade_to = &"darkwood_workbench"
+upgrade_cost = Dictionary[StringName, int]({
+&"darkwood": 20,
+&"iron_bar": 3
+})
 health = 1.0
 drop_item = &"workbench"
 id = &"workbench"

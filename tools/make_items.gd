@@ -107,6 +107,13 @@ func _items() -> Array[ItemData]:
 	dsap.plants = &"darkwood"
 	dsap.place_area_max = 1
 	out.append(dsap)
+	# Reinforced: wood or darkwood with iron straps, at the Darkwood Workbench. Sturdier.
+	var rwood := _block(&"reinforced_wood", "Reinforced Wood", "Wood bound with iron: a sturdy building block (right click: a back wall).", &"reinforced_wood_wall")
+	rwood.places_block = &"reinforced_wood"
+	out.append(rwood)
+	var rdark := _block(&"reinforced_darkwood", "Reinforced Darkwood", "Darkwood bound with iron: a sturdy building block (right click: a back wall).", &"reinforced_darkwood_wall")
+	rdark.places_block = &"reinforced_darkwood"
+	out.append(rdark)
 	out.append(_small(&"magic_essence", "Magic Essence", "A wisp of magic left by a Forest Spirit."))
 	out.append(_small(&"spirit_core", "Spirit Core", "The glowing heart of a Forest Spirit. Rare."))
 	# Platforms and rope go one at a time (line placing may come later).
@@ -241,6 +248,7 @@ func _items() -> Array[ItemData]:
 			[&"scribes_desk", "Scribe's Desk", "A crafting station: scribe scrolls of the spells you know onto blank scrolls."],
 			[&"lumber_rack", "Lumber Rack", "Storage for logs and wood: 1,000 of them. It fills up as you stock it."],
 			[&"potion_cabinet", "Potion Cabinet", "Storage for potions, flasks and coatings: 10 stacks, shown on its shelves."],
+			[&"darkwood_workbench", "Darkwood Workbench", "A tier 2 Workbench (upgrade one with 20 Darkwood and 3 Iron Bars): everything a Workbench makes, plus reinforced wood."],
 			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
 			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."],
 			[&"table", "Table", "Put things on display on top: hold an item and right click the table top."],
@@ -697,7 +705,8 @@ func _objects() -> Array[ObjectDef]:
 			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""],
 			# Added later go last, so the indexes below stay put.
 			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"],
-			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 4, &""]]:
+			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 4, &""],
+			[&"darkwood_workbench", "Darkwood Workbench", 5, 4, &"workbench"]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -736,6 +745,10 @@ func _objects() -> Array[ObjectDef]:
 	out[13].container_slots = 10
 	out[13].container_accepts = &"potion"
 	out[13].fill_look = ObjectDef.FillLook.BOTTLES
+	# The Workbench upgrades in place to the Darkwood Workbench (tier 2: reinforced wood).
+	out[1].upgrade_to = &"darkwood_workbench"
+	out[1].upgrade_cost = {&"darkwood": 20, &"iron_bar": 3}
+	out[14].station_tier = 2
 	# What's on display (World.displays): drawn as the item itself.
 	var shown := ObjectDef.new()
 	shown.id = &"display"
@@ -983,6 +996,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"scribes_desk", &"workbench", {&"wood": 15, &"paper": 5, &"copper_bar": 2}, &"scribes_desk", 1, []],
 		[&"lumber_rack", &"workbench", {&"wood": 25, &"log": 4}, &"lumber_rack", 1, []],
 		[&"potion_cabinet", &"workbench", {&"wood": 20, &"copper_bar": 2, &"clay_flask": 2}, &"potion_cabinet", 1, []],
+		[&"reinforced_wood", &"workbench", {&"wood": 4, &"iron_bar": 1}, &"reinforced_wood", 4, []],
+		[&"reinforced_darkwood", &"workbench", {&"darkwood": 4, &"iron_bar": 1}, &"reinforced_darkwood", 4, []],
 	]
 	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by
 	# tier (placeholder until each spell gets its own materials). Only spells you know can
@@ -1005,6 +1020,8 @@ func _recipes() -> Array[RecipeData]:
 		for q: StringName in e[5]:
 			r.requires.append(q)
 		r.display_name = String(e[3]).capitalize()
+		if r.id in [&"reinforced_wood", &"reinforced_darkwood"]:
+			r.station_tier = 2  # the Darkwood Workbench
 		for u: StringName in UNLOCKS.get(r.id, []):
 			r.unlock_items.append(u)
 		r.tab = {&"poison_coating": "Coatings", &"poison_flask": "Flasks"}.get(r.id, "Potions" if r.station == &"alchemy" else "")

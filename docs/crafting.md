@@ -170,6 +170,8 @@ Current recipes:
 | Workbench | Shelf: 4 wood |
 | Workbench | Furnace: 20 stone + 4 wood + 3 torches |
 | Workbench | Copper Anvil: 6 copper bars |
+| Darkwood Workbench (tier 2) | Reinforced Wood: 4 wood + 1 iron bar = 4 |
+| Darkwood Workbench (tier 2) | Reinforced Darkwood: 4 darkwood + 1 iron bar = 4 |
 | Furnace | Copper Bar: 3 copper ore |
 | Anvil | Copper Pickaxe: 10 bars + 3 wood; Copper Axe: 8 bars + 3 wood |
 | Furnace | Iron Bar: 3 iron ore |
@@ -250,8 +252,11 @@ can't mine the floor under furniture.
   size change keeps its old filler tiles; mine it and place it again.
 - **Station tiers:** a station with `upgrade_to` shows an **Upgrade** row at the bottom
   of its list; it costs `upgrade_cost` and replaces the station in place with the next
-  tier. Recipes with a higher `station_tier` only show at that tier. No station has an
-  upgrade yet; the framework is ready for it.
+  tier. Recipes with a higher `station_tier` only show at that tier. The first one:
+  **Workbench -> Darkwood Workbench** (tier 2) for 20 Darkwood + 3 Iron Bars. It makes
+  everything a Workbench does, plus **Reinforced Wood** (4 Wood + 1 Iron Bar = 4) and
+  **Reinforced Darkwood** (4 Darkwood + 1 Iron Bar = 4): sturdy building blocks (160
+  health, walls 90) with iron straps, each with a back wall (right click).
 - Enchanting comes later, with a design brief first.
 
 ## Items on display

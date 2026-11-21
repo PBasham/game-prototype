@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_ld7iv"]
+
+[resource]
+script = ExtResource("1_ld7iv")
+station_tier = 2
+station = &"workbench"
+inputs = Dictionary[StringName, int]({
+&"darkwood": 4,
+&"iron_bar": 1
+})
+output = &"reinforced_darkwood"
+output_count = 4
+id = &"reinforced_darkwood"
+display_name = "Reinforced Darkwood"

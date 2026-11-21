@@ -264,3 +264,6 @@ or .ogg); the generator never overwrites without `--force`.
 | decor/darkwood_sapling.png, items/{icons,held}/darkwood_sapling.png | 9x14 darkwood sapling (and its icon). Same script, `--sapling` |
 | items/icons/call_spirit.png (+ scroll_, page_ icons) | Call Spirit: the spirit's first frame over a ring. Placeholder |
 | items/icons/air_step.png, bound.png (+ scroll_, page_ icons) | 16x16 spell icons: cloud steps with an up chevron; an arcing arrow. Placeholders |
+| objects/darkwood_workbench.png (+ icon, held) | The Workbench recolored to darkwood (80x64, detail 2). Placeholder (`--phase16` on `art/concepts/dark_forest/make_dark_forest.py`) |
+| terrain/reinforced_wood{,_wall}.png, terrain/reinforced_darkwood{,_wall}.png | 64x64 planks with iron straps and rivets; icons and held sprites cut from them. Same script |
+| tiles/blocks.png rows 11, 12 | Collision atlas rows for the reinforced blocks (copies of the planks row) |

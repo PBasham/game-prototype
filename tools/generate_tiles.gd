@@ -1801,6 +1801,8 @@ const GAME_BLOCKS := [
 	{"id": "iron_ore", "base": Color("757064"), "kind": "stone"},
 	{"id": "clay", "base": Color("a8664a"), "kind": "dirt"},
 	{"id": "darkwood_planks", "base": Color("4e2e42"), "kind": "planks"},
+	{"id": "reinforced_wood", "base": Color("6a5236"), "kind": "planks"},
+	{"id": "reinforced_darkwood", "base": Color("3e2636"), "kind": "planks"},
 ]
 
 const BD_W := 1280

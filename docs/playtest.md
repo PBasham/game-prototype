@@ -288,6 +288,9 @@ guesses; the docs listed say where each tunable lives.
       2 Magic Essence; the tooltip's mana goes down 5% per rank.
 - [ ] N opens the world map: what you've seen fills in as you walk; wheel zooms, drag
       pans, N or Esc closes. Save, quit, come back: still explored.
+- [ ] Workbench: Upgrade (20 Darkwood + 3 Iron Bars) turns it into a Darkwood Workbench;
+      it makes Reinforced Wood and Reinforced Darkwood (4 + 1 Iron Bar), sturdy blocks
+      and walls.
 
 ## Known
 

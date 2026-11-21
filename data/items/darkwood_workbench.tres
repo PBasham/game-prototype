@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_v07yj"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_5ldxi"]
+[ext_resource type="Texture2D" path="res://assets/items/held/darkwood_workbench.png" id="3_3rcdv"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/darkwood_workbench.png" id="4_7y81g"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_hqefb"]
+
+[sub_resource type="Resource" id="Resource_6nqe2"]
+script = ExtResource("2_5ldxi")
+id = &"darkwood_workbench"
+texture = ExtResource("3_3rcdv")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_hqefb")
+kind = 10
+icon = ExtResource("4_7y81g")
+max_stack = 99
+held = SubResource("Resource_6nqe2")
+impact_at = 0.2
+places_object = &"darkwood_workbench"
+place_area_max = 1
+id = &"darkwood_workbench"
+display_name = "Darkwood Workbench"
+description = "A tier 2 Workbench (upgrade one with 20 Darkwood and 3 Iron Bars): everything a Workbench makes, plus reinforced wood."

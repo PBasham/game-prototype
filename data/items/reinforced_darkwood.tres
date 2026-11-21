@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_wohyi"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_waywu"]
+[ext_resource type="Texture2D" path="res://assets/items/held/reinforced_darkwood.png" id="3_qyd47"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/reinforced_darkwood.png" id="4_ljlhq"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_c55v1"]
+
+[sub_resource type="Resource" id="Resource_jvllh"]
+script = ExtResource("2_waywu")
+id = &"reinforced_darkwood"
+texture = ExtResource("3_qyd47")
+type = &"block"
+grip = Vector2(3, 5)
+
+[resource]
+script = ExtResource("5_c55v1")
+kind = 1
+icon = ExtResource("4_ljlhq")
+held = SubResource("Resource_jvllh")
+impact_at = 0.2
+places_block = &"reinforced_darkwood"
+places_wall = &"reinforced_darkwood_wall"
+id = &"reinforced_darkwood"
+display_name = "Reinforced Darkwood"
+description = "Darkwood bound with iron: a sturdy building block (right click: a back wall)."
