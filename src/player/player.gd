@@ -256,6 +256,14 @@ var _step_offset := 0.0
 ## Held item (null = empty hands) and whether it's put away.
 var held: HeldItemLook
 var stowed := false
+## The emote being played (chat /sit, /wave, /cheer, or sitting on a chair: &"sit"),
+## or &"". Walking, jumping or using an item ends it.
+var emote: StringName = &""
+## The chair sat on (its anchor), or World.NO_TILE.
+var seat := World.NO_TILE
+var _emote_left := 0.0
+## Wave and cheer last this long (seconds); sitting lasts until you move.
+@export var emote_seconds := 3.0
 ## The attack playing (null = none), seconds into it, and its place in the combo.
 var _attack: ItemMotion
 var _attack_time := 0.0
@@ -733,6 +741,11 @@ func _hold_motion() -> ItemMotion:
 func _physics_process(delta: float) -> void:
 	var input_x := _axis("move_left", "move_right")
 	var input_y := _axis("move_up", "move_down")
+	if emote != &"":
+		_update_emote(delta, input_x, input_y)
+		if emote in [&"sit", &"sit_floor"]:
+			input_x = 0.0  # sitting: stay put (moving stood you up above)
+			input_y = 0.0
 	_input_x = input_x
 	if _just("toggle_walk"):
 		walk_toggled = not walk_toggled
@@ -1610,6 +1623,70 @@ func jump_frame_for(count: int) -> int:
 ## Pixels to draw the body lower (+) or higher (-) so the feet sit on the slope: the
 ## ground height is interpolated between the two nearest tile columns, which is how
 ## the terrain shader draws 1-tile steps (as a slope). 0 on flat ground and at cliffs.
+## The emotes the chat knows (/<name>): what each plays.
+const EMOTES := {&"sit": &"sit_floor", &"wave": &"wave", &"cheer": &"cheer"}
+
+
+## Starts an emote by its chat name (sit, wave, cheer). Returns why it can't ("" = it
+## started).
+func start_emote(chat_name: StringName) -> String:
+	if not EMOTES.has(chat_name):
+		return "No emote /%s. Emotes: /%s" % [chat_name, " /".join(EMOTES.keys())]
+	if dead:
+		return "Not now"
+	var e: StringName = EMOTES[chat_name]
+	if e == &"sit_floor" and (not is_on_floor() or is_flying() or is_levitating() or _climbing):
+		return "Sit down where you can stand"
+	_begin_emote(e)
+	return ""
+
+
+## Sits on a chair (its anchor tile): you move onto the seat, facing away from the back.
+func sit_on(anchor: Vector2i) -> void:
+	var def := world.object_at(anchor) if world else null
+	if def == null or not def.seat or dead:
+		return
+	var flipped := world.is_flipped(anchor)
+	var w := def.width_tiles * TILE
+	var x := anchor.x * TILE + (w - def.seat_x_px if flipped else def.seat_x_px)
+	global_position = Vector2(x, (anchor.y + 1) * TILE)
+	reset_physics_interpolation()
+	velocity = Vector2.ZERO
+	facing = -1 if flipped else 1
+	_doll.seat_height = def.seat_height_px
+	_begin_emote(&"sit")
+	seat = anchor
+
+
+func _begin_emote(e: StringName) -> void:
+	if concentration and (is_flying() or is_levitating()):
+		toggle_concentration(concentration)
+	if held_item and not stowed:
+		toggle_stowed()  # hands free
+	emote = e
+	seat = World.NO_TILE
+	_emote_left = emote_seconds if e in [&"wave", &"cheer"] else INF
+	_doll.pose = e
+	EventBus.sound_requested.emit(&"ui_click", global_position)
+
+
+func stop_emote() -> void:
+	emote = &""
+	seat = World.NO_TILE
+	_doll.pose = &""
+
+
+## Moving, jumping, using an item or the time running out ends an emote; a chair taken
+## away stands you up.
+func _update_emote(delta: float, input_x: float, input_y: float) -> void:
+	_emote_left -= delta
+	var leave := input_x != 0.0 or input_y < 0.0 or _just("jump") or is_using() or _emote_left <= 0.0
+	if seat != World.NO_TILE and (world == null or world.object_at(seat) == null or not world.object_at(seat).seat):
+		leave = true
+	if leave:
+		stop_emote()
+
+
 ## The ground under a doll-local x (px, before the facing flip), in doll-local y; INF
 ## if there's none near the feet. For planting code-posed feet.
 func _ground_under_doll(local_x: float) -> float:

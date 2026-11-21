@@ -167,6 +167,7 @@ Current recipes:
 | Workbench | Chest: 8 wood + 2 copper bars |
 | Workbench | Door: 6 wood |
 | Workbench | Table: 8 wood |
+| Workbench | Wooden Chair: 4 wood (2x3; right click to sit) |
 | Workbench | Shelf: 4 wood |
 | Workbench | Furnace: 20 stone + 4 wood + 3 torches |
 | Workbench | Copper Anvil: 6 copper bars |
@@ -216,6 +217,7 @@ can't mine the floor under furniture.
 | `detail` | Art pixels per world pixel: 2 for detailed art (stations, Table, Shelf). See "Detailed art" in guide.md |
 | `station`, `station_tier` | Makes it a crafting station |
 | `upgrade_to`, `upgrade_cost` | Upgrade in place (see below) |
+| `seat`, `seat_height_px`, `seat_x_px` | A chair: right click sits you on it, the seat this high above the floor and this far in from the backrest side; you face away from the back (flipped chairs face left) |
 
 | Object | Size | Notes |
 | --- | --- | --- |

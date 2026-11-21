@@ -363,6 +363,22 @@ func _register() -> void:
 		var n := int(a[1]) if a.size() > 1 else it.max_stack
 		var left := store.add(it.id, n)
 		_print("Stocked %d %s%s." % [n - left, it.display_name, " (the rest didn't fit)" if left > 0 else ""]))
+	_add("emote", "emote <sit|wave|cheer|stand|chair>", "Play an emote, like the chat's /sit (chair: sit on the chair under the cursor).", func(a: PackedStringArray) -> void:
+		var p := world.player
+		if a.is_empty():
+			_print("emote sit | wave | cheer | stand | chair")
+		elif a[0] == "stand":
+			p.stop_emote()
+		elif a[0] == "chair":
+			var t := world.object_anchor_visual(world.world_to_tile(world.item_user.cursor()))
+			if t == World.NO_TILE or world.object_at(t) == null or not world.object_at(t).seat:
+				_print("No chair under the cursor.")
+			else:
+				p.sit_on(t)
+		else:
+			var problem := p.start_emote(StringName(a[0]))
+			if problem != "":
+				_print(problem))
 	_add("legs", "legs [drawn|planted|posed]", "Leg rig test: drawn frames, drawn frames with feet planted on the ground, or a walk made in code.", func(a: PackedStringArray) -> void:
 		var modes := {"drawn": PaperDoll.LegMode.DRAWN, "planted": PaperDoll.LegMode.PLANTED, "posed": PaperDoll.LegMode.POSED}
 		var doll := world.player.get_node("Doll") as PaperDoll

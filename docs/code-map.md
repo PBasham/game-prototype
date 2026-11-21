@@ -290,6 +290,14 @@ wheel and pickup notes. Separate windows: `equipment_window.gd`, `spell_window.g
 buttons) and `src/ui/satchel_look.gd` (the satchel inventory: colors are the consts at
 its top). The trash slot is `CharacterData.trash`. Menus: `src/ui/menu/`.
 
+## Chat and emotes
+
+`src/ui/hud/chat_box.gd` (the chat line and log; commands in `send()`), emotes in
+`src/player/player.gd` (`EMOTES`, `start_emote`, `sit_on`, `_update_emote`), the poses
+in `src/player/doll/paper_doll.gd` (`_sit_targets`, `_emote_arm_angle`, the "Poses"
+exports). Chairs are objects with `seat` ([crafting.md](crafting.md)). Key: Enter
+(`chat` in the Input Map).
+
 ## World map
 
 `src/world/world_map.gd` (what's explored, the picture; `reveal_tiles`, `reveal_every`,
@@ -314,8 +322,8 @@ console `legs`, see "Legs posed in code"). Held item motion: `data/item_types/`.
 
 Project Settings, **Input Map** (`project.godot`). Current: WASD move, Space jump, I
 inventory, K crafting, P equipment, L spells, R spellbook (hold: wheel), Q and E wheels,
-Z X C quick slots, F movement spell, H quick heal, M quick mana, B buffs, N map, Esc
-pause.
+Z X C quick slots, F movement spell, H quick heal, M quick mana, B buffs, N map, Enter
+chat, Esc pause.
 
 ## Saving
 

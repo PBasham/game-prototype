@@ -302,6 +302,13 @@ guesses; the docs listed say where each tunable lives.
 - [ ] `legs posed`: walk, run, jump with a code-made gait. Compare with `legs drawn`.
 - [ ] Tune live: Remote, Player > Doll, the "Legs (rig test)" exports.
 
+**Phase 18: emotes, chat, chair (branch phase-18-sit-emotes-chat)**
+- [ ] Enter opens the chat; type hello, Enter: it's in the log and over your head.
+- [ ] /sit sits on the floor; /wave; /cheer; /stand; /emotes lists them. Walk to stand up.
+- [ ] Workbench: Wooden Chair (4 wood). Right click it: you sit facing away from the
+      back, thighs level. Place it facing left: you sit facing left.
+- [ ] While typing, WASD, I, K and the rest don't do anything in the game.
+
 ## Known
 
 - `test_spawns_ahead_when_moving_and_despawn_waits` (test_combat.gd) fails now and

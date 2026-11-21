@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-21: Phase 18, emotes, chat and a chair
+
+- **Patrick:** go deeper on the rig with sitting (a chair and the floor), triggered from a
+  Terraria-like chat (/sit). Added /wave and /cheer as the first other emotes, said lines
+  show over your head, and a Wooden Chair (4 wood, 2x3) you sit on with right click.
+  The chair is new content Patrick asked for.
+
 ## 2026-11-21: Phase 17, leg rig test
 
 - **Legs posed in code (Patrick: "start testing"):** two-bone IK legs like the arms, as

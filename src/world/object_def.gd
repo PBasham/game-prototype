@@ -98,6 +98,12 @@ enum FillLook { NONE, FRAMES, BOTTLES, PILE }
 @export var station: StringName = &""
 ## A bed: right click sets your respawn point here, and at night you sleep till morning.
 @export var bed := false
+## A seat: right click to sit on it (a chair). The seat's height above the floor (px),
+## and where it is across the footprint (px from the left edge, for the unflipped art;
+## you sit facing away from the backrest).
+@export var seat := false
+@export var seat_height_px := 12.0
+@export var seat_x_px := 9.0
 ## Recipes need at least this tier of their station.
 @export var station_tier := 1
 ## Upgrading turns it into this station (the next tier) in place. Empty = top tier.

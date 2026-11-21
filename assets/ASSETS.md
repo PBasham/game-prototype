@@ -269,3 +269,4 @@ or .ogg); the generator never overwrites without `--force`.
 | tiles/blocks.png rows 11, 12 | Collision atlas rows for the reinforced blocks (copies of the planks row) |
 | terrain/darkwood_logs.png, terrain/darkwood_logs_wall.png | The log block and wall recolored to darkwood. Placeholders |
 | tiles/blocks.png row 13 | Collision row for the darkwood log block (copy of the log row) |
+| objects/chair.png (+ icon, held) | Wooden Chair, 32x48 (2x3 tiles, detail 2), backrest left, seat 24 art px up. Placeholder (`art/concepts/chair/make_chair.py`) |

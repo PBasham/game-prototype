@@ -139,6 +139,23 @@ bent legs show the boot turned; that's the trade-off against drawn frames. New p
 settled. Code: `_foot_targets` and `_pose_leg` in `src/player/doll/paper_doll.gd`,
 `_measure_leg` in `doll_rig.gd`.
 
+## Emote poses (Phase 18)
+
+`PaperDoll.pose` (set from `Player.emote`) poses the doll in code, whatever the frames
+say:
+
+| Pose | Chat | What it does | Tunables ("Poses (emotes)" on the Doll) |
+| --- | --- | --- | --- |
+| `sit` | right click a chair | hips come down to the seat, thighs level, shins down to the floor | `seat_height` (the chair sets it: `ObjectDef.seat_height_px`) |
+| `sit_floor` | `/sit` | hips on the floor, the near leg out long, the far knee up | `floor_hip_height`, `floor_reach` |
+| `wave` | `/wave` | the near arm up, swinging | `wave_angle`, `wave_swing`, `wave_speed` |
+| `cheer` | `/cheer` | both arms up, a little hop | `cheer_angles`, `cheer_bounce` |
+
+Sitting poses the legs with the same knee solve as the rig test (`_sit_targets`), and
+the body comes down by however far the hips drop. Emote arms are `_emote_arm_angle`.
+A new emote is a name in `Player.EMOTES`, a pose here, and its legs or arms in those
+two functions.
+
 ## Joints (pivots)
 
 Code needs the shoulder, elbow and hand of each arm.

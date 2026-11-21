@@ -328,6 +328,14 @@ same look through `UiSkin.theme()`.
 godot --headless --path . --script res://tools/make_ui_art.gd
 ```
 
+**Chat and emotes (Enter):** like Terraria's. Enter opens a line at the bottom left,
+Enter sends, Esc closes (`ChatBox`, src/ui/hud/chat_box.gd). `/sit` (on the floor),
+`/wave`, `/cheer`, `/stand`, `/emotes` (the list). Anything else is said: it goes in the
+log (fades after `line_seconds`, all shown again while typing) and shows over your head
+for `bubble_seconds`. Moving, jumping or using an item ends an emote; wave and cheer
+end by themselves after `Player.emote_seconds`. Right click (or E) a chair to sit on it.
+Dev console: `emote sit | wave | cheer | stand | chair`.
+
 **World map (N):** a full screen map of what you've explored, like Terraria's
 (`WorldMap`, src/world/world_map.gd; the screen is `MapView`, src/ui/hud/map_view.gd).
 Everything within `reveal_tiles` (48) of you fills in as you go (checked every

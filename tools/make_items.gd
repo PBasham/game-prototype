@@ -249,6 +249,7 @@ func _items() -> Array[ItemData]:
 			[&"scribes_desk", "Scribe's Desk", "A crafting station: scribe scrolls of the spells you know onto blank scrolls."],
 			[&"lumber_rack", "Lumber Rack", "Storage for logs and wood: 1,000 of them. It fills up as you stock it."],
 			[&"potion_cabinet", "Potion Cabinet", "Storage for potions, flasks and coatings: 10 stacks, shown on its shelves."],
+			[&"chair", "Wooden Chair", "Right click (or E) to sit on it. Move to stand up."],
 			[&"darkwood_workbench", "Darkwood Workbench", "A tier 2 Workbench (upgrade one with 20 Darkwood and 3 Iron Bars): everything a Workbench makes, plus reinforced wood."],
 			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
 			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."],
@@ -707,7 +708,8 @@ func _objects() -> Array[ObjectDef]:
 			# Added later go last, so the indexes below stay put.
 			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"],
 			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 4, &""],
-			[&"darkwood_workbench", "Darkwood Workbench", 5, 4, &"workbench"]]:
+			[&"darkwood_workbench", "Darkwood Workbench", 5, 4, &"workbench"],
+			[&"chair", "Wooden Chair", 2, 3, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -749,6 +751,11 @@ func _objects() -> Array[ObjectDef]:
 	out[1].upgrade_to = &"darkwood_workbench"
 	out[1].upgrade_cost = {&"darkwood": 20, &"iron_bar": 3}
 	out[14].station_tier = 2
+	# A chair: right click to sit (the seat 12 px up, 9 px in from the backrest side).
+	out[15].detail = 2
+	out[15].seat = true
+	out[15].seat_height_px = 12.0
+	out[15].seat_x_px = 9.0
 	# What's on display (World.displays): drawn as the item itself.
 	var shown := ObjectDef.new()
 	shown.id = &"display"
@@ -953,6 +960,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"wooden_bowl", &"workbench", {&"wood": 2}, &"wooden_bowl", 2, []],
 		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
 		[&"table", &"workbench", {&"wood": 8}, &"table", 1, []],
+		[&"chair", &"workbench", {&"wood": 4}, &"chair", 1, []],
 		[&"shelf", &"workbench", {&"wood": 4}, &"shelf", 1, []],
 		[&"roasted_berries", &"cooking", {&"berries": 3}, &"roasted_berries", 1, []],
 		[&"cooked_mushroom", &"cooking", {&"field_mushroom": 1}, &"cooked_mushroom", 1, []],

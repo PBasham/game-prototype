@@ -195,3 +195,49 @@ func test_the_world_map_fills_in_around_you_and_is_saved() -> void:
 	assert_false(w.hud.map_view.visible)
 	w.queue_free()
 	await wait_physics_frames(2)
+
+
+func test_emotes_chat_and_sitting_on_a_chair() -> void:
+	var info := WorldInfo.test_course()
+	var w := _start(info)
+	await wait_physics_frames(5)
+	var p := w.player
+	var hud := w.hud
+	# The chat: /sit sits on the floor, moving stands you up.
+	hud.chat.send("/sit")
+	assert_eq(p.emote, &"sit_floor")
+	await wait_physics_frames(10)
+	assert_eq(p.emote, &"sit_floor", "stays sitting")
+	assert_eq(p.get_node("Doll").pose, &"sit_floor")
+	Input.action_press("move_right")
+	await wait_physics_frames(3)
+	Input.action_release("move_right")
+	assert_eq(p.emote, &"", "moving stands you up")
+	# /wave ends by itself; an unknown emote says what there is.
+	hud.chat.send("/wave")
+	assert_eq(p.emote, &"wave")
+	hud.chat.send("/dance")
+	assert_string_contains(hud.chat._lines[-1][0], "/sit")
+	hud.chat.send("/stand")
+	assert_eq(p.emote, &"")
+	# Saying something: in the log and over your head.
+	hud.chat.send("hello there")
+	assert_string_contains(hud.chat._lines[-1][0], "hello there")
+	assert_gt(hud.chat._bubble_left, 0.0)
+	# A chair: sit on it, facing away from the back; take it away and you stand.
+	await wait_physics_frames(5)
+	var feet := w.world_to_tile(p.global_position)
+	var spot := Vector2i(feet.x + 6, feet.y)
+	var chair := w.objects.index_of(&"chair")
+	assert_true(w.request_place_object(spot, chair), "a chair on the floor")
+	assert_true(w.try_interact_at(w.tile_to_world(spot), p))
+	assert_eq(p.emote, &"sit")
+	assert_eq(p.seat, spot)
+	assert_eq(p.facing, 1)
+	await wait_physics_frames(5)
+	assert_eq(p.emote, &"sit")
+	w.request_remove_object(spot)
+	await wait_physics_frames(3)
+	assert_eq(p.emote, &"", "no chair, no sitting")
+	w.queue_free()
+	await wait_physics_frames(2)

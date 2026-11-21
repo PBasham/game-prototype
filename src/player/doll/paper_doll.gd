@@ -41,6 +41,22 @@ const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 ## attacking, aiming, between combo hits), instead of jumping there.
 @export var blend_time := 0.07
 
+@export_group("Poses (emotes)")
+## Sitting on a chair: how high the seat is above the floor (px; the chair sets it).
+@export var seat_height := 12.0
+## Sitting on the floor: how high the hips rest (px), and how far out the near and far
+## feet reach (share of the leg's length; the far leg bends its knee up).
+@export var floor_hip_height := 3.0
+@export var floor_reach := Vector2(0.92, 0.55)
+## Waving: the arm's angle (degrees, 0 = ahead, -90 = up), how far it swings, how fast.
+@export var wave_angle := -70.0
+@export var wave_swing := 25.0
+@export var wave_speed := 9.0
+## Cheering: both arms up (degrees) and the hop (px).
+@export var cheer_angles := Vector2(-105.0, -75.0)
+@export var cheer_bounce := 2.0
+@export_group("")
+
 @export_group("Legs (rig test)")
 ## How the legs are drawn. DRAWN: the Aseprite frames as they are. PLANTED: standing,
 ## each foot is set on the ground under it (steps and slopes), the leg bent at the knee
@@ -70,6 +86,10 @@ var ground_probe: Callable
 ## whether it's in the air.
 var walked := 0.0
 var airborne := false
+## An emote pose (Player.emote): &"sit" (a chair), &"sit_floor", &"wave", &"cheer", or
+## &"" for none. Sitting poses the legs in code whatever leg_mode is.
+var pose: StringName = &""
+var _pose_time := 0.0
 
 var rig: DollRig
 var palette: CharacterPalette
@@ -284,6 +304,7 @@ func _process(delta: float) -> void:
 	if rig == null:
 		return
 	_advance(delta)
+	_pose_time += delta
 	_blend_left = maxf(_blend_left - delta, 0.0)
 	_update()
 
@@ -322,7 +343,10 @@ func _update() -> void:
 		_last_in_hand = in_hand
 	hands.clear()
 
-	var posed_legs := leg_mode != LegMode.DRAWN and rig.legs.size() == 2
+	var sitting := pose in [&"sit", &"sit_floor"] and rig.legs.size() == 2
+	if pose == &"cheer":
+		shift.y -= absf(sin(_pose_time * 6.0)) * cheer_bounce
+	var posed_legs := (leg_mode != LegMode.DRAWN or sitting) and rig.legs.size() == 2
 	var nudge := {}
 	if posed_legs and leg_mode == LegMode.PLANTED and (airborne or animation in [&"Jog", &"Jump"]):
 		posed_legs = false  # running or jumping: the drawn frames (nudged onto the ground)
@@ -332,7 +356,10 @@ func _update() -> void:
 				nudge[rig.legs[side].upper] = clampf(g, -max_leg_nudge, max_leg_nudge) if not is_inf(g) else 0.0
 				nudge[rig.legs[side].lower] = nudge[rig.legs[side].upper]
 	var feet := {}
-	if posed_legs:
+	if sitting:
+		feet = _sit_targets(body_abs)
+		shift.y += feet[&"drop"]
+	elif posed_legs:
 		feet = _foot_targets(legs_abs, body_abs)
 		shift.y += feet.get(&"drop", 0.0)  # hips lower so the low foot reaches its step
 	for pi in rig.part_names.size():
@@ -401,7 +428,14 @@ func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 	_item_sprite.visible = in_hand and m != null
 	if m == null:
 		for side: StringName in [&"front", &"back"]:
-			_natural(side, legs_abs, body_abs, shift)
+			var angle := _emote_arm_angle(side)
+			if is_nan(angle) or not rig.arms.has(side):
+				_natural(side, legs_abs, body_abs, shift)
+				continue
+			var arm: Dictionary = rig.arms[side]
+			var shoulder := _shoulder(side, body_abs, shift)
+			var length := ((arm.hand as Vector2) - (arm.shoulder as Vector2)).length()
+			_reach(arm, _parts_of(_channel(side)), shoulder, shoulder + Vector2.from_angle(deg_to_rad(angle)) * length * 0.97)
 		return
 
 	var tag := drawn_tag_for(m)
@@ -682,3 +716,44 @@ func _pose_leg(side: StringName, body_abs: int, shift: Vector2, foot: Vector2) -
 	var sole := hip + to.normalized() * d
 	_bone(leg.upper, h0, hip, a1 - (k0 - h0).angle())
 	_bone(leg.lower, k0, knee, (sole - knee).angle() - (f0 - k0).angle())
+
+
+# --- Emote poses -----------------------------------------------------------------------
+
+## Where an arm points for the current emote (degrees), or NAN to leave it natural.
+func _emote_arm_angle(side: StringName) -> float:
+	match pose:
+		&"wave":
+			return wave_angle + sin(_pose_time * wave_speed) * wave_swing if side == &"front" else NAN
+		&"cheer":
+			return cheer_angles.x if side == &"front" else cheer_angles.y
+	return NAN
+
+
+## Sitting: the hips come down to the seat (or the floor), and the feet go out ahead:
+## on a chair, thighs level and shins down to the floor; on the floor, the near leg out
+## long and the far one with its knee up. "drop" is how far the body comes down.
+func _sit_targets(body_abs: int) -> Dictionary:
+	var out := {}
+	var hip_y := 0.0
+	var l1 := 0.0
+	var l2 := 0.0
+	for side: StringName in [&"front", &"back"]:
+		var leg: Dictionary = rig.legs[side]
+		hip_y += (Vector2(leg.hip) - rig.anchor).y * 0.5
+		l1 = maxf(l1, (Vector2(leg.knee) - Vector2(leg.hip)).length())
+		l2 = maxf(l2, (Vector2(leg.foot) - Vector2(leg.knee)).length())
+	var bob: Vector2 = rig.body_offset[body_abs] if body_abs < rig.body_offset.size() else Vector2.ZERO
+	var seat := seat_height if pose == &"sit" else floor_hip_height
+	var drop := maxf(-seat - (hip_y + bob.y), 0.0)
+	out[&"drop"] = drop
+	for side: StringName in [&"front", &"back"]:
+		var leg: Dictionary = rig.legs[side]
+		var hip_x := (Vector2(leg.hip) - rig.anchor).x
+		var near := side == &"front"
+		if pose == &"sit":
+			out[side] = Vector2(hip_x + l1 * 0.95 + (1.0 if near else -1.0), 0.0)
+		else:
+			var reach := floor_reach.x if near else floor_reach.y
+			out[side] = Vector2(hip_x + (l1 + l2) * reach, -1.0)
+	return out

@@ -1669,7 +1669,7 @@ func try_interact_near(who: Player) -> bool:
 
 static func _usable(def: ObjectDef) -> bool:
 	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &"" or def.bed or def.display \
-		or def.right_click_takes
+		or def.right_click_takes or def.seat
 
 
 func _interact_object(anchor: Vector2i) -> bool:
@@ -1682,6 +1682,8 @@ func _interact_object(anchor: Vector2i) -> bool:
 		request_take_display(anchor, player)
 	elif def.bed:
 		use_bed(anchor)
+	elif def.seat:
+		player.sit_on(anchor)
 	elif def.toggles_to != &"":
 		if not request_toggle_object(anchor):
 			EventBus.debug_message.emit("Something's in the way" if def.blocks_movement else "Can't close: you're in the doorway")

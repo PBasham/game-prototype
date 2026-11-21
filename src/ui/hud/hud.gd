@@ -105,6 +105,8 @@ var _amount_typing := false
 var _amount_fresh := false
 ## The full screen world map (N).
 var map_view: MapView
+## The chat line (Enter) and its log: /sit, /wave, /cheer...
+var chat: ChatBox
 ## Which tab of a station with tabs is shown (STATION_TABS).
 var craft_tab := 0
 ## Spell Weaving Table filters (like the Spell Index): -1 = All, else a SpellData.Group,
@@ -197,6 +199,8 @@ func _ready() -> void:
 	add_child(_equip)
 	map_view = MapView.new(world)
 	add_child(map_view)
+	chat = ChatBox.new(self)
+	add_child(chat)
 	_spells = SpellWindow.new(self)
 	_spells.close_pressed.connect(toggle_spells)
 	add_child(_spells)
@@ -334,6 +338,15 @@ func _redraw() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	# The chat line takes every key while it's open; Enter opens it when nothing else
+	# is being typed into.
+	if chat.open and chat.handle_key(event as InputEventKey):
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("chat") and not _typing_elsewhere():
+		chat.open_chat()
+		get_viewport().set_input_as_handled()
+		return
 	# A click that starts on a window (its close button, say) never reaches the world,
 	# even if the window closes under the mouse: blocked until the button comes up.
 	var press := event as InputEventMouseButton
@@ -390,6 +403,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+## Something else has the keyboard (the console, a search box, renaming, the amount).
+func _typing_elsewhere() -> bool:
+	return (world.console != null and world.console.open) or _spells.searching or _dev_items.searching \
+		or renaming or weave_searching or _amount_typing or map_view.visible
+
+
 ## Opens or closes the world map (N).
 func toggle_map() -> void:
 	move_child(map_view, -1)  # over every window
@@ -400,7 +419,7 @@ func _process(delta: float) -> void:
 	_update_notes(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
 		or _dev_items.searching or renaming \
-		or weave_searching
+		or weave_searching or chat.open
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
 		set_open(not open)
