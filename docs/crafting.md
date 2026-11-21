@@ -242,12 +242,12 @@ can't mine the floor under furniture.
   Fields on the `ObjectDef`: `container_accepts` (a storage tag; items list theirs in
   `ItemData.storage_tags`: every log and wood is `lumber`; healing and mana potions, poison
   coatings and flasks, and clay flasks are `potion`), `container_stack_cap` (a stack size
-  that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (a sprite sheet
-  of 11 frames, 0% to 100% in 10% steps; unused now), `PILE` (the Lumber Rack: its
-  empty frame, with up to 23 ends drawn on it in staggered rows of 5 and 4, filled a
-  layer at a time, each kind getting its share: **round log ends** for logs, **square
-  board ends** for wood, in the item's `shelf_color`, so you can see pine vs darkwood
-  and logs vs boards at a glance; `ObjectLayer._draw_pile`) or `BOTTLES` (the Potion Cabinet draws one bottle per item kind on its shelves, in that
+  that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (the Lumber Rack:
+  a sprite sheet of 11 frames, 0% to 100% in 10% steps, its log ends in staggered rows
+  filled a layer at a time; how full counts each slot as its share of a full stack),
+  `PILE` (not used now: draws each kind in its own color, round ends for logs and
+  square ends for boards, `ObjectLayer._draw_pile`; set the rack's `fill_look` to PILE
+  to try it) or `BOTTLES` (the Potion Cabinet draws one bottle per item kind on its shelves, in that
   item's `shelf_color`; filled shelves follow the stacks inside). The window shows
   "used / total" and a fill bar. Art from `art/concepts/storage/make_storage.py`.
 - Console `stock <item> [count]` fills the chest you have open (testing storage).

@@ -740,7 +740,7 @@ func _objects() -> Array[ObjectDef]:
 	out[12].detail = 2
 	out[12].container_slots = 10
 	out[12].container_accepts = &"lumber"
-	out[12].fill_look = ObjectDef.FillLook.PILE
+	out[12].fill_look = ObjectDef.FillLook.FRAMES
 	out[13].detail = 2
 	out[13].container_slots = 10
 	out[13].container_accepts = &"potion"

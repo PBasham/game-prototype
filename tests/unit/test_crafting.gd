@@ -538,7 +538,7 @@ func test_special_storage_takes_only_its_kind_and_fills_up() -> void:
 	assert_almost_eq(rack.fill(), 1.0, 0.001)
 	rack.remove(&"wood", full * 5)
 	assert_almost_eq(rack.fill(), 0.5, 0.001, "half full by stacks")
-	assert_eq((w.objects.def(rack_id) as ObjectDef).fill_look, ObjectDef.FillLook.PILE)
+	assert_eq(w.object_layer.frame_for(w.objects.def(rack_id) as ObjectDef, a, rack_id), 5, "half full: frame 5")
 	# Darkwood logs build blocks like logs do.
 	var dl := ItemData.find(&"dark_log")
 	assert_eq(dl.display_name, "Darkwood Log")

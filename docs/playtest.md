@@ -292,8 +292,8 @@ guesses; the docs listed say where each tunable lives.
       it makes Reinforced Wood and Reinforced Darkwood (4 + 1 Iron Bar), sturdy blocks
       and walls.
 - [ ] Blocks stack to 9999.
-- [ ] Lumber Rack: takes any logs and wood in full stacks (10 of them). Mix Logs, Darkwood
-      Logs and Wood: round ends for logs, square ends for boards, each in its color.
+- [ ] Lumber Rack: takes any logs and wood in full stacks (10 of them); the log pile
+      grows as stacks fill (5 full stacks = half).
 - [ ] Darkwood Log (from darkwood trees) places a darkwood log block; right click a wall.
 
 ## Known

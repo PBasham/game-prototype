@@ -13,7 +13,8 @@ Newest first. Each entry: what was decided, why, and what it affects.
   chests and teleporting are later.
 - **Block stacks (Patrick):** every block item stacks to 9999 (was 999). Special storage
   had its own cap; the Lumber Rack now holds full stacks (Patrick), 10 of them, of any
-  logs or wood, and shows each kind: round log ends, square board ends, in their colors.
+  logs or wood. Its look stays the log pile frames for now (Patrick); a per-kind look
+  (`FillLook.PILE`) is in the code, unused.
 - **Darkwood Log (Patrick):** the Dark Log is the Darkwood Log and builds a darkwood log
   block and wall, like the Log.
 - **Darkwood and stations (Patrick):** darkwood upgrades the Workbench to the
