@@ -7,10 +7,16 @@ placeholder assets for now.
 **Plan:** [Project plan](https://claude.ai/artifact/CXB7mRPD7CvxJhTRsmLGAM) (phases, systems, decisions).
 Docs:
 
+- [docs/code-map.md](docs/code-map.md): where everything is and how to change it (start here).
 - [docs/guide.md](docs/guide.md): how every feature works and what you can tweak.
-- [docs/world-generation.md](docs/world-generation.md): world generation in depth.
+- [docs/items-and-mining.md](docs/items-and-mining.md): items, inventory, mining, placing, spells, plants.
+- [docs/crafting.md](docs/crafting.md): crafting, stations, furniture, storage, learning and empowering spells.
+- [docs/survival.md](docs/survival.md): day and night, health, hunger, food, dying.
+- [docs/combat.md](docs/combat.md): enemies, spawning, weapons, armor, beds.
+- [docs/world-generation.md](docs/world-generation.md): world generation and biomes in depth.
 - [docs/character-art.md](docs/character-art.md): drawing for the paper doll character.
 - [docs/architecture.md](docs/architecture.md): how the code is organized and its rules.
+- [docs/playtest.md](docs/playtest.md): what to test after each phase.
 - [docs/decisions.md](docs/decisions.md): decision log.
 
 ## Requirements

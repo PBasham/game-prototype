@@ -21,7 +21,7 @@ const SPELL_PREFIX := "spell:"
 ## Small symbol drawn in the top right corner of its inventory slot (what's in a
 ## flask, say). 8x8 art. Empty = none.
 @export var badge: Texture2D
-## Most per inventory slot (999 for blocks and materials, 1 for tools).
+## Most per inventory slot (9999 for blocks, 999 for materials, 1 for tools).
 @export var max_stack := 999
 ## How it looks and animates in hand. Null = held like a small block.
 @export var held: HeldItemLook

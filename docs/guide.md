@@ -1,7 +1,8 @@
 # Guide: how everything works
 
 A tour of every feature in the game so far: what it does, where the code is, and what
-you can tweak. For the rules the code follows (data-driven content, host-authoritative,
+you can tweak. **Looking for where to change something?** Start at
+[code-map.md](code-map.md): every area, its files, and the usual edits. For the rules the code follows (data-driven content, host-authoritative,
 threading) see [architecture.md](architecture.md). World generation has its own deep
 dive: [world-generation.md](world-generation.md); items, mining, placing, magic and plants are
 in [items-and-mining.md](items-and-mining.md); crafting, stations, furniture and mana in
