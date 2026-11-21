@@ -194,6 +194,50 @@ code-posed legs. Arms are still posed in code. `PaperDoll.use_drawn_poses` (off)
 back to the code pose to compare. Align the drawing to the same foot anchor; the chair's
 `seat_height_px` doesn't move a drawn frame.
 
+## 3D body (Phase 20 prototype)
+
+A second way to draw the character, the way Dead Cells does: a body made of 3D parts,
+rendered small with hard banded shading into its own pixel canvas (a SubViewport), then
+shown in the world like a sprite. It is a test: the drawn Scholar is still the default.
+
+```
+body 3d                  # the 3D body
+body doll                # the drawn Scholar again
+body step 12             # pose 12 times a second (hand-drawn feel); body smooth = every frame
+body bands 2             # 2 or 3 shading bands
+body trim 0.55           # the light edge (0 = none)
+body turn 18             # head turned toward you, degrees
+body colors srgb         # auto | as_is | srgb | linear (see below)
+```
+
+**How it works.** The PaperDoll still does the thinking. `Body3D.attach` gives the doll
+the 3D body's joints (`PaperDoll.joints_override`) and hides the drawn parts
+(`parts_hidden`); the doll then works out the hands, the held item and the feet around
+those joints, as always, and publishes them (`pose_state`, signal `posed`). Body3D bends
+its arms and legs to those points (two-bone IK in the side plane) and draws the rest.
+So every item, swing, spell, emote and chair works with it, and the held item is still
+drawn by the doll, on top.
+
+**The placeholder** is a mannequin made in code from capsules, spheres and boxes
+(`Body3D._build`), sized from the Scholar: no model file. Its colors are each palette
+group's dark, middle and light shades (recolored by the character's look), so the
+character creator colors work. The robe is a tube over each thigh, so it follows the
+legs when walking and sitting. Hair and armor overlays aren't on it yet.
+
+**Tunables** (Player > Body3D in the Remote tree): "Look" (`bands`, `trim`,
+`light_dir`, `far_shade`, `color_space`), "Shape" (heights and bone lengths in art
+pixels), "Motion" (`arm_swing`, `turn`). Shading cuts are in
+`src/player/body3d/toon.gdshader`.
+
+**Colors and renderers.** The editor and game normally run Forward+; screenshots here
+use Compatibility, which handles color spaces differently. `color_space` "auto" picks
+per renderer. If the 3D body looks too dark, too saturated or washed out next to the
+world, try `body colors as_is`, `srgb` or `linear` and tell Claude which one matches.
+
+**A modeled character later:** a Blender model exported as glTF, with bones for hips,
+knees, feet, shoulders, elbows, hands and head, replaces `_build`; the same IK targets
+drive its bones. That's the next phase if the prototype works for you.
+
 ## Joints (pivots)
 
 Code needs the shoulder, elbow and hand of each arm.

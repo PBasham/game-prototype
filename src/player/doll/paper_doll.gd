@@ -163,6 +163,30 @@ var _overlays: Array[Array] = []  ## per part: overlay Sprite2Ds
 ## with another part's pixels (back arm from the front arm) shows that part's overlay.
 var _overlay_tex: Dictionary[StringName, Dictionary] = {}
 ## Hide the hair (a helmet is on).
+## Another body (Body3D) can give its own joints: doll-space rest positions keyed
+## hip_front, hip_back, knee_front, knee_back, foot_front, foot_back, shoulder_front,
+## shoulder_back. Hands, the held item and the feet are then worked out around them,
+## and the feet are always worked out (`pose_state`). Empty = the drawn Scholar's joints.
+var joints_override: Dictionary[StringName, Vector2] = {}
+## Hides the drawn body (parts, overlays, hair); the held and stowed items still show.
+var parts_hidden := false:
+	set(v):
+		parts_hidden = v
+		for slot in _slots:
+			slot.visible = not v
+		if _hair:
+			_hair.visible = not hair_hidden and not v
+## The pose just worked out, for another body to draw (doll space, y down): hips,
+## knees are left to the drawer; keys hip_front, hip_back, foot_front, foot_back,
+## shoulder_front, shoulder_back, hand_front, hand_back (when posed), shift.
+var pose_state: Dictionary[StringName, Vector2] = {}
+## Poses only this many times a second (hand-drawn feel); 0 = every frame.
+@export var step_fps := 0.0
+var _step_left := 0.0
+
+## Emitted after every pose update (pose_state is fresh).
+signal posed
+
 var hair_hidden := false:
 	set(v):
 		hair_hidden = v
@@ -337,6 +361,13 @@ func _process(delta: float) -> void:
 	_pose_time += delta
 	_blend_left = maxf(_blend_left - delta, 0.0)
 	_update_extras(delta)
+	if step_fps > 0.0:
+		_step_left -= delta
+		if _step_left > 0.0:
+			return
+		_step_left += 1.0 / step_fps
+		if _step_left < 0.0:
+			_step_left = 1.0 / step_fps
 	_update()
 
 
@@ -442,7 +473,7 @@ func _update() -> void:
 	if sitting:
 		feet = _sit_targets(body_abs)
 		shift.y += feet[&"drop"]
-	elif posed_legs:
+	elif posed_legs or (not joints_override.is_empty() and rig.legs.size() == 2):
 		feet = _foot_targets(legs_abs, body_abs)
 		shift.y += feet.get(&"drop", 0.0)  # hips lower so the low foot reaches its step
 	for pi in rig.part_names.size():
@@ -464,6 +495,23 @@ func _update() -> void:
 		_hair.offset = Vector2(-_hair.texture.get_width() * 0.5, 0.0)
 		_hair.rotation = deg_to_rad(_sway_angle)
 	_place_stowed(body_abs, shift)
+	_publish(body_abs, shift, feet)
+
+
+func _publish(body_abs: int, shift: Vector2, feet: Dictionary) -> void:
+	pose_state.clear()
+	if rig.legs.size() == 2:
+		var bob: Vector2 = rig.body_offset[body_abs] if body_abs < rig.body_offset.size() else Vector2.ZERO
+		for side: StringName in [&"front", &"back"]:
+			pose_state[StringName("hip_" + side)] = _rest_joint(&"hip", side) + Vector2(0.0, bob.y) + shift
+			if feet.has(side):
+				pose_state[StringName("foot_" + side)] = feet[side]
+	for side: StringName in [&"front", &"back"]:
+		pose_state[StringName("shoulder_" + side)] = _shoulder(side, body_abs, shift)
+		if hands.has(side):
+			pose_state[StringName("hand_" + side)] = hands[side]
+	pose_state[&"shift"] = shift
+	posed.emit()
 
 
 ## The frame a channel shows: its own tag's frame at the same index if it has one,
@@ -508,6 +556,10 @@ func _set_region(pi: int, region: Rect2, offset: Vector2, source: int = -1) -> v
 
 
 func _shoulder(side: StringName, body_abs: int, shift: Vector2) -> Vector2:
+	var key := StringName("shoulder_" + side)
+	if joints_override.has(key):
+		var bob: Vector2 = rig.body_offset[body_abs] if body_abs < rig.body_offset.size() else Vector2.ZERO
+		return joints_override[key] + Vector2(0.0, bob.y) + shift
 	if not rig.shoulders.has(side):
 		return Vector2.ZERO
 	return rig.shoulders[side][body_abs] - rig.anchor + shift
@@ -572,6 +624,12 @@ func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 			_reach(arm, _parts_of(_channel(side)), shoulder, target)
 		if side == holding and in_hand:
 			_place_item(m, holding, shoulder, aim_angle)
+
+
+## Whether an arm is hanging free (no item motion, no emote): another body may swing
+## it its own way.
+func arm_is_natural(side: StringName) -> bool:
+	return motion == null and is_nan(_emote_arm_angle(side))
 
 
 func _holding_side() -> StringName:
@@ -754,10 +812,18 @@ func _apply_look() -> void:
 	if _hair:
 		_hair.texture = upscaled(look.hair, rig.art_scale, rig.upscale_steps) if look else null
 		_hair.scale = Vector2.ONE / float(rig.art_scale)
-		_hair.visible = not hair_hidden
+		_hair.visible = not hair_hidden and not parts_hidden
 
 
 # --- Legs posed in code (rig test) ---------------------------------------------------
+
+## A leg joint's rest position (doll space): &"hip", &"knee" or &"foot".
+func _rest_joint(joint: StringName, side: StringName) -> Vector2:
+	var key := StringName(String(joint) + "_" + side)
+	if joints_override.has(key):
+		return joints_override[key]
+	return Vector2(rig.legs[side][joint]) - rig.anchor
+
 
 ## Where each foot goes (doll-local, the sole's middle), plus "drop": how much to lower
 ## the hips so both feet reach.
@@ -768,12 +834,13 @@ func _foot_targets(legs_abs: int, body_abs: int) -> Dictionary:
 		var leg: Dictionary = rig.legs[side]
 		var target: Vector2
 		var lift := 0.0
-		if leg_mode == LegMode.PLANTED:
+		var standing := not joints_override.is_empty() and absf(velocity.x) < 4.0 and not airborne
+		if leg_mode == LegMode.PLANTED or standing:
 			# Standing: the rest pose's foot, a little apart, set on the ground.
-			target = Vector2(leg.foot) - rig.anchor
+			target = _rest_joint(&"foot", side)
 			target.x += stance_px * (0.5 if side == &"front" else -0.5)
 		else:
-			var rest: Vector2 = Vector2(leg.foot) - rig.anchor
+			var rest: Vector2 = _rest_joint(&"foot", side)
 			rest.x += stance_px * (0.5 if side == &"front" else -0.5)
 			if airborne:
 				target = rest + Vector2(air_tuck.x * (1.0 if side == &"front" else -0.5), air_tuck.y)
@@ -842,17 +909,15 @@ func _sit_targets(body_abs: int) -> Dictionary:
 	var l1 := 0.0
 	var l2 := 0.0
 	for side: StringName in [&"front", &"back"]:
-		var leg: Dictionary = rig.legs[side]
-		hip_y += (Vector2(leg.hip) - rig.anchor).y * 0.5
-		l1 = maxf(l1, (Vector2(leg.knee) - Vector2(leg.hip)).length())
-		l2 = maxf(l2, (Vector2(leg.foot) - Vector2(leg.knee)).length())
+		hip_y += _rest_joint(&"hip", side).y * 0.5
+		l1 = maxf(l1, (_rest_joint(&"knee", side) - _rest_joint(&"hip", side)).length())
+		l2 = maxf(l2, (_rest_joint(&"foot", side) - _rest_joint(&"knee", side)).length())
 	var bob: Vector2 = rig.body_offset[body_abs] if body_abs < rig.body_offset.size() else Vector2.ZERO
 	var seat := seat_height if pose == &"sit" else floor_hip_height
 	var drop := maxf(-seat - (hip_y + bob.y), 0.0)
 	out[&"drop"] = drop
 	for side: StringName in [&"front", &"back"]:
-		var leg: Dictionary = rig.legs[side]
-		var hip_x := (Vector2(leg.hip) - rig.anchor).x
+		var hip_x := _rest_joint(&"hip", side).x
 		var near := side == &"front"
 		if pose == &"sit":
 			out[side] = Vector2(hip_x + l1 * 0.95 + (1.0 if near else -1.0), 0.0)

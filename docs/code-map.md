@@ -319,6 +319,11 @@ exports and `land()` on the doll, `DollRig.art_scale` / `rect_base` (upscaled sh
 key poses: `PaperDoll.DRAWN_POSE_TAGS`, `drawn_pose_frame()`. Inside a canvas, convert
 with `doll_to_world` / `world_to_doll`, never `to_local` on the doll.
 
+3D body (Phase 20, console `body`): `src/player/body3d/body_3d.gd` (the mannequin,
+its canvas, IK, colors), `toon.gdshader` (banded shading), `trim.gdshader` (the light
+edge). `Player.set_body`. On the doll: `joints_override`, `parts_hidden`, `pose_state`
+and `posed`, `step_fps`, `arm_is_natural`.
+
 ## Sounds
 
 `src/core/sounds.gd` plays `assets/sounds/<id>.wav` when anything calls

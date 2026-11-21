@@ -270,3 +270,21 @@ func test_doll_render_modes_switch_sheets_and_canvas() -> void:
 	assert_eq(d.get_parent(), p, "back on the player")
 	w.queue_free()
 	await wait_physics_frames(2)
+
+
+func test_body_3d_switches_on_and_off() -> void:
+	var info := WorldInfo.test_course()
+	var w := _start(info)
+	await wait_physics_frames(5)
+	var p := w.player
+	assert_string_contains(p.set_body("3d", 12.0), "3d")
+	assert_true(p.body3d().is_on())
+	assert_eq(p.doll().step_fps, 12.0)
+	assert_lt(p.body3d().get_index(), p.doll().get_index(), "drawn under the held item")
+	assert_string_contains(p.set_doll_render(true, "2x", "basic"), "3D body is on")
+	await wait_physics_frames(5)
+	p.set_body("doll", 0.0)
+	assert_false(p.body3d().is_on())
+	assert_false(p.doll().parts_hidden)
+	w.queue_free()
+	await wait_physics_frames(2)

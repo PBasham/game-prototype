@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-21: Phase 20, 3D body prototype
+
+- **Patrick:** go with the brief's defaults: live 3D (route B) rendered on its own
+  pixel canvas, placeholder until his Blender model, Scholar sized, 3 shading bands with
+  a light trim and no dark outline, palette colors from the look, existing 2D items on
+  the hand, stepped 12 fps vs smooth as a switch, console only for now.
+- The PaperDoll keeps all the pose logic (hands, items, feet) and the 3D body follows
+  it (`joints_override`, `pose_state`), so items, attacks and emotes needed no new code.
+- The placeholder is a mannequin built in code (no download, nothing to license).
+- Colors: Compatibility and Forward+ treat 3D colors differently; `color_space` "auto"
+  picks per renderer, untested on Forward+ (only Compatibility runs here).
+
 ## 2026-11-21: Phase 19, doll render test
 
 - **Patrick:** do all three: 2x art (scaled up accurately, Scale2x smoothed base to

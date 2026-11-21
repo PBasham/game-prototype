@@ -11,6 +11,12 @@ seamlessly and blend between materials. Regenerate everything with:
 godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game
 ```
 
+## 3D body placeholder (Phase 20)
+
+No files: the mannequin is built in code (`src/player/body3d/body_3d.gd`, `_build`) from
+capsules, spheres and boxes, colored from `scholar_palette.tres`. **Placeholder** for a
+character Patrick models in Blender (glTF).
+
 ## Player: `sprites/scholar*`
 
 Made from Patrick's `art/Scholar-casual.aseprite` by the importer:

@@ -46,6 +46,8 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 		look = v
 		if _doll:
 			_doll.look = v if v else load(DEFAULT_LOOK) as CharacterLook
+			if _body3d and _body3d.is_on():
+				_body3d.set_colors(_doll.palette, _doll.look)
 
 @export_group("Animation")
 ## Seconds the first Jump frame (takeoff) shows after a jump starts.
@@ -271,7 +273,12 @@ var _emote_left := 0.0
 @export_enum("1x", "2x", "2x_smooth") var doll_art := "1x"
 @export_enum("basic", "rotsprite") var doll_turn := "basic"
 @export_group("")
+@export_group("Body (test)")
+## "doll": the drawn Scholar. "3d": the 3D body (Body3D), console `body`.
+@export_enum("doll", "3d") var body_kind := "doll"
+@export_group("")
 var _canvas: DollCanvas
+var _body3d: Body3D
 var _doll_sheet := ""
 ## The attack playing (null = none), seconds into it, and its place in the combo.
 var _attack: ItemMotion
@@ -331,11 +338,38 @@ func _ready() -> void:
 	_doll_sheet = SHEET
 	if doll_grid or doll_art != "1x" or doll_turn != "basic":
 		set_doll_render.call_deferred(doll_grid, doll_art, doll_turn)
+	if body_kind == "3d":
+		set_body.call_deferred("3d")
 
 
 ## The paper doll (it may live inside a DollCanvas, so don't look it up by path).
 func doll() -> PaperDoll:
 	return _doll
+
+
+## The 3D body test (console `body`): "3d" draws a Body3D driven by the doll, "doll"
+## the drawn Scholar. step_fps > 0 poses only that often (a hand-drawn feel); 0 = every
+## frame. Returns what it set, for the console.
+func set_body(kind: String, step_fps: float = -1.0) -> String:
+	if step_fps >= 0.0:
+		_doll.step_fps = step_fps
+	if kind == "3d":
+		if doll_grid or doll_art != "1x" or doll_turn != "basic":
+			set_doll_render(false, "1x", "basic")  # the 3D body draws on its own grid
+		if _body3d == null:
+			_body3d = Body3D.new()
+			_body3d.name = "Body3D"
+			add_child(_body3d)
+			move_child(_body3d, _doll.get_index())  # drawn under the held item
+		_body3d.attach(_doll)
+	elif _body3d:
+		_body3d.detach()
+	body_kind = "3d" if kind == "3d" else "doll"
+	return "Body: %s, posing %s" % [body_kind, "every frame" if _doll.step_fps <= 0.0 else "%d times a second" % int(_doll.step_fps)]
+
+
+func body3d() -> Body3D:
+	return _body3d
 
 
 ## Doll render test (console `doll`): which sheet and how it's drawn.
@@ -344,6 +378,8 @@ func doll() -> PaperDoll:
 ## 4x, then shrunk onto the art grid; needs the grid); grid: drawn on its own pixel grid
 ## (DollCanvas). Returns what it set, for the console.
 func set_doll_render(grid: bool, art: String, turn: String) -> String:
+	if _body3d and _body3d.is_on() and (grid or art != "1x" or turn != "basic"):
+		return "The 3D body is on: `body doll` first"
 	if not art in ["1x", "2x", "2x_smooth"]:
 		art = "1x"
 	if not turn in ["basic", "rotsprite"]:

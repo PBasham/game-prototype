@@ -318,6 +318,15 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Which combination to keep as the default (and what to drop) is your call.
 - [ ] Optional: draw a `Sit` frame in Aseprite, reimport, rerun `tools/upscale_doll.py`.
 
+**Phase 20: 3D body prototype (branch phase-20-3d-body)**
+- [ ] Console `body 3d`. Walk, run, jump, swing tools, cast, `/sit`, `/wave`, `/cheer`,
+      sit on a chair. `body doll` to compare with the Scholar.
+- [ ] **Colors first:** does the 3D body's blue match the world's look? If it's too
+      dark or washed out, try `body colors as_is`, `srgb`, `linear` and note which.
+- [ ] `body step 12` vs `body smooth`: hand-drawn feel or fluid?
+- [ ] `body bands 2` vs `3`, `body trim 0`, `body turn 0` / `30`.
+- [ ] Is it worth modeling a real character in Blender for this? (Next phase if yes.)
+
 ## Known
 
 - Window positions reset when you quit. Accessories aren't drawn on the character.
