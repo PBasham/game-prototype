@@ -196,6 +196,7 @@ func _ready() -> void:
 	_equip.close_pressed.connect(toggle_equipment)
 	add_child(_equip)
 	map_view = MapView.new(world)
+	add_child(map_view)
 	_spells = SpellWindow.new(self)
 	_spells.close_pressed.connect(toggle_spells)
 	add_child(_spells)
@@ -391,8 +392,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Opens or closes the world map (N).
 func toggle_map() -> void:
-	if map_view.get_parent() == null:
-		add_child(map_view)
+	move_child(map_view, -1)  # over every window
 	map_view.toggle()
 
 
