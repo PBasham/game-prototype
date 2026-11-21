@@ -207,6 +207,7 @@ body step 12             # pose 12 times a second (hand-drawn feel); body smooth
 body bands 2             # 2 or 3 shading bands
 body trim 0.55           # the light edge (0 = none)
 body turn 18             # head turned toward you, degrees
+body detail 2            # render pixels per art pixel: 1 (Scholar size) to 4
 body colors srgb         # auto | as_is | srgb | linear (see below)
 ```
 
@@ -224,7 +225,12 @@ group's dark, middle and light shades (recolored by the character's look), so th
 character creator colors work. The robe is a tube over each thigh, so it follows the
 legs when walking and sitting. Hair and armor overlays aren't on it yet.
 
-**Tunables** (Player > Body3D in the Remote tree): "Look" (`bands`, `trim`,
+**Detail** (`detail`, default 2): the canvas renders 1 to 4 pixels per art pixel and is
+shown at that fraction, so the body is the same size with finer pixels. 2 matches the
+detailed art (128x128 terrain, 32x32 icons). Higher costs almost nothing for one
+character; the trim edge gets thinner with it.
+
+**Tunables** (Player > Body3D in the Remote tree): `detail`, "Look" (`bands`, `trim`,
 `light_dir`, `far_shade`, `color_space`), "Shape" (heights and bone lengths in art
 pixels), "Motion" (`arm_swing`, `turn`). Shading cuts are in
 `src/player/body3d/toon.gdshader`.

@@ -11,6 +11,8 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - The PaperDoll keeps all the pose logic (hands, items, feet) and the 3D body follows
   it (`joints_override`, `pose_state`), so items, attacks and emotes needed no new code.
 - The placeholder is a mannequin built in code (no download, nothing to license).
+- **Patrick:** more detail than 1x. `detail` renders 1 to 4 pixels per art pixel;
+  default 2, the detailed art size used by terrain and icons.
 - Colors: Compatibility and Forward+ treat 3D colors differently; `color_space` "auto"
   picks per renderer, untested on Forward+ (only Compatibility runs here).
 

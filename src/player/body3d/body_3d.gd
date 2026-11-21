@@ -19,6 +19,13 @@ extends Node2D
 @export var canvas_px := Vector2i(96, 96)
 @export var origin_px := Vector2i(48, 84)
 
+## Render pixels per art pixel: 1 = the Scholar's pixel size, 2 = the detailed art size
+## (like the 128x128 terrain and 32x32 icons), 3 or 4 finer still. Same size on screen.
+@export_range(1, 4) var detail := 2:
+	set(v):
+		detail = clampi(v, 1, 4)
+		_apply_detail()
+
 @export_group("Look")
 ## Shading bands: 2 (dark, light) or 3 (dark, middle, light).
 @export_range(2, 3) var bands := 3:
@@ -80,6 +87,7 @@ var _far_mats: Dictionary[StringName, ShaderMaterial] = {}
 var _palette: CharacterPalette
 var _look: CharacterLook
 var _dirty := true
+var _cam: Camera3D
 
 const TOON := preload("res://src/player/body3d/toon.gdshader")
 const TRIM := preload("res://src/player/body3d/trim.gdshader")
@@ -89,7 +97,6 @@ const GROUPS: Array[StringName] = [&"skin", &"hair", &"tunic", &"pants", &"leath
 func _ready() -> void:
 	_vp = SubViewport.new()
 	_vp.name = "Body3DCanvas"
-	_vp.size = canvas_px
 	_vp.transparent_bg = true
 	_vp.own_world_3d = true
 	_vp.msaa_3d = Viewport.MSAA_DISABLED
@@ -118,6 +125,7 @@ func _ready() -> void:
 	_show.texture = _vp.get_texture()
 	_show.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_show.position = -Vector2(origin_px)
+	_cam = cam
 	var m := ShaderMaterial.new()
 	m.shader = TRIM
 	m.set_shader_parameter(&"strength", trim)
@@ -125,6 +133,7 @@ func _ready() -> void:
 	_anchor.add_child(_show)
 	_build()
 	_apply_colors()
+	_apply_detail()
 
 
 ## Follows a doll: takes over its body (the doll keeps drawing the held item).
@@ -337,6 +346,16 @@ func _apply_colors() -> void:
 	if _show:
 		var t := shades(&"trim")
 		(_show.material as ShaderMaterial).set_shader_parameter(&"trim_color", t[2])
+	_dirty = true
+
+
+## The canvas renders detail x the art size; the picture is shown at 1 / detail, so the
+## body stays the same size with finer pixels. The camera still spans the same art area.
+func _apply_detail() -> void:
+	if _vp == null:
+		return
+	_vp.size = canvas_px * detail
+	_show.scale = Vector2.ONE / float(detail)
 	_dirty = true
 
 

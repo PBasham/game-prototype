@@ -104,3 +104,13 @@ func test_doll_can_pose_in_steps() -> void:
 	for i in 60:
 		d._process(1.0 / 60.0)
 	assert_eq(count[0], 60, "smooth: every frame")
+
+
+func test_detail_renders_finer_pixels_at_the_same_size() -> void:
+	var d := _doll()
+	var b := _body(d)
+	b.detail = 3
+	assert_eq(b._vp.size, b.canvas_px * 3)
+	assert_almost_eq(b._show.scale.x, 1.0 / 3.0, 0.001)
+	b.detail = 9
+	assert_eq(b.detail, 4, "at most 4x")

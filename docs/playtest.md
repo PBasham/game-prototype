@@ -324,6 +324,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] **Colors first:** does the 3D body's blue match the world's look? If it's too
       dark or washed out, try `body colors as_is`, `srgb`, `linear` and note which.
 - [ ] `body step 12` vs `body smooth`: hand-drawn feel or fluid?
+- [ ] `body detail 1` to `4` (2 is the default, the detailed art size).
 - [ ] `body bands 2` vs `3`, `body trim 0`, `body turn 0` / `30`.
 - [ ] Is it worth modeling a real character in Blender for this? (Next phase if yes.)
 
