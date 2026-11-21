@@ -401,6 +401,21 @@ func _spells() -> Array[ItemData]:
 	lev.mana_per_second = 4.0
 	out.append(lev)
 
+	# Readied jump spells: on like Fly, but they only cost mana when you press Jump in
+	# the air. Both make that landing safe.
+	var step := _spell(&"air_step", "Air Step", "Readied. Turn it on (F, or click); then press Jump in the air for a second jump, with much better steering until you land. 8 mana per jump. That landing never hurts.")
+	step.cast = SpellData.Cast.TOGGLE
+	step.effect = &"air_step"
+	step.mana_cost = 8.0
+	step.cooldown = 0.0
+	out.append(step)
+	var bound := _spell(&"bound", "Bound", "Readied. Turn it on (F, or click); then press Jump in the air to leap far forward in an arc. 12 mana per leap. That landing never hurts.")
+	bound.cast = SpellData.Cast.TOGGLE
+	bound.effect = &"bound"
+	bound.mana_cost = 12.0
+	bound.cooldown = 0.0
+	out.append(bound)
+
 	var drill := _spell(&"hyper_drill", "Hyper Drill", "Hold for a huge drilling beam that tears through a round area. Very mana hungry. Right click: back walls.")
 	drill.beam = true
 	drill.mining_damage = 400.0  # per second, on every tile in the circle
@@ -648,6 +663,8 @@ func _spells() -> Array[ItemData]:
 		&"spark_ward": SpellData.Group.ATTACK,
 		&"familiar": SpellData.Group.ATTACK,
 		&"call_spirit": SpellData.Group.ATTACK,
+		&"air_step": SpellData.Group.MOVEMENT,
+		&"bound": SpellData.Group.MOVEMENT,
 		&"arcane_edge": SpellData.Group.DEFENSE,
 		&"barrier": SpellData.Group.DEFENSE,
 		&"gel_cushion": SpellData.Group.DEFENSE,

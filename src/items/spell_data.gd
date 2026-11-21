@@ -97,6 +97,18 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## boost) and the mana per second by boost_mana_mult. An empowerment later; on for now.
 @export var boost_speed_mult := 1.0
 @export var boost_mana_mult := 1.0
+## Readied jump spells (effect air_step or bound): turned on like Fly, but they cost
+## nothing until you press Jump in the air; then they spend mana_cost once, and the
+## landing after can't hurt you. One per jump (it re-arms when you land).
+## air_step: a second jump (air_jump_power times a normal one), with air_control_mult
+## faster steering and air_speed_mult more top speed until you land.
+@export var air_jump_power := 1.0
+@export var air_control_mult := 1.8
+@export var air_speed_mult := 1.15
+## bound: a long leap forward in an arc (leap_speed tiles/s ahead, leap_rise up), the
+## momentum kept until you land (steer against it to slow down).
+@export var leap_speed := 30.0
+@export var leap_rise := 20.0
 ## Levitate: tiles above the ground it hovers at.
 @export var hover_tiles := 5.0
 ## Mend: health per second while on (times spell power).

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_5bwje"]
+
+[resource]
+script = ExtResource("1_5bwje")
+station = &"scribing"
+inputs = Dictionary[StringName, int]({
+&"blank_scroll": 1,
+&"copper_bar": 2
+})
+output = &"scroll_air_step"
+id = &"scroll_air_step"
+display_name = "Scroll Air Step"

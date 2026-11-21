@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_ttxnm"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_gb2fi"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_bound.png" id="3_lq6e8"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_bound.png" id="4_od1og"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_v3hav"]
+
+[sub_resource type="Resource" id="Resource_cbgij"]
+script = ExtResource("2_gb2fi")
+id = &"page_bound"
+texture = ExtResource("3_lq6e8")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_v3hav")
+kind = 15
+icon = ExtResource("4_od1og")
+max_stack = 20
+held = SubResource("Resource_cbgij")
+impact_at = 0.2
+learns_spell = &"bound"
+id = &"page_bound"
+display_name = "Spell Page: Bound"
+description = "A found page of spellcraft. Left click: learn Bound for good (the page is used up)."

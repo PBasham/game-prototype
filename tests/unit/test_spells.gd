@@ -846,3 +846,54 @@ func test_tooltips_say_which_spells_have_their_own_key() -> void:
 	assert_string_contains(Hud.spell_tooltip(_spell(&"chopping_spell")), "own key (Ctrl + R)")
 	assert_string_contains(Hud.spell_tooltip(_spell(&"fly")), "Movement slot")
 	assert_false(Hud.spell_tooltip(_spell(&"spark")).contains("own key"))
+
+
+func test_readied_jump_spells_trigger_once_in_the_air_and_land_safe() -> void:
+	var p := w.player
+	var c := w.character
+	for id: StringName in [&"air_step", &"bound"]:
+		c.learn_spell(id)
+		assert_true(_spell(id).fits_movement_slot(), "%s goes in the Movement slot" % id)
+	p.invincible = false
+	p.health = p.max_health
+	# Air Step: off, Jump in the air does nothing.
+	p.global_position.y -= 40 * World.TILE
+	p.reset_physics_interpolation()
+	await wait_physics_frames(5)
+	assert_false(p.is_on_floor())
+	p.mana = p.max_mana
+	Input.action_press("jump")
+	await wait_physics_frames(2)
+	Input.action_release("jump")
+	assert_gt(p.velocity.y, 0.0, "nothing readied: still falling")
+	# Readied: on, costs nothing until it fires.
+	p.toggle_concentration(_spell(&"air_step"))
+	assert_eq(p.mana, p.max_mana)
+	Input.action_press("jump")
+	await wait_physics_frames(2)
+	Input.action_release("jump")
+	assert_lt(p.velocity.y, 0.0, "a second jump")
+	assert_almost_eq(p.mana, p.max_mana - 8.0, 1.0, "8 mana once")
+	await wait_physics_frames(2)
+	var mana := p.mana
+	Input.action_press("jump")
+	await wait_physics_frames(2)
+	Input.action_release("jump")
+	assert_almost_eq(p.mana, mana, 1.0, "only once per time in the air")
+	await wait_seconds(3.0)
+	assert_true(p.is_on_floor())
+	assert_eq(p.health, p.max_health, "a 40 tile fall, but the landing was safe")
+	# Bound: a leap forward.
+	p.toggle_concentration(_spell(&"bound"))
+	p.global_position.y -= 40 * World.TILE
+	p.reset_physics_interpolation()
+	await wait_physics_frames(15)  # past the coyote time
+	var x := p.global_position.x
+	Input.action_press("jump")
+	await wait_physics_frames(2)
+	Input.action_release("jump")
+	assert_gt(absf(p.velocity.x), 20.0 * World.TILE, "leaps forward")
+	assert_lt(p.velocity.y, 0.0, "in an arc")
+	await wait_physics_frames(20)
+	assert_gt(absf(p.global_position.x - x), 6.0 * World.TILE, "keeps the momentum")
+	p.toggle_concentration(_spell(&"bound"))

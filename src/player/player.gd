@@ -233,6 +233,13 @@ var facing := 1
 var _coyote := 0.0
 var _buffer := 0.0
 var _rising_jump := false
+## A readied jump spell (Air Step, Bound) was used this time in the air; it re-arms on
+## landing. While _air_boost, steering is quicker (Air Step); while _leaping, the leap's
+## momentum is kept (Bound). _safe_landing: this landing takes no fall damage.
+var _air_trigger_used := false
+var _air_boost: SpellData
+var _leaping := false
+var _safe_landing := false
 var _climbing := false
 var _drop_timer := 0.0
 var _drop_from_y := 0.0
@@ -790,12 +797,16 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 			_rising_jump = true
 			_takeoff_timer = takeoff_time
 			_coyote = 0.0
+	elif _just("jump") and not is_on_floor() and _coyote <= 0.0 and not _dropping:
+		_air_trigger(jv)
 	if _rising_jump and (velocity.y >= 0.0 or not _held("jump")):
 		if velocity.y < 0.0:
 			velocity.y *= jump_cut
 		_rising_jump = false
 
 	var top := _current_speed() * TILE
+	if _air_boost and not is_on_floor():
+		top *= _air_boost.air_speed_mult
 	if input_x != 0.0 and signf(input_x) != float(facing):
 		top *= backpedal_speed  # walking backwards (aiming the other way)
 	var target := input_x * top
@@ -814,6 +825,10 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 		rate = top / air_drag_time
 	else:
 		rate = top / air_accel_time
+	if not grounded and _air_boost:
+		rate *= _air_boost.air_control_mult
+	if not grounded and _leaping and (input_x == 0.0 or signf(input_x) == signf(velocity.x)):
+		rate = 0.0  # Bound: keep the leap's momentum unless steering against it
 	velocity.x = move_toward(velocity.x, target, rate * delta)
 
 	var y_before := global_position.y
@@ -1673,8 +1688,53 @@ func _body_center() -> Vector2:
 	return global_position + Vector2(0.0, -30.0)
 
 
+## The readied jump spell, if one is on and not used yet this time in the air.
+func readied_jump() -> SpellData:
+	if concentration and concentration.effect in [&"air_step", &"bound"] and not _air_trigger_used:
+		return concentration
+	return null
+
+
+## Jump pressed in the air: fire the readied jump spell (Air Step's second jump, or
+## Bound's leap), paying its mana once.
+func _air_trigger(jv: Vector2) -> void:
+	var spell := readied_jump()
+	if spell == null:
+		return
+	if not is_free_spell(spell):
+		if not has_mana(spell.mana_cost):
+			EventBus.debug_message.emit("Not enough mana")
+			return
+		spend_mana(spell.mana_cost)
+	_air_trigger_used = true
+	_safe_landing = true
+	_buffer = 0.0
+	if spell.effect == &"air_step":
+		velocity.y = -jv.y * spell.air_jump_power
+		_rising_jump = true
+		_air_boost = spell
+		EventBus.sound_requested.emit(&"cast_blink", global_position)
+	else:
+		var dir := signf(_axis("move_left", "move_right"))
+		if dir == 0.0:
+			dir = float(facing)
+		velocity = Vector2(dir * spell.leap_speed * TILE, -spell.leap_rise * TILE)
+		_rising_jump = false
+		_leaping = true
+		facing = int(dir)
+		EventBus.sound_requested.emit(&"cast_gust", global_position)
+	_peak_y = global_position.y
+
+
 func _track_fall() -> void:
 	if is_on_floor() or _climbing:
+		_air_trigger_used = false
+		_air_boost = null
+		_leaping = false
+		var safe := _safe_landing
+		_safe_landing = false
+		if safe:
+			_peak_y = global_position.y  # a readied jump spell's landing doesn't hurt
 		if _airborne and not _climbing:
 			var fall := (global_position.y - _peak_y) / TILE
 			landed.emit(fall)

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_xu58k"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_jvefj"]
+[ext_resource type="Texture2D" path="res://assets/items/held/page_air_step.png" id="3_y2qox"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/page_air_step.png" id="4_6ln68"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_xl512"]
+
+[sub_resource type="Resource" id="Resource_4gywk"]
+script = ExtResource("2_jvefj")
+id = &"page_air_step"
+texture = ExtResource("3_y2qox")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_xl512")
+kind = 15
+icon = ExtResource("4_6ln68")
+max_stack = 20
+held = SubResource("Resource_4gywk")
+impact_at = 0.2
+learns_spell = &"air_step"
+id = &"page_air_step"
+display_name = "Spell Page: Air Step"
+description = "A found page of spellcraft. Left click: learn Air Step for good (the page is used up)."

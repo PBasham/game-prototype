@@ -279,6 +279,12 @@ guesses; the docs listed say where each tunable lives.
 - [ ] `give page_call_spirit`: reading it says to use the table; "Learn: Call Spirit"
       appears at the Spell Weaving Table (page + 5 Essence + 1 Core).
 
+**Phase 16: jump spells, Empower, world map, darkwood (branch phase-16-moves-map-empower)**
+- [ ] Air Step (Movement slot, F): free while on; Jump in the air = a second jump with
+      snappier steering; 8 mana; the landing doesn't hurt even from high up.
+- [ ] Bound: Jump in the air = a long forward leap in an arc; 12 mana; safe landing.
+- [ ] Each works once per time in the air, and re-arms when you land.
+
 ## Known
 
 - `test_spawns_ahead_when_moving_and_despawn_waits` (test_combat.gd) fails now and

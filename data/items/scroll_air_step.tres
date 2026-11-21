@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_mtuyc"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_cfwbx"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_air_step.png" id="3_8iej4"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_air_step.png" id="4_n76nr"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_uygrn"]
+
+[sub_resource type="Resource" id="Resource_5qh0q"]
+script = ExtResource("2_cfwbx")
+id = &"scroll_air_step"
+texture = ExtResource("3_8iej4")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_uygrn")
+kind = 14
+icon = ExtResource("4_n76nr")
+max_stack = 20
+held = SubResource("Resource_5qh0q")
+impact_at = 0.2
+teaches_spell = &"air_step"
+id = &"scroll_air_step"
+display_name = "Scroll: Air Step"
+description = "One use. Left click: cast Air Step once for free, at base power."

@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-21: Phase 16, jump spells, Empower, world map, darkwood
+
+- **Readied jump spells (Patrick):** Air Step (double jump, better air control) and
+  Bound (forward leap in an arc). They sit in the concentration slot like Fly but cost
+  nothing until the trigger: Jump in the air spends mana once; that landing takes no
+  fall damage. "Readied" is the name for this kind (Patrick left the term to Claude).
+
 ## 2026-11-20: Dark Forest is one big region
 
 - **Patrick:** big biomes (Dark Forest, like Terraria's jungle or corruption) are one
