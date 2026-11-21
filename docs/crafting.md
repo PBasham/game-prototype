@@ -322,14 +322,30 @@ Fly, say), in its recipe file `data/recipes/scroll_<spell>.tres`.
 Two magic stations:
 
 - **Spell Weaving Table** (station `spell_weaving`, 20 wood, 5 copper bars, 4 paper at
-  the workbench): learn spells here, for good. Its Empower tab (skill tree) comes with
-  magic progression. Every spell you don't know yet is listed,
+  the workbench): two tabs, **Learn** and **Empower**. Learn: every spell you don't know yet is listed,
   cheapest tier first; **Learn** uses its `learn_cost` (copper bars by tier: 4, 10, 20;
   20 Slime for Gel Cushion) and it joins your known spells. No scroll needed. A spell
   above your book's tier can be learned; it says it needs a better book to cast.
   Spells with `learnable_at_table = false` (SpellData) aren't listed: they only come
   from a **Spell Page**. Recipes come from `Crafting.learn_recipes` (made on the fly,
   `RecipeData.teaches`).
+
+  **Empower** (bare bones of the magic progression tree): the next rank of each node on
+  each spell you know, bought for good, per spell. Nodes are data:
+  `data/empower/<id>.tres` (`EmpowerNode`, src/items/empower_node.gd).
+
+  | Field | What it does |
+  | --- | --- |
+  | `stat`, `per_rank` | What a rank changes (MANA_COST -0.05 = 5% cheaper per rank) |
+  | `max_rank` | Ranks (5) |
+  | `cost_per_rank` | Cost of rank 1; rank n costs n times this |
+  | `groups` | Spell groups it's offered for (empty = every spell that uses mana) |
+  | `requires` | A node that needs a rank first (the tree's shape; empty = first node) |
+  | `order` | Order in the tree |
+
+  The only node so far: **Efficient**, 5% less mana per rank, up to 5 (25% off), 2 / 4 /
+  6 / 8 / 10 Magic Essence. Ranks are saved per character (`CharacterData.empower`); the
+  spell's tooltip shows the lower cost and "Empowered: Efficient 2/5".
 - **Scribe's Desk** (station `scribing`, 15 wood, 5 paper, 2 copper bars at the
   workbench): scribe a scroll (a one-use cast) of any spell **you know**, and only
   those. It costs the spell's scroll recipe in full, times `World.scribe_cost_mult`

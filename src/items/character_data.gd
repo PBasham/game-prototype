@@ -84,6 +84,53 @@ func note_inventory() -> void:
 		recipe_discovered.emit(name_)
 
 
+## The rank of an Empower node on a spell (0 = none).
+func empower_rank(spell_id: StringName, node_id: StringName) -> int:
+	return int(empower.get(spell_id, {}).get(node_id, 0))
+
+
+## What a spell's mana costs are multiplied by (Efficient: 5% less per rank).
+func mana_mult(spell_id: StringName) -> float:
+	var ranks: Dictionary = empower.get(spell_id, {})
+	var m := 1.0
+	for node_id: StringName in ranks:
+		var n := Registry.get_def(&"empower", node_id) as EmpowerNode
+		if n and n.stat == EmpowerNode.Stat.MANA_COST:
+			m += n.per_rank * int(ranks[node_id])
+	return maxf(m, 0.1)
+
+
+## Why the next rank of `node` on `spell` can't be bought ("" = it can).
+func empower_problem(spell: SpellData, node: EmpowerNode) -> String:
+	if not knows(spell.id):
+		return "You don't know this spell"
+	var rank := empower_rank(spell.id, node.id)
+	if rank >= node.max_rank:
+		return "Fully empowered"
+	if node.requires != &"" and empower_rank(spell.id, node.requires) <= 0:
+		return "Needs the node before it"
+	var cost := node.cost_for(rank)
+	for id in cost:
+		if inventory.count_of(id) < cost[id]:
+			var it := ItemData.find(id)
+			return "Needs %d %s" % [cost[id], it.display_name if it else String(id)]
+	return ""
+
+
+## Buys the next rank (paying from the inventory). False if it can't.
+func buy_empower(spell: SpellData, node: EmpowerNode) -> bool:
+	if empower_problem(spell, node) != "":
+		return false
+	var rank := empower_rank(spell.id, node.id)
+	var cost := node.cost_for(rank)
+	for id in cost:
+		inventory.remove(id, cost[id])
+	if not empower.has(spell.id):
+		empower[spell.id] = {}
+	empower[spell.id][node.id] = rank + 1
+	return true
+
+
 ## True when a recipe's key items (if it has any) have been seen.
 func unlocked(unlock_items: Array[StringName]) -> bool:
 	if unlock_items.is_empty():
@@ -99,6 +146,9 @@ func unlocked(unlock_items: Array[StringName]) -> bool:
 var movement_spell: StringName = &""
 ## The trash slot (like Terraria's): the last item thrown away, until another replaces it.
 var trash := Inventory.new(1)
+
+## Empower ranks: spell id -> {node id -> rank} (Spell Weaving Table, Empower tab).
+var empower: Dictionary[StringName, Dictionary] = {}
 
 ## Every item this character has ever had in the inventory (id -> true). Hidden recipes
 ## (`RecipeData.unlock_items`, `SpellData.learn_unlock_items`) show up once one of their
@@ -534,6 +584,11 @@ static func load_file(path: String) -> CharacterData:
 	var d: Dictionary = v
 	var c := CharacterData.new()
 	c.name = String(d.get("name", DEFAULT_NAME))
+	for sid: String in d.get("empower", {}):
+		var ranks := {}
+		for nid: String in d["empower"][sid]:
+			ranks[StringName(nid)] = int(d["empower"][sid][nid])
+		c.empower[StringName(sid)] = ranks
 	for id: String in d.get("seen_items", []):
 		c.seen_items[StringName(id)] = true
 	c.inventory.from_dict(d.get("inventory", {}))
@@ -634,4 +689,15 @@ func to_dict() -> Dictionary:
 		"known_spells": known, "quick": q, "quick_modes": modes, "wheel_last": last,
 		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger,
 		"movement_spell": String(movement_spell), "ghost": ghost, "trash": trash.to_dict(),
+		"empower": _empower_dict(),
 		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k))}
+
+
+func _empower_dict() -> Dictionary:
+	var out := {}
+	for sid: StringName in empower:
+		var ranks := {}
+		for nid: StringName in empower[sid]:
+			ranks[String(nid)] = empower[sid][nid]
+		out[String(sid)] = ranks
+	return out

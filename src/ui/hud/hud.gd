@@ -49,7 +49,8 @@ const LIST_W := 134
 ## Stations whose window has tabs: station kind to tab names. The Spell Weaving Table:
 ## Spells (learn spells) and Scrolls (scribe spells you know). Create and Empower come
 ## with Magic progression.
-const STATION_TABS := { &"alchemy": ["Potions", "Coatings", "Flasks"]}
+const STATION_TABS := { &"alchemy": ["Potions", "Coatings", "Flasks"],
+	&"spell_weaving": ["Learn", "Empower"]}
 const TAB_H := 14
 const ROW_H := 18
 ## Craft buttons: how many each makes (0 = as many as you can).
@@ -1219,14 +1220,14 @@ func _draw_chest(g: Control) -> void:
 func recipes() -> Array[RecipeData]:
 	var def := world.object_at(station) if station != World.NO_TILE else null
 	var c := world.character
-	var key := "%s|%d|%d|%d|%s|%s|%d|%s|%d" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
+	var key := "%s|%d|%d|%d|%s|%s|%d|%s|%d|%d" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
 		hash(c.known_spells) if c else 0, world.scribe_cost_mult, world.scroll_max_mana_by_tier, weave_group,
-		weave_search, c.seen_items.size() if c else 0]
+		weave_search, c.seen_items.size() if c else 0, hash(c.empower) if c else 0]
 	if key == _recipe_key:
 		return _recipe_cache
 	var list: Array[RecipeData] = []
 	if def and def.station == &"spell_weaving":
-		list = Crafting.learn_recipes(c)
+		list = Crafting.empower_recipes(c) if craft_tab == 1 else Crafting.learn_recipes(c)
 	elif def and def.station == &"scribing":
 		list = Crafting.scroll_recipes(c, world.scroll_max_mana_by_tier, world.scribe_cost_mult)
 	else:
@@ -1293,6 +1294,8 @@ func _weave_search_rect() -> Rect2:
 
 ## The spell a Spell Weaving Table recipe is about (learning or a scroll).
 static func recipe_spell(r: RecipeData) -> SpellData:
+	if r.empower_spell != &"":
+		return ItemData.find(ItemData.spell_key(r.empower_spell)) as SpellData
 	if r.teaches != &"":
 		return ItemData.find(ItemData.spell_key(r.teaches)) as SpellData
 	var out := ItemData.find(r.output)
@@ -1356,7 +1359,7 @@ func craft_stock() -> CraftStock:
 
 func _times(r: RecipeData) -> int:
 	var n := Crafting.times_craftable(craft_stock(), r, INF if world.free_crafting else _max_mana())
-	return mini(n, 1) if r.teaches != &"" else n
+	return mini(n, 1) if r.teaches != &"" or r.empower_node != &"" else n
 
 
 func _station_def() -> ObjectDef:
@@ -1578,11 +1581,13 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 	var hint := "Can make %d.  Shift: 10  Ctrl: a stack" % times
 	if r.teaches != &"":
 		hint = "Learn it once, it's yours for good." if times > 0 else "Not enough to learn it yet."
+	elif r.empower_node != &"":
+		hint = "Permanent, for this spell." if times > 0 else "Not enough to empower it yet."
 	g.draw_string(font, Vector2(d.position.x, b[0].position.y - 3), hint, HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.DIM)
 	for i in b.size():
 		var hot: bool = hover[0] == Area.CRAFT and hover[1] == i
-		if r.teaches != &"" and i != CraftBtn.CRAFT:
-			continue  # learning has no amount
+		if (r.teaches != &"" or r.empower_node != &"") and i != CraftBtn.CRAFT:
+			continue  # learning and empowering have no amount
 		match i:
 			CraftBtn.FIELD:
 				UiSkin.slot(g, b[i], UiSkin.SlotLook.SELECTED if _amount_typing else UiSkin.SlotLook.NORMAL)
@@ -1596,7 +1601,7 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 				UiSkin.button(g, b[i], "-" if i == CraftBtn.MINUS else "+", UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL)
 			_:
 				var state := UiSkin.Btn.DISABLED if times <= 0 else (UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL)
-				UiSkin.button(g, b[i], "Learn" if r.teaches != &"" else "Craft", state)
+				UiSkin.button(g, b[i], "Learn" if r.teaches != &"" else ("Empower" if r.empower_node != &"" else "Craft"), state)
 
 
 ## One "icon name  have / need" line; returns the next y.
@@ -1866,7 +1871,7 @@ func _asked(r: RecipeData, shift: bool, ctrl: bool) -> int:
 func planned_crafts(r: RecipeData) -> int:
 	var shift := Input.is_key_pressed(KEY_SHIFT)
 	var ctrl := Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_META)
-	if r.teaches != &"":
+	if r.teaches != &"" or r.empower_node != &"":
 		return 1
 	var asked := _asked(r, shift, ctrl)
 	if shift or ctrl:
@@ -1905,6 +1910,8 @@ func craft(r: RecipeData, times: int) -> int:
 		return 0
 	if r.teaches != &"":
 		return learn(r)
+	if r.empower_node != &"":
+		return empower(r)
 	var result := Crafting.craft(craft_stock(), r, times, INF if world.free_crafting else _max_mana())
 	_stock = null  # counts changed
 	if int(result[1]) > 0:
@@ -1913,6 +1920,25 @@ func craft(r: RecipeData, times: int) -> int:
 		EventBus.item_picked_up.emit(r.output, int(result[0]) * r.output_count)
 		EventBus.sound_requested.emit(&"craft", Vector2.INF)
 	return int(result[0])
+
+
+## An Empower tab recipe: buys the next rank of the node on the spell. 1 if bought.
+func empower(r: RecipeData) -> int:
+	var c := world.character
+	var spell := ItemData.find(ItemData.spell_key(r.empower_spell)) as SpellData
+	var node := Registry.get_def(&"empower", r.empower_node) as EmpowerNode
+	if spell == null or node == null:
+		return 0
+	var problem := c.empower_problem(spell, node)
+	if problem != "":
+		EventBus.debug_message.emit(problem)
+		return 0
+	c.buy_empower(spell, node)
+	_stock = null
+	_recipe_key = ""
+	EventBus.debug_message.emit("%s: %s rank %d" % [spell.display_name, node.display_name, c.empower_rank(spell.id, node.id)])
+	EventBus.sound_requested.emit(&"learn_spell", Vector2.INF)
+	return 1
 
 
 ## A Spells tab recipe: pays the learn cost and teaches the spell. 1 if learned.
@@ -2489,13 +2515,23 @@ static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
 	if spell.description != "":
 		lines.append(spell.description)
 	var mana := PackedStringArray()
+	var mm := c.mana_mult(spell.id) if c else 1.0  # Empower: Efficient
 	if spell.cast == SpellData.Cast.CHARGED:
-		mana.append("%s to %s mana" % [_num(spell.mana_cost * spell.charge_min_mana), _num(spell.mana_cost)])
+		mana.append("%s to %s mana" % [_num(spell.mana_cost * spell.charge_min_mana * mm), _num(spell.mana_cost * mm)])
 	elif spell.mana_cost > 0.0:
-		mana.append("%s mana" % _num(spell.mana_cost))
+		mana.append("%s mana" % _num(spell.mana_cost * mm))
 	if spell.mana_per_second > 0.0:
-		mana.append("%s mana per second" % _num(spell.mana_per_second))
-	lines.append("Mana: " + (", ".join(mana) if not mana.is_empty() else "none"))
+		mana.append("%s mana per second" % _num(spell.mana_per_second * mm))
+	var off := "  (%d%% less, Empowered)" % roundi((1.0 - mm) * 100.0) if mm < 1.0 else ""
+	lines.append("Mana: " + (", ".join(mana) if not mana.is_empty() else "none") + off)
+	if c and c.empower.has(spell.id):
+		var ranks := PackedStringArray()
+		for node in EmpowerNode.for_spell(spell):
+			var rk := c.empower_rank(spell.id, node.id)
+			if rk > 0:
+				ranks.append("%s %d/%d" % [node.display_name, rk, node.max_rank])
+		if not ranks.is_empty():
+			lines.append("Empowered: " + ", ".join(ranks))
 	var needs := PackedStringArray()
 	for id: StringName in spell.reagents:
 		var it := ItemData.find(id)

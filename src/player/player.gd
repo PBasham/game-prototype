@@ -944,6 +944,13 @@ func spend_mana(amount: float) -> bool:
 	return true
 
 
+## A spell's mana cost for this character (Empower's Efficient makes it cheaper); per
+## second for concentration and beams when `per_second`.
+func mana_cost_of(spell: SpellData, per_second: bool = false) -> float:
+	var base := spell.mana_per_second if per_second else spell.mana_cost
+	return base * (character.mana_mult(spell.id) if character else 1.0)
+
+
 func has_mana(amount: float) -> bool:
 	return infinite_mana or mana >= amount
 
@@ -956,7 +963,7 @@ func _update_mana(delta: float) -> void:
 	if concentration and concentration.effect == &"mend":
 		heal(concentration.heal_per_second * spell_power() * delta)
 	if concentration and concentration.mana_per_second > 0.0 and not is_free_spell(concentration):
-		var cost := concentration.mana_per_second * (concentration.boost_mana_mult if is_boosting() else 1.0)
+		var cost := mana_cost_of(concentration, true) * (concentration.boost_mana_mult if is_boosting() else 1.0)
 		if not spend_mana(cost * delta):
 			toggle_concentration(concentration)
 			EventBus.debug_message.emit("Out of mana")
@@ -1702,10 +1709,10 @@ func _air_trigger(jv: Vector2) -> void:
 	if spell == null:
 		return
 	if not is_free_spell(spell):
-		if not has_mana(spell.mana_cost):
+		if not has_mana(mana_cost_of(spell)):
 			EventBus.debug_message.emit("Not enough mana")
 			return
-		spend_mana(spell.mana_cost)
+		spend_mana(mana_cost_of(spell))
 	_air_trigger_used = true
 	_safe_landing = true
 	_buffer = 0.0
@@ -1918,7 +1925,7 @@ func _complete_ritual() -> void:
 	ritual = null
 	if is_instance_valid(_ritual_fx):
 		_ritual_fx.queue_free()
-	if not _ritual_free and not spend_mana(spell.mana_cost):
+	if not _ritual_free and not spend_mana(mana_cost_of(spell)):
 		EventBus.debug_message.emit("%s: not enough mana" % spell.display_name)
 		ritual_finished.emit(spell, false)
 		return

@@ -99,7 +99,7 @@ func _process(delta: float) -> void:
 	# Spell beams drain mana while they run, and stop when it's gone.
 	if _item and _item.beam and _item.is_spell() and p.is_using() and not p.input_blocked \
 			and not p.is_free_spell(_item as SpellData):
-		if not p.spend_mana((_item as SpellData).mana_per_second * delta):
+		if not p.spend_mana(p.mana_cost_of(_item as SpellData, true) * delta):
 			p.stop_using()
 			EventBus.debug_message.emit("Out of mana")
 	if mode == Mode.GRAB and p.is_using() and not p.input_blocked and problem == "":
@@ -191,7 +191,7 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 		problem = p.character.cast_problem(_item as SpellData, from_tome)
 		var sp := _item as SpellData
 		var turning_off := sp.cast == SpellData.Cast.TOGGLE and p.concentration == sp
-		var need := sp.mana_cost * (sp.charge_min_mana if sp.cast == SpellData.Cast.CHARGED else 1.0)
+		var need := p.mana_cost_of(sp) * (sp.charge_min_mana if sp.cast == SpellData.Cast.CHARGED else 1.0)
 		if problem == "" and not turning_off and not p.has_mana(maxf(need, minf(sp.mana_per_second * 0.1, 1.0))):
 			problem = "Not enough mana"
 		if p.is_free_spell(sp):
@@ -733,7 +733,7 @@ func _on_impact(item: ItemData) -> void:
 			# Mana is checked before the reagents are used up, so a failed cast costs nothing.
 			# A ritual pays when it completes.
 			var pays := spell.cast != SpellData.Cast.RITUAL
-			var cost := spell.mana_cost
+			var cost := p.mana_cost_of(spell)
 			if cooldown_left(spell) <= 0.0 and p.has_mana(cost) and p.character.take_reagents(spell):
 				if pays:
 					p.spend_mana(cost)
@@ -774,14 +774,15 @@ func cast_direct(spell: SpellData) -> String:
 		return why
 	if cooldown_left(spell) > 0.0:
 		return "Not ready yet"
-	if not p.has_mana(spell.mana_cost):
+	var cost := p.mana_cost_of(spell)
+	if not p.has_mana(cost):
 		return "Not enough mana"
 	if not p.character.take_reagents(spell):
 		return "Missing reagents"
-	p.spend_mana(spell.mana_cost)
+	p.spend_mana(cost)
 	_ready_at[spell.id] = _now() + spell.cooldown
 	if not cast(spell):
-		p.mana += spell.mana_cost
+		p.mana += cost
 		_ready_at.erase(spell.id)
 		return "It fizzles"
 	return ""
@@ -866,7 +867,7 @@ func release_charge() -> SpellProjectile:
 	queue_redraw()
 	if spell == null:
 		return null
-	var cost := spell.mana_cost * lerpf(spell.charge_min_mana, 1.0, k)
+	var cost := p.mana_cost_of(spell) * lerpf(spell.charge_min_mana, 1.0, k)
 	if not p.spend_mana(cost):
 		EventBus.debug_message.emit("Not enough mana")
 		return null

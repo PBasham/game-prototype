@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EmpowerNode" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/empower_node.gd" id="1_emp"]
+
+[resource]
+script = ExtResource("1_emp")
+per_rank = -0.05
+max_rank = 5
+cost_per_rank = Dictionary[StringName, int]({
+&"magic_essence": 2
+})
+id = &"efficient"
+display_name = "Efficient"
+description = "Costs 5% less mana per rank."

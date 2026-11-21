@@ -47,6 +47,38 @@ static func learn_recipes(c: CharacterData) -> Array[RecipeData]:
 	return out
 
 
+## The Spell Weaving Table's Empower tab: the next rank of each Empower node on each
+## spell you know (EmpowerNode.for_spell), for its cost. Buying it is permanent.
+static func empower_recipes(c: CharacterData) -> Array[RecipeData]:
+	var out: Array[RecipeData] = []
+	if c == null:
+		return out
+	var spells: Array[SpellData] = []
+	for id in c.known_spells:
+		var s := ItemData.find(ItemData.spell_key(id)) as SpellData
+		if s:
+			spells.append(s)
+	spells.sort_custom(func(a: SpellData, b: SpellData) -> bool: return a.display_name < b.display_name)
+	for spell in spells:
+		for node in EmpowerNode.for_spell(spell):
+			var rank := c.empower_rank(spell.id, node.id)
+			if rank >= node.max_rank:
+				continue
+			if node.requires != &"" and c.empower_rank(spell.id, node.requires) <= 0:
+				continue
+			var r := RecipeData.new()
+			r.id = StringName("empower_%s_%s" % [spell.id, node.id])
+			r.display_name = "%s: %s %d/%d" % [spell.display_name, node.display_name, rank + 1, node.max_rank]
+			r.station = &"spell_weaving"
+			r.inputs.assign(node.cost_for(rank))
+			r.output = ItemData.spell_key(spell.id)
+			r.empower_node = node.id
+			r.empower_spell = spell.id
+			r.note = node.description
+			out.append(r)
+	return out
+
+
 ## The Scribe's Desk: a scroll for each spell you know (only those),
 ## from its scroll recipe (data/recipes, output `scroll_<spell>`) with the materials
 ## times `cost_mult` (rounded up, at least 1; the Blank Scroll stays 1), or just a Blank

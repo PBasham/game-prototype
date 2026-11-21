@@ -8,6 +8,9 @@ Newest first. Each entry: what was decided, why, and what it affects.
   Bound (forward leap in an arc). They sit in the concentration slot like Fly but cost
   nothing until the trigger: Jump in the air spends mana once; that landing takes no
   fall damage. "Readied" is the name for this kind (Patrick left the term to Claude).
+- **Empower (bare bones, Patrick):** one first node on every spell's tree, Efficient
+  (-5% mana per rank, 5 ranks). Paid in Magic Essence (2 x rank) by default; tree
+  nodes are data so more can be added with `requires`.
 
 ## 2026-11-20: Dark Forest is one big region
 

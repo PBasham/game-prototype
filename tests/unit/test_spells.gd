@@ -223,7 +223,7 @@ func test_spell_weaving_table_teaches_spells() -> void:
 	var a := w.world_to_tile(p.global_position) + Vector2i(4, -1)
 	assert_true(w.request_place_object(a, w.objects.index_of(&"spell_weaving_table")))
 	assert_true(w.try_interact_at(w.tile_to_world(a + Vector2i(1, -1)) + Vector2(4, 4), p))
-	assert_eq(w.hud._tabs(), [], "just learning (scrolls are at the Scribe's Desk)")
+	assert_eq(w.hud._tabs(), ["Learn", "Empower"], "learning and empowering (scrolls are at the Scribe's Desk)")
 	w.hud.craft_tab = 0
 	var learn := w.hud.recipes()
 	var names := learn.map(func(r: RecipeData) -> StringName: return r.teaches)
@@ -897,3 +897,45 @@ func test_readied_jump_spells_trigger_once_in_the_air_and_land_safe() -> void:
 	await wait_physics_frames(20)
 	assert_gt(absf(p.global_position.x - x), 6.0 * World.TILE, "keeps the momentum")
 	p.toggle_concentration(_spell(&"bound"))
+
+
+func test_empower_efficient_lowers_mana_costs() -> void:
+	var p := w.player
+	var c := w.character
+	var spark := _spell(&"spark")
+	var fly := _spell(&"fly")
+	c.learn_spell(&"spark")
+	c.learn_spell(&"fly")
+	var node := Registry.get_def(&"empower", &"efficient") as EmpowerNode
+	assert_true(node.fits(spark))
+	assert_eq(node.max_rank, 5)
+	# The tab lists rank 1 for each known spell that uses mana.
+	var ids := Crafting.empower_recipes(c).map(func(r: RecipeData) -> StringName: return r.id)
+	assert_has(ids, &"empower_spark_efficient")
+	c.inventory.remove(&"magic_essence", c.inventory.count_of(&"magic_essence"))
+	assert_string_contains(c.empower_problem(spark, node), "Magic Essence")
+	c.inventory.add(&"magic_essence", 6)
+	assert_eq(node.cost_for(0), {&"magic_essence": 2})
+	assert_true(c.buy_empower(spark, node))
+	assert_true(c.buy_empower(spark, node))  # rank 2 costs 4
+	assert_eq(c.inventory.count_of(&"magic_essence"), 0)
+	assert_eq(c.empower_rank(&"spark", &"efficient"), 2)
+	assert_almost_eq(p.mana_cost_of(spark), spark.mana_cost * 0.9, 0.001, "10% less")
+	assert_almost_eq(p.mana_cost_of(fly, true), fly.mana_per_second, 0.001, "per spell: Fly unchanged")
+	assert_string_contains(Hud.spell_tooltip(spark, c), "Efficient 2/5")
+	# Saved with the character.
+	var path := "user://test_empower.char"
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	SaveHeader.write(f, SaveHeader.KIND_CHARACTER)
+	f.store_var(c.to_dict())
+	f.close()
+	var back := CharacterData.load_file(path)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	assert_eq(back.empower_rank(&"spark", &"efficient"), 2)
+	# The HUD's buy path, through a recipe.
+	c.inventory.add(&"magic_essence", 6)
+	var r: RecipeData = Crafting.empower_recipes(c).filter(
+		func(x: RecipeData) -> bool: return x.id == &"empower_spark_efficient")[0]
+	assert_eq(r.display_name, "Spark: Efficient 3/5")
+	assert_eq(w.hud.craft(r, 1), 1)
+	assert_eq(c.empower_rank(&"spark", &"efficient"), 3)

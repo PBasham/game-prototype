@@ -284,6 +284,8 @@ guesses; the docs listed say where each tunable lives.
       snappier steering; 8 mana; the landing doesn't hurt even from high up.
 - [ ] Bound: Jump in the air = a long forward leap in an arc; 12 mana; safe landing.
 - [ ] Each works once per time in the air, and re-arms when you land.
+- [ ] Spell Weaving Table: Learn and Empower tabs. Empower: "Spark: Efficient 1/5" for
+      2 Magic Essence; the tooltip's mana goes down 5% per rank.
 
 ## Known
 

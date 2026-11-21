@@ -25,6 +25,9 @@ var note := ""
 ## Teaches this spell instead of making an item: the Spell Weaving Table's Spells tab
 ## (Crafting.learn_recipes makes these; `output` is the spell, for its icon and name).
 var teaches: StringName = &""
+## Empower tab recipes (made in code): buying the next rank of this node on this spell.
+var empower_node: StringName = &""
+var empower_spell: StringName = &""
 ## What it makes, and how many per craft.
 ## Hidden until the character has had one of these items (empty = always known). A
 ## "New recipe" note shows the moment one turns up.
