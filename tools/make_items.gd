@@ -533,6 +533,27 @@ func _spells() -> Array[ItemData]:
 	fam.projectile_color = Color(0.6, 0.85, 1.0)
 	out.append(fam)
 
+	# From the Forest Spirit: its Spirit Core reveals a scroll that calls one to fight
+	# for you; its rare Spell Page, with Essence and a Core, teaches it for good.
+	var call := _spell(&"call_spirit", "Call Spirit", "A Forest Spirit fights for you for 90 seconds: it charges for a second, then shoots the nearest enemy.")
+	call.cast = SpellData.Cast.SUMMON
+	call.damage = 15.0
+	call.duration = 90.0
+	call.summon_interval = 2.2
+	call.summon_charge = 1.0
+	call.summon_tiles = 20.0
+	call.summon_texture = load("res://assets/enemies/forest_spirit.png") as Texture2D
+	call.projectile_speed = 30.0
+	call.projectile_range = 24.0
+	call.mana_cost = 45.0
+	call.cooldown = 2.0
+	call.impact_at = 0.3
+	call.projectile_color = Color(0.5, 0.75, 1.0)
+	call.learn_cost = {&"page_call_spirit": 1, &"magic_essence": 5, &"spirit_core": 1}
+	call.learn_unlock_items = [&"page_call_spirit"]
+	call.page_needs_table = true
+	out.append(call)
+
 	var plat := _spell(&"conjure_platform", "Conjure Platform", "A glowing platform, 6 blocks wide, at the cursor for 30 seconds. Down + Jump drops through.")
 	plat.cast = SpellData.Cast.CONJURE
 	plat.conjure_tiles = 6
@@ -626,6 +647,7 @@ func _spells() -> Array[ItemData]:
 		&"air_push": SpellData.Group.ATTACK,
 		&"spark_ward": SpellData.Group.ATTACK,
 		&"familiar": SpellData.Group.ATTACK,
+		&"call_spirit": SpellData.Group.ATTACK,
 		&"arcane_edge": SpellData.Group.DEFENSE,
 		&"barrier": SpellData.Group.DEFENSE,
 		&"gel_cushion": SpellData.Group.DEFENSE,
@@ -797,6 +819,7 @@ func _enemies() -> Array[EnemyData]:
 	spirit.glow_tiles = 8.0
 	spirit.loot.append(LootDrop.make(&"magic_essence", 1, 2))
 	spirit.loot.append(LootDrop.make(&"spirit_core", 1, 1, 0.05))
+	spirit.loot.append(LootDrop.make(&"page_call_spirit", 1, 1, 0.02))
 	out.append(spirit)
 	return out
 
@@ -965,6 +988,8 @@ func _recipes() -> Array[RecipeData]:
 		for q: StringName in e[5]:
 			r.requires.append(q)
 		r.display_name = String(e[3]).capitalize()
+		for u: StringName in UNLOCKS.get(r.id, []):
+			r.unlock_items.append(u)
 		r.tab = {&"poison_coating": "Coatings", &"poison_flask": "Flasks"}.get(r.id, "Potions" if r.station == &"alchemy" else "")
 		out.append(r)
 	return out
@@ -974,9 +999,13 @@ func _recipes() -> Array[RecipeData]:
 const SCROLL_BARS: Array[int] = [2, 5, 10]
 ## Copper bars learning a spell from its scroll costs, by tier; and exceptions.
 const LEARN_BARS: Array[int] = [4, 10, 20]
-const LEARN_COSTS := {&"gel_cushion": {&"slime": 20}}
+const LEARN_COSTS := {&"gel_cushion": {&"slime": 20},
+	&"call_spirit": {&"page_call_spirit": 1, &"magic_essence": 5, &"spirit_core": 1}}
 ## Scrolls that cost something else instead.
-const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20}}
+const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20},
+	&"call_spirit": {&"blank_scroll": 1, &"magic_essence": 3, &"spirit_core": 1}}
+## Hidden recipes: shown once you've had one of these items (RecipeData.unlock_items).
+const UNLOCKS := {&"scroll_call_spirit": [&"spirit_core"]}
 
 
 ## Paper, the Blank Scroll, a scroll for every spell (left click casts it once) and a
@@ -995,6 +1024,8 @@ func _scrolls() -> Array[ItemData]:
 		out.append(scroll)
 		var page := _small(StringName("page_" + String(spell.id)), "Spell Page: %s" % spell.display_name,
 			"A found page of spellcraft. Left click: learn %s for good (the page is used up)." % spell.display_name)
+		if spell.page_needs_table:
+			page.description = "A found page of spellcraft, too strong to read alone. Learn %s with it at a Spell Weaving Table." % spell.display_name
 		page.kind = ItemData.Kind.PAGE
 		page.learns_spell = spell.id
 		page.max_stack = 20

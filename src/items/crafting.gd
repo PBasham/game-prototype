@@ -27,6 +27,8 @@ static func learn_recipes(c: CharacterData) -> Array[RecipeData]:
 		var spell := d as SpellData
 		if spell == null or c.knows(spell.id) or not spell.learnable_at_table:
 			continue
+		if not c.unlocked(spell.learn_unlock_items):
+			continue
 		var r := RecipeData.new()
 		r.id = StringName("learn_" + String(spell.id))
 		r.display_name = "Learn: %s" % spell.display_name
@@ -59,7 +61,15 @@ static func scroll_recipes(c: CharacterData, max_mana_by_tier: Array[float], cos
 		var rd := d as RecipeData
 		if rd and String(rd.output).begins_with("scroll_"):
 			by_output[rd.output] = rd
-	for id in c.known_spells:
+	# Spells you know, and scrolls whose recipe you've discovered (Call Spirit: from a
+	# Spirit Core) even without knowing the spell.
+	var ids: Array[StringName] = c.known_spells.duplicate()
+	for out_id: StringName in by_output:
+		var rd: RecipeData = by_output[out_id]
+		var sid := StringName(String(out_id).trim_prefix("scroll_"))
+		if not rd.unlock_items.is_empty() and c.unlocked(rd.unlock_items) and not ids.has(sid):
+			ids.append(sid)
+	for id in ids:
 		var spell := ItemData.find(ItemData.spell_key(id)) as SpellData
 		var scroll := StringName("scroll_" + String(id))
 		if spell == null or ItemData.find(scroll) == null:
@@ -127,3 +137,19 @@ static func craft(inv: Inventory, r: RecipeData, times: int, max_mana: float = I
 static func _name(item_id: StringName) -> String:
 	var item := ItemData.find(item_id)
 	return item.display_name if item else String(item_id)
+
+
+## Names of the hidden recipes that `fresh` (items just seen for the first time) reveal
+## for `c`: data recipes, scroll recipes and spells to learn.
+static func revealed_by(fresh: Array[StringName], c: CharacterData) -> PackedStringArray:
+	var out := PackedStringArray()
+	for d in Registry.get_all(&"recipes"):
+		var r := d as RecipeData
+		if r and r.unlock_items.any(func(id: StringName) -> bool: return fresh.has(id)):
+			var it := ItemData.find(r.output)
+			out.append(r.display_name if r.display_name != "" else (it.display_name if it else String(r.output)))
+	for d in Registry.get_all(&"spells"):
+		var s := d as SpellData
+		if s and not c.knows(s.id) and s.learn_unlock_items.any(func(id: StringName) -> bool: return fresh.has(id)):
+			out.append("Learn: %s" % s.display_name)
+	return out

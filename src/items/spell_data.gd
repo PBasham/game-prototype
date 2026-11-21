@@ -63,6 +63,12 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## Listed in the Spell Weaving Table's Spells tab for its learn_cost. Off for spells you
 ## can only learn from a scroll you find: they show up there while you carry one.
 @export var learnable_at_table := true
+## Its "Learn" recipe at the table stays hidden until you've had one of these items
+## (Call Spirit: its Spell Page). Empty = always shown.
+@export var learn_unlock_items: Array[StringName] = []
+## Reading its Spell Page doesn't teach it: take the page to the Spell Weaving Table
+## (its learn_cost includes the page). The page's tooltip says so.
+@export var page_needs_table := false
 ## From a quick slot (Q/E wheels, Z X C): 0 = by cast (see casts_from_quick_slot),
 ## 1 = cast right away, 2 = put it in your hand. The player can flip it per slot.
 @export_enum("By cast", "Cast right away", "Put in hand") var quick_default := 0
@@ -122,6 +128,12 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 @export var max_active := 3
 ## Familiar: shots every this many seconds, at enemies within this many tiles.
 @export var summon_interval := 1.0
+## A summon drawn from a sprite sheet instead of the little orb (Call Spirit: the Forest
+## Spirit's 3 frames: idle, charging, shooting), and how long it charges before each
+## shot (sparks close in; 0 = shoots right away).
+@export var summon_texture: Texture2D
+@export var summon_frame_size := Vector2i(24, 24)
+@export var summon_charge := 0.0
 @export var summon_tiles := 15.0
 ## Conjure Platform: width in tiles.
 @export var conjure_tiles := 6

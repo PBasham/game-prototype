@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_fs0xi"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_4bw82"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_call_spirit.png" id="3_8ewfh"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_call_spirit.png" id="4_s4do3"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_5pppn"]
+
+[sub_resource type="Resource" id="Resource_4lubj"]
+script = ExtResource("2_4bw82")
+id = &"scroll_call_spirit"
+texture = ExtResource("3_8ewfh")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_5pppn")
+kind = 14
+icon = ExtResource("4_s4do3")
+max_stack = 20
+held = SubResource("Resource_4lubj")
+impact_at = 0.2
+teaches_spell = &"call_spirit"
+id = &"scroll_call_spirit"
+display_name = "Scroll: Call Spirit"
+description = "One use. Left click: cast Call Spirit once for free, at base power."

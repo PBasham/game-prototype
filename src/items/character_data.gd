@@ -16,6 +16,9 @@ extends RefCounted
 signal magic_changed
 ## Something was equipped or taken off (stats may have changed).
 signal equipment_changed
+## A hidden recipe (or a spell to learn) showed up because you got one of its key
+## items for the first time.
+signal recipe_discovered(display_name: String)
 
 const DEFAULT_NAME := "default"
 ## Used when the book slot is empty (data/items).
@@ -59,14 +62,54 @@ const WHEEL_SIZE := 8
 const QUICK_KEYS: Array[StringName] = [&"z", &"x", &"c"]
 const BUFF_SET_SIZE := 6
 
+func _init() -> void:
+	_watch_inventory()
+
+
+func _watch_inventory() -> void:
+	if inventory and not inventory.changed.is_connected(note_inventory):
+		inventory.changed.connect(note_inventory)
+
+
+## Marks everything in the inventory as seen; new key items reveal their recipes.
+func note_inventory() -> void:
+	var fresh: Array[StringName] = []
+	for id in inventory.ids:
+		if id != &"" and not seen_items.has(id):
+			seen_items[id] = true
+			fresh.append(id)
+	if fresh.is_empty():
+		return
+	for name_ in Crafting.revealed_by(fresh, self):
+		recipe_discovered.emit(name_)
+
+
+## True when a recipe's key items (if it has any) have been seen.
+func unlocked(unlock_items: Array[StringName]) -> bool:
+	if unlock_items.is_empty():
+		return true
+	for id in unlock_items:
+		if seen_items.has(id):
+			return true
+	return false
+
+
 ## The movement spell the movement key (F) uses, set in the Equipment window's Movement
 ## slot (empty = Fly if known, else Levitate).
 var movement_spell: StringName = &""
 ## The trash slot (like Terraria's): the last item thrown away, until another replaces it.
 var trash := Inventory.new(1)
 
+## Every item this character has ever had in the inventory (id -> true). Hidden recipes
+## (`RecipeData.unlock_items`, `SpellData.learn_unlock_items`) show up once one of their
+## key items is in here.
+var seen_items: Dictionary[StringName, bool] = {}
+
 var name := DEFAULT_NAME
-var inventory := Inventory.new()
+var inventory := Inventory.new():
+	set(value):
+		inventory = value
+		_watch_inventory()
 ## Appearance: palette group (skin, hair, tunic, trim, pants, leather) -> the color its
 ## middle shade becomes. Missing groups keep the art's colors.
 var colors: Dictionary[StringName, Color] = {}
@@ -491,9 +534,12 @@ static func load_file(path: String) -> CharacterData:
 	var d: Dictionary = v
 	var c := CharacterData.new()
 	c.name = String(d.get("name", DEFAULT_NAME))
+	for id: String in d.get("seen_items", []):
+		c.seen_items[StringName(id)] = true
 	c.inventory.from_dict(d.get("inventory", {}))
 	if d.has("trash"):
 		c.trash.from_dict(d["trash"])
+	c.note_inventory()
 	var eq: Dictionary = d.get("equipment", {})
 	for slot: StringName in ALL_SLOTS:
 		var item_id := StringName(eq.get(String(slot), ""))
@@ -587,4 +633,5 @@ func to_dict() -> Dictionary:
 	return {"name": name, "inventory": inventory.to_dict(), "equipment": eq,
 		"known_spells": known, "quick": q, "quick_modes": modes, "wheel_last": last,
 		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger,
-		"movement_spell": String(movement_spell), "ghost": ghost, "trash": trash.to_dict()}
+		"movement_spell": String(movement_spell), "ghost": ghost, "trash": trash.to_dict(),
+		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k))}

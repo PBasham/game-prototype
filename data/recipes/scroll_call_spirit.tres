@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_nkpeq"]
+
+[resource]
+script = ExtResource("1_nkpeq")
+station = &"scribing"
+inputs = Dictionary[StringName, int]({
+&"blank_scroll": 1,
+&"magic_essence": 3,
+&"spirit_core": 1
+})
+unlock_items = Array[StringName]([&"spirit_core"])
+output = &"scroll_call_spirit"
+id = &"scroll_call_spirit"
+display_name = "Scroll: Call Spirit"

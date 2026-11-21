@@ -8,6 +8,12 @@ Newest first. Each entry: what was decided, why, and what it affects.
   (`SatchelLook`), placeholders until real art.
 - **Trash slot (Patrick, like Terraria):** one slot, keeps the last thing trashed.
 - **Tree Seed is now "Sapling"** (Patrick: regular trees drop saplings too); id unchanged.
+- **Discovered recipes (Patrick: "yes, good"):** `RecipeData.unlock_items`; only new
+  recipes use it so far (existing ones stay known from the start).
+- **Call Spirit (Patrick):** first Spirit Core reveals the scroll; a rare Spell Page,
+  plus Essence and a Core at the table, teaches it for good. It fights for you like the
+  Familiar. Player summons never drop loot.
+- **Two spells at once:** Patrick's own idea for later (concentrating on two), noted.
 
 ## 2026-11-20: Phase 14, Dark Forest
 

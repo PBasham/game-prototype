@@ -262,3 +262,4 @@ or .ogg); the generator never overwrites without `--force`.
 | items/{icons,held}: dark_log, darkwood, magic_essence, spirit_core | 16x16 icons, same script |
 | enemies/forest_spirit.png | 72x24: three 24x24 frames (drifting, charging, shooting) |
 | decor/darkwood_sapling.png, items/{icons,held}/darkwood_sapling.png | 9x14 darkwood sapling (and its icon). Same script, `--sapling` |
+| items/icons/call_spirit.png (+ scroll_, page_ icons) | Call Spirit: the spirit's first frame over a ring. Placeholder |

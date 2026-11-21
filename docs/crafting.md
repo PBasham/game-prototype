@@ -146,6 +146,13 @@ name (`World.chest_names`, saved). A torch on a wall comes down with a right cli
 | `inputs` | Item id to count, used up |
 | `requires` | Item ids that must be in the inventory but aren't used up (the hand hammer) |
 | `output`, `output_count` | What you get |
+| `unlock_items` | **Discovered recipe:** hidden until the character has had one of these items in the inventory (empty = always known). The moment one turns up: "New recipe: ..." and a chime. Remembered per character (`CharacterData.seen_items`, saved), so using the item up doesn't hide it again. Spells to learn at the table do the same with `SpellData.learn_unlock_items`. |
+
+Discovered recipes so far: **Scroll: Call Spirit** (Scribe's Desk: Blank Scroll + 3
+Magic Essence + 1 Spirit Core) shows up with your first Spirit Core, even if you don't
+know the spell. **Learn: Call Spirit** (Spell Weaving Table: the Spell Page + 5 Magic
+Essence + 1 Spirit Core) shows up with the page; reading the page alone says to take it
+to the table (`SpellData.page_needs_table`).
 
 Current recipes:
 

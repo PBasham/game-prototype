@@ -26,6 +26,9 @@ var note := ""
 ## (Crafting.learn_recipes makes these; `output` is the spell, for its icon and name).
 var teaches: StringName = &""
 ## What it makes, and how many per craft.
+## Hidden until the character has had one of these items (empty = always known). A
+## "New recipe" note shows the moment one turns up.
+@export var unlock_items: Array[StringName] = []
 @export var output: StringName = &""
 @export var output_count := 1
 

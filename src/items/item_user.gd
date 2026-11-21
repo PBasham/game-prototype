@@ -415,6 +415,9 @@ func read_page() -> bool:
 	if p.character.knows(spell.id):
 		EventBus.debug_message.emit("You already know %s" % spell.display_name)
 		return false
+	if spell.page_needs_table:
+		EventBus.debug_message.emit("Too much for one page: learn %s at a Spell Weaving Table" % spell.display_name)
+		return false
 	if not p.take_held():
 		return false
 	p.character.learn_spell(spell.id)

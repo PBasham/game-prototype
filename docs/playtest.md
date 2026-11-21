@@ -272,6 +272,11 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Trash (bin, bottom right): drop a stack on it, or Ctrl + click a slot. Click it
       with an empty mouse to take the last one back.
 - [ ] Pine trees drop "Sapling" (was Tree Seed).
+- [ ] Kill Forest Spirits until a Spirit Core drops: "New recipe: Scroll: Call Spirit";
+      it's at the Scribe's Desk (Blank Scroll + 3 Essence + 1 Core).
+- [ ] The scroll calls a Forest Spirit that charges (sparks) and shoots enemies, 90 s.
+- [ ] `give page_call_spirit`: reading it says to use the table; "Learn: Call Spirit"
+      appears at the Spell Weaving Table (page + 5 Essence + 1 Core).
 
 ## Known
 

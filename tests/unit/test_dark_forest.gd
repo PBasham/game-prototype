@@ -137,3 +137,57 @@ func _world() -> World:
 	await wait_physics_frames(3)
 	world.spawner.peaceful = true
 	return world
+
+
+func test_a_spirit_core_reveals_the_call_spirit_scroll() -> void:
+	var c := CharacterData.new()
+	c.learn_spell(&"spark")
+	var heard: Array[String] = []
+	c.recipe_discovered.connect(func(what: String) -> void: heard.append(what))
+	var ids := func() -> Array: return Crafting.scroll_recipes(c, [] as Array[float]).map(
+		func(r: RecipeData) -> StringName: return r.output)
+	assert_false(ids.call().has(&"scroll_call_spirit"), "hidden before a core")
+	c.inventory.add(&"spirit_core", 1)
+	assert_true(ids.call().has(&"scroll_call_spirit"), "a core reveals it")
+	assert_eq(heard, ["Scroll: Call Spirit"] as Array[String])
+	# Still known after the core is used up, and after saving.
+	c.inventory.take(c.inventory.ids.find(&"spirit_core"), 1)
+	assert_true(ids.call().has(&"scroll_call_spirit"))
+	assert_true(c.to_dict()["seen_items"].has("spirit_core"))
+	var r: RecipeData = Crafting.scroll_recipes(c, [] as Array[float]).filter(
+		func(x: RecipeData) -> bool: return x.output == &"scroll_call_spirit")[0]
+	assert_eq(r.inputs, {&"blank_scroll": 1, &"magic_essence": 3, &"spirit_core": 1})
+
+
+func test_the_spell_page_is_learned_at_the_table_with_a_core() -> void:
+	var c := CharacterData.new()
+	var learn := func() -> Array: return Crafting.learn_recipes(c).map(
+		func(r: RecipeData) -> StringName: return r.teaches)
+	assert_false(learn.call().has(&"call_spirit"), "hidden until you have the page")
+	c.inventory.add(&"page_call_spirit", 1)
+	assert_true(learn.call().has(&"call_spirit"))
+	var spell := ItemData.find(ItemData.spell_key(&"call_spirit")) as SpellData
+	assert_true(spell.page_needs_table)
+	assert_eq(spell.learn_cost, {&"page_call_spirit": 1, &"magic_essence": 5, &"spirit_core": 1})
+	var odds := {}
+	for l in (Registry.get_def(&"enemies", &"forest_spirit") as EnemyData).loot:
+		odds[l.item] = l.chance
+	assert_lt(float(odds[&"page_call_spirit"]), float(odds[&"spirit_core"]), "rarer than a core")
+
+
+func test_called_spirit_charges_then_shoots_enemies() -> void:
+	w = await _world()
+	var spell := ItemData.find(ItemData.spell_key(&"call_spirit")) as SpellData
+	var fam := w.request_spell_effect(spell, w.player.chest(), 1.0) as Familiar
+	assert_not_null(fam)
+	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
+	var e := w.request_spawn_enemy(slime, w.player.global_position + Vector2(10 * World.TILE, 0))
+	var charged := false
+	for i in 240:
+		await wait_physics_frames(1)
+		if fam._charge_left >= 0.0:
+			charged = true
+		if not is_instance_valid(e) or e.health < e.data.max_health:
+			break
+	assert_true(charged, "charges first")
+	assert_true(not is_instance_valid(e) or e.health < e.data.max_health, "then hits")

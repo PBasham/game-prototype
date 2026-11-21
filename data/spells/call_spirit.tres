@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/call_spirit.png" id="1_t8peg"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_3ptmi"]
+[ext_resource type="Texture2D" path="res://assets/enemies/forest_spirit.png" id="3_spo8r"]
+
+[resource]
+script = ExtResource("2_3ptmi")
+cast = 10
+learn_unlock_items = Array[StringName]([&"page_call_spirit"])
+page_needs_table = true
+cooldown = 2.0
+damage = 15.0
+projectile_speed = 30.0
+projectile_range = 24.0
+projectile_color = Color(0.5, 0.75, 1, 1)
+summon_interval = 2.2
+summon_texture = ExtResource("3_spo8r")
+summon_charge = 1.0
+summon_tiles = 20.0
+duration = 90.0
+mana_cost = 45.0
+learn_cost = Dictionary[StringName, int]({
+&"magic_essence": 5,
+&"page_call_spirit": 1,
+&"spirit_core": 1
+})
+kind = 4
+icon = ExtResource("1_t8peg")
+max_stack = 1
+impact_at = 0.3
+id = &"call_spirit"
+display_name = "Call Spirit"
+description = "A Forest Spirit fights for you for 90 seconds: it charges for a second, then shoots the nearest enemy."

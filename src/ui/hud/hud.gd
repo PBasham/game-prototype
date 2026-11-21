@@ -297,6 +297,11 @@ func _ready() -> void:
 	EventBus.player_died.connect(_on_player_died)
 	world.character.inventory.changed.connect(_redraw)
 	world.character.magic_changed.connect(_layout)
+	world.character.recipe_discovered.connect(func(what: String) -> void:
+		EventBus.debug_message.emit("New recipe: %s" % what)
+		EventBus.sound_requested.emit(&"learn_spell", world.player.chest())
+		_recipe_key = ""
+		_redraw())
 	world.character.equipment_changed.connect(func() -> void: _layout.call_deferred())
 	world.player.selection_changed.connect(func(_s: int) -> void: _redraw())
 	_layout()
@@ -1216,7 +1221,7 @@ func recipes() -> Array[RecipeData]:
 	var c := world.character
 	var key := "%s|%d|%d|%d|%s|%s|%d|%s|%d" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
 		hash(c.known_spells) if c else 0, world.scribe_cost_mult, world.scroll_max_mana_by_tier, weave_group,
-		weave_search, 0]
+		weave_search, c.seen_items.size() if c else 0]
 	if key == _recipe_key:
 		return _recipe_cache
 	var list: Array[RecipeData] = []
@@ -1229,6 +1234,8 @@ func recipes() -> Array[RecipeData]:
 			else Crafting.recipes_for(&"")
 		var tabs: Array = STATION_TABS.get(def.station, []) if def else []
 		for r in base:
+			if c and not c.unlocked(r.unlock_items):
+				continue  # not discovered yet
 			if not tabs.is_empty():
 				var t := r.tab if r.tab != "" else String(tabs[0])
 				if t != String(tabs[craft_tab]):

@@ -13,6 +13,10 @@ var spell: SpellData
 var power := 1.0
 var time_left := 60.0
 var _cooldown := 0.5
+## Charging up a shot (summon_charge): time left, and at whom.
+var _charge_left := -1.0
+var _charge_target: Enemy
+var _shot_flash := 0.0
 
 
 func setup(w: World, s: SpellData, spell_power: float) -> void:
@@ -39,14 +43,30 @@ func _process(delta: float) -> void:
 		return
 	global_position = global_position.lerp(_target(), minf(follow * delta, 1.0))
 	_cooldown -= delta
-	if _cooldown <= 0.0:
+	_shot_flash = maxf(_shot_flash - delta, 0.0)
+	if _charge_left >= 0.0:
+		_charge_left -= delta
+		if _charge_left < 0.0:
+			if is_instance_valid(_charge_target) and not _charge_target.is_queued_for_deletion():
+				_shoot(_charge_target)
+			_charge_target = null
+	elif _cooldown <= 0.0:
 		var target := nearest_enemy()
 		if target:
 			_cooldown = spell.summon_interval
-			var dir := (target.hit_rect().get_center() - global_position).normalized()
-			world.request_spawn_projectile(spell, global_position, dir, power, world.player)
-			EventBus.sound_requested.emit(&"familiar_shot", global_position)
+			if spell.summon_charge > 0.0:
+				_charge_left = spell.summon_charge
+				_charge_target = target
+			else:
+				_shoot(target)
 	queue_redraw()
+
+
+func _shoot(target: Enemy) -> void:
+	var dir := (target.hit_rect().get_center() - global_position).normalized()
+	world.request_spawn_projectile(spell, global_position, dir, power, world.player)
+	EventBus.sound_requested.emit(&"familiar_shot", global_position)
+	_shot_flash = 0.3
 
 
 ## The nearest enemy within range, or null.
@@ -64,6 +84,18 @@ func nearest_enemy() -> Enemy:
 func _draw() -> void:
 	var c := spell.projectile_color
 	var fade := clampf(time_left / 3.0, 0.0, 1.0)
+	if spell.summon_texture:
+		var fs := Vector2(spell.summon_frame_size)
+		var frame := 1 if _charge_left >= 0.0 else (2 if _shot_flash > 0.0 else 0)
+		draw_texture_rect_region(spell.summon_texture, Rect2(-fs * 0.5, fs),
+			Rect2(Vector2(frame * fs.x, 0), fs), Color(1, 1, 1, fade))
+		if _charge_left >= 0.0:
+			var k := 1.0 - clampf(_charge_left / spell.summon_charge, 0.0, 1.0)
+			var spin := Time.get_ticks_msec() * 0.004
+			for i in 8:
+				draw_circle(Vector2.from_angle(spin + i * TAU / 8.0) * lerpf(16.0, 7.0, k), 1.0,
+					Color(0.85, 0.95, 1.0, (0.4 + 0.6 * k) * fade))
+		return
 	draw_circle(Vector2.ZERO, 4.0, Color(c, 0.25 * fade))
 	draw_circle(Vector2.ZERO, 2.2, Color(c.lightened(0.3), fade))
 	# Two little eyes, looking where you face.

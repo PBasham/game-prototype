@@ -82,7 +82,8 @@ tiles/s, `keep_tiles_min/max` 6 to 12 tiles away, 3 to 10 up), stops, charges fo
 (`shot_damage` 15, `shot_speed` 22 tiles/s, out to `shot_tiles` 30; `EnemyShot`,
 `src/combat/enemy_shot.gd`, stops at blocks). It only shoots when it can see you. 30
 health, 6 contact damage, lights its surroundings (`glow_tiles` 8). Day and night.
-Drops 1 to 2 **Magic Essence**, and a **Spirit Core** 1 time in 20. Sheet:
+Drops 1 to 2 **Magic Essence**, a **Spirit Core** 1 time in 20, and its **Spell Page:
+Call Spirit** 1 time in 50 (crafting.md: discovered recipes). Sheet:
 `assets/enemies/forest_spirit.png` (24x24 frames: drifting, charging, shooting).
 
 ## Spawning
