@@ -392,7 +392,7 @@ func _register() -> void:
 			i += 2
 		_print(p.set_doll_render(grid, art, turn) + ", squash %s, sway %s, blend %s" % [
 			"on" if doll.squash else "off", "on" if doll.sway else "off", "on" if doll.blend_time > 0.0 else "off"]))
-	_add("body", "body [3d|doll] [step N|smooth] [bands 2|3] [trim 0..1] [turn DEG] [detail 1-4] [colors auto|as_is|srgb|linear]", "3D body test: draw the 3D body or the drawn Scholar; step 12 poses 12 times a second (smooth: every frame). No arguments: what's set.", func(a: PackedStringArray) -> void:
+	_add("body", "body [3d|doll] [step N|smooth] [bands 2|3] [trim 0..1] [turn DEG] [style blocky|soft|round] [detail 1-4] [colors auto|as_is|srgb|linear]", "3D body test: draw the 3D body or the drawn Scholar; step 12 poses 12 times a second (smooth: every frame). No arguments: what's set.", func(a: PackedStringArray) -> void:
 		var p := world.player
 		var kind := p.body_kind
 		var step := -1.0
@@ -406,6 +406,12 @@ func _register() -> void:
 				"smooth":
 					step = 0.0
 					i += 1
+				"style":
+					if i + 1 >= a.size():
+						_print("style blocky | soft | round")
+						return
+					looks["style"] = a[i + 1]
+					i += 2
 				"colors":
 					if i + 1 >= a.size():
 						_print("colors as_is | srgb | linear | auto")
@@ -429,10 +435,12 @@ func _register() -> void:
 		if b and b.is_on():
 			b.bands = int(looks.get("bands", b.bands))
 			b.trim = float(looks.get("trim", b.trim))
-			b.turn = float(looks.get("turn", b.turn))
+			b.turn_idle = float(looks.get("turn", b.turn_idle))
 			b.detail = int(looks.get("detail", b.detail))
 			b.color_space = String(looks.get("colors", b.color_space))
-			msg += ", detail %dx, bands %d, trim %.2f, turn %d, colors %s" % [b.detail, b.bands, b.trim, int(b.turn), b.color_mode()]
+			if looks.has("style"):
+				b.style = String(looks["style"])
+			msg += ", style %s, detail %dx, bands %d, trim %.2f, turn %d, colors %s" % [b.style, b.detail, b.bands, b.trim, int(b.turn_idle), b.color_mode()]
 		_print(msg))
 	_add("emote", "emote <sit|wave|cheer|stand|chair>", "Play an emote, like the chat's /sit (chair: sit on the chair under the cursor).", func(a: PackedStringArray) -> void:
 		var p := world.player

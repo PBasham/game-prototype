@@ -11,11 +11,14 @@ seamlessly and blend between materials. Regenerate everything with:
 godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game
 ```
 
-## 3D body placeholder (Phase 20)
+## 3D body (Phase 20): `body3d/`
 
-No files: the mannequin is built in code (`src/player/body3d/body_3d.gd`, `_build`) from
-capsules, spheres and boxes, colored from `scholar_palette.tres`. **Placeholder** for a
-character Patrick models in Blender (glTF).
+| File | What |
+| --- | --- |
+| `mannequin.glb` | **Placeholder** rigged mannequin (Rigify bone names, materials named by color group), from `tools/make_test_body.gd` (kept unless `--force`). Open it in Blender as a reference. |
+| `scholar.glb` | Patrick's character, exported from Blender (not there yet). Rules: docs/3d-character.md. Source `.blend` goes in `art/body3d/`. |
+
+The code-made styles (`fit`, `blocky`, `soft`, `round`) are built in code, no files.
 
 ## Player: `sprites/scholar*`
 

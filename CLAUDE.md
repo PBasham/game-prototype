@@ -3,7 +3,7 @@
 Godot 4.7.2 (GDScript) 2D sandbox. Read docs/architecture.md before changing core systems.
 docs/code-map.md says where everything is and how to change it (keep it current when files
 or fields move); docs/guide.md explains every feature; docs/world-generation.md covers generation;
-docs/character-art.md covers the paper doll; docs/items-and-mining.md covers items,
+docs/character-art.md covers the paper doll; docs/3d-character.md covers the 3D body (Blender model rules); docs/items-and-mining.md covers items,
 the inventory, layers, mining, placing, magic and plants; docs/crafting.md covers
 crafting, stations, furniture, chests, doors, pickups and mana; docs/survival.md covers
 day and night, health, hunger, food, berry bushes, dying and the magic bag; docs/combat.md covers

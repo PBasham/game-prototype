@@ -326,7 +326,9 @@ guesses; the docs listed say where each tunable lives.
 - [ ] `body step 12` vs `body smooth`: hand-drawn feel or fluid?
 - [ ] `body detail 1` to `4` (2 is the default, the detailed art size).
 - [ ] `body bands 2` vs `3`, `body trim 0`, `body turn 0` / `30`.
-- [ ] Is it worth modeling a real character in Blender for this? (Next phase if yes.)
+- [ ] `body style model` (the default): the rigged placeholder posed by its bones.
+- [ ] Your own model: follow [3d-character.md](3d-character.md), export to
+      `assets/body3d/scholar.glb`, `body 3d`.
 
 ## Known
 

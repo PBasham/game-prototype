@@ -11,6 +11,11 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - The PaperDoll keeps all the pose logic (hands, items, feet) and the 3D body follows
   it (`joints_override`, `pose_state`), so items, attacks and emotes needed no new code.
 - The placeholder is a mannequin built in code (no download, nothing to license).
+- **Patrick:** the code-made looks (blocky, soft, round, fit) didn't work for him; he'll
+  model the character in Blender. The game loads a rigged glTF (`style model`, the
+  default 3D style) and turns its bones to the doll's targets, so he models and rigs but
+  doesn't animate. Rigify bone names, materials named by color group. The 2D Scholar
+  stays the default body; the code-made styles stay as switches.
 - **Patrick:** more detail than 1x. `detail` renders 1 to 4 pixels per art pixel;
   default 2, the detailed art size used by terrain and icons.
 - Colors: Compatibility and Forward+ treat 3D colors differently; `color_space` "auto"

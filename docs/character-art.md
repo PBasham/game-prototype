@@ -219,7 +219,12 @@ its arms and legs to those points (two-bone IK in the side plane) and draws the 
 So every item, swing, spell, emote and chair works with it, and the held item is still
 drawn by the doll, on top.
 
-**The placeholder** is a mannequin made in code from capsules, spheres and boxes
+**Styles** (`body style`): `model` (default: Patrick's Blender character, see
+[3d-character.md](3d-character.md); until it exists, the rigged placeholder
+`assets/body3d/mannequin.glb`), and the code-made tests `fit` (muscle profiles),
+`blocky`, `soft`, `round`.
+
+**The code-made styles** are a mannequin made in code from capsules, spheres and boxes
 (`Body3D._build`), sized from the Scholar: no model file. Its colors are each palette
 group's dark, middle and light shades (recolored by the character's look), so the
 character creator colors work. The robe is a tube over each thigh, so it follows the
@@ -240,9 +245,8 @@ use Compatibility, which handles color spaces differently. `color_space` "auto" 
 per renderer. If the 3D body looks too dark, too saturated or washed out next to the
 world, try `body colors as_is`, `srgb` or `linear` and tell Claude which one matches.
 
-**A modeled character later:** a Blender model exported as glTF, with bones for hips,
-knees, feet, shoulders, elbows, hands and head, replaces `_build`; the same IK targets
-drive its bones. That's the next phase if the prototype works for you.
+**A modeled character:** see [3d-character.md](3d-character.md). The bones of a glTF
+model are turned to point at the same IK targets (`_pose_model`).
 
 ## Joints (pivots)
 
