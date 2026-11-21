@@ -934,13 +934,19 @@ func gust(spell: SpellData, from: Vector2, dir: Vector2) -> int:
 			continue
 		if d > 1.0 and rad_to_deg(absf(dir.angle_to(to))) > spell.gust_angle:
 			continue
+		if not world.line_clear(from, r.get_center()):
+			continue  # walls stop the gust
 		if spell.damage > 0.0:
 			node.call(&"take_damage", spell.damage * _spell_power(), p)
 		if node.has_method(&"knock_back"):
 			node.call(&"knock_back", from, spell.gust_push)
 		hit += 1
-	if not p.is_on_floor() and spell.gust_recoil > 0.0:
-		p.velocity -= dir * spell.gust_recoil * TILE
+	var recoil := spell.gust_recoil if not p.is_on_floor() else spell.gust_recoil_ground
+	if recoil > 0.0:
+		var push := -dir * recoil * TILE
+		if p.is_on_floor():
+			push.y = minf(push.y, 0.0)  # on the ground: sideways (or up), never into the floor
+		p.velocity += push
 	SpellEffect.spawn(world.effects, SpellEffect.Kind.GUST, from, dir * reach_px, spell.projectile_color,
 		spell.gust_angle)
 	return hit

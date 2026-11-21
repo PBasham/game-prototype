@@ -506,8 +506,10 @@ func toggle_dev_items() -> void:
 
 ## Puts `count` of an item on the mouse (the Dev items window). The same item adds up
 ## to a stack; something else on the mouse goes back to the inventory first.
-func give_cursor(item_id: StringName, count: int) -> void:
-	if cursor_count > 0 and cursor_id != item_id:
+## `meta` {"infinite": true} makes a stack that never runs out (right click in the Dev
+## items window).
+func give_cursor(item_id: StringName, count: int, meta: Dictionary = {}) -> void:
+	if cursor_count > 0 and (cursor_id != item_id or cursor_meta != meta):
 		if _cursor_is_spell():
 			_clear_cursor()
 		else:
@@ -519,6 +521,7 @@ func give_cursor(item_id: StringName, count: int) -> void:
 	var cap := Inventory.max_stack(item_id)
 	cursor_count = mini(cap, (cursor_count if cursor_id == item_id else 0) + count)
 	cursor_id = item_id
+	cursor_meta = meta
 	_redraw()
 
 
@@ -911,8 +914,9 @@ func _draw_cursor_stack(g: Control) -> void:
 	var m := g.get_local_mouse_position()
 	if item and item.icon:
 		g.draw_texture_rect(item.icon, Rect2(m + Vector2(2, 2), Vector2(16, 16)), false)
-	if cursor_count > 1:
-		_draw_count(g, ThemeDB.fallback_font, Rect2(m, Vector2(SLOT, SLOT)), cursor_count)
+	if cursor_count > 1 or cursor_meta.get("infinite", false):
+		_draw_count(g, ThemeDB.fallback_font, Rect2(m, Vector2(SLOT, SLOT)),
+			-1 if cursor_meta.get("infinite", false) else cursor_count)
 
 
 func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, alpha: float = 1.0,
@@ -937,6 +941,8 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 		# Red when it can't be cast right now.
 		if world.character.cast_problem(item as SpellData) != "":
 			g.draw_rect(r.grow(-2), BAD)
+	elif meta.get("infinite", false):
+		_draw_count(g, font, r, -1)
 	elif count > 1:
 		_draw_count(g, font, r, count)
 
@@ -1075,8 +1081,9 @@ func _draw_status(g: Control) -> void:
 		g.draw_string(font, Vector2(104, y + 7), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
 
 
+## A stack's count in a slot's corner (-1: an infinite dev stack, "inf").
 func _draw_count(g: Control, font: Font, r: Rect2, n: int) -> void:
-	var text := str(n)
+	var text := "inf" if n < 0 else str(n)
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 	var at := r.position + Vector2(SLOT - w - 2, SLOT - 3)
 	g.draw_string(font, at + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, Color(0, 0, 0, 0.8))
@@ -2329,7 +2336,8 @@ func _update_tooltip(over: Control) -> void:
 	_tooltip_types.text = spell_types(item as SpellData) if item is SpellData else ""
 	_tooltip_types.visible = _tooltip_types.text != ""
 	_tooltip.reset_size()
-	var at := over.get_global_mouse_position() + Vector2(10, 8)
+	# `over` is null for a chest's name (hovering it in the world, not a window).
+	var at := (over if over else _tooltip).get_global_mouse_position() + Vector2(10, 8)
 	var view := _view_size()
 	at.x = minf(at.x, view.x - _tooltip.size.x - 2)
 	at.y = minf(at.y, view.y - _tooltip.size.y - 2)
@@ -2442,7 +2450,22 @@ static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
 		lines.append("Cooldown %s s" % _num(spell.cooldown))
 	if c and c.knows(spell.id) and c.cast_problem(spell) != "":
 		lines.append("Can't cast now: %s" % c.cast_problem(spell))
+	var own := own_key_note(spell)
+	if own != "":
+		lines.append(own)
 	return "\n".join(lines)
+
+
+## Spells with a key of their own don't need a wheel or Z X C slot; the tooltip says so.
+static func own_key_note(spell: SpellData) -> String:
+	match spell.id:
+		&"mining_spell":
+			return "Has its own key (R), so it doesn't need a wheel slot unless you want one."
+		&"chopping_spell":
+			return "Has its own key (Ctrl + R), so it doesn't need a wheel slot unless you want one."
+	if spell.fits_movement_slot():
+		return "Can go in the Movement slot (F key), so it doesn't need a wheel slot unless you want one."
+	return ""
 
 
 static func _num(v: float) -> String:

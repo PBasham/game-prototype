@@ -1,10 +1,10 @@
 class_name DevItemsWindow
 extends HudWindow
 ## Dev builds: every item in the game, like a creative menu (F7, or console `creative`).
-## Tabs by kind and a search box narrow the grid. Left click puts a full stack on the
-## mouse (click again to add another stack's worth, up to a stack); right click puts one;
-## shift + click sends a full stack straight to your inventory. Nothing else changes (no
-## flying or god mode): it's just the menu.
+## Tabs by kind and a search box narrow the grid. Like crafting: left click puts 1 on
+## the mouse, shift + click 10, ctrl + click a full stack (clicks add up, to a stack).
+## Right click puts an infinite stack on the mouse: placing, eating or throwing from it
+## uses nothing ("inf" in its corner). Nothing else changes (no flying or god mode).
 
 const SLOT := Hud.SLOT
 const STEP := Hud.STEP
@@ -183,12 +183,11 @@ func body_click(mb: InputEventMouseButton) -> void:
 		Part.ITEM:
 			var it: ItemData = shown()[h[1]]
 			var stack := maxi(it.max_stack, 1)
-			if mb.button_index == MOUSE_BUTTON_LEFT and mb.shift_pressed:
-				var left := hud.world.character.inventory.add(it.id, stack)
-				if left > 0:
-					EventBus.debug_message.emit("No room for more %s" % it.display_name)
-			elif mb.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
-				hud.give_cursor(it.id, stack if mb.button_index == MOUSE_BUTTON_LEFT else 1)
+			if mb.button_index == MOUSE_BUTTON_RIGHT:
+				hud.give_cursor(it.id, 1, {"infinite": true})
+			elif mb.button_index == MOUSE_BUTTON_LEFT:
+				var n := stack if mb.ctrl_pressed or mb.meta_pressed else (10 if mb.shift_pressed else 1)
+				hud.give_cursor(it.id, mini(n, stack))
 
 
 func tooltip_at(local: Vector2) -> Array:

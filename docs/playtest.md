@@ -220,6 +220,12 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Pickaxe in hand, right click an outlined stick or rock in front of a back wall:
       you pick it up (the wall stays).
 - [ ] Lumber Rack: logs in staggered rows, filling a full layer at a time.
+- [ ] Placing a Lumber Rack, Potion Cabinet or chest: no error in the debugger.
+- [ ] Dev items (F7): click 1, shift 10, ctrl a stack; right click an "inf" stack that
+      places forever.
+- [ ] Air Push: a wall in between stops it; enemies fly farther; on the ground it
+      shoves you a bit the other way (a little dash), more in the air.
+- [ ] Tooltips of Mining, Chopping, Fly, Levitate: "doesn't need a wheel slot".
 - [ ] Raspberries fill more (+14), blueberries heal more (+4 health).
 - [ ] Campfire: Raspberry Compote (4 + a bowl, Mending: +1 health/s for 4 min) and
       Blueberry Mash (4 + a bowl, Light Step: +15% speed for 4 min).

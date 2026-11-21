@@ -461,6 +461,15 @@ func test_dev_items_window_gives_stacks() -> void:
 	assert_eq(hud.cursor_count, Inventory.max_stack(&"wood_platform"), "never past a stack")
 	hud.cursor_count = 0
 	hud.cursor_id = &""
+	# Right click: an infinite stack. Placing from it uses nothing.
+	hud.give_cursor(&"wood_platform", 1, {"infinite": true})
+	var p := w.player
+	assert_true(p.mouse_stack or hud.cursor_count == 1)
+	hud.cursor_count = 1
+	assert_true(hud.cursor_meta.get("infinite", false))
+	hud.cursor_count = 0
+	hud.cursor_id = &""
+	hud.cursor_meta = {}
 	hud.toggle_dev_items()
 	hud.set_open(false)
 
