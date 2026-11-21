@@ -267,3 +267,5 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/darkwood_workbench.png (+ icon, held) | The Workbench recolored to darkwood (80x64, detail 2). Placeholder (`--phase16` on `art/concepts/dark_forest/make_dark_forest.py`) |
 | terrain/reinforced_wood{,_wall}.png, terrain/reinforced_darkwood{,_wall}.png | 64x64 planks with iron straps and rivets; icons and held sprites cut from them. Same script |
 | tiles/blocks.png rows 11, 12 | Collision atlas rows for the reinforced blocks (copies of the planks row) |
+| terrain/darkwood_logs.png, terrain/darkwood_logs_wall.png | The log block and wall recolored to darkwood. Placeholders |
+| tiles/blocks.png row 13 | Collision row for the darkwood log block (copy of the log row) |

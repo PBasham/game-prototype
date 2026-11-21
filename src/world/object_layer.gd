@@ -135,10 +135,12 @@ func draw_chunk(view: ChunkObjects) -> void:
 				view.draw_set_transform(Vector2.ZERO)
 			else:
 				view.draw_texture_rect_region(def.frames, dest, src)
-			if def.fill_look == ObjectDef.FillLook.BOTTLES:
+			if def.fill_look in [ObjectDef.FillLook.BOTTLES, ObjectDef.FillLook.PILE]:
 				var store := world.container_at(origin + Vector2i(lx, ly))
-				if store:
+				if store and def.fill_look == ObjectDef.FillLook.BOTTLES:
 					_draw_bottles(view, dest, store, world.is_flipped(origin + Vector2i(lx, ly)))
+				elif store:
+					_draw_pile(view, dest, store, world.is_flipped(origin + Vector2i(lx, ly)))
 
 
 ## Redraws every shown chunk's objects (a storage's fill changed).
@@ -176,6 +178,46 @@ func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool) -> voi
 		view.draw_rect(Rect2(o + Vector2(p.x - 1, p.y - 7) * s, Vector2(3, 2) * s), Color("cdbeaa"))  # neck
 		view.draw_rect(Rect2(o + Vector2(p.x - 2, p.y - 5) * s, Vector2(5, 5) * s), colors[b])
 		view.draw_rect(Rect2(o + Vector2(p.x - 1, p.y - 4) * s, Vector2(1, 1) * s), Color(1, 1, 1, 0.8))
+
+
+## Lumber Rack: staggered rows of 5, 4, 5, 4, 5 ends (23), bottom row first, as many as
+## it is full; each item gets its share in slot order. Logs are round ends with a ring,
+## wood is square board ends. In art pixels of its 48x48 picture.
+func _draw_pile(view: Node2D, dest: Rect2, inv: Inventory, flip: bool) -> void:
+	var spots: Array[Vector2] = []
+	for row in 5:
+		var n := 5 if row % 2 == 0 else 4
+		var x0 := 9.0 if row % 2 == 0 else 12.5
+		for i in n:
+			spots.append(Vector2(x0 + i * 7.0, 38.0 - row * 6.0))
+	var kinds: Array[ItemData] = []
+	var total := 0.0
+	for i in inv.size:
+		if inv.is_empty(i):
+			continue
+		var share := inv.counts[i] / float(maxi(inv.cap_for(inv.ids[i]), 1)) / inv.size
+		total += share
+		var n := maxi(1, roundi(share * spots.size()))
+		for _k in n:
+			kinds.append(ItemData.find(inv.ids[i]))
+	var shown := mini(kinds.size(), maxi(roundi(total * spots.size()), 1 if total > 0.0 else 0))
+	var s := dest.size.x / 48.0
+	for b in mini(shown, spots.size()):
+		var p := spots[b]
+		if flip:
+			p.x = 48.0 - p.x
+		var at := dest.position + p * s
+		var c := shelf_color(kinds[b])
+		var dark := c.darkened(0.45)
+		if kinds[b] and String(kinds[b].id).ends_with("log"):
+			view.draw_circle(at, 3.4 * s, dark)
+			view.draw_circle(at, 2.6 * s, c)
+			view.draw_arc(at, 1.4 * s, 0.0, TAU, 10, dark, 0.5 * s)
+			view.draw_rect(Rect2(at - Vector2(0.5, 0.5) * s, Vector2(1, 1) * s), dark)
+		else:
+			view.draw_rect(Rect2(at - Vector2(3.2, 2.8) * s, Vector2(6.4, 5.6) * s), dark)
+			view.draw_rect(Rect2(at - Vector2(2.6, 2.2) * s, Vector2(5.2, 4.4) * s), c)
+			view.draw_line(at + Vector2(-2.6, 0) * s, at + Vector2(2.6, 0) * s, dark, 0.5 * s)
 
 
 static var _shelf_colors: Dictionary[StringName, Color] = {}

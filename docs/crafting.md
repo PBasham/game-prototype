@@ -236,15 +236,18 @@ can't mine the floor under furniture.
 
 | Object | Size | Holds | Capacity | Recipe (workbench) |
 | --- | --- | --- | --- | --- |
-| Lumber Rack | 3x3 | Wood and Logs | 10 stacks of 100 (1,000) | 25 Wood + 4 Logs |
+| Lumber Rack | 3x3 | Any logs and wood (Log, Darkwood Log, Wood, Darkwood, both Reinforced) | 10 full stacks (9,999 each) | 25 Wood + 4 Logs |
 | Potion Cabinet | 3x4 | Potions, coatings, flasks | 10 normal stacks | 20 Wood + 2 Copper Bars + 2 Clay Flasks |
 
   Fields on the `ObjectDef`: `container_accepts` (a storage tag; items list theirs in
-  `ItemData.storage_tags`: wood and logs are `lumber`; healing and mana potions, poison
+  `ItemData.storage_tags`: every log and wood is `lumber`; healing and mana potions, poison
   coatings and flasks, and clay flasks are `potion`), `container_stack_cap` (a stack size
-  that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (the sprite sheet
-  has 11 frames, 0% to 100% in 10% steps: the Lumber Rack's logs sit in staggered rows and fill a layer at a time)
-  or `BOTTLES` (the Potion Cabinet draws one bottle per item kind on its shelves, in that
+  that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (a sprite sheet
+  of 11 frames, 0% to 100% in 10% steps; unused now), `PILE` (the Lumber Rack: its
+  empty frame, with up to 23 ends drawn on it in staggered rows of 5 and 4, filled a
+  layer at a time, each kind getting its share: **round log ends** for logs, **square
+  board ends** for wood, in the item's `shelf_color`, so you can see pine vs darkwood
+  and logs vs boards at a glance; `ObjectLayer._draw_pile`) or `BOTTLES` (the Potion Cabinet draws one bottle per item kind on its shelves, in that
   item's `shelf_color`; filled shelves follow the stacks inside). The window shows
   "used / total" and a fill bar. Art from `art/concepts/storage/make_storage.py`.
 - Console `stock <item> [count]` fills the chest you have open (testing storage).

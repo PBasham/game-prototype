@@ -12,7 +12,10 @@ Newest first. Each entry: what was decided, why, and what it affects.
   tiles of you, terrain colors from the textures, saved as a picture. Pins, trees,
   chests and teleporting are later.
 - **Block stacks (Patrick):** every block item stacks to 9999 (was 999). Special storage
-  keeps its own cap (the Lumber Rack: 100 a slot).
+  had its own cap; the Lumber Rack now holds full stacks (Patrick), 10 of them, of any
+  logs or wood, and shows each kind: round log ends, square board ends, in their colors.
+- **Darkwood Log (Patrick):** the Dark Log is the Darkwood Log and builds a darkwood log
+  block and wall, like the Log.
 - **Darkwood and stations (Patrick):** darkwood upgrades the Workbench to the
   Darkwood Workbench (tier 2, 20 Darkwood + 3 Iron Bars), which makes Reinforced Wood
   and Reinforced Darkwood (both for now; one may go later).

@@ -15,10 +15,15 @@ grip = Vector2(4, 6)
 
 [resource]
 script = ExtResource("5_rg4gt")
+shelf_color = Color(0.416, 0.259, 0.376, 1)
+max_stack = 9999
+kind = 1
 icon = ExtResource("4_0jcnu")
 held = SubResource("Resource_3bhk4")
 impact_at = 0.2
+places_block = &"darkwood_log"
+places_wall = &"darkwood_log_wall"
 storage_tags = Array[StringName]([&"lumber"])
 id = &"dark_log"
-display_name = "Dark Log"
-description = "From darkwood trees in the Dark Forest. Craft into 4 Darkwood."
+display_name = "Darkwood Log"
+description = "From darkwood trees. Craft into 4 Darkwood, or build with it: a darkwood log block (right click: a log back wall)."

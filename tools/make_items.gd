@@ -96,7 +96,8 @@ func _items() -> Array[ItemData]:
 	# Logs: what trees drop. Craft into 4 Wood, or build a log cabin with them.
 	out.append(_block(&"log", "Log", "From trees. Craft into 4 Wood, or build with it: a log cabin block (right click: a log back wall).", &"log_wall"))
 	# Dark Forest: darkwood trees drop Dark Logs, 1 = 4 Darkwood (a building block).
-	var dlog := _small(&"dark_log", "Dark Log", "From darkwood trees in the Dark Forest. Craft into 4 Darkwood.")
+	var dlog := _block(&"dark_log", "Darkwood Log", "From darkwood trees. Craft into 4 Darkwood, or build with it: a darkwood log block (right click: a log back wall).", &"darkwood_log_wall")
+	dlog.places_block = &"darkwood_log"
 	out.append(dlog)
 	var dwood := _block(&"darkwood", "Darkwood", "Dark, dense wood from the Dark Forest (1 Dark Log = 4). A building block (right click: a back wall).", &"darkwood_wall")
 	dwood.places_block = &"darkwood_planks"
@@ -739,8 +740,7 @@ func _objects() -> Array[ObjectDef]:
 	out[12].detail = 2
 	out[12].container_slots = 10
 	out[12].container_accepts = &"lumber"
-	out[12].container_stack_cap = 100
-	out[12].fill_look = ObjectDef.FillLook.FRAMES
+	out[12].fill_look = ObjectDef.FillLook.PILE
 	out[13].detail = 2
 	out[13].container_slots = 10
 	out[13].container_accepts = &"potion"
@@ -1079,12 +1079,15 @@ func _spell(spell_id: StringName, label: String, text: String) -> SpellData:
 
 
 ## Which special storage takes an item (Lumber Rack, Potion Cabinet).
-const STORAGE_TAGS := {&"log": &"lumber", &"wood": &"lumber", &"dark_log": &"lumber", &"darkwood": &"lumber", &"healing_potion": &"potion",
+const STORAGE_TAGS := {&"log": &"lumber", &"wood": &"lumber", &"dark_log": &"lumber", &"darkwood": &"lumber",
+	&"reinforced_wood": &"lumber", &"reinforced_darkwood": &"lumber", &"healing_potion": &"potion",
 	&"mana_potion": &"potion", &"poison_coating": &"potion", &"poison_flask": &"potion", &"clay_flask": &"potion"}
 
 
 ## How potions look in a Potion Cabinet.
 const SHELF_COLORS := {&"healing_potion": Color(0.86, 0.27, 0.27), &"mana_potion": Color(0.3, 0.5, 0.95),
+	&"log": Color("a07a4c"), &"wood": Color("c8a06a"), &"dark_log": Color("6a4260"), &"darkwood": Color("8e5f7f"),
+	&"reinforced_wood": Color("b08a5c"), &"reinforced_darkwood": Color("7a4f6c"),
 	&"poison_coating": Color(0.45, 0.8, 0.32), &"poison_flask": Color(0.45, 0.8, 0.32), &"clay_flask": Color(0.66, 0.46, 0.32)}
 
 

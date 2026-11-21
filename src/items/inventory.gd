@@ -60,19 +60,13 @@ func cap_for(item_id: StringName) -> int:
 	return stack_cap if stack_cap > 0 else max_stack(item_id)
 
 
-## How full it is, 0 to 1: items over what all its slots could hold.
+## How full it is, 0 to 1: each slot counts as its share of a full stack there.
 func fill() -> float:
-	var used := 0
-	var room := 0
+	var total := 0.0
 	for i in size:
-		var cap := stack_cap if stack_cap > 0 else (max_stack(ids[i]) if not is_empty(i) else 0)
-		if cap <= 0:
-			continue
-		used += counts[i]
-		room += cap
-	if stack_cap > 0:
-		room = stack_cap * size
-	return clampf(float(used) / maxf(room, 1.0), 0.0, 1.0)
+		if not is_empty(i):
+			total += counts[i] / float(maxi(cap_for(ids[i]), 1))
+	return clampf(total / maxf(size, 1.0), 0.0, 1.0)
 
 
 static func max_stack(item_id: StringName) -> int:

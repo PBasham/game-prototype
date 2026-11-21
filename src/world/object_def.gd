@@ -83,7 +83,10 @@ enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 ## How it shows how full it is: FRAMES = its strip has 11 frames, 0% to 100% in 10%
 ## steps (Lumber Rack); BOTTLES = bottles on its shelves in the colors of what's
 ## inside (Potion Cabinet).
-enum FillLook { NONE, FRAMES, BOTTLES }
+## PILE: the Lumber Rack: frame 0 (the empty rack), with what's inside drawn on it in
+## staggered rows filled a layer at a time: round log ends for logs, square board ends
+## for wood, each in its item's color (`ItemData.shelf_color`, else its icon's).
+enum FillLook { NONE, FRAMES, BOTTLES, PILE }
 @export var fill_look := FillLook.NONE
 ## Storage slots (chests). It can only be picked up when empty.
 @export var container_slots := 0

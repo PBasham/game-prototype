@@ -528,13 +528,24 @@ func test_special_storage_takes_only_its_kind_and_fills_up() -> void:
 	var rack := w.container_at(a)
 	assert_eq(rack.size, 10)
 	assert_eq(rack.add(&"stone", 10), 10, "stone doesn't go in")
-	assert_eq(rack.add(&"wood", 700), 0, "100 a slot")
-	assert_eq(rack.add(&"log", 400), 100, "1,000 in all")
+	# Any logs and wood, in full stacks.
+	var full := Inventory.max_stack(&"wood")
+	assert_eq(full, 9999)
+	assert_eq(rack.add(&"wood", full * 5), 0, "full stacks")
+	assert_eq(rack.add(&"dark_log", full * 3), 0)
+	assert_eq(rack.add(&"reinforced_darkwood", full * 2), 0)
+	assert_eq(rack.add(&"log", 10), 10, "10 stacks in all")
 	assert_almost_eq(rack.fill(), 1.0, 0.001)
-	assert_eq(w.object_layer.frame_for(w.objects.def(rack_id) as ObjectDef, a, rack_id), 10, "the full frame")
-	rack.remove(&"log", 400)
-	rack.remove(&"wood", 200)
-	assert_eq(w.object_layer.frame_for(w.objects.def(rack_id) as ObjectDef, a, rack_id), 5, "half full")
+	rack.remove(&"wood", full * 5)
+	assert_almost_eq(rack.fill(), 0.5, 0.001, "half full by stacks")
+	assert_eq((w.objects.def(rack_id) as ObjectDef).fill_look, ObjectDef.FillLook.PILE)
+	# Darkwood logs build blocks like logs do.
+	var dl := ItemData.find(&"dark_log")
+	assert_eq(dl.display_name, "Darkwood Log")
+	assert_eq(dl.places_block, &"darkwood_log")
+	assert_gt(w.blocks.index_of(&"darkwood_log"), 0)
+	assert_gt(w.walls.index_of(&"darkwood_log_wall"), 0)
+	assert_eq(w.blocks.def(w.blocks.index_of(&"darkwood_log")).drop_item, &"dark_log")
 	# The mouse can't drop stone in, either.
 	var hud := w.hud
 	hud.cursor_id = &"stone"
