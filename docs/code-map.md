@@ -312,6 +312,13 @@ legs, body and head are frames, or legs can be posed in code too (`PaperDoll.leg
 console `legs`, see "Legs posed in code"). Held item motion: `data/item_types/`. Colors:
 `tools/make_character_palette.gd`. Everything is in [character-art.md](character-art.md).
 
+Render test (Phase 19, console `doll`): `src/player/doll/doll_canvas.gd` (own pixel
+grid), `Player.set_doll_render` (picks the sheet and canvas), the "Motion extras"
+exports and `land()` on the doll, `DollRig.art_scale` / `rect_base` (upscaled sheets),
+`tools/upscale_doll.py` (makes `scholar@x2n`, `@x2s`, `@x4s`, `@x4ns`). Hand-drawn
+key poses: `PaperDoll.DRAWN_POSE_TAGS`, `drawn_pose_frame()`. Inside a canvas, convert
+with `doll_to_world` / `world_to_doll`, never `to_local` on the doll.
+
 ## Sounds
 
 `src/core/sounds.gd` plays `assets/sounds/<id>.wav` when anything calls

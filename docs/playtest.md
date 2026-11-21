@@ -309,9 +309,15 @@ guesses; the docs listed say where each tunable lives.
       back, thighs level. Place it facing left: you sit facing left.
 - [ ] While typing, WASD, I, K and the rest don't do anything in the game.
 
+**Phase 19: doll render test (branch phase-19-doll-render)**
+- [ ] Console `doll grid on`, then compare `art 1x`, `art 2x`, `art 2x_smooth`,
+      `turn rotsprite`. Look at arms swinging a tool, legs on a chair (`place chair`,
+      right click it) and `/sit`. `doll grid off art 1x turn basic` is how it was.
+- [ ] `doll squash on`: jump and land. `doll sway on`: run and stop, watch the hair.
+- [ ] `doll blend off`: hands snap between poses instead of sliding.
+- [ ] Which combination to keep as the default (and what to drop) is your call.
+- [ ] Optional: draw a `Sit` frame in Aseprite, reimport, rerun `tools/upscale_doll.py`.
+
 ## Known
 
-- `test_spawns_ahead_when_moving_and_despawn_waits` (test_combat.gd) fails now and
-  then: it rolls 40 spawns and wants more than 26 ahead of you, so bad luck can fail it.
-  Not a game bug; it passes when rerun.
 - Window positions reset when you quit. Accessories aren't drawn on the character.

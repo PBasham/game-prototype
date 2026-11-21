@@ -156,6 +156,43 @@ the body comes down by however far the hips drop. Emote arms are `_emote_arm_ang
 A new emote is a name in `Player.EMOTES`, a pose here, and its legs or arms in those
 two functions.
 
+## Render test: pixel grid, 2x art, RotSprite, motion (Phase 19)
+
+Switches for comparing ways of drawing the doll, all in game from the console (~):
+
+```
+doll                                   # prints the current settings
+doll grid on art 2x_smooth turn rotsprite squash on sway on
+doll grid off art 1x turn basic        # back to how it was
+```
+
+| Switch | Values | What it does |
+| --- | --- | --- |
+| `grid` | on, off | **On:** the doll is drawn into its own small canvas (`DollCanvas`, a SubViewport) at art resolution, then shown in the world. A turned limb is redrawn in whole square pixels lined up with the body, instead of rotated pixels at odd angles. |
+| `art` | 1x, 2x, 2x_smooth | **2x:** the sheet doubled with plain nearest (same look, twice the pixels to turn). **2x_smooth:** doubled with Scale2x, which rounds diagonals. Both are drawn at half size, so the Scholar stays the same size. |
+| `turn` | basic, rotsprite | **rotsprite:** draws from a 4x Scale2x sheet and shrinks it onto the grid (nearest), a RotSprite style turn with cleaner lines. Forces the grid on. |
+| `squash` | on, off | Landing squashes a little and springs back; rising stretches. Tunables: "Motion extras" on the Doll (`squash_land`, `squash_time`, `stretch_rise`). |
+| `sway` | on, off | Hair swings on a spring as you move (`sway_stiffness`, `sway_damping`, `sway_max`). |
+| `blend` | on, off | The hands slide between poses (`blend_time` 0.07) or snap (0). |
+
+The same switches are exports on the Player ("Doll render (test)") and the Doll.
+
+**The 2x sheets** come from `python3 tools/upscale_doll.py` (needs numpy and Pillow):
+`assets/sprites/scholar@x2n` (nearest), `@x2s` (Scale2x, **your starting point to refine
+at 2x**), `@x4s` and `@x4ns` (for RotSprite). Each json has `art_scale` and the doubled
+anchor and pivots; `DollRig` divides back so all doll math stays in original art pixels.
+Rerun the script after reimporting the Aseprite file. To use a hand-refined 2x sheet,
+draw over `scholar@x2s_parts.png` and keep the json next to it.
+
+**Limits:** hair and armor overlays are doubled with nearest only (blocky at 2x until
+drawn at 2x). Sitting in the long robe still needs drawn frames (below).
+
+**Hand-drawn key poses:** add a tag `Sit` or `SitFloor` (or `legs/Sit`, `legs/SitFloor`)
+to the Aseprite file, one frame, and that frame is shown for the pose instead of the
+code-posed legs. Arms are still posed in code. `PaperDoll.use_drawn_poses` (off) goes
+back to the code pose to compare. Align the drawing to the same foot anchor; the chair's
+`seat_height_px` doesn't move a drawn frame.
+
 ## Joints (pivots)
 
 Code needs the shoulder, elbow and hand of each arm.

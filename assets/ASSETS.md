@@ -27,6 +27,7 @@ godot --headless --path . --script res://tools/import_aseprite.gd -- --in=res://
 | `scholar_palette.tres` | Recolorable color groups (skin, tunic, pants, leather, trim, hair), from `tools/make_character_palette.gd` |
 | `scholar_look.tres` | Default look: colors (none changed) and hairstyle |
 | `hair/short.png` | **Placeholder** hairstyle, 9x6, faces right (drawn by `make_character_palette.gd`) |
+| `scholar@x2n*`, `@x2s*`, `@x4s*`, `@x4ns*` | Upscaled sheets for the render test (Phase 19), from `python3 tools/upscale_doll.py`: nearest 2x, Scale2x 2x (base to refine), Scale2x 4x, nearest then Scale2x 4x. Rerun after reimporting. |
 
 Frames are 44x64, feet at (20, 64). How to draw for the paper doll (layers, tags,
 pivots, arm poses) is in [docs/character-art.md](../docs/character-art.md).

@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-21: Phase 19, doll render test
+
+- **Patrick:** do all three: 2x art (scaled up accurately, Scale2x smoothed base to
+  refine), the character on its own pixel grid, hand-drawn key poses plus code motion,
+  each switchable from the console to compare. All are switches (`doll` command), off by
+  default, so today's look is unchanged until Patrick picks.
+- 2x is drawn at half size, so the Scholar stays ~3 by 8 tiles; doll math stays in
+  original art pixels. Overlays (hair, armor) are only nearest doubled for now.
+- RotSprite is approximated (4x Scale2x, shrunk with nearest), not the full algorithm.
+- Hand-drawn poses: a `Sit` / `SitFloor` tag wins over the code pose for the legs.
+- Two random tests were made steadier (more tries, a longer wait).
+
 ## 2026-11-21: Phase 18, emotes, chat and a chair
 
 - **Patrick:** go deeper on the rig with sitting (a chair and the floor), triggered from a

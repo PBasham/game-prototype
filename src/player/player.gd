@@ -264,6 +264,15 @@ var seat := World.NO_TILE
 var _emote_left := 0.0
 ## Wave and cheer last this long (seconds); sitting lasts until you move.
 @export var emote_seconds := 3.0
+
+@export_group("Doll render (test)")
+## Start-up render settings (console `doll` changes them live; see set_doll_render).
+@export var doll_grid := false
+@export_enum("1x", "2x", "2x_smooth") var doll_art := "1x"
+@export_enum("basic", "rotsprite") var doll_turn := "basic"
+@export_group("")
+var _canvas: DollCanvas
+var _doll_sheet := ""
 ## The attack playing (null = none), seconds into it, and its place in the combo.
 var _attack: ItemMotion
 var _attack_time := 0.0
@@ -319,6 +328,68 @@ func _ready() -> void:
 	mana = max_mana
 	_doll.setup(DollRig.load_from(SHEET), load(PALETTE) as CharacterPalette)
 	_doll.look = look if look else load(DEFAULT_LOOK) as CharacterLook
+	_doll_sheet = SHEET
+	if doll_grid or doll_art != "1x" or doll_turn != "basic":
+		set_doll_render.call_deferred(doll_grid, doll_art, doll_turn)
+
+
+## The paper doll (it may live inside a DollCanvas, so don't look it up by path).
+func doll() -> PaperDoll:
+	return _doll
+
+
+## Doll render test (console `doll`): which sheet and how it's drawn.
+## art: "1x" (the Aseprite export), "2x" (each pixel a 2x2 block), "2x_smooth" (Scale2x);
+## turn: "basic" (parts turned as they are) or "rotsprite" (drawn from a Scale2x sheet at
+## 4x, then shrunk onto the art grid; needs the grid); grid: drawn on its own pixel grid
+## (DollCanvas). Returns what it set, for the console.
+func set_doll_render(grid: bool, art: String, turn: String) -> String:
+	if not art in ["1x", "2x", "2x_smooth"]:
+		art = "1x"
+	if not turn in ["basic", "rotsprite"]:
+		turn = "basic"
+	if turn == "rotsprite":
+		grid = true  # it's the shrinking onto the grid that cleans the lines
+	var out_scale := 1 if art == "1x" else 2
+	var suffix := {"1x": "", "2x": "@x2n", "2x_smooth": "@x2s"}[art] as String
+	if turn == "rotsprite":
+		suffix = {"1x": "@x4s", "2x": "@x4ns", "2x_smooth": "@x4s"}[art]
+	var sheet := SHEET + suffix
+	if sheet != _doll_sheet:
+		if not FileAccess.file_exists(sheet + ".json"):
+			return "Missing %s: run python3 tools/upscale_doll.py" % sheet
+		_doll.setup(DollRig.load_from(sheet), load(PALETTE) as CharacterPalette)
+		_doll.look = look if look else load(DEFAULT_LOOK) as CharacterLook
+		_doll.item = held
+		_doll.stowed = stowed
+		_doll.wear(character.worn_items() if character else [] as Array[ItemData])
+		_doll_sheet = sheet
+	if grid:
+		if _canvas == null:
+			_canvas = DollCanvas.new()
+			_canvas.name = "DollCanvas"
+			add_child(_canvas)
+		_canvas.attach(_doll, _doll.rig.art_scale, out_scale)
+	elif _canvas and _canvas.is_on():
+		_canvas.detach(_doll)
+	doll_grid = grid
+	doll_art = art
+	doll_turn = turn
+	_place_doll()
+	return "Doll: grid %s, art %s, turning %s" % ["on" if grid else "off", art, turn]
+
+
+## Puts the doll (or its canvas) where the feet are, facing the right way. An upscaled
+## sheet is drawn at 1 / its scale (the doll works in original art pixels).
+func _place_doll() -> void:
+	if _canvas and _canvas.is_on():
+		_canvas.position = Vector2(0.0, _step_offset)
+		_canvas.set_facing(facing)
+		_doll.velocity = get_real_velocity() if is_inside_tree() else velocity
+		return
+	_doll.position = Vector2(0.0, _step_offset)
+	_doll.facing = facing
+	_doll.velocity = get_real_velocity() if is_inside_tree() else velocity
 
 
 ## Puts an item look in the player's hands (null = empty hands). The hotbar calls this
@@ -1526,13 +1597,13 @@ func _animate(delta: float) -> void:
 	var target := _slope_offset() if follow_slopes and is_on_floor() and not _climbing and not is_flying() and not is_levitating() else 0.0
 	var gap := absf(_step_offset - target)
 	_step_offset = move_toward(_step_offset, target, maxf(gap / maxf(step_smooth_time, 0.001), 30.0) * delta)
-	_doll.position.y = _step_offset
+	_place_doll()
 	# Moving = actually moving, or steering while not against a wall (so turning around
 	# doesn't flash the idle). Pushing into a wall counts as standing still.
 	var moving := absf(get_real_velocity().x) > 4.0 or (_input_x != 0.0 and is_on_floor() and not is_on_wall())
 	# Falling = off the ground a moment, or jumped. Brief bumps keep the run going.
 	var airborne := not is_on_floor() and (_air_time > air_grace_time or velocity.y < 0.0)
-	_doll.scale.x = float(facing)
+	_place_doll()
 	# Code-posed legs (PaperDoll.leg_mode, a rig test): how far we've walked, and the
 	# ground under each foot.
 	_doll.airborne = airborne or is_flying() or (is_levitating() and not is_on_floor())
@@ -1698,7 +1769,7 @@ func _ground_under_doll(local_x: float) -> float:
 		h = _ground_top(floori(x / TILE), global_position.y)
 	if is_inf(h):
 		return INF
-	return h - (global_position.y + _doll.position.y)
+	return h - (global_position.y + _step_offset)
 
 
 func _slope_offset() -> float:
@@ -1761,7 +1832,7 @@ func doll_item_position() -> Vector2:
 
 ## The front (casting) hand, in world space: spell beams start here.
 func casting_hand_position() -> Vector2:
-	return _doll.to_global(_doll.hands[&"front"]) if _doll.hands.has(&"front") else chest()
+	return _doll.doll_to_world(_doll.hands[&"front"]) if _doll.hands.has(&"front") else chest()
 
 
 ## Input, ignored while typing (the dev console).
@@ -1843,6 +1914,7 @@ func _track_fall() -> void:
 		if _airborne and not _climbing:
 			var fall := (global_position.y - _peak_y) / TILE
 			landed.emit(fall)
+			_doll.land(fall)
 			if fall >= 2.0:
 				_land_timer = land_time
 			if fall > fall_damage_start and has_buff(&"gel_cushion"):

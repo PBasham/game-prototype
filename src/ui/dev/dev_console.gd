@@ -363,6 +363,35 @@ func _register() -> void:
 		var n := int(a[1]) if a.size() > 1 else it.max_stack
 		var left := store.add(it.id, n)
 		_print("Stocked %d %s%s." % [n - left, it.display_name, " (the rest didn't fit)" if left > 0 else ""]))
+	_add("doll", "doll [grid on|off] [art 1x|2x|2x_smooth] [turn basic|rotsprite] [squash|sway|blend on|off]", "Doll render test: how the character is drawn and moves. No arguments: what's set.", func(a: PackedStringArray) -> void:
+		var p := world.player
+		var grid := p.doll_grid
+		var art := p.doll_art
+		var turn := p.doll_turn
+		var doll := p.doll()
+		var i := 0
+		while i + 1 < a.size():
+			var key := a[i]
+			var v := a[i + 1]
+			match key:
+				"grid":
+					grid = v == "on"
+				"art":
+					art = v
+				"turn":
+					turn = v
+				"squash":
+					doll.squash = v == "on"
+				"sway":
+					doll.sway = v == "on"
+				"blend":
+					doll.blend_time = 0.07 if v == "on" else 0.0
+				_:
+					_print("Unknown: %s" % key)
+					return
+			i += 2
+		_print(p.set_doll_render(grid, art, turn) + ", squash %s, sway %s, blend %s" % [
+			"on" if doll.squash else "off", "on" if doll.sway else "off", "on" if doll.blend_time > 0.0 else "off"]))
 	_add("emote", "emote <sit|wave|cheer|stand|chair>", "Play an emote, like the chat's /sit (chair: sit on the chair under the cursor).", func(a: PackedStringArray) -> void:
 		var p := world.player
 		if a.is_empty():
@@ -381,7 +410,7 @@ func _register() -> void:
 				_print(problem))
 	_add("legs", "legs [drawn|planted|posed]", "Leg rig test: drawn frames, drawn frames with feet planted on the ground, or a walk made in code.", func(a: PackedStringArray) -> void:
 		var modes := {"drawn": PaperDoll.LegMode.DRAWN, "planted": PaperDoll.LegMode.PLANTED, "posed": PaperDoll.LegMode.POSED}
-		var doll := world.player.get_node("Doll") as PaperDoll
+		var doll := world.player.doll()
 		if a.is_empty() or not modes.has(a[0]):
 			_print("Legs: %s. legs drawn | planted | posed" % String(PaperDoll.LegMode.keys()[doll.leg_mode]).to_lower())
 			return

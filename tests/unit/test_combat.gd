@@ -341,11 +341,11 @@ func test_spawns_ahead_when_moving_and_despawn_waits() -> void:
 	assert_gt(slime.aggro_tiles, sp.max_distance_tiles, "slimes notice you from where they spawn")
 	p.velocity.x = -20.0 * World.TILE  # running left
 	var left := 0
-	for i in 40:
+	for i in 200:  # random: enough tries that bad luck can't fail it
 		var spot := sp.find_spot(slime)
 		if spot != Vector2.INF and spot.x < p.global_position.x:
 			left += 1
-	assert_gt(left, 26, "mostly ahead (about 80%)")
+	assert_gt(left, 120, "mostly ahead (about 80%)")
 	p.velocity.x = 0.0
 	# Far away: kept for despawn_seconds, then removed.
 	var e := w.request_spawn_enemy(slime, p.global_position + Vector2(100 * World.TILE, -40))

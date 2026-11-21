@@ -134,7 +134,7 @@ func _drive(d: PaperDoll, attacking: bool, mouse: Vector2) -> void:
 	var facing := _facing
 	if d.motion and (d.motion.aims or attacking):
 		facing = 1.0 if mouse.x >= d.global_position.x else -1.0  # face the cursor
-	d.scale.x = facing
+	d.facing = int(facing)
 
 
 ## Plays a combo chain on a loop: each attack, a short pause, the next.

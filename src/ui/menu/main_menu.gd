@@ -173,7 +173,7 @@ func _make_preview(scale_by: float = 2.0) -> Array:
 	var doll := PaperDoll.new()
 	vp.add_child(doll)
 	doll.setup(_rig, _palette)
-	doll.scale = Vector2(scale_by, scale_by)
+	doll.draw_scale = scale_by  # the doll sets its own scale from this
 	doll.position = Vector2(vp.size.x * 0.5, vp.size.y - 8)
 	doll.play(&"Breath")
 	return [holder, doll]

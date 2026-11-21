@@ -26,6 +26,13 @@ const CHANNELS: Array[StringName] = [&"legs", &"body", &"back_arm", &"front_arm"
 
 ## The parts texture (one row per layer).
 var texture: Texture2D
+## Art pixels per original art pixel: 1 for the Aseprite export, 2 or 4 for the upscaled
+## copies (tools/upscale_doll.py: "<sheet>@x2n" and so on). Joints, frames and the
+## anchor are all in these pixels; the doll is drawn at 1 / art_scale.
+var art_scale := 1
+## How the upscaled copy was made ("n" = 2x blocks, "s" = Scale2x, in order): overlays
+## (armor, hair) are upscaled the same way to match.
+var upscale_steps: PackedStringArray = []
 var frame_size: Vector2i
 ## Feet inside a frame (doll origin), from the frame's top-left.
 var anchor: Vector2
@@ -106,6 +113,8 @@ func _load(base_path: String) -> void:
 	texture = load(base_path + "_parts.png") as Texture2D
 	frame_size = Vector2i(int(meta.frame_size[0]), int(meta.frame_size[1]))
 	anchor = Vector2(float(meta.anchor[0]), float(meta.anchor[1]))
+	art_scale = int(meta.get("art_scale", 1))
+	upscale_steps = PackedStringArray(meta.get("upscale", []))
 	var frame_list: Array = meta.frames
 	frame_count = frame_list.size()
 	for f: Dictionary in frame_list:
@@ -159,6 +168,43 @@ func _load(base_path: String) -> void:
 		else:
 			body_offset.append(Vector2.ZERO)
 		head_pos.append(Vector2(_rect(head, fi).position) if head >= 0 else Vector2.ZERO)
+	_to_base()
+
+
+## Joints, the anchor and offsets were measured in the sheet's pixels; the doll works
+## in original art pixels (1 / art_scale of those), so an upscaled sheet poses the same.
+## Sprites draw the sheet at 1 / art_scale (PaperDoll._set_region).
+func _to_base() -> void:
+	if art_scale == 1:
+		return
+	var k := 1.0 / art_scale
+	anchor *= k
+	for side: StringName in arms:
+		for key: String in ["shoulder", "elbow", "hand"]:
+			arms[side][key] = Vector2(arms[side][key]) * k
+	for side: StringName in legs:
+		for key: String in ["hip", "knee", "foot"]:
+			legs[side][key] = Vector2(legs[side][key]) * k
+	for side: StringName in shoulders:
+		var a := shoulders[side]
+		for i in a.size():
+			a[i] *= k
+		shoulders[side] = a
+	for side: StringName in drawn_feet:
+		var a := drawn_feet[side]
+		for i in a.size():
+			a[i] *= k
+		drawn_feet[side] = a
+	for i in body_offset.size():
+		body_offset[i] *= k
+	for i in head_pos.size():
+		head_pos[i] *= k
+
+
+## A part's used rectangle in a frame, in original art pixels.
+func rect_base(part: int, frame: int) -> Rect2:
+	var r := Rect2(rects[part][frame])
+	return Rect2(r.position / art_scale, r.size / art_scale)
 
 
 func _channel_for(layer_name: String) -> StringName:
@@ -201,7 +247,7 @@ func _measure_arm(img: Image, side: StringName) -> Dictionary:
 	var lr := _rect(lower, f)
 	if ur.size == Vector2i.ZERO or lr.size == Vector2i.ZERO:
 		return {}
-	var shoulder := _row_center(img, upper, f, ur.position.y) + Vector2(0, 1)
+	var shoulder := _row_center(img, upper, f, ur.position.y) + Vector2(0, art_scale)
 	var elbow := _row_center(img, upper, f, ur.end.y - 1)
 	var hand := _row_center(img, lower, f, lr.end.y - 1)
 	var pv: Dictionary = pivots[f] if f < pivots.size() else {}
@@ -232,7 +278,7 @@ func _measure_leg(img: Image, side: StringName) -> Dictionary:
 	var lr := _rect(lower, f)
 	if ur.size == Vector2i.ZERO or lr.size == Vector2i.ZERO:
 		return {}
-	var hip := _row_center(img, upper, f, ur.position.y) + Vector2(0, 1)
+	var hip := _row_center(img, upper, f, ur.position.y) + Vector2(0, art_scale)
 	var knee := _row_center(img, upper, f, ur.end.y - 1)
 	var foot := _row_center(img, lower, f, lr.end.y - 1)
 	return {"upper": upper, "lower": lower, "hip": hip, "knee": knee, "foot": foot}
@@ -253,7 +299,7 @@ func _measure_shoulders(img: Image, side: StringName, arm: Dictionary) -> Packed
 			continue
 		if lower.is_empty():
 			var r := _rect(arm.upper, f)
-			out.append(_row_center(img, arm.upper, f, r.position.y) + Vector2(0, 1))
+			out.append(_row_center(img, arm.upper, f, r.position.y) + Vector2(0, art_scale))
 			continue
 		# Elbow = the upper-arm pixel nearest the lower arm; shoulder = the upper-arm
 		# pixel farthest from it. Works however the arm is swung in the frame.

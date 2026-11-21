@@ -1,0 +1,190 @@
+{
+ "anchor": [
+  80,
+  256
+ ],
+ "frame_size": [
+  176,
+  256
+ ],
+ "frames": [
+  {
+   "duration_ms": 100,
+   "x": 0
+  },
+  {
+   "duration_ms": 100,
+   "x": 176
+  },
+  {
+   "duration_ms": 100,
+   "x": 352
+  },
+  {
+   "duration_ms": 100,
+   "x": 528
+  },
+  {
+   "duration_ms": 100,
+   "x": 704
+  },
+  {
+   "duration_ms": 100,
+   "x": 880
+  },
+  {
+   "duration_ms": 100,
+   "x": 1056
+  },
+  {
+   "duration_ms": 100,
+   "x": 1232
+  },
+  {
+   "duration_ms": 100,
+   "x": 1408
+  },
+  {
+   "duration_ms": 100,
+   "x": 1584
+  },
+  {
+   "duration_ms": 100,
+   "x": 1760
+  },
+  {
+   "duration_ms": 100,
+   "x": 1936
+  },
+  {
+   "duration_ms": 100,
+   "x": 2112
+  },
+  {
+   "duration_ms": 100,
+   "x": 2288
+  },
+  {
+   "duration_ms": 100,
+   "x": 2464
+  },
+  {
+   "duration_ms": 100,
+   "x": 2640
+  },
+  {
+   "duration_ms": 100,
+   "x": 2816
+  },
+  {
+   "duration_ms": 100,
+   "x": 2992
+  },
+  {
+   "duration_ms": 100,
+   "x": 3168
+  },
+  {
+   "duration_ms": 100,
+   "x": 3344
+  },
+  {
+   "duration_ms": 100,
+   "x": 3520
+  },
+  {
+   "duration_ms": 100,
+   "x": 3696
+  },
+  {
+   "duration_ms": 100,
+   "x": 3872
+  },
+  {
+   "duration_ms": 100,
+   "x": 4048
+  },
+  {
+   "duration_ms": 100,
+   "x": 4224
+  },
+  {
+   "duration_ms": 100,
+   "x": 4400
+  },
+  {
+   "duration_ms": 100,
+   "x": 4576
+  },
+  {
+   "duration_ms": 100,
+   "x": 4752
+  }
+ ],
+ "parts": [
+  {
+   "name": "Back Leg Lower",
+   "row": 0
+  },
+  {
+   "name": "Back Leg Upper",
+   "row": 1
+  },
+  {
+   "name": "Back Arm Lower",
+   "row": 2
+  },
+  {
+   "name": "Back Arm Upper",
+   "row": 3
+  },
+  {
+   "name": "Front Leg Lower",
+   "row": 4
+  },
+  {
+   "name": "Front Leg Upper",
+   "row": 5
+  },
+  {
+   "name": "Head",
+   "row": 6
+  },
+  {
+   "name": "Torso",
+   "row": 7
+  },
+  {
+   "name": "Front Arm Lower",
+   "row": 8
+  },
+  {
+   "name": "Front Arm Upper",
+   "row": 9
+  }
+ ],
+ "source": "Scholar-casual.aseprite",
+ "tags": {
+  "Breath": [
+   8,
+   19
+  ],
+  "Idle Pose": [
+   0,
+   0
+  ],
+  "Jog": [
+   20,
+   27
+  ],
+  "Jump": [
+   1,
+   7
+  ]
+ },
+ "upscale": [
+  "n",
+  "s"
+ ],
+ "art_scale": 4
+}

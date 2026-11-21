@@ -41,6 +41,21 @@ const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 ## attacking, aiming, between combo hits), instead of jumping there.
 @export var blend_time := 0.07
 
+@export_group("Motion extras (render test)")
+## Squash and stretch: a landing squashes the body (up to squash_land of its height,
+## springing back over squash_time); rising fast stretches it a little.
+@export var squash := false
+@export var squash_land := 0.12
+@export var squash_time := 0.2
+@export var stretch_rise := 0.05
+## Sway: hair (and an item on your back) swing behind your movement and settle, like a
+## spring: stiffness, damping, and the most it swings (degrees).
+@export var sway := false
+@export var sway_stiffness := 90.0
+@export var sway_damping := 9.0
+@export var sway_max := 18.0
+@export_group("")
+
 @export_group("Poses (emotes)")
 ## Sitting on a chair: how high the seat is above the floor (px; the chair sets it).
 @export var seat_height := 12.0
@@ -89,6 +104,20 @@ var airborne := false
 ## An emote pose (Player.emote): &"sit" (a chair), &"sit_floor", &"wave", &"cheer", or
 ## &"" for none. Sitting poses the legs in code whatever leg_mode is.
 var pose: StringName = &""
+## Drawn on its own pixel grid (DollCanvas): the node standing where the doll stands in
+## the world (world positions go through it), and how big the doll is drawn there
+## (sheet pixels per art pixel). Null and 1 when drawn straight into the world.
+var world_node: Node2D
+var draw_scale := 1.0
+## Which way it faces (1 right, -1 left); the doll sets its own scale from this, the
+## draw scale and squash and stretch.
+var facing := 1
+## How fast its owner is moving (world px per second), for squash, stretch and sway.
+var velocity := Vector2.ZERO
+var _squash_left := 0.0
+var _squash_k := 0.0
+var _sway_angle := 0.0
+var _sway_speed := 0.0
 var _pose_time := 0.0
 
 var rig: DollRig
@@ -239,6 +268,7 @@ func add_overlay(part_name: String, texture: Texture2D, group: StringName = &"")
 	if pi < 0:
 		push_warning("PaperDoll: no part named %s" % part_name)
 		return null
+	texture = upscaled(texture, rig.art_scale)
 	var s := Sprite2D.new()
 	s.texture = texture
 	s.region_enabled = true
@@ -306,7 +336,55 @@ func _process(delta: float) -> void:
 	_advance(delta)
 	_pose_time += delta
 	_blend_left = maxf(_blend_left - delta, 0.0)
+	_update_extras(delta)
 	_update()
+
+
+## A landing (fall in tiles): squash, if squash is on.
+func land(fall_tiles: float) -> void:
+	if squash and fall_tiles >= 1.0:
+		_squash_k = squash_land * clampf(fall_tiles / 8.0, 0.35, 1.0)
+		_squash_left = squash_time
+
+
+## Squash and stretch on the doll's scale, and the sway spring.
+func _update_extras(delta: float) -> void:
+	var sq := Vector2.ONE
+	if squash:
+		_squash_left = maxf(_squash_left - delta, 0.0)
+		if _squash_left > 0.0:
+			var t := _squash_left / maxf(squash_time, 0.01)
+			var s := _squash_k * t * t
+			sq = Vector2(1.0 + s * 0.6, 1.0 - s)
+		elif velocity.y < -40.0:
+			var st := clampf(-velocity.y / 400.0, 0.0, 1.0) * stretch_rise
+			sq = Vector2(1.0 - st * 0.5, 1.0 + st)
+	scale = Vector2(float(facing), 1.0) * draw_scale * sq
+	if sway:
+		# Swings back against the way you move (and up when falling), springing back.
+		var target := clampf(-velocity.x * float(facing) * 0.03 + velocity.y * 0.01, -sway_max, sway_max)
+		_sway_speed += ((target - _sway_angle) * sway_stiffness - _sway_speed * sway_damping) * delta
+		_sway_angle = clampf(_sway_angle + _sway_speed * delta, -sway_max * 1.5, sway_max * 1.5)
+	else:
+		_sway_angle = 0.0
+		_sway_speed = 0.0
+
+
+## Sheet tag names for hand-drawn key poses. When the sheet has one (plain or "legs/"),
+## that frame is shown for the pose instead of the code-posed legs.
+const DRAWN_POSE_TAGS: Dictionary[StringName, String] = {
+	&"sit": "Sit", &"sit_floor": "SitFloor",
+}
+
+## Use hand-drawn pose frames when the sheet has them (off to compare with code poses).
+@export var use_drawn_poses := true
+
+
+## The sheet frame drawn for the current pose, or -1 when the pose is code-posed.
+func drawn_pose_frame() -> int:
+	if not use_drawn_poses or pose == &"" or not DRAWN_POSE_TAGS.has(pose):
+		return -1
+	return rig.tag_range(&"legs", StringName(DRAWN_POSE_TAGS[pose])).x
 
 
 func _advance(delta: float) -> void:
@@ -332,6 +410,11 @@ func _update() -> void:
 	frame = clampi(frame, 0, count - 1)
 	var legs_abs := legs_r.x + frame
 	var body_abs := _follow(&"body", legs_abs)
+	var drawn_pose := drawn_pose_frame()
+	if drawn_pose >= 0:
+		# Patrick drew this pose (tag "Sit" or "SitFloor"): show it as is.
+		legs_abs = drawn_pose
+		body_abs = drawn_pose
 	var shift := Vector2(motion.lunge_at(motion_t) if motion else 0.0, dip)
 	var in_hand := item != null and not stowed
 	if motion != _last_motion or in_hand != _last_in_hand:
@@ -343,7 +426,7 @@ func _update() -> void:
 		_last_in_hand = in_hand
 	hands.clear()
 
-	var sitting := pose in [&"sit", &"sit_floor"] and rig.legs.size() == 2
+	var sitting := pose in [&"sit", &"sit_floor"] and rig.legs.size() == 2 and drawn_pose < 0
 	if pose == &"cheer":
 		shift.y -= absf(sin(_pose_time * 6.0)) * cheer_bounce
 	var posed_legs := (leg_mode != LegMode.DRAWN or sitting) and rig.legs.size() == 2
@@ -375,7 +458,11 @@ func _update() -> void:
 	_pose_arms(legs_abs, body_abs, shift)
 
 	if _hair and _hair.texture and _head_part >= 0:
-		_hair.position = rig.head_pos[body_abs] + look.hair_offset - rig.anchor + shift
+		# Turned around the top middle of the hair (sway), drawn at 1 / art_scale.
+		var hw := float(_hair.texture.get_width()) / rig.art_scale
+		_hair.position = rig.head_pos[body_abs] + look.hair_offset - rig.anchor + shift + Vector2(hw * 0.5, 0.0)
+		_hair.offset = Vector2(-_hair.texture.get_width() * 0.5, 0.0)
+		_hair.rotation = deg_to_rad(_sway_angle)
 	_place_stowed(body_abs, shift)
 
 
@@ -397,8 +484,12 @@ func _show_frame(pi: int, abs_frame: int, shift: Vector2) -> void:
 
 
 func _set_region(pi: int, region: Rect2, offset: Vector2, source: int = -1) -> void:
+	# `offset` is in art pixels; an upscaled sheet is drawn at 1 / art_scale.
+	var k := float(rig.art_scale)
+	offset *= k
 	_sprites[pi].region_rect = region
 	_sprites[pi].offset = offset
+	_sprites[pi].scale = Vector2.ONE / k
 	var src := source if source >= 0 else pi
 	for s: Sprite2D in _overlays[pi]:
 		if src != pi:
@@ -413,6 +504,7 @@ func _set_region(pi: int, region: Rect2, offset: Vector2, source: int = -1) -> v
 			s.visible = true
 		s.region_rect = Rect2(region.position.x, 0, region.size.x, region.size.y)
 		s.offset = offset
+		s.scale = Vector2.ONE / k
 
 
 func _shoulder(side: StringName, body_abs: int, shift: Vector2) -> Vector2:
@@ -458,7 +550,7 @@ func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 	var other := &"back" if holding == &"front" else &"front"
 	var aim_angle := 0.0
 	if m.aims:
-		aim_angle = (to_local(aim_global) - _shoulder(&"front", body_abs, shift)).angle()
+		aim_angle = (world_to_doll(aim_global) - _shoulder(&"front", body_abs, shift)).angle()
 		if m.aim_limit_degrees < 180.0:
 			var lim := deg_to_rad(m.aim_limit_degrees)
 			aim_angle = clampf(wrapf(aim_angle, -PI, PI), -lim, lim)
@@ -576,7 +668,7 @@ func _bone_source(side: StringName) -> Dictionary:
 
 ## Hand position in a drawn frame: the end of the lower arm farthest from the shoulder.
 func _drawn_hand(arm: Dictionary, abs_frame: int, shoulder: Vector2) -> Vector2:
-	var r: Rect2i = rig.rects[arm.lower][abs_frame]
+	var r := rig.rect_base(arm.lower, abs_frame)
 	var best := shoulder
 	var best_d := -1.0
 	for p: Vector2 in [Vector2(r.position), Vector2(r.end.x, r.position.y), Vector2(r.position.x, r.end.y), Vector2(r.end),
@@ -613,7 +705,7 @@ func _place_item(m: ItemMotion, side: StringName, shoulder: Vector2, aim_angle: 
 		ItemMotion.ItemAngle.ARM:
 			item_rotation = (hand - shoulder).angle() + offset
 		ItemMotion.ItemAngle.AIM:
-			item_rotation = ((to_local(aim_global) - hand).angle() if m.aims else aim_angle) + offset
+			item_rotation = ((world_to_doll(aim_global) - hand).angle() if m.aims else aim_angle) + offset
 		_:
 			item_rotation = offset
 	_item_sprite.position = hand
@@ -623,7 +715,17 @@ func _place_item(m: ItemMotion, side: StringName, shoulder: Vector2, aim_angle: 
 
 ## Where the held item is, in world space (the beam starts here).
 func item_global_position() -> Vector2:
-	return _item_sprite.global_position if _item_sprite else global_position
+	return doll_to_world(_item_sprite.position) if _item_sprite else doll_to_world(Vector2.ZERO)
+
+
+## A doll-space point (art pixels from the feet, facing right) in the world.
+func doll_to_world(p: Vector2) -> Vector2:
+	return world_node.to_global(p) if world_node else to_global(p)
+
+
+## A world point in doll space.
+func world_to_doll(p: Vector2) -> Vector2:
+	return world_node.to_local(p) if world_node else to_local(p)
 
 
 ## A pixel of the item texture, in doll space, with the item where it is now.
@@ -636,7 +738,7 @@ func _place_stowed(body_abs: int, shift: Vector2) -> void:
 		return
 	var shoulder := _shoulder(&"front", body_abs, shift)
 	_stow_back.position = shoulder + stow_back_offset
-	_stow_back.rotation = deg_to_rad(stow_back_angle) + PI / 4.0
+	_stow_back.rotation = deg_to_rad(stow_back_angle + _sway_angle * 0.5) + PI / 4.0
 	_stow_hip.position = shoulder + stow_hip_offset
 	_stow_hip.rotation = deg_to_rad(stow_hip_angle) + PI / 4.0
 
@@ -650,7 +752,8 @@ func _apply_look() -> void:
 	_material.set_shader_parameter(&"swap", tex)
 	_material.set_shader_parameter(&"count", tex.get_width() if tex else 0)
 	if _hair:
-		_hair.texture = look.hair if look else null
+		_hair.texture = upscaled(look.hair, rig.art_scale) if look else null
+		_hair.scale = Vector2.ONE / float(rig.art_scale)
 		_hair.visible = not hair_hidden
 
 
@@ -756,4 +859,24 @@ func _sit_targets(body_abs: int) -> Dictionary:
 		else:
 			var reach := floor_reach.x if near else floor_reach.y
 			out[side] = Vector2(hip_x + (l1 + l2) * reach, -1.0)
+	return out
+
+
+static var _upscaled: Dictionary = {}
+
+
+## An overlay (armor, hair) drawn for an upscaled sheet: each pixel a k x k block (fast,
+## at load). The sheet itself may be smoothed (Scale2x); overlays stay blocky for now.
+static func upscaled(tex: Texture2D, k: int) -> Texture2D:
+	if tex == null or k <= 1:
+		return tex
+	var key := "%s|%d" % [tex.get_rid(), k]
+	if _upscaled.has(key):
+		return _upscaled[key]
+	var img := tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	img.resize(img.get_width() * k, img.get_height() * k, Image.INTERPOLATE_NEAREST)
+	var out := ImageTexture.create_from_image(img)
+	_upscaled[key] = out
 	return out

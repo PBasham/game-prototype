@@ -317,3 +317,48 @@ func test_legs_are_measured_and_can_be_posed_in_code() -> void:
 	d.leg_mode = PaperDoll.LegMode.DRAWN
 	d._update()
 	assert_eq(d._slots[front.lower].rotation, 0.0)
+
+
+func test_upscaled_sheets_keep_the_doll_in_original_art_pixels() -> void:
+	for v: String in ["@x2n", "@x2s", "@x4s"]:
+		var big := DollRig.load_from("res://assets/sprites/scholar" + v)
+		assert_eq(big.art_scale, 2 if v.begins_with("@x2") else 4, v)
+		assert_almost_eq(big.anchor.x, rig.anchor.x, 0.6, "%s anchor in base pixels" % v)
+		assert_almost_eq(big.anchor.y, rig.anchor.y, 0.6, "%s anchor in base pixels" % v)
+		var front_big: Dictionary = big.legs[&"front"]
+		var front: Dictionary = rig.legs[&"front"]
+		assert_almost_eq(front_big.hip.y, front.hip.y, 1.0, "%s hip" % v)
+		var r := big.rect_base(0, 0)
+		assert_almost_eq(r.size.x, float(big.rects[0][0].size.x) / big.art_scale, 0.01, "%s rect in base pixels" % v)
+		assert_almost_eq(r.size.x, rig.rect_base(0, 0).size.x, 1.0, "%s same size as the 1x part" % v)
+
+
+func test_hand_drawn_sit_frame_replaces_the_code_pose() -> void:
+	var d := _doll()
+	d.play(&"Breath")
+	d.pose = &"sit"
+	assert_eq(d.drawn_pose_frame(), -1, "no Sit tag yet: code-posed")
+	var with_sit := DollRig.load_from("res://assets/sprites/scholar")
+	with_sit.tags["Sit"] = Vector2i(3, 3)
+	d.setup(with_sit, palette)
+	d.pose = &"sit"
+	assert_eq(d.drawn_pose_frame(), 3, "a drawn Sit frame is used")
+	d.use_drawn_poses = false
+	assert_eq(d.drawn_pose_frame(), -1, "can be switched off to compare")
+
+
+func test_landing_squashes_and_springs_back() -> void:
+	var d := _doll()
+	d.squash = true
+	d.land(6.0)
+	d._update_extras(0.016)
+	assert_lt(d.scale.y, 1.0, "squashed on landing")
+	for i in 40:
+		d._update_extras(0.016)
+	assert_almost_eq(d.scale.y, 1.0, 0.001, "back to normal")
+	d.sway = true
+	d.velocity = Vector2(200, 0)
+	for i in 10:
+		d._update_extras(0.016)
+	assert_ne(d._sway_angle, 0.0, "the hair swings when moving")
+	assert_lte(absf(d._sway_angle), d.sway_max)

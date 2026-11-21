@@ -111,6 +111,8 @@ tools/     editor-time scripts (placeholder generation, etc.)
   ```
   godot --headless --path . --script res://tools/import_aseprite.gd -- --in=res://art/Scholar-casual.aseprite --out=res://assets/sprites/scholar
   ```
+  Then `python3 tools/upscale_doll.py` remakes the 2x / 4x sheets for the render test
+  (console `doll`, see character-art.md).
 - **Terrain, trees, backdrop** are generated:
   ```
   godot --headless --path . --script res://tools/generate_tiles.gd -- --export=game
