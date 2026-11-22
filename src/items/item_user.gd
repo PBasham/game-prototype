@@ -19,7 +19,7 @@ extends Node2D
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT,
-	CHARGE, SCROLL, THROW, PAGE, GRAB, CATALOG }
+	CHARGE, SCROLL, THROW, PAGE, GRAB }
 
 const TILE := World.TILE
 
@@ -300,10 +300,6 @@ func can_use(on_back: bool = false) -> bool:
 		Mode.PAGE:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				read_page()
-			return false
-		Mode.CATALOG:
-			if not on_back and Input.is_action_just_pressed("use_primary") and world.hud:
-				world.hud.toggle_catalog()
 			return false
 		Mode.SCROLL:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
@@ -596,8 +592,6 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.NONE if on_back else Mode.SCROLL
 	if item.learns_spell != &"":
 		return Mode.NONE if on_back else Mode.PAGE
-	if item.opens_catalog:
-		return Mode.NONE if on_back else Mode.CATALOG
 	if on_back:
 		return Mode.PLACE_WALL if item.places_wall != &"" else Mode.NONE
 	if item.axe_damage > 0.0:

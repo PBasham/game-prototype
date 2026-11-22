@@ -23,13 +23,9 @@ func _round_trip(c: CharacterData) -> CharacterData:
 	return back
 
 
-func test_everyone_starts_with_the_catalog() -> void:
-	var c := CharacterData.create("Test")
-	assert_gt(c.inventory.count_of(&"catalog"), 0, "in the starting inventory")
-	assert_true(ItemData.find(&"catalog").opens_catalog)
-	# An older character (no Catalog ever) gets one when loaded.
-	var back := _round_trip(CharacterData.new())
-	assert_gt(back.inventory.count_of(&"catalog"), 0)
+func test_the_catalog_is_a_panel_not_an_item() -> void:
+	assert_null(ItemData.find(&"catalog"), "no book to carry")
+	assert_true(CharacterData.create("Test").inventory.is_all_empty())
 
 
 func test_found_items_enemies_and_drops_are_saved() -> void:
@@ -83,6 +79,11 @@ func test_enemy_kills_fill_the_catalog_and_j_opens_it() -> void:
 	await wait_process_frames(2)
 	Input.action_release("catalog")
 	assert_true(w.hud.catalog_open, "J opens it")
+	w.hud.toggle_catalog()
+	w.hud.set_open(true)
+	var b: Rect2 = w.hud._catalog_button_rect()
+	assert_eq(w.hud.hit(b.get_center())[0], Hud.Area.CATALOG_BUTTON, "a button in the inventory")
+	assert_false(b.intersects(w.hud.trash_rect()), "beside the trash")
 	w.hud.show_catalog_recipes(ItemData.find(&"slime"))
 	assert_eq(w.hud._catalog.tab, 2)
 	assert_gt(w.hud._catalog._recipes().size(), 0)

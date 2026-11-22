@@ -353,13 +353,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       its Spell Page teaches it on a left click, anywhere.
 - [ ] Slimes rarely drop a Slime Core (1 in 40) or Spell Page: Summon Slime (1 in 100).
       `give slime_core` to test quickly.
-- [ ] Summon Slime: your slime (gold cross) hops after enemies and hits them, stays
+- [ ] Summon Slime: your slime (gold cross) goes straight for enemies (aimed hops, slides
+      into them up close) and hits them, stays
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
 **Phase 23: the Catalog (branch phase-23-catalog)**
-- [ ] A new character has the Catalog in the last backpack slot; an old one gets it on load.
-- [ ] J (or a left click with it held) opens it; x, J and Esc close it.
+- [ ] J or the Catalog button (inventory, next to the trash) opens it; x, J and Esc close it.
 - [ ] Items tab: unfound items are silhouettes; "N / M found" goes up as you pick things up.
 - [ ] Item page: Made at, Dropped by, Used in; the Recipes button jumps to the Recipes tab.
 - [ ] Enemies tab: kill a slime, its page shows stats, slain count and drops (unseen ones dark).

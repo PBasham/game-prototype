@@ -393,5 +393,5 @@ saves still load.
 | What's found, recipes making and using an item, station names, drops | `Catalog` (src/items/catalog.gd) |
 | The window (tabs, pages, recipe slot) | `CatalogWindow` (src/ui/hud/catalog_window.gd), opened by `Hud.toggle_catalog`, `show_catalog_recipes` |
 | Kills and seen drops (saved) | `CharacterData.slain`, `seen_drops`, `note_kill` (from `Enemy._die`) |
-| Starting with it | `CharacterData.give_catalog` (in `create` and old saves in `load_file`) |
-| The item, the key | `data/items/catalog.tres` (`ItemData.opens_catalog`, `ItemUser` mode CATALOG), action `catalog` (J) in project.godot |
+| Opening it | action `catalog` (J) in project.godot, the inventory's Catalog button (`Hud._catalog_button_rect`, `Area.CATALOG_BUTTON`) |
+| Your slime's movement (aimed hops, sliding in) | `Enemy._summon_move`, `SpellData.summon_hop_wait`, `summon_ram_tiles`, `summon_hop_reach` |

@@ -77,10 +77,13 @@ same rare core and page as the Green Slime. Same sheet as the Green Slime, tinte
 ### Your slime (Summon Slime)
 
 A melee summon (`SpellData.summon_enemy_ranks`): a real slime that fights for you
-(`Enemy.setup_summon`). It hops after the nearest enemy within 18 tiles
-(`summon_tiles`) and hits it on contact for `damage` (8) every 0.6 s
-(`SUMMON_HIT_EVERY`), knocking it back; with no enemy near it stays a few tiles behind
-you, and if it's 40 tiles away (`SUMMON_LEASH_TILES`) it hops back to you. Your hits
+(`Enemy.setup_summon`, `_summon_move`). It goes after the nearest enemy within 18
+tiles (`summon_tiles`), never hopping at random: every `summon_hop_wait` (0.35 s) it
+hops aimed to land on the enemy (sideways speed up to `summon_hop_reach` (1.6) times
+its hop speed), and within `summon_ram_tiles` (2.5) on the same level it slides
+straight into it. It hits on contact for `damage` (8) every 0.6 s
+(`SUMMON_HIT_EVERY`), knocking it back; with no enemy near it hops after you and rests a few tiles
+behind you, and if it's 40 tiles away (`SUMMON_LEASH_TILES`) it hops back to you. Your hits
 don't touch it and it isn't counted as an enemy; it lasts 90 s, with a gold cross over
 it. **Evolve** (Empower tab, `data/empower/evolve.tres`: 15 Slime + 6 Magic Essence)
 makes it a Blue Slime, hitting harder by as much as a Blue Slime does (9 vs 6: 12).

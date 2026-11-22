@@ -198,21 +198,7 @@ var temporary := false
 static func create(char_name: String) -> CharacterData:
 	var c := CharacterData.new()
 	c.name = char_name
-	c.give_catalog()  # everyone starts with the Catalog (J)
 	return c
-
-
-## The Catalog goes in the backpack's last slot, out of the hotbar's way (any free slot if
-## that one is taken).
-func give_catalog() -> void:
-	if ItemData.find(&"catalog") == null or inventory.count_of(&"catalog") > 0:
-		return
-	var last := inventory.size - 1
-	if inventory.item(last) == null:
-		inventory.set_slot(last, &"catalog", 1)
-	else:
-		inventory.add(&"catalog", 1)
-	note_inventory()
 
 
 ## A character with the dev kit (tests, scripted runs).
@@ -629,8 +615,6 @@ static func load_file(path: String) -> CharacterData:
 			items[StringName(it)] = true
 		c.seen_drops[StringName(id)] = items
 	c.inventory.from_dict(d.get("inventory", {}))
-	if not c.seen_items.has(&"catalog"):
-		c.give_catalog()  # characters from before the Catalog get one
 	if d.has("trash"):
 		c.trash.from_dict(d["trash"])
 	c.note_inventory()

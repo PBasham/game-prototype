@@ -195,9 +195,8 @@ Defaults are written by `tools/make_items.gd` (items, spells, objects and recipe
 
 ## The Catalog (J)
 
-Every character starts with the **Catalog** (in the last backpack slot; older characters
-get one when loaded). **J**, or a left click while holding it, opens it next to the
-inventory (`CatalogWindow`, src/ui/hud/catalog_window.gd; data in `Catalog`,
+The **Catalog** is a panel, not an item: **J**, or the **Catalog** button in the
+inventory (next to the trash), opens it next to the inventory (`CatalogWindow`, src/ui/hud/catalog_window.gd; data in `Catalog`,
 src/items/catalog.gd). Three tabs:
 
 - **Items:** every item but spells. Ones you've never had show as black silhouettes;

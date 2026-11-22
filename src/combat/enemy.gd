@@ -243,6 +243,9 @@ func _slime(delta: float) -> void:
 	if velocity.y >= 0.0 and _hop_vx != 0.0:
 		_hop_vx = 0.0  # landed
 		_moved()
+	if is_summon():
+		_summon_move(delta)
+		return
 	if _slither > 0.0:
 		_slither -= delta
 		velocity.x = _dir * data.slither_speed * TILE
@@ -535,6 +538,57 @@ func _summon_dir() -> float:
 	var want := p.global_position.x - p.facing * (3.0 + slot * 2.5) * TILE
 	var dx := _wrapped_dx(want)
 	return signf(dx) if absf(dx) > 2.0 * TILE else 0.0
+
+
+## Your slime on the ground: no random hops. With an enemy near it hops to land on it
+## (aimed from the gap), or slides straight into it when close; otherwise it follows you.
+func _summon_move(delta: float) -> void:
+	var target := _summon_target()
+	var dx := 0.0
+	var dy := 0.0  # > 0: the target is above
+	if target:
+		dx = _wrapped_dx(target.global_position.x)
+		dy = global_position.y - target.global_position.y
+		_dir = signf(dx) if dx != 0.0 else _dir
+		if absf(dx) < summon_spell.summon_ram_tiles * TILE and dy < TILE * 2.0:
+			velocity.x = _dir * data.slither_speed * 2.0 * TILE  # into it
+			_step_up()
+			_wait = minf(_wait, summon_spell.summon_hop_wait)
+			return
+	else:
+		var dir := _summon_dir()
+		if dir == 0.0:
+			velocity.x = move_toward(velocity.x, 0.0, 60.0 * TILE * delta)
+			return  # next to you: rest
+		_dir = dir
+		var p := world.player
+		dx = _wrapped_dx(p.global_position.x)
+		dy = global_position.y - p.global_position.y
+	velocity.x = move_toward(velocity.x, 0.0, 60.0 * TILE * delta)
+	_wait -= delta
+	if _wait < 0.12 and _wait + delta >= 0.12:
+		_squash = 0.12
+	if _wait > 0.0:
+		return
+	_wait = summon_spell.summon_hop_wait if target else data.hop_wait_min
+	_move_from = global_position.x
+	# High enough to clear the gap upward (and walls, once stuck), then the sideways
+	# speed that lands it on the spot.
+	var g := data.gravity * TILE
+	var height := clampf(dy / TILE + 1.5, data.hop_tiles_min, data.hop_tiles * 1.5)
+	if _stuck > 0:
+		height = maxf(height, data.hop_tiles)
+	var launch := sqrt(2.0 * g * height * TILE)
+	var t_up := launch / g
+	var fall := maxf(height * TILE - dy, 0.0)
+	var t := t_up + sqrt(2.0 * fall / g)
+	var max_vx := data.hop_speed * summon_spell.summon_hop_reach * TILE
+	var vx := clampf(dx / maxf(t, 0.05), -max_vx, max_vx)
+	if absf(vx) < data.hop_speed * 0.4 * TILE:
+		vx = _dir * data.hop_speed * 0.4 * TILE
+	velocity = Vector2(vx, -launch)
+	_hop_vx = vx
+	EventBus.sound_requested.emit(&"slime_hop", global_position)
 
 
 func _summon_tick(delta: float) -> void:

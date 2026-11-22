@@ -156,6 +156,13 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## more as slimes are added. It hops after enemies and hits on contact for `damage`
 ## (times its contact damage over the first one's: a Blue Slime hits harder).
 @export var summon_enemy_ranks: Array[StringName] = []
+## Melee summon: seconds between hops while it has an enemy (no random waits), and how
+## close (tiles) it gets before it slides straight into the enemy instead of hopping.
+@export var summon_hop_wait := 0.35
+@export var summon_ram_tiles := 2.5
+## Melee summon: sideways speed of an aimed hop is capped at the slime's hop speed
+## times this, so it can land on enemies a bit further off.
+@export var summon_hop_reach := 1.6
 @export var summon_charge := 0.0
 @export var summon_tiles := 15.0
 ## Conjure Platform: width in tiles.

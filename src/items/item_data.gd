@@ -119,8 +119,6 @@ const SPELL_PREFIX := "spell:"
 ## A Spell Page (found, not crafted): left click learns this spell for good, and the
 ## page is used up. The only way to learn spells that aren't `learnable_at_table`.
 @export var learns_spell: StringName = &""
-## The Catalog book: left click opens the Catalog window (also J).
-@export var opens_catalog := false
 @export_group("Food and potions")
 ## Eating or drinking it (left click while holding it) refills this much hunger...
 @export var food_value := 0.0

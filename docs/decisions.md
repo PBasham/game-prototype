@@ -10,7 +10,9 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - Claude's defaults Patrick OK'd: J (C was taken by a quick slot), Items, Enemies and
   Recipes tabs, silhouettes with found counts, unknown recipes show their station.
   An enemy is found once killed; its drops appear as you get them from it.
-- It starts in the backpack's last slot so it doesn't move the hotbar.
+- **Patrick:** it's a panel, not a book item: J or a Catalog button in the inventory.
+- **Patrick:** your summoned slime doesn't hop at random: aimed hops at the enemy, and it
+  slides into it up close.
 
 ## 2026-11-21: Phase 22, summons
 

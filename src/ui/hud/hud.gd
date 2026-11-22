@@ -6,7 +6,7 @@ extends CanvasLayer
 ## stack held on the mouse, tooltips, and pickup notes. Drawn with UiSkin.
 ##
 ## Inventory panel (I or Tab): rows of 10 (the character's inventory size), the top row
-## is the hotbar. Items only; to the right are the Craft (K), Equip (P) and Spells (L)
+## is the hotbar. Items only; to the right are the Craft (K), Equip (P), Spells (L) and Catalog (J)
 ## buttons.
 ##   Left click: pick up a stack / put it down / swap / merge.
 ##   Right click: pick up half, or put one down from the stack on the mouse.
@@ -32,7 +32,7 @@ const TITLE_H := 14
 const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
-enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CHEST, CHEST_TAKE,
+enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CATALOG_BUTTON, CHEST, CHEST_TAKE,
 	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME, TRASH }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
@@ -817,6 +817,13 @@ func _spells_button_rect() -> Rect2:
 	return Rect2(_equip_origin() + Vector2(0, 42), Vector2(EQUIP_W - 2, 16))
 
 
+## The Catalog (J) button: last row, left of the trash.
+func _catalog_button_rect() -> Rect2:
+	var t := trash_rect()
+	var x := _equip_origin().x
+	return Rect2(Vector2(x, t.position.y + 2), Vector2(t.position.x - x - GAP, 16))
+
+
 
 
 
@@ -849,6 +856,8 @@ func hit(local: Vector2) -> Array:
 		return [Area.EQUIP_BUTTON, 0]
 	if _spells_button_rect().has_point(local):
 		return [Area.SPELLS_BUTTON, 0]
+	if _catalog_button_rect().has_point(local):
+		return [Area.CATALOG_BUTTON, 0]
 	if trash_rect().has_point(local):
 		return [Area.TRASH, 0]
 	return [Area.NONE, -1]
@@ -1008,6 +1017,8 @@ func _draw_inventory(g: Control) -> void:
 		var sr := _spells_button_rect()
 		state = UiSkin.Btn.PRESSED if spells_open else (UiSkin.Btn.HOT if hover[0] == Area.SPELLS_BUTTON else UiSkin.Btn.NORMAL)
 		UiSkin.button(g, sr, "Spells (L)", state)
+		state = UiSkin.Btn.PRESSED if catalog_open else (UiSkin.Btn.HOT if hover[0] == Area.CATALOG_BUTTON else UiSkin.Btn.NORMAL)
+		UiSkin.button(g, _catalog_button_rect(), "Catalog", state)
 		# The trash: a dimmer cell with a bin drawn in it until something's thrown away.
 		var tr := trash_rect()
 		var trash := c.trash
@@ -1748,6 +1759,9 @@ func _inventory_input(pane: Pane, event: InputEvent) -> void:
 		Area.SPELLS_BUTTON:
 			if left:
 				toggle_spells()
+		Area.CATALOG_BUTTON:
+			if left:
+				toggle_catalog()
 		Area.TRASH:
 			if left:
 				click_trash()
