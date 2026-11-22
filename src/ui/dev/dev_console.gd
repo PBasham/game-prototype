@@ -620,7 +620,7 @@ func _equip(a: PackedStringArray) -> void:
 	var c := world.character
 	var target: StringName = &""
 	for slot: StringName in CharacterData.ALL_SLOTS:
-		if CharacterData.fits(slot, item) and (target == &"" or (c.equipment[target] != &"" and c.equipment[slot] == &"")):
+		if c.equip_problem(slot, item) == "" and (target == &"" or (c.equipment[target] != &"" and c.equipment[slot] == &"")):
 			target = slot
 	if target == &"":
 		_print("%s can't be equipped." % item.display_name)

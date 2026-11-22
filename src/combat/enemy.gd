@@ -19,6 +19,7 @@ var data: EnemyData
 var world: World
 var health := 1.0
 var _sprite: Sprite2D
+var _halo: GlowHalo
 var _wait := 1.0
 var _squash := 0.0
 var _flash := 0.0
@@ -68,6 +69,12 @@ func _ready() -> void:
 	if data.glow_tiles > 0.0:
 		radius = data.glow_tiles
 		color = data.glow_color
+		# It glows: drawn over the lighting so it never looks faded, with a halo that
+		# brightens while it charges and shoots.
+		_sprite.z_as_relative = false
+		_sprite.z_index = 55
+		_halo = GlowHalo.make(data.glow_color, 14.0)
+		add_child(_halo)
 		add_to_group(&"light_sources")
 
 
@@ -403,6 +410,14 @@ func _update_look() -> void:
 		_sprite.modulate = data.tint if _flash <= 0.0 else Color(2.0, 2.0, 2.0)
 		if _flash <= 0.0 and _poison_left > 0.0:
 			_sprite.modulate = data.tint * Color(0.7, 1.15, 0.6)
+		if _halo:
+			_halo.position = Vector2(0, -data.size.y * 0.5)
+			var k := 0.0
+			if _state == SpiritState.CHARGE:
+				k = 1.0 - clampf(_state_left / maxf(data.charge_seconds, 0.01), 0.0, 1.0)
+			elif _state == SpiritState.SHOT:
+				k = 1.0
+			_halo.strength = k
 		return
 	if not is_on_floor():
 		_set_frame(2)

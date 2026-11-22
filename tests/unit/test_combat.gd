@@ -135,9 +135,13 @@ func test_quick_equip_fills_empty_accessory_slots() -> void:
 	c.inventory.set_slot(39, &"dev_ring", 1)
 	w.hud.quick_equip(39)
 	assert_eq(c.equipment[&"accessory_1"], &"dev_ring")
+	c.inventory.set_slot(39, &"forest_spirit_pendant", 1)
+	w.hud.quick_equip(39)
+	assert_eq(c.equipment[&"accessory_2"], &"forest_spirit_pendant", "the next empty one")
+	# A second of the same accessory doesn't go on (one of each).
 	c.inventory.set_slot(39, &"dev_ring", 1)
 	w.hud.quick_equip(39)
-	assert_eq(c.equipment[&"accessory_2"], &"dev_ring", "the next empty one")
+	assert_ne(c.equipment[&"accessory_3"], &"dev_ring", "not two of the same")
 
 
 func test_spawner_spawns_on_the_surface_not_indoors() -> void:

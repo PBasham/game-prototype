@@ -83,8 +83,10 @@ tiles/s, `keep_tiles_min/max` 6 to 12 tiles away, 3 to 10 up), stops, charges fo
 `src/combat/enemy_shot.gd`, stops at blocks). It only shoots when it can see you. 30
 health, 6 contact damage, lights its surroundings (`glow_tiles` 8). Day and night.
 Drops 1 to 2 **Magic Essence**, a **Spirit Core** 1 time in 20, and its **Spell Page:
-Summon Forest Spirit** 1 time in 50 (crafting.md: discovered recipes). Its light follows
-it smoothly (see "Moving lights" in items-and-mining.md). Yours, from the spell, is
+Summon Forest Spirit** 1 time in 50 (crafting.md: discovered recipes). It glows: drawn
+over the lighting with a soft halo (`GlowHalo`, `src/combat/glow_halo.gd`: `rest` 0.35,
+`full` 0.85) that brightens while it charges and shoots, so it never looks faded; the
+summoned one too. Its light follows it smoothly (see "Moving lights" in items-and-mining.md). Yours, from the spell, is
 tinted darker blue (`SpellData.summon_tint`) so you can tell them apart. Sheet:
 `assets/enemies/forest_spirit.png` (24x24 frames: drifting, charging, shooting).
 
@@ -196,10 +198,12 @@ enemies through the same `damageable` group. See items-and-mining.md, Magic.
 
 **Forest Spirit Pendant** (accessory, Phase 21): +1 summon at a time
 (`stats.summon_slots`) and +20% summon damage (`stats.summon_damage`). Made at the
-Spell Weaving Table from 1 Spirit Core and 10 Magic Essence (the recipe shows once you
+Spell Weaving Table from 1 Spirit Core, 10 Magic Essence and 10 Iron Bars (the recipe shows once you
 have a Spirit Core). Without it, one summon at a time (casting again replaces it);
 with it, two (the oldest goes past that), floating one behind the other
 (`Familiar.slot`). Placeholder icon from `tools/make_brick_art.py`.
+
+You can wear only one of each accessory (`CharacterData.equip_problem`).
 
 Its own window: press **P** or the **Equip (P)** button in the inventory. It opens in
 the middle of the screen, can be dragged by its title bar, and keeps its spot until you

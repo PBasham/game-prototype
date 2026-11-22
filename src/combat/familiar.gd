@@ -18,6 +18,7 @@ var _cooldown := 0.5
 var _charge_left := -1.0
 var _charge_target: Enemy
 var _shot_flash := 0.0
+var _halo: GlowHalo
 ## Its place among your summons (0 = first): each floats a little further back and up.
 var slot := 0
 
@@ -28,8 +29,11 @@ func setup(w: World, s: SpellData, spell_power: float) -> void:
 	power = spell_power
 	time_left = s.duration
 	global_position = _target()
-	z_index = 25
+	z_index = 55  # over the lighting: it glows (LightMap is z 50)
 	add_to_group(&"familiars")
+	if s.summon_texture:
+		_halo = GlowHalo.make(s.projectile_color, 14.0)
+		add_child(_halo)
 
 
 func _target() -> Vector2:
@@ -63,6 +67,14 @@ func _process(delta: float) -> void:
 				_charge_target = target
 			else:
 				_shoot(target)
+	if _halo:
+		var k := 0.0
+		if _charge_left >= 0.0:
+			k = 1.0 - clampf(_charge_left / maxf(spell.summon_charge, 0.01), 0.0, 1.0)
+		if _shot_flash > 0.0:
+			k = 1.0
+		_halo.strength = k
+		_halo.fade = clampf(time_left / 3.0, 0.0, 1.0)
 	queue_redraw()
 
 

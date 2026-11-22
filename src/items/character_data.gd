@@ -494,6 +494,18 @@ static func fits(slot: StringName, item: ItemData) -> bool:
 	return false
 
 
+## Why an item can't go in this slot ("" = it can): it doesn't fit, or it's an
+## accessory you're already wearing in another slot (one of each, like Terraria).
+func equip_problem(slot: StringName, item: ItemData) -> String:
+	if not fits(slot, item):
+		return "That doesn't go there"
+	if slot in SLOT_ACCESSORIES:
+		for other in SLOT_ACCESSORIES:
+			if other != slot and equipment.get(other, &"") == item.id:
+				return "You're already wearing %s" % item.display_name
+	return ""
+
+
 ## Why a spell can't be cast right now ("" = it can). `from_tome` skips the book check.
 func cast_problem(spell: SpellData, from_tome: bool = false) -> String:
 	if spell == null:

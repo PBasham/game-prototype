@@ -327,7 +327,7 @@ the daylight, and Forest Spirits (combat.md). The edges fade over a few dozen ti
 world, the ground is its own blocks: **Dark Forest Dirt**, **Dark Forest Grass** (the
 surface, blue-black blades) and **Dark Forest Stone**, with **Dark Forest Dirt Wall** and
 **Dark Forest Stone Wall** behind (`ForestGenerator.dark_forest_blocks_at`, swapped in
-`_block` and `_wall`). Ores and clay stay as they are. The art is a placeholder blend
+`_block` and `_wall`). Ores stay as they are; there's no clay under the Dark Forest (it becomes Dark Forest Dirt). The art is a placeholder blend
 toward black with a hint of blue (`python3 tools/make_dark_forest_terrain.py --force`,
 per texture `--dirt=amount,brightness`, `--dirt_wall=`, `--stone=`, `--stone_wall=`); the
 grass colors are `ChunkRenderer.dark_grass_colors`.

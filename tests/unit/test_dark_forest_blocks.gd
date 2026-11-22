@@ -48,6 +48,10 @@ func test_dark_forest_ground_goes_to_the_bottom_with_wobbly_sides() -> void:
 			plain += 1
 	assert_gt(dark, 40, "the middle is Dark Forest ground from top to bottom")
 	assert_eq(plain, 0, "no plain dirt or stone in the middle")
+	var clay := tiles.index_of(&"clay")
+	for cx in range(x - 200, x + 200, 9):
+		for y in range(g.surface_at(posmod(cx, g.width)), g.surface_at(posmod(cx, g.width)) + 120, 3):
+			assert_ne(g.block_at(posmod(cx, g.width), y), clay, "no clay under the Dark Forest")
 	assert_false(g.dark_forest_blocks_at(g.settings.spawn_x, 300, g._column(g.settings.spawn_x)), "not at spawn")
 	# The side wanders: where it is changes with depth.
 	var edges: Array[int] = []
@@ -157,3 +161,14 @@ func test_moving_light_between_tiles_lights_both() -> void:
 	var mid: Array = lit.call(Vector2(11.0, 10.5))
 	assert_gt(float(left[0]), float(left[1]), "on a tile: that tile is brightest")
 	assert_almost_eq(float(mid[0]), float(mid[1]), 0.001, "half way: shared")
+
+
+func test_one_of_each_accessory() -> void:
+	var c := CharacterData.new()
+	var pendant := ItemData.find(&"forest_spirit_pendant")
+	assert_eq(c.equip_problem(&"accessory_1", pendant), "")
+	c.equip(&"accessory_1", &"forest_spirit_pendant")
+	assert_string_contains(c.equip_problem(&"accessory_2", pendant), "already wearing")
+	assert_eq(c.equip_problem(&"accessory_1", pendant), "", "swapping in the same slot is fine")
+	var r := Registry.get_def(&"recipes", &"forest_spirit_pendant") as RecipeData
+	assert_eq(r.inputs[&"iron_bar"], 10)

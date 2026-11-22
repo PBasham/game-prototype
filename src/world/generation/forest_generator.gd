@@ -233,7 +233,9 @@ func _column(x: int) -> PackedFloat32Array:
 
 func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloat32Array]) -> int:
 	var b := _plain_block(x, y, col, entrances)
-	if _dark_blocks.has(b) and dark_forest_blocks_at(x, y, col):
+	if (_dark_blocks.has(b) or b == _b.get(&"clay", -1)) and dark_forest_blocks_at(x, y, col):
+		if b == _b.get(&"clay", -1):
+			return _dark_blocks.get(_b[&"dirt"], b)  # no clay under the Dark Forest
 		return _dark_blocks[b]
 	return b
 

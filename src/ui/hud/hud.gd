@@ -1160,7 +1160,8 @@ func _draw_status(g: Control) -> void:
 		var w := (r.size.x - 2) * k
 		g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(w, 4)), fill)
 		g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(w, 1)), fill.lightened(0.35))
-		var text := "inf" if v[2] else "%d" % roundi(float(v[0]))
+		# Current and total (108/120); hunger is a share, so just the number.
+		var text := "inf" if v[2] else ("%d/%d" % [roundi(float(v[0])), roundi(float(v[1]))] if i < 2 else "%d" % roundi(float(v[0])))
 		g.draw_string(font, Vector2(104, y + 7), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
 
 
@@ -2125,8 +2126,9 @@ func click_equipment(slot: StringName) -> void:
 			cursor_count = 1
 		return
 	var item := ItemData.find(cursor_id)
-	if cursor_count != 1 or not CharacterData.fits(slot, item):
-		EventBus.debug_message.emit("That doesn't go there")
+	var why := "That doesn't go there" if cursor_count != 1 else c.equip_problem(slot, item)
+	if why != "":
+		EventBus.debug_message.emit(why)
 		return
 	var old := c.equip(slot, cursor_id)
 	if old != &"":
@@ -2146,8 +2148,13 @@ func quick_equip(slot: int) -> void:
 	# The first slot it fits, preferring an empty one (accessories).
 	var target: StringName = &""
 	for eq in EQUIP_SLOTS:
-		if CharacterData.fits(eq, item) and (target == &"" or (c.equipment[target] != &"" and c.equipment[eq] == &"")):
+		if c.equip_problem(eq, item) == "" and (target == &"" or (c.equipment[target] != &"" and c.equipment[eq] == &"")):
 			target = eq
+	if target == &"":
+		for eq in EQUIP_SLOTS:
+			if CharacterData.fits(eq, item):
+				EventBus.debug_message.emit(c.equip_problem(eq, item))  # already wearing one
+				break
 	if target != &"":
 		var old := c.equip(target, item.id)
 		c.inventory.set_slot(slot, old, 1 if old != &"" else 0)

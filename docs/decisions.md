@@ -14,7 +14,10 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Patrick:** bricks from stone, any stone to its own brick (2 stone, Furnace, like
   Terraria's Gray Brick).
 - **Patrick:** Forest Spirit Pendant: +1 summon, +20% summon damage. How you get it was
-  Claude's default: Spell Weaving Table, 1 Spirit Core + 10 Magic Essence. Summon Forest
+  Claude's default: Spell Weaving Table, 1 Spirit Core + 10 Magic Essence; **Patrick:**
+  plus 10 Iron Bars. One of each accessory at a time; health and mana show current/total.
+- **Patrick:** no clay in the Dark Forest; spirits always glow, brighter when shooting
+  (drawn over the lighting, GlowHalo). How to mark your summoned spirit: still open. Summon Forest
   Spirit's own learning cost (page + core + essence) left as it was until Patrick decides.
 - **Patrick:** "Call Spirit" renamed Summon Forest Spirit (id still `call_spirit`);
   your summoned spirit is tinted darker blue.

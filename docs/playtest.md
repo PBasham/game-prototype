@@ -338,12 +338,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       or build a Dark Forest Stone room in the normal forest.
 - [ ] Grass spreads onto Dark Forest Dirt as blue-black grass; seeds work on it.
 - [ ] Stone Bricks and Dark Forest Stone Bricks at a Furnace (2 stone each).
-- [ ] Forest Spirit Pendant (Spell Weaving Table: 1 Spirit Core, 10 Magic Essence):
+- [ ] Forest Spirit Pendant (Spell Weaving Table: 1 Spirit Core, 10 Magic Essence, 10 Iron Bars):
       two summoned spirits, hitting 20% harder. Yours are darker blue.
 - [ ] Spirit lights glide smoothly; Light Orb too.
 - [ ] Hold the mouse button with Chain Spark in hand, or hold its quick key: keeps casting.
 - [ ] Bound: 48 tiles/s ahead, a low arc; pull back to slow down.
 - [ ] No trees hanging over drops; trunks lean a little, some mirrored.
+- [ ] Health and mana show current/total (108/120). Only one of each accessory.
+- [ ] Forest Spirits (wild and yours) always glow, brighter while charging and shooting.
+- [ ] No clay under the Dark Forest.
 
 ## Known
 

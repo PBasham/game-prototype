@@ -6,6 +6,7 @@
 script = ExtResource("1_05y7s")
 station = &"scribing"
 inputs = Dictionary[StringName, int]({
+&"iron_bar": 10,
 &"magic_essence": 10,
 &"spirit_core": 1
 })

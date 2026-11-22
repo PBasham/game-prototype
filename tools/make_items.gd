@@ -972,7 +972,7 @@ func _recipes() -> Array[RecipeData]:
 		# Bricks: 2 stone of a kind make 1 brick of that kind (like Terraria's Gray Brick).
 		[&"stone_bricks", &"furnace", {&"stone": 2}, &"stone_bricks", 1, []],
 		[&"dark_forest_stone_bricks", &"furnace", {&"dark_forest_stone": 2}, &"dark_forest_stone_bricks", 1, []],
-		[&"forest_spirit_pendant", &"scribing", {&"spirit_core": 1, &"magic_essence": 10}, &"forest_spirit_pendant", 1, []],
+		[&"forest_spirit_pendant", &"scribing", {&"spirit_core": 1, &"magic_essence": 10, &"iron_bar": 10}, &"forest_spirit_pendant", 1, []],
 		[&"wooden_bowl", &"workbench", {&"wood": 2}, &"wooden_bowl", 2, []],
 		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
 		[&"table", &"workbench", {&"wood": 8}, &"table", 1, []],
