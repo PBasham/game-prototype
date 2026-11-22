@@ -146,9 +146,11 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## shot (sparks close in; 0 = shoots right away).
 @export var summon_texture: Texture2D
 @export var summon_frame_size := Vector2i(24, 24)
-## Tints the summon's art (the summoned Forest Spirit is a darker blue than wild ones,
-## so you can tell yours apart).
+## Tints the summon's art (the summoned Forest Spirit leans a little teal, so you can
+## tell yours apart).
 @export var summon_tint := Color.WHITE
+## A little gold cross over your summon: it's yours.
+@export var summon_marker := false
 @export var summon_charge := 0.0
 @export var summon_tiles := 15.0
 ## Conjure Platform: width in tiles.

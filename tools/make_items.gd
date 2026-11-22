@@ -577,7 +577,8 @@ func _spells() -> Array[ItemData]:
 	call.duration = 90.0
 	call.summon_interval = 2.2
 	call.summon_charge = 1.0
-	call.summon_tint = Color(0.42, 0.5, 1.0)  # darker than wild spirits: yours
+	call.summon_tint = Color(0.78, 1.0, 0.96)  # a little teal: yours
+	call.summon_marker = true
 	call.summon_tiles = 20.0
 	call.summon_texture = load("res://assets/enemies/forest_spirit.png") as Texture2D
 	call.projectile_speed = 30.0

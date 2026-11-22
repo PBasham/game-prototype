@@ -105,6 +105,12 @@ func _draw() -> void:
 		var frame := 1 if _charge_left >= 0.0 else (2 if _shot_flash > 0.0 else 0)
 		draw_texture_rect_region(spell.summon_texture, Rect2(-fs * 0.5, fs),
 			Rect2(Vector2(frame * fs.x, 0), fs), Color(spell.summon_tint, fade))
+		if spell.summon_marker:
+			# A small gold cross over it: yours.
+			var top := Vector2(0, -fs.y * 0.5 - 2.0)
+			var gold := Color(1.0, 0.86, 0.45, fade)
+			draw_rect(Rect2(top + Vector2(-0.5, -2.5), Vector2(1, 5)), gold)
+			draw_rect(Rect2(top + Vector2(-2.5, -0.5), Vector2(5, 1)), gold)
 		if _charge_left >= 0.0:
 			var k := 1.0 - clampf(_charge_left / spell.summon_charge, 0.0, 1.0)
 			var spin := Time.get_ticks_msec() * 0.004

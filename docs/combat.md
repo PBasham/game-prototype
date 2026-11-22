@@ -86,8 +86,9 @@ Drops 1 to 2 **Magic Essence**, a **Spirit Core** 1 time in 20, and its **Spell 
 Summon Forest Spirit** 1 time in 50 (crafting.md: discovered recipes). It glows: drawn
 over the lighting with a soft halo (`GlowHalo`, `src/combat/glow_halo.gd`: `rest` 0.35,
 `full` 0.85) that brightens while it charges and shoots, so it never looks faded; the
-summoned one too. Its light follows it smoothly (see "Moving lights" in items-and-mining.md). Yours, from the spell, is
-tinted darker blue (`SpellData.summon_tint`) so you can tell them apart. Sheet:
+summoned one too. Its light follows it smoothly (see "Moving lights" in items-and-mining.md). Yours, from the spell, leans
+a little teal (`SpellData.summon_tint`) with a small gold cross over it
+(`summon_marker`), so you can tell them apart. Sheet:
 `assets/enemies/forest_spirit.png` (24x24 frames: drifting, charging, shooting).
 
 ## Spawning

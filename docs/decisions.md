@@ -17,7 +17,8 @@ Newest first. Each entry: what was decided, why, and what it affects.
   Claude's default: Spell Weaving Table, 1 Spirit Core + 10 Magic Essence; **Patrick:**
   plus 10 Iron Bars. One of each accessory at a time; health and mana show current/total.
 - **Patrick:** no clay in the Dark Forest; spirits always glow, brighter when shooting
-  (drawn over the lighting, GlowHalo). How to mark your summoned spirit: still open. Summon Forest
+  (drawn over the lighting, GlowHalo). **Patrick:** your summoned spirit: a slight hue shift (a little teal) and the gold cross
+  on top; upgrades may change its color later. Summon Forest
   Spirit's own learning cost (page + core + essence) left as it was until Patrick decides.
 - **Patrick:** "Call Spirit" renamed Summon Forest Spirit (id still `call_spirit`);
   your summoned spirit is tinted darker blue.
