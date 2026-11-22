@@ -4,6 +4,10 @@ Newest first. Each entry: what was decided, why, and what it affects.
 
 ## 2026-11-21: Phase 20, 3D body prototype
 
+- Bound fix: the leap's rise was a fixed 20 tiles/s, which the jump's strong gravity
+  ate in about a tile ("moves an inch up"). Now `leap_height` (6 tiles) sets the rise
+  from wherever it's pressed, worked out from the jump's gravity.
+
 - **Patrick:** go with the brief's defaults: live 3D (route B) rendered on its own
   pixel canvas, placeholder until his Blender model, Scholar sized, 3 shading bands with
   a light trim and no dark outline, palette colors from the look, existing 2D items on

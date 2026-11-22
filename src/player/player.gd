@@ -1930,7 +1930,10 @@ func _air_trigger(jv: Vector2) -> void:
 		var dir := signf(_axis("move_left", "move_right"))
 		if dir == 0.0:
 			dir = float(facing)
-		velocity = Vector2(dir * spell.leap_speed * TILE, -spell.leap_rise * TILE)
+		# Up speed that rises leap_height tiles under the jump's gravity (a fixed speed
+		# barely lifted you: the jump's gravity is strong).
+		var rise := sqrt(2.0 * jv.x * spell.leap_height * TILE)
+		velocity = Vector2(dir * spell.leap_speed * TILE, -rise)
 		_rising_jump = false
 		_leaping = true
 		facing = int(dir)

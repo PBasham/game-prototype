@@ -102,7 +102,7 @@ extends ItemData). The full list with numbers is in [items-and-mining.md](items-
 | Change its tier (which book can cast it) | `tier` |
 | Change its group (tab and filters) | `group`: ATTACK, MOVEMENT, TOOLS, UTILITY, BUFF... |
 | Change Fly or Levitate speed | `move_speed`, `boost_speed_mult`, `hover_tiles` |
-| Change Air Step or Bound | `air_jump_power`, `air_control_mult`, `air_speed_mult`, `leap_speed`, `leap_rise`, `mana_cost` |
+| Change Air Step or Bound | `air_jump_power`, `air_control_mult`, `air_speed_mult`, `leap_speed`, `leap_height`, `mana_cost` |
 | Change a summon (Familiar, Call Spirit) | `duration`, `damage`, `summon_interval`, `summon_charge`, `summon_tiles` |
 | Change Tele Grab | `grab_tiles`, `grab_pull_speed`, `reach_tiles`, `mana_per_second` |
 | Make a cursor spell ignore walls | `needs_sight` off |

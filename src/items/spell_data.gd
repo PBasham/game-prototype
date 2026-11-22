@@ -105,10 +105,11 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 @export var air_jump_power := 1.0
 @export var air_control_mult := 1.8
 @export var air_speed_mult := 1.15
-## bound: a long leap forward in an arc (leap_speed tiles/s ahead, leap_rise up), the
-## momentum kept until you land (steer against it to slow down).
+## bound: a long leap forward in an arc (leap_speed tiles/s ahead, rising leap_height
+## tiles under normal gravity, wherever in the air you press it), the momentum kept
+## until you land (steer against it to slow down).
 @export var leap_speed := 30.0
-@export var leap_rise := 20.0
+@export var leap_height := 6.0
 ## Levitate: tiles above the ground it hovers at.
 @export var hover_tiles := 5.0
 ## Mend: health per second while on (times spell power).
