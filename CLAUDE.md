@@ -15,8 +15,11 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Before building any gameplay system, send Patrick a short design brief (the choices
   that matter, with defaults) and wait for his input.
 - One phase per branch (`phase-NN-name`); the handoff lists what to playtest.
-- Never push, merge, open or retarget PRs unless Patrick asks for it in that session.
-  Commit locally on the phase branch; Patrick reviews and pushes.
+- Commit on the phase branch and push it (`git push -u origin phase-NN-name`). Never
+  open or retarget PRs. Finished phases get merged into `main` (fast-forward, since each
+  phase branches from the last) and merged branches pruned; Patrick asked for that on
+  2026-11-21. New phases branch from `main`. This session can't delete branches on
+  GitHub (403): give Patrick the `git push origin --delete ...` line instead.
 - Never use en dashes in docs, comments or messages.
 - Patrick supplies real art and audio; use placeholders and record them in assets/ASSETS.md.
 - No dark outlines on terrain, trees or decorations; transitions use texture.
