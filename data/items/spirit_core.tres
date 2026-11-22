@@ -19,5 +19,5 @@ icon = ExtResource("4_2ag2p")
 held = SubResource("Resource_hlc3g")
 impact_at = 0.2
 id = &"spirit_core"
-display_name = "Spirit Core"
-description = "The glowing heart of a Forest Spirit. Rare."
+display_name = "Forest Spirit Core"
+description = "The glowing heart of a Forest Spirit. Rare. Shows how to summon one at a Spell Weaving Table."

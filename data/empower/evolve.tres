@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EmpowerNode" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/empower_node.gd" id="1_emp"]
+
+[resource]
+script = ExtResource("1_emp")
+stat = 1
+per_rank = 1.0
+max_rank = 1
+cost_per_rank = Dictionary[StringName, int]({
+&"magic_essence": 6,
+&"slime": 15
+})
+order = 1
+id = &"evolve"
+display_name = "Evolve"
+description = "Grows your slime into its next form: Green, then Blue (tougher, hits harder). More forms as more slimes are found."

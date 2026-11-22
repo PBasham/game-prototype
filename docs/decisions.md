@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-21: Phase 22, summons
+
+- **Patrick:** a summonable enemy's rare core shows its summon recipe and goes into it;
+  its Spell Page stays as a rarer direct drop (and maybe chest loot underground later).
+- **Patrick:** Summon Slime is melee; Empower changes it through the slime variants
+  (Green, then Blue; more as slimes are added). Claude's defaults he OK'd: Slime Core 1
+  in 40, page 1 in 100, learn 1 core + 20 Slime + 5 Magic Essence, summons share one
+  limit. Evolve cost (15 Slime + 6 Magic Essence) is Claude's pick.
+- Spirit Core is now called Forest Spirit Core (id still `spirit_core`).
+- Ideas noted, not built: boots or greaves, maybe a cape (Patrick undecided).
+
 ## 2026-11-21: Phase 21, Dark Forest ground, biomes, bricks, Pendant
 
 - **Patrick:** real blocks for the Dark Forest (Dark Forest Dirt and Stone, plus walls

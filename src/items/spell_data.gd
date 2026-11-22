@@ -151,6 +151,11 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 @export var summon_tint := Color.WHITE
 ## A little gold cross over your summon: it's yours.
 @export var summon_marker := false
+## A melee summon: an enemy that fights for you (Summon Slime) instead of a floating
+## orb. One per Evolve empower rank (rank 0 = the first): Green, then Blue Slime, and
+## more as slimes are added. It hops after enemies and hits on contact for `damage`
+## (times its contact damage over the first one's: a Blue Slime hits harder).
+@export var summon_enemy_ranks: Array[StringName] = []
 @export var summon_charge := 0.0
 @export var summon_tiles := 15.0
 ## Conjure Platform: width in tiles.

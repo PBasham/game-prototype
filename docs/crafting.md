@@ -148,11 +148,17 @@ name (`World.chest_names`, saved). A torch on a wall comes down with a right cli
 | `output`, `output_count` | What you get |
 | `unlock_items` | **Discovered recipe:** hidden until the character has had one of these items in the inventory (empty = always known). The moment one turns up: "New recipe: ..." and a chime. Remembered per character (`CharacterData.seen_items`, saved), so using the item up doesn't hide it again. Spells to learn at the table do the same with `SpellData.learn_unlock_items`. |
 
-Discovered recipes so far: **Scroll: Summon Forest Spirit** (Scribe's Desk: Blank Scroll + 3
-Magic Essence + 1 Spirit Core) shows up with your first Spirit Core, even if you don't
-know the spell. **Learn: Summon Forest Spirit** (Spell Weaving Table: the Spell Page + 5 Magic
-Essence + 1 Spirit Core) shows up with the page; reading the page alone says to take it
-to the table (`SpellData.page_needs_table`).
+**Summons (Phase 22):** each summonable enemy drops a rare core that shows its summon's
+recipes and goes into them; its Spell Page is a rarer drop that teaches the spell
+outright (left click, anywhere), and may turn up in loot later.
+
+| Core | Drops from | Shows |
+| --- | --- | --- |
+| Forest Spirit Core (1 in 20; page 1 in 50) | Forest Spirit | **Learn: Summon Forest Spirit** (Spell Weaving Table: 1 core + 5 Magic Essence), **Scroll: Summon Forest Spirit** (Scribe's Desk: Blank Scroll + 3 Magic Essence + 1 core), **Forest Spirit Pendant** |
+| Slime Core (1 in 40; page 1 in 100) | Green and Blue Slime | **Learn: Summon Slime** (1 core + 20 Slime + 5 Magic Essence), **Scroll: Summon Slime** |
+
+`SpellData.page_needs_table` (a page you must take to the table) is still there for
+later spells; no summon uses it now.
 
 Current recipes:
 

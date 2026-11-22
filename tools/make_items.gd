@@ -127,7 +127,8 @@ func _items() -> Array[ItemData]:
 	rdark.places_block = &"reinforced_darkwood"
 	out.append(rdark)
 	out.append(_small(&"magic_essence", "Magic Essence", "A wisp of magic left by a Forest Spirit."))
-	out.append(_small(&"spirit_core", "Spirit Core", "The glowing heart of a Forest Spirit. Rare."))
+	out.append(_small(&"spirit_core", "Forest Spirit Core", "The glowing heart of a Forest Spirit. Rare. Shows how to summon one at a Spell Weaving Table."))
+	out.append(_small(&"slime_core", "Slime Core", "The firm heart of a slime. Rare. Shows how to summon one at a Spell Weaving Table."))
 	# Platforms and rope go one at a time (line placing may come later).
 	var platform := _block(&"wood_platform", "Wood Platform", "Stand on it; jump up through it, Down + Jump drops through.")
 	platform.place_area_max = 1
@@ -587,10 +588,28 @@ func _spells() -> Array[ItemData]:
 	call.cooldown = 2.0
 	call.impact_at = 0.3
 	call.projectile_color = Color(0.5, 0.75, 1.0)
-	call.learn_cost = {&"page_call_spirit": 1, &"magic_essence": 5, &"spirit_core": 1}
-	call.learn_unlock_items = [&"page_call_spirit"]
-	call.page_needs_table = true
+	# Summons: the enemy's core shows the recipe and goes into it; its Spell Page (rarer)
+	# teaches it straight away.
+	call.learn_cost = {&"spirit_core": 1, &"magic_essence": 5}
+	call.learn_unlock_items = [&"spirit_core"]
 	out.append(call)
+
+	var slime_sum := _spell(&"summon_slime", "Summon Slime",
+		"A slime fights beside you for 90 seconds: it hops after the nearest enemy and hits it on contact. Empower it to grow it into a tougher slime.")
+	slime_sum.cast = SpellData.Cast.SUMMON
+	slime_sum.group = SpellData.Group.ATTACK
+	slime_sum.damage = 8.0
+	slime_sum.duration = 90.0
+	slime_sum.summon_tiles = 18.0
+	slime_sum.summon_enemy_ranks = [&"green_slime", &"blue_slime"]
+	slime_sum.summon_marker = true
+	slime_sum.mana_cost = 35.0
+	slime_sum.cooldown = 2.0
+	slime_sum.impact_at = 0.3
+	slime_sum.projectile_color = Color(0.55, 1.0, 0.45)
+	slime_sum.learn_cost = {&"slime_core": 1, &"slime": 20, &"magic_essence": 5}
+	slime_sum.learn_unlock_items = [&"slime_core"]
+	out.append(slime_sum)
 
 	var plat := _spell(&"conjure_platform", "Conjure Platform", "A glowing platform, 6 blocks wide, at the cursor for 30 seconds. Down + Jump drops through.")
 	plat.cast = SpellData.Cast.CONJURE
@@ -827,6 +846,8 @@ func _enemies() -> Array[EnemyData]:
 	slime.contact_damage = 6.0
 	slime.knockback = 10.0
 	slime.loot.append(LootDrop.make(&"slime", 1, 2))
+	slime.loot.append(LootDrop.make(&"slime_core", 1, 1, 0.025))
+	slime.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
 	out.append(slime)
 	# The rare one: tougher, hits harder, hops higher, drops more slime.
 	var blue := EnemyData.new()
@@ -847,6 +868,8 @@ func _enemies() -> Array[EnemyData]:
 	blue.hop_wait_min = 0.6
 	blue.hop_wait_max = 1.8
 	blue.loot.append(LootDrop.make(&"slime", 2, 4))
+	blue.loot.append(LootDrop.make(&"slime_core", 1, 1, 0.025))
+	blue.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
 	out.append(blue)
 	# Dark Forest: a glowing ball that darts about, stops, charges and shoots.
 	var spirit := EnemyData.new()
@@ -1059,12 +1082,15 @@ const SCROLL_BARS: Array[int] = [2, 5, 10]
 ## Copper bars learning a spell from its scroll costs, by tier; and exceptions.
 const LEARN_BARS: Array[int] = [4, 10, 20]
 const LEARN_COSTS := {&"gel_cushion": {&"slime": 20},
-	&"call_spirit": {&"page_call_spirit": 1, &"magic_essence": 5, &"spirit_core": 1}}
+	&"call_spirit": {&"spirit_core": 1, &"magic_essence": 5},
+	&"summon_slime": {&"slime_core": 1, &"slime": 20, &"magic_essence": 5}}
 ## Scrolls that cost something else instead.
 const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20},
-	&"call_spirit": {&"blank_scroll": 1, &"magic_essence": 3, &"spirit_core": 1}}
+	&"call_spirit": {&"blank_scroll": 1, &"magic_essence": 3, &"spirit_core": 1},
+	&"summon_slime": {&"blank_scroll": 1, &"magic_essence": 3, &"slime_core": 1}}
 ## Hidden recipes: shown once you've had one of these items (RecipeData.unlock_items).
-const UNLOCKS := {&"scroll_call_spirit": [&"spirit_core"], &"forest_spirit_pendant": [&"spirit_core"]}
+const UNLOCKS := {&"scroll_call_spirit": [&"spirit_core"], &"forest_spirit_pendant": [&"spirit_core"],
+	&"scroll_summon_slime": [&"slime_core"]}
 
 
 ## Paper, the Blank Scroll, a scroll for every spell (left click casts it once) and a

@@ -348,6 +348,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
 - [ ] Forest Spirits (wild and yours) always glow, brighter while charging and shooting.
 - [ ] No clay under the Dark Forest.
 
+**Phase 22: summons (branch phase-22-summons)**
+- [ ] A Forest Spirit Core shows Learn: Summon Forest Spirit (core + 5 Magic Essence);
+      its Spell Page teaches it on a left click, anywhere.
+- [ ] Slimes rarely drop a Slime Core (1 in 40) or Spell Page: Summon Slime (1 in 100).
+      `give slime_core` to test quickly.
+- [ ] Summon Slime: your slime (gold cross) hops after enemies and hits them, stays
+      near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
+- [ ] With the Pendant: a slime and a spirit together.
+
 ## Known
 
 - Window positions reset when you quit. Accessories aren't drawn on the character.

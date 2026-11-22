@@ -64,14 +64,29 @@ into item drops.
 
 ### Green Slime
 
-20 health, 6 contact damage, hops about 5 tiles. Drops 1 to 2 **Slime**. The common one.
+20 health, 6 contact damage, hops about 5 tiles. Drops 1 to 2 **Slime**, rarely a
+**Slime Core** (1 in 40) or **Spell Page: Summon Slime** (1 in 100). The common one.
 
 ### Blue Slime
 
 The rare one (about 1 in 9 forest spawns), and only after a Green Slime has been slain
 in this world. 35 health, 1 defense, 9 contact damage,
-hops about 7 tiles and more often (waits 0.6 to 1.8 s). Drops 2 to 4 **Slime**. Same
-sheet as the Green Slime, tinted blue.
+hops about 7 tiles and more often (waits 0.6 to 1.8 s). Drops 2 to 4 **Slime**, and the
+same rare core and page as the Green Slime. Same sheet as the Green Slime, tinted blue.
+
+### Your slime (Summon Slime)
+
+A melee summon (`SpellData.summon_enemy_ranks`): a real slime that fights for you
+(`Enemy.setup_summon`). It hops after the nearest enemy within 18 tiles
+(`summon_tiles`) and hits it on contact for `damage` (8) every 0.6 s
+(`SUMMON_HIT_EVERY`), knocking it back; with no enemy near it stays a few tiles behind
+you, and if it's 40 tiles away (`SUMMON_LEASH_TILES`) it hops back to you. Your hits
+don't touch it and it isn't counted as an enemy; it lasts 90 s, with a gold cross over
+it. **Evolve** (Empower tab, `data/empower/evolve.tres`: 15 Slime + 6 Magic Essence)
+makes it a Blue Slime, hitting harder by as much as a Blue Slime does (9 vs 6: 12).
+More forms as more slimes are added (add them to `summon_enemy_ranks`, raise the
+node's `max_rank`). It shares the summon limit with the Forest Spirit (one, two with
+the Pendant).
 
 ### Forest Spirit (Dark Forest)
 

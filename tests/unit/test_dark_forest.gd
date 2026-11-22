@@ -150,7 +150,7 @@ func test_a_spirit_core_reveals_the_call_spirit_scroll() -> void:
 	c.inventory.add(&"spirit_core", 1)
 	assert_true(ids.call().has(&"scroll_call_spirit"), "a core reveals it")
 	heard.sort()
-	assert_eq(heard, ["Forest Spirit Pendant", "Scroll: Summon Forest Spirit"] as Array[String], "a core reveals its recipes")
+	assert_eq(heard, ["Forest Spirit Pendant", "Learn: Summon Forest Spirit", "Scroll: Summon Forest Spirit"] as Array[String], "a core reveals its recipes")
 	# Still known after the core is used up, and after saving.
 	c.inventory.take(c.inventory.ids.find(&"spirit_core"), 1)
 	assert_true(ids.call().has(&"scroll_call_spirit"))
@@ -160,16 +160,16 @@ func test_a_spirit_core_reveals_the_call_spirit_scroll() -> void:
 	assert_eq(r.inputs, {&"blank_scroll": 1, &"magic_essence": 3, &"spirit_core": 1})
 
 
-func test_the_spell_page_is_learned_at_the_table_with_a_core() -> void:
+func test_a_core_shows_the_summon_and_the_page_teaches_it_outright() -> void:
 	var c := CharacterData.new()
 	var learn := func() -> Array: return Crafting.learn_recipes(c).map(
 		func(r: RecipeData) -> StringName: return r.teaches)
-	assert_false(learn.call().has(&"call_spirit"), "hidden until you have the page")
-	c.inventory.add(&"page_call_spirit", 1)
-	assert_true(learn.call().has(&"call_spirit"))
+	assert_false(learn.call().has(&"call_spirit"), "hidden until you have a core")
+	c.inventory.add(&"spirit_core", 1)
+	assert_true(learn.call().has(&"call_spirit"), "a core shows the recipe")
 	var spell := ItemData.find(ItemData.spell_key(&"call_spirit")) as SpellData
-	assert_true(spell.page_needs_table)
-	assert_eq(spell.learn_cost, {&"page_call_spirit": 1, &"magic_essence": 5, &"spirit_core": 1})
+	assert_false(spell.page_needs_table, "the page teaches it anywhere")
+	assert_eq(spell.learn_cost, {&"magic_essence": 5, &"spirit_core": 1})
 	var odds := {}
 	for l in (Registry.get_def(&"enemies", &"forest_spirit") as EnemyData).loot:
 		odds[l.item] = l.chance

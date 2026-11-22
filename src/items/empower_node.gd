@@ -5,7 +5,9 @@ extends GameData
 ## (`CharacterData.empower`). Bare bones for now: every spell's tree is the nodes whose
 ## `groups` fit it, in `order`; `requires` (a node id at rank 1+) makes the tree shape.
 
-enum Stat { MANA_COST }
+## MANA_COST: per_rank changes the mana cost. EVOLVE: each rank grows a melee summon
+## into its next form (SpellData.summon_enemy_ranks: Green Slime, then Blue Slime).
+enum Stat { MANA_COST, EVOLVE }
 
 ## What a rank changes, and by how much (Efficient: MANA_COST -0.05 = 5% cheaper).
 @export var stat := Stat.MANA_COST
@@ -25,6 +27,8 @@ enum Stat { MANA_COST }
 func fits(spell: SpellData) -> bool:
 	if stat == Stat.MANA_COST and spell.mana_cost <= 0.0 and spell.mana_per_second <= 0.0:
 		return false
+	if stat == Stat.EVOLVE:
+		return spell.summon_enemy_ranks.size() > 1
 	return groups.is_empty() or groups.has(spell.group)
 
 

@@ -658,6 +658,28 @@ func summon_light_orb(spell: SpellData) -> LightOrb:
 	return orb
 
 
+## A melee summon (Summon Slime): the enemy for its Evolve rank, fighting for you.
+func _summon_ally(spell: SpellData, power: float, used: Array[int]) -> Enemy:
+	var rank := character.empower_rank(spell.id, &"evolve") if character else 0
+	var ranks := spell.summon_enemy_ranks
+	var d := Registry.get_def(&"enemies", ranks[clampi(rank, 0, ranks.size() - 1)]) as EnemyData
+	var first := Registry.get_def(&"enemies", ranks[0]) as EnemyData
+	if d == null:
+		spell_problem = "Unknown summon"
+		return null
+	# A later form hits harder by as much as that slime does (Blue 9 vs Green 6).
+	var dmg := spell.damage * power * (d.contact_damage / maxf(first.contact_damage if first else d.contact_damage, 1.0))
+	var e := Enemy.new()
+	e.setup_summon(self, d, spell, dmg)
+	while e.slot in used:
+		e.slot += 1
+	var p := player.global_position if player else Vector2.ZERO
+	e.position = Vector2(near_player_x(p.x - (player.facing if player else 1) * 2.0 * TILE), p.y - TILE)
+	_enemies.add_child(e)
+	EventBus.sound_requested.emit(&"slime_hop", e.global_position)
+	return e
+
+
 ## The lights and familiars a spell has out right now (Light Orb, Wisps, Familiar).
 func summons_of(spell: SpellData) -> Array[Node]:
 	var out: Array[Node] = []
@@ -671,6 +693,8 @@ func summons_of(spell: SpellData) -> Array[Node]:
 			out.append(n)
 		elif n is Familiar and (n as Familiar).spell == spell:
 			out.append(n)
+		elif n is Enemy and (n as Enemy).summon_spell == spell:
+			out.append(n)  # Summon Slime
 	return out
 
 
@@ -731,14 +755,16 @@ func request_spell_effect(spell: SpellData, at: Vector2, power: float) -> Node:
 				func(n: Node) -> bool: return not n.is_queued_for_deletion())
 			while out.size() >= limit:
 				out.pop_front().queue_free()
-			var fam := Familiar.new()
-			effects.add_child(fam)
 			if player:
 				power *= 1.0 + player.stat(&"summon_damage")
-			fam.setup(self, spell, power)
 			var used: Array[int] = []
 			for f: Node in out:
-				used.append((f as Familiar).slot)
+				used.append(int(f.get(&"slot")))
+			if not spell.summon_enemy_ranks.is_empty():
+				return _summon_ally(spell, power, used)
+			var fam := Familiar.new()
+			effects.add_child(fam)
+			fam.setup(self, spell, power)
 			while fam.slot in used:
 				fam.slot += 1
 			return fam
@@ -848,7 +874,7 @@ func enemies() -> Array[Enemy]:
 	if _enemies == null:
 		return out
 	for e in _enemies.get_children():
-		if e is Enemy and not e.is_queued_for_deletion():
+		if e is Enemy and not e.is_queued_for_deletion() and not (e as Enemy).is_summon():
 			out.append(e)
 	return out
 

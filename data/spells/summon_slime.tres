@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/summon_slime.png" id="1_sv7jv"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_s5k8d"]
+
+[resource]
+script = ExtResource("2_s5k8d")
+cast = 10
+learn_unlock_items = Array[StringName]([&"slime_core"])
+cooldown = 2.0
+damage = 8.0
+projectile_color = Color(0.55, 1, 0.45, 1)
+summon_marker = true
+summon_enemy_ranks = Array[StringName]([&"green_slime", &"blue_slime"])
+summon_tiles = 18.0
+duration = 90.0
+mana_cost = 35.0
+learn_cost = Dictionary[StringName, int]({
+&"magic_essence": 5,
+&"slime": 20,
+&"slime_core": 1
+})
+kind = 4
+icon = ExtResource("1_sv7jv")
+max_stack = 1
+impact_at = 0.3
+id = &"summon_slime"
+display_name = "Summon Slime"
+description = "A slime fights beside you for 90 seconds: it hops after the nearest enemy and hits it on contact. Empower it to grow it into a tougher slime."

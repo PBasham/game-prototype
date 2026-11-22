@@ -9,11 +9,21 @@ script = ExtResource("1_roai4")
 item = &"slime"
 max_count = 2
 
+[sub_resource type="Resource" id="Loot_slime_core"]
+script = ExtResource("1_roai4")
+item = &"slime_core"
+chance = 0.025
+
+[sub_resource type="Resource" id="Loot_page_summon_slime"]
+script = ExtResource("1_roai4")
+item = &"page_summon_slime"
+chance = 0.01
+
 [resource]
 script = ExtResource("2_vnykk")
 texture = ExtResource("3_vsx11")
 tint = Color(0.55, 1, 0.45, 1)
-loot = Array[ExtResource("1_roai4")]([SubResource("Resource_wbqt7")])
+loot = Array[ExtResource("1_roai4")]([SubResource("Resource_wbqt7"), SubResource("Loot_slime_core"), SubResource("Loot_page_summon_slime")])
 id = &"green_slime"
 display_name = "Green Slime"
 description = "Hops around. Not very dangerous."

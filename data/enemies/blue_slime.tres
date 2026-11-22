@@ -10,6 +10,16 @@ item = &"slime"
 min_count = 2
 max_count = 4
 
+[sub_resource type="Resource" id="Loot_slime_core"]
+script = ExtResource("1_j3x2u")
+item = &"slime_core"
+chance = 0.025
+
+[sub_resource type="Resource" id="Loot_page_summon_slime"]
+script = ExtResource("1_j3x2u")
+item = &"page_summon_slime"
+chance = 0.01
+
 [resource]
 script = ExtResource("2_217tg")
 texture = ExtResource("3_be802")
@@ -23,7 +33,7 @@ hop_tiles_min = 3.0
 hop_tiles = 7.0
 hop_wait_min = 0.6
 hop_wait_max = 1.8
-loot = Array[ExtResource("1_j3x2u")]([SubResource("Resource_lhn1y")])
+loot = Array[ExtResource("1_j3x2u")]([SubResource("Resource_lhn1y"), SubResource("Loot_slime_core"), SubResource("Loot_page_summon_slime")])
 id = &"blue_slime"
 display_name = "Blue Slime"
 description = "A rarer, tougher slime. Hops higher and hits harder."

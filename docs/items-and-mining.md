@@ -239,7 +239,8 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Healing Circle | ZONE | 5 tile radius at the cursor, 10 s, heals 4/s (times spell power) while you're inside. 25 mana, 2 s cooldown. One at a time (`max_active` 1): casting again moves it, so circles don't stack. |
 | Spark Ward | WARD | A rune for 2 minutes; the first enemy on it takes 20 and knockback 20. Up to 3. 15 mana. |
 | Familiar | SUMMON | Follows you for 60 s, shoots the nearest enemy within 15 tiles every second for 5. One at a time. 30 mana. |
-| Summon Forest Spirit | SUMMON | A Forest Spirit fights for you for 90 s: charges 1 s (`summon_charge`), then shoots the nearest enemy within 20 tiles for 15, every 2.2 s. Drawn from `summon_texture`. 45 mana. Learned with its rare Spell Page at the table (see crafting.md); the scroll comes from a Spirit Core. Summons are yours: they never drop loot. |
+| Summon Forest Spirit | SUMMON | A Forest Spirit fights for you for 90 s: charges 1 s (`summon_charge`), then shoots the nearest enemy within 20 tiles for 15, every 2.2 s. Drawn from `summon_texture`. 45 mana. Learned at the table with a Forest Spirit Core, or straight from its rarer Spell Page (crafting.md). Summons are yours: they never drop loot. |
+| Summon Slime | SUMMON (melee) | A slime fights beside you for 90 s, hopping after enemies and hitting on contact for 8. Evolve (Empower) grows it into a Blue Slime. 35 mana. Learned with a Slime Core, or its Spell Page (combat.md). |
 | Conjure Platform | CONJURE | 6 tiles wide at the cursor for 30 s. 10 mana. |
 | Arcane Edge | BUFF | Melee damage x1.5 for 60 s. 20 mana. |
 | Barrier | BUFF (reactive) | Waits up to 5 minutes. When a hit would leave you under 25% health it pops: a shield soaks the next 30 damage for 10 s (a bubble, "blocked" when it soaks a whole hit). 30 mana. |

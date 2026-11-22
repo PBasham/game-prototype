@@ -172,3 +172,41 @@ func test_one_of_each_accessory() -> void:
 	assert_eq(c.equip_problem(&"accessory_1", pendant), "", "swapping in the same slot is fine")
 	var r := Registry.get_def(&"recipes", &"forest_spirit_pendant") as RecipeData
 	assert_eq(r.inputs[&"iron_bar"], 10)
+
+
+func test_summon_slime_fights_for_you_and_evolves() -> void:
+	w = await _world()
+	var spell := ItemData.find(ItemData.spell_key(&"summon_slime")) as SpellData
+	assert_not_null(spell)
+	assert_eq(spell.learn_cost, {&"slime_core": 1, &"slime": 20, &"magic_essence": 5})
+	var drops := {}
+	for l in (Registry.get_def(&"enemies", &"green_slime") as EnemyData).loot:
+		drops[l.item] = l.chance
+	assert_almost_eq(float(drops[&"slime_core"]), 0.025, 0.0001, "a rare core")
+	assert_lt(float(drops[&"page_summon_slime"]), float(drops[&"slime_core"]), "the page is rarer")
+	var mine := w.request_spell_effect(spell, w.player.chest(), 1.0) as Enemy
+	assert_not_null(mine)
+	assert_true(mine.is_summon())
+	assert_eq(mine.data.id, &"green_slime", "rank 0: a green slime")
+	assert_false(mine.is_in_group(&"damageable"), "your hits don't hurt it")
+	assert_false(w.enemies().has(mine), "not counted as an enemy")
+	assert_eq(w.summons_of(spell).size(), 1)
+	# It goes after an enemy and hits it.
+	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
+	var e := w.request_spawn_enemy(slime, w.player.global_position + Vector2(5 * World.TILE, 0))
+	var hit := false
+	for i in 900:
+		await wait_physics_frames(1)
+		if not is_instance_valid(e) or e.health < e.data.max_health:
+			hit = true
+			break
+	assert_true(hit, "your slime hits the enemy")
+	# Evolve: rank 1 makes a blue slime that hits harder.
+	var node := Registry.get_def(&"empower", &"evolve") as EmpowerNode
+	assert_true(node.fits(spell))
+	assert_false(node.fits(ItemData.find(ItemData.spell_key(&"spark")) as SpellData), "only for evolving summons")
+	w.character.empower[spell.id] = {&"evolve": 1}
+	var blue := w.request_spell_effect(spell, w.player.chest(), 1.0) as Enemy
+	assert_eq(blue.data.id, &"blue_slime")
+	assert_gt(blue.summon_damage, mine.summon_damage if is_instance_valid(mine) else spell.damage, "hits harder")
+	assert_eq(w.summons_of(spell).size(), 1, "one summon at a time: the new one replaced it")

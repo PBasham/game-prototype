@@ -45,9 +45,40 @@ func setup(w: World, d: EnemyData) -> void:
 	health = d.max_health
 
 
+# --- as your summon (Summon Slime) -------------------------------------------------------
+
+## The spell that summoned it: it fights for you. Not hit by you, not counted as an
+## enemy, gone after the spell's duration (`time_left`).
+var summon_spell: SpellData
+var time_left := 0.0
+## Damage per contact hit on an enemy, and its place among your summons.
+var summon_damage := 0.0
+var slot := 0
+## Enemy -> seconds until this summon can hit it again.
+var _hit_wait: Dictionary = {}
+## Summoned this far from you (tiles), it hops back next to you.
+const SUMMON_LEASH_TILES := 40.0
+const SUMMON_HIT_EVERY := 0.6
+
+
+## Sets it up as your summon (call before adding it to the tree).
+func setup_summon(w: World, d: EnemyData, spell: SpellData, damage: float) -> void:
+	setup(w, d)
+	summon_spell = spell
+	time_left = spell.duration
+	summon_damage = damage
+
+
+func is_summon() -> bool:
+	return summon_spell != null
+
+
 func _ready() -> void:
-	add_to_group(&"damageable")
-	add_to_group(&"enemies")
+	if is_summon():
+		add_to_group(&"familiars")  # counted with the other summons, ends when you die
+	else:
+		add_to_group(&"damageable")
+		add_to_group(&"enemies")
 	collision_layer = 1 << (LAYER - 1)
 	collision_mask = 1 | 2  # world blocks, platforms
 	floor_snap_length = 2.0
@@ -194,7 +225,10 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor() and not _was_on_floor:
 		_squash = 0.15  # landed
 	_was_on_floor = is_on_floor()
-	_touch_player()
+	if is_summon():
+		_summon_tick(delta)
+	else:
+		_touch_player()
 	_update_look()
 	queue_redraw()
 
@@ -239,8 +273,11 @@ func _slime(delta: float) -> void:
 	EventBus.sound_requested.emit(&"slime_hop", global_position)
 
 
-## -1 or 1 toward the player if it's chasing them, 0 if it's wandering.
+## -1 or 1 toward the player if it's chasing them, 0 if it's wandering. A summon goes
+## after the nearest enemy, or back toward you when none is near.
 func _target_dir() -> float:
+	if is_summon():
+		return _summon_dir()
 	var p := world.player
 	if p == null or p.dead:
 		return 0.0
@@ -450,6 +487,14 @@ func _draw() -> void:
 		var spin := Time.get_ticks_msec() * 0.004
 		for i in 8:
 			draw_circle(mid + Vector2.from_angle(spin + i * TAU / 8.0) * r, 1.0, Color(0.85, 0.95, 1.0, 0.4 + 0.6 * k))
+	# Yours: a small gold cross over it.
+	if is_summon():
+		if summon_spell.summon_marker:
+			var top := Vector2(0, -data.size.y - 5.0)
+			var gold := Color(1.0, 0.86, 0.45, clampf(time_left / 3.0, 0.0, 1.0))
+			draw_rect(Rect2(top + Vector2(-0.5, -2.5), Vector2(1, 5)), gold)
+			draw_rect(Rect2(top + Vector2(-2.5, -0.5), Vector2(5, 1)), gold)
+		return
 	# Health bar once hurt (fades after a while).
 	if health >= data.max_health or _since_hit > 6.0:
 		return
@@ -459,3 +504,59 @@ func _draw() -> void:
 	var k := clampf(health / data.max_health, 0.0, 1.0)
 	var c := Color("d83a3a").lerp(Color("6ad04a"), k)
 	draw_rect(Rect2(-w * 0.5, y, w * k, 2), c)
+
+
+# --- summon behavior --------------------------------------------------------------------
+
+func _summon_target() -> Enemy:
+	var best: Enemy = null
+	var best_d := summon_spell.summon_tiles * TILE
+	for n in get_tree().get_nodes_in_group(&"enemies"):
+		var e := n as Enemy
+		if e == null or e.is_queued_for_deletion() or e.health <= 0.0:
+			continue
+		var d := absf(_wrapped_dx(e.global_position.x)) + absf(e.global_position.y - global_position.y) * 0.5
+		if d < best_d:
+			best_d = d
+			best = e
+	return best
+
+
+func _summon_dir() -> float:
+	var target := _summon_target()
+	if target:
+		return signf(_wrapped_dx(target.global_position.x))
+	var p := world.player
+	if p == null or p.dead:
+		return 0.0
+	# Stay near you: a few tiles behind, by your side.
+	var want := p.global_position.x - p.facing * (3.0 + slot * 2.5) * TILE
+	var dx := _wrapped_dx(want)
+	return signf(dx) if absf(dx) > 2.0 * TILE else 0.0
+
+
+func _summon_tick(delta: float) -> void:
+	time_left -= delta
+	if time_left <= 0.0:
+		FloatingText.spawn(get_parent(), global_position + Vector2(0, -data.size.y - 6), "*pop*", Color("9ae88a"))
+		queue_free()
+		return
+	var p := world.player
+	if p and not p.dead and absf(_wrapped_dx(p.global_position.x)) + absf(p.global_position.y - global_position.y) > SUMMON_LEASH_TILES * TILE:
+		global_position = p.global_position + Vector2(-p.facing * 2.0 * TILE, -TILE)  # caught up
+		velocity = Vector2.ZERO
+	for e: Variant in _hit_wait.keys():
+		_hit_wait[e] = float(_hit_wait[e]) - delta
+		if _hit_wait[e] <= 0.0 or not is_instance_valid(e):
+			_hit_wait.erase(e)
+	var me := hit_rect()
+	for n in get_tree().get_nodes_in_group(&"enemies"):
+		var e := n as Enemy
+		if e == null or e.health <= 0.0 or _hit_wait.has(e):
+			continue
+		var r := e.hit_rect()
+		r.position.x = global_position.x + _wrapped_dx(r.position.x + r.size.x * 0.5) - r.size.x * 0.5
+		if me.intersects(r):
+			e.take_damage(summon_damage, self)
+			e.knock_back(global_position, data.knockback * 0.6)
+			_hit_wait[e] = SUMMON_HIT_EVERY

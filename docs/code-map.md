@@ -375,3 +375,12 @@ saves still load.
 | Summon limit and damage | `World.request_spell_effect` (SUMMON), stats `summon_slots`, `summon_damage`, `Familiar.slot`, `SpellData.summon_tint` |
 | Hold to keep casting | `Player._handle_use` (spells repeat past the combo window), `Player._repeat_quick` |
 | Art placeholders | `tools/make_dark_forest_terrain.py`, `tools/make_brick_art.py` |
+
+
+## Phase 22: summons
+
+| Change | Where |
+| --- | --- |
+| A melee summon (an enemy fighting for you) | `SpellData.summon_enemy_ranks`, `World._summon_ally`, `Enemy.setup_summon`, `_summon_dir`, `_summon_tick` |
+| Summon evolving through forms | `EmpowerNode.Stat.EVOLVE`, `data/empower/evolve.tres` (raise `max_rank` with more forms) |
+| Summon unlocks | the spell's `learn_unlock_items` (its core) and `learn_cost`; the page item's `learns_spell` |

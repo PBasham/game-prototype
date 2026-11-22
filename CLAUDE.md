@@ -28,7 +28,7 @@ tunables change: Patrick tweaks things by hand from these docs.
   and blue slime, slime, wooden and copper swords, copper armor, bed, paper, blank and spell
   scrolls, the Spell Weaving Table, and the spells in data/spells; placeholder sounds;
   Phase 21: Dark Forest Dirt, Grass, Stone and walls, Stone Bricks and Dark Forest Stone
-  Bricks, the Forest Spirit Pendant).
+  Bricks, the Forest Spirit Pendant; Phase 22: Slime Core, Summon Slime).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

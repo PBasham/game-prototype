@@ -290,3 +290,5 @@ or .ogg); the generator never overwrites without `--force`.
 | `terrain/{stone_bricks,dark_forest_stone_bricks}{,_wall}.png`, their icons and held sprites | **Placeholder** bricks built from each stone's colors (`python3 tools/make_brick_art.py --force`). |
 | `items/{icons,held}/forest_spirit_pendant.png` | **Placeholder** pendant icon (same tool). |
 | `tiles/blocks.png` rows 14 to 18 | Copies of the dirt, grass and stone rows (dark forest blocks, bricks): collision only, the terrain shader draws them. |
+
+| `items/icons/{summon_slime,scroll_summon_slime,page_summon_slime,slime_core}.png` (and held) | **Placeholder**: the Summon Forest Spirit icons and the spirit core, turned slime green. |

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_j6ulb"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_nt0l7"]
+[ext_resource type="Texture2D" path="res://assets/items/held/slime_core.png" id="3_sp6o7"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/slime_core.png" id="4_hovs3"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_63qn5"]
+
+[sub_resource type="Resource" id="Resource_86yjp"]
+script = ExtResource("2_nt0l7")
+id = &"slime_core"
+texture = ExtResource("3_sp6o7")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_63qn5")
+icon = ExtResource("4_hovs3")
+held = SubResource("Resource_86yjp")
+impact_at = 0.2
+id = &"slime_core"
+display_name = "Slime Core"
+description = "The firm heart of a slime. Rare. Shows how to summon one at a Spell Weaving Table."
