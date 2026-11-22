@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-21: Phase 23, the Catalog
+
+- **Patrick:** a Catalog book showing every block and enemy you've found, with a slot to
+  put an item in and see its recipes (unknown ones blacked out). You start with it, no
+  crafting.
+- Claude's defaults Patrick OK'd: J (C was taken by a quick slot), Items, Enemies and
+  Recipes tabs, silhouettes with found counts, unknown recipes show their station.
+  An enemy is found once killed; its drops appear as you get them from it.
+- It starts in the backpack's last slot so it doesn't move the hotbar.
+
 ## 2026-11-21: Phase 22, summons
 
 - **Patrick:** a summonable enemy's rare core shows its summon recipe and goes into it;

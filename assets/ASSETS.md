@@ -292,3 +292,4 @@ or .ogg); the generator never overwrites without `--force`.
 | `tiles/blocks.png` rows 14 to 18 | Copies of the dirt, grass and stone rows (dark forest blocks, bricks): collision only, the terrain shader draws them. |
 
 | `items/icons/{summon_slime,scroll_summon_slime,page_summon_slime,slime_core}.png` (and held) | **Placeholder**: the Summon Forest Spirit icons and the spirit core, turned slime green. |
+| `items/icons/catalog.png` (and held) | **Placeholder**: a brown book with a gold emblem (the Catalog). |

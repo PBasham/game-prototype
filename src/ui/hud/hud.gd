@@ -126,6 +126,8 @@ var _chest: Pane
 var _equip: EquipmentWindow
 var _spells: SpellWindow
 var _dev_items: DevItemsWindow
+var _catalog: CatalogWindow
+var catalog_open := false
 var _status: Pane
 ## Buff icons with their time left, above the status panel.
 var _buffs: Pane
@@ -207,6 +209,9 @@ func _ready() -> void:
 	_dev_items = DevItemsWindow.new(self)
 	_dev_items.close_pressed.connect(toggle_dev_items)
 	add_child(_dev_items)
+	_catalog = CatalogWindow.new(self)
+	_catalog.close_pressed.connect(toggle_catalog)
+	add_child(_catalog)
 	_quick = _pane(_draw_quick, func(_p: Pane, _e: InputEvent) -> void: pass)
 	_quick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_buffs = _pane(_draw_buffs, func(_p: Pane, _e: InputEvent) -> void: pass)
@@ -335,6 +340,7 @@ func _redraw() -> void:
 	_equip.queue_redraw()
 	_spells.queue_redraw()
 	_dev_items.queue_redraw()
+	_catalog.queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
@@ -429,6 +435,8 @@ func _process(delta: float) -> void:
 		toggle_equipment()
 	if Input.is_action_just_pressed("spells") and not paused:
 		toggle_spells()
+	if Input.is_action_just_pressed("catalog") and not paused:
+		toggle_catalog()
 	if Input.is_action_just_pressed("map") and not paused:
 		toggle_map()
 	if map_view.visible:
@@ -490,7 +498,7 @@ func _process(delta: float) -> void:
 
 ## The window under the mouse, or null.
 func _over_pane() -> Control:
-	for pane: Control in [_dev_items, _spells, _equip, _craft, _chest, _inv]:
+	for pane: Control in [_catalog, _dev_items, _spells, _equip, _craft, _chest, _inv]:
 		if pane.visible and pane.get_global_rect().has_point(pane.get_global_mouse_position()):
 			return pane
 	return null
@@ -507,6 +515,7 @@ func set_open(value: bool) -> void:
 		equipping = false
 		spells_open = false
 		dev_items_open = false
+		catalog_open = false
 		if cursor_count > 0:
 			if _cursor_is_spell():
 				_clear_cursor()  # a spell being placed just goes back
@@ -565,6 +574,22 @@ func give_cursor(item_id: StringName, count: int, meta: Dictionary = {}) -> void
 	cursor_count = mini(cap, (cursor_count if cursor_id == item_id else 0) + count)
 	cursor_id = item_id
 	_redraw()
+
+
+## J (or left click the Catalog book): the Catalog, with the inventory (so items can
+## be dropped on its Recipes slot), or closes it.
+func toggle_catalog() -> void:
+	catalog_open = not catalog_open
+	if catalog_open:
+		open = true
+	_layout()
+
+
+## The Catalog, on an item's recipes (from an item's right click menu later, tests).
+func show_catalog_recipes(it: ItemData) -> void:
+	if not catalog_open:
+		toggle_catalog()
+	_catalog.show_recipes(it)
 
 
 ## L: the Spell Index (with the inventory), or closes it.
@@ -717,6 +742,10 @@ func _layout() -> void:
 		_dev_items.visible = false
 		if _dev_items.searching:
 			_dev_items.set_searching(false)
+	if open and catalog_open:
+		_catalog.show_at(_catalog.centered())
+	else:
+		_catalog.visible = false
 	if open and spells_open:
 		_spells.show_at(_spell_window_spot())
 	else:

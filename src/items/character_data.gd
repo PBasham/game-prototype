@@ -154,6 +154,10 @@ var empower: Dictionary[StringName, Dictionary] = {}
 ## (`RecipeData.unlock_items`, `SpellData.learn_unlock_items`) show up once one of their
 ## key items is in here.
 var seen_items: Dictionary[StringName, bool] = {}
+## The Catalog: enemies this character has slain (id -> how many), and what each has
+## been seen to drop (id -> {item id: true}). Saved.
+var slain: Dictionary[StringName, int] = {}
+var seen_drops: Dictionary[StringName, Dictionary] = {}
 
 var name := DEFAULT_NAME
 var inventory := Inventory.new():
@@ -194,7 +198,21 @@ var temporary := false
 static func create(char_name: String) -> CharacterData:
 	var c := CharacterData.new()
 	c.name = char_name
+	c.give_catalog()  # everyone starts with the Catalog (J)
 	return c
+
+
+## The Catalog goes in the backpack's last slot, out of the hotbar's way (any free slot if
+## that one is taken).
+func give_catalog() -> void:
+	if ItemData.find(&"catalog") == null or inventory.count_of(&"catalog") > 0:
+		return
+	var last := inventory.size - 1
+	if inventory.item(last) == null:
+		inventory.set_slot(last, &"catalog", 1)
+	else:
+		inventory.add(&"catalog", 1)
+	note_inventory()
 
 
 ## A character with the dev kit (tests, scripted runs).
@@ -603,7 +621,16 @@ static func load_file(path: String) -> CharacterData:
 		c.empower[StringName(sid)] = ranks
 	for id: String in d.get("seen_items", []):
 		c.seen_items[StringName(id)] = true
+	for id: String in d.get("slain", {}):
+		c.slain[StringName(id)] = int(d["slain"][id])
+	for id: String in d.get("seen_drops", {}):
+		var items := {}
+		for it: String in d["seen_drops"][id]:
+			items[StringName(it)] = true
+		c.seen_drops[StringName(id)] = items
 	c.inventory.from_dict(d.get("inventory", {}))
+	if not c.seen_items.has(&"catalog"):
+		c.give_catalog()  # characters from before the Catalog get one
 	if d.has("trash"):
 		c.trash.from_dict(d["trash"])
 	c.note_inventory()
@@ -702,7 +729,31 @@ func to_dict() -> Dictionary:
 		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger,
 		"movement_spell": String(movement_spell), "ghost": ghost, "trash": trash.to_dict(),
 		"empower": _empower_dict(),
-		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k))}
+		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k)),
+		"slain": _slain_dict(), "seen_drops": _drops_dict()}
+
+
+func _slain_dict() -> Dictionary:
+	var out := {}
+	for k in slain:
+		out[String(k)] = slain[k]
+	return out
+
+
+func _drops_dict() -> Dictionary:
+	var out := {}
+	for k in seen_drops:
+		out[String(k)] = seen_drops[k].keys().map(func(i: StringName) -> String: return String(i))
+	return out
+
+
+## You slew an enemy that dropped these items: the Catalog learns it and its drops.
+func note_kill(enemy_id: StringName, drops: Array) -> void:
+	slain[enemy_id] = int(slain.get(enemy_id, 0)) + 1
+	if not seen_drops.has(enemy_id):
+		seen_drops[enemy_id] = {}
+	for it: Variant in drops:
+		seen_drops[enemy_id][StringName(it)] = true
 
 
 func _empower_dict() -> Dictionary:

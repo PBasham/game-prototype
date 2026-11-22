@@ -357,6 +357,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 23: the Catalog (branch phase-23-catalog)**
+- [ ] A new character has the Catalog in the last backpack slot; an old one gets it on load.
+- [ ] J (or a left click with it held) opens it; x, J and Esc close it.
+- [ ] Items tab: unfound items are silhouettes; "N / M found" goes up as you pick things up.
+- [ ] Item page: Made at, Dropped by, Used in; the Recipes button jumps to the Recipes tab.
+- [ ] Enemies tab: kill a slime, its page shows stats, slain count and drops (unseen ones dark).
+- [ ] Recipes tab: drop Slime or Darkwood in the slot; unknown recipes are "???" with
+      their station; clicking a known row moves to that item.
+
 ## Known
 
 - Window positions reset when you quit. Accessories aren't drawn on the character.

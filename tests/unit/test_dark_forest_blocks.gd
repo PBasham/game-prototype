@@ -195,7 +195,7 @@ func test_summon_slime_fights_for_you_and_evolves() -> void:
 	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
 	var e := w.request_spawn_enemy(slime, w.player.global_position + Vector2(5 * World.TILE, 0))
 	var hit := false
-	for i in 900:
+	for i in 1800:  # slimes hop at random: give it time
 		await wait_physics_frames(1)
 		if not is_instance_valid(e) or e.health < e.data.max_health:
 			hit = true

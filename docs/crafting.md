@@ -193,6 +193,30 @@ Defaults are written by `tools/make_items.gd` (items, spells, objects and recipe
 `--only=a,b` limits it to some ids; it never overwrites a file unless you pass
 `--force`, so edit the `.tres` files freely.
 
+## The Catalog (J)
+
+Every character starts with the **Catalog** (in the last backpack slot; older characters
+get one when loaded). **J**, or a left click while holding it, opens it next to the
+inventory (`CatalogWindow`, src/ui/hud/catalog_window.gd; data in `Catalog`,
+src/items/catalog.gd). Three tabs:
+
+- **Items:** every item but spells. Ones you've never had show as black silhouettes;
+  the title shows "found / total". Click a found item for its page: description, where
+  it's made, which enemies drop it, how many recipes use it, and a **Recipes** button.
+- **Enemies:** an enemy counts as found once you've killed one. Its page shows health,
+  damage, defense, how many you've slain, and its drops (drops you've never had from it
+  stay silhouettes).
+- **Recipes:** put an item in the slot (drop it from the mouse; right click clears) to
+  list what makes it and what it goes into. Recipes you haven't unlocked show as "???"
+  with their station; known ones show the ingredients. Click a known row to jump to that
+  item's recipes.
+
+"Found" items are `CharacterData.seen_items` (anything that's been in your inventory);
+kills and drops are `slain` and `seen_drops` (`CharacterData.note_kill`, called from
+`Enemy._die`). A recipe is known when you've had one of its `unlock_items`, the same
+rule as the crafting window. Station names come from the lowest tier object with that
+`station`. Dev console: `catalog [items|enemies|recipes] [name]`.
+
 ## Furniture and stations: `data/objects/<id>.tres` (`ObjectDef`)
 
 **Facing:** furniture you place while facing left is mirrored, so it faces the way you

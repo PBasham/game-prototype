@@ -384,3 +384,14 @@ saves still load.
 | A melee summon (an enemy fighting for you) | `SpellData.summon_enemy_ranks`, `World._summon_ally`, `Enemy.setup_summon`, `_summon_dir`, `_summon_tick` |
 | Summon evolving through forms | `EmpowerNode.Stat.EVOLVE`, `data/empower/evolve.tres` (raise `max_rank` with more forms) |
 | Summon unlocks | the spell's `learn_unlock_items` (its core) and `learn_cost`; the page item's `learns_spell` |
+
+
+## Phase 23: the Catalog
+
+| Change | Where |
+| --- | --- |
+| What's found, recipes making and using an item, station names, drops | `Catalog` (src/items/catalog.gd) |
+| The window (tabs, pages, recipe slot) | `CatalogWindow` (src/ui/hud/catalog_window.gd), opened by `Hud.toggle_catalog`, `show_catalog_recipes` |
+| Kills and seen drops (saved) | `CharacterData.slain`, `seen_drops`, `note_kill` (from `Enemy._die`) |
+| Starting with it | `CharacterData.give_catalog` (in `create` and old saves in `load_file`) |
+| The item, the key | `data/items/catalog.tres` (`ItemData.opens_catalog`, `ItemUser` mode CATALOG), action `catalog` (J) in project.godot |

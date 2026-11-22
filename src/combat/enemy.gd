@@ -194,6 +194,8 @@ func _die() -> void:
 	world.record_kill(data.id)
 	EventBus.sound_requested.emit(&"enemy_die", global_position)
 	var drops := LootDrop.roll(data.loot)
+	if world.character:
+		world.character.note_kill(data.id, drops.keys())  # the Catalog
 	for item_id: StringName in drops:
 		world.request_spawn_drop(item_id, drops[item_id], global_position + Vector2(0, -data.size.y * 0.5),
 			Vector2(randf_range(-3, 3), -6) * TILE)

@@ -69,7 +69,9 @@ func test_character_save_and_load() -> void:
 	assert_eq(back.inventory.count_of(&"wood"), c.inventory.count_of(&"wood"))
 
 
-func test_new_characters_start_with_nothing() -> void:
+func test_new_characters_start_with_only_the_catalog() -> void:
 	var c := CharacterData.create("nobody")
-	assert_true(c.inventory.is_all_empty(), "no items")
+	assert_eq(c.inventory.ids[c.inventory.size - 1], &"catalog", "in the last backpack slot")
+	c.inventory.clear(c.inventory.size - 1)
+	assert_true(c.inventory.is_all_empty(), "nothing else")
 	assert_eq(c.known_spells.size(), 0, "no spells (they lost their memory)")

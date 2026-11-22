@@ -7,7 +7,7 @@ docs/character-art.md covers the paper doll; docs/3d-character.md covers the 3D 
 the inventory, layers, mining, placing, magic and plants; docs/crafting.md covers
 crafting, stations, furniture, chests, doors, pickups and mana; docs/survival.md covers
 day and night, health, hunger, food, berry bushes, dying and the magic bag; docs/combat.md covers
-enemies, spawning, melee, armor, equipment stats and beds. Keep them up to date when behavior or
+enemies, spawning, melee, armor, equipment stats and beds; the Catalog (J) is in docs/crafting.md. Keep them up to date when behavior or
 tunables change: Patrick tweaks things by hand from these docs.
 
 ## Collaboration rules
@@ -28,7 +28,7 @@ tunables change: Patrick tweaks things by hand from these docs.
   and blue slime, slime, wooden and copper swords, copper armor, bed, paper, blank and spell
   scrolls, the Spell Weaving Table, and the spells in data/spells; placeholder sounds;
   Phase 21: Dark Forest Dirt, Grass, Stone and walls, Stone Bricks and Dark Forest Stone
-  Bricks, the Forest Spirit Pendant; Phase 22: Slime Core, Summon Slime).
+  Bricks, the Forest Spirit Pendant; Phase 22: Slime Core, Summon Slime; Phase 23: the Catalog).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

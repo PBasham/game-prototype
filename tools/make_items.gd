@@ -1098,6 +1098,11 @@ const UNLOCKS := {&"scroll_call_spirit": [&"spirit_core"], &"forest_spirit_penda
 func _scrolls() -> Array[ItemData]:
 	var out: Array[ItemData] = []
 	out.append(_small(&"paper", "Paper", "Made from wood. Used for scrolls and the Spell Weaving Table."))
+	var catalog := _small(&"catalog", "Catalog",
+		"Everything you've found: items, enemies and their drops, and every recipe an item is in. Left click or J to open.")
+	catalog.opens_catalog = true
+	catalog.max_stack = 1
+	out.append(catalog)
 	out.append(_small(&"blank_scroll", "Blank Scroll", "Write a spell on it at the Spell Weaving Table."))
 	for sp in _spells():
 		var spell := sp as SpellData
