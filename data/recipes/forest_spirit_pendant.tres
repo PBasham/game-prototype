@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_05y7s"]
+
+[resource]
+script = ExtResource("1_05y7s")
+station = &"scribing"
+inputs = Dictionary[StringName, int]({
+&"magic_essence": 10,
+&"spirit_core": 1
+})
+unlock_items = Array[StringName]([&"spirit_core"])
+output = &"forest_spirit_pendant"
+id = &"forest_spirit_pendant"
+display_name = "Forest Spirit Pendant"

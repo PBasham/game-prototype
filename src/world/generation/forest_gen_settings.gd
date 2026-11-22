@@ -198,6 +198,14 @@ extends GameData
 @export var dark_forest_spawn_clear := 300
 ## The patch fades in and out over this many tiles at each edge (trees, darkness, sky).
 @export var dark_forest_edge_tiles := 40
+## Underground the Dark Forest's blocks (Dark Forest Dirt, Stone, Grass and walls) go
+## all the way to the bottom of the world. Their sides wander in and out by up to this
+## many tiles as they go down (less near the surface, so they meet the trees' edge)...
+@export var dark_forest_wobble_tiles := 40.0
+## ...one wiggle every this many tiles going down...
+@export var dark_forest_wobble_length := 110.0
+## ...and the edge is a band this many tiles wide where both kinds mix in clumps.
+@export var dark_forest_fringe_tiles := 7.0
 ## Dark trees: one spot every this many columns, the chance a spot has a tree, and the
 ## number of darkwood tree art variants (assets/trees/darkwood_<n>.png).
 @export var dark_tree_spacing := 5

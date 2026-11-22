@@ -19,6 +19,20 @@ enum Collision {
 ## Player can climb it with Up/Down (ropes, ladders).
 @export var climbable: bool = false
 
+@export_group("Ground")
+## What natural ground it acts as: &"grass", &"dirt" or &"stone" (empty = none). The
+## biome versions (Dark Forest Dirt) act as their plain kind: grass spreads onto any
+## dirt, trees and bushes root in any grass, pickups lie on any of them.
+@export var kind: StringName = &""
+## Dirt kinds: the grass it turns into when grass spreads onto it (dirt -> grass).
+@export var grows_to: StringName = &""
+## Grass kinds: the dirt it turns back into when covered (grass -> dirt).
+@export var bare_to: StringName = &""
+## The biome this block belongs to (&"dark_forest"): enough of them around you and
+## you're in that biome (World.biome_at).
+@export var biome: StringName = &""
+@export_group("")
+
 @export_group("Mining")
 ## Damage it takes to break. A copper pickaxe does 25 per hit, so 50 = two hits. Walls
 ## (the back layer) are mined with right click, by the same tools.
@@ -43,6 +57,8 @@ enum Collision {
 @export var terrain: String = ""
 ## Grass grows on its exposed surfaces (top and upper sides).
 @export var grass_cover: bool = false
+## Grass in the dark palette (blue-black, ChunkRenderer.dark_grass_colors).
+@export var dark_grass: bool = false
 ## Overlay drawn on top of the base texture: assets/terrain/ore_<ore_overlay>.png.
 @export var ore_overlay: String = ""
 ## Built block (planks, bricks): crisp square edges with a dark edge line instead of the

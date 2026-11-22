@@ -32,6 +32,13 @@ extends Sprite2D
 @export var sky_depth_tiles := 0
 ## Minimum seconds between recomputes.
 @export var min_interval := 0.12
+## Each new light map fades in over the last one over this long, so moving lights
+## glide instead of jumping a tile at a time (0 = snap).
+@export var fade_seconds := 0.14
+var _outside: Node2D
+var _image: Image
+var _prev: ImageTexture
+var _fade := 1.0
 
 var world: World
 var _dirty := true
@@ -57,9 +64,17 @@ func _ready() -> void:
 	scale = Vector2(World.TILE, World.TILE)
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	z_index = 50
-	var mat := CanvasItemMaterial.new()
-	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_MUL
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://src/world/light_map.gdshader")
 	material = mat
+	# The rough stand-in light around the map draws on a child with a plain multiply.
+	_outside = Node2D.new()
+	_outside.name = "Outside"
+	var omat := CanvasItemMaterial.new()
+	omat.blend_mode = CanvasItemMaterial.BLEND_MODE_MUL
+	_outside.material = omat
+	add_child(_outside)
+	_outside.draw.connect(func() -> void: _draw_outside(_outside))
 
 
 func mark_dirty() -> void:
@@ -73,6 +88,9 @@ func _sky() -> Color:
 
 func _process(delta: float) -> void:
 	_cooldown -= delta
+	if _fade < 1.0:
+		_fade = minf(_fade + delta / maxf(fade_seconds, 0.001), 1.0)
+		(material as ShaderMaterial).set_shader_parameter(&"fade", _fade)
 	if _job != null and WorkerThreadPool.is_task_completed(_job.task):
 		WorkerThreadPool.wait_for_task_completion(_job.task)
 		PerfStats.add("light rebuild (worker)", _job.usec)
@@ -161,7 +179,7 @@ func _make_job() -> LightJob:
 			job.object_h[id] = od.height_tiles
 	job.source_solid_factor = source_solid_factor
 	for l in world.dynamic_lights():
-		job.extra.append([Vector2i(l[0]) - rect.position, l[1], l[2]])
+		job.extra.append([Vector2(l[0]) - Vector2(rect.position), l[1], l[2]])
 	job.emitters.resize(world.objects.size() * 4)
 	for id in range(1, world.objects.size()):
 		var def := world.objects.def(id) as ObjectDef
@@ -187,7 +205,7 @@ func _make_job() -> LightJob:
 
 ## Around the real light map: sky light above the natural ground, dark below, so
 ## ground that comes into view before the light catches up isn't lit up bright.
-func _draw() -> void:
+func _draw_outside(c: CanvasItem) -> void:
 	if world == null or _shown_rect.size.x <= 0:
 		return
 	var w := _shown_rect.size.x
@@ -206,19 +224,19 @@ func _draw() -> void:
 		var bottom := h + m
 		if inside_x:
 			# Above and below the map only.
-			_strip(x, step, top, 0, ground, col_sky, dark)
-			_strip(x, step, h, bottom, ground, col_sky, dark)
+			_strip(c, x, step, top, 0, ground, col_sky, dark)
+			_strip(c, x, step, h, bottom, ground, col_sky, dark)
 		else:
-			_strip(x, step, top, bottom, ground, col_sky, dark)
+			_strip(c, x, step, top, bottom, ground, col_sky, dark)
 
 
 ## A column strip from y0 to y1 (tiles): sky light down to `ground`, dark under it.
-func _strip(x: int, w: int, y0: int, y1: int, ground: int, sky: Color, dark: Color) -> void:
+func _strip(c: CanvasItem, x: int, w: int, y0: int, y1: int, ground: int, sky: Color, dark: Color) -> void:
 	var split := clampi(ground, y0, y1)
 	if split > y0:
-		draw_rect(Rect2(x, y0, w, split - y0), sky)
+		c.draw_rect(Rect2(x, y0, w, split - y0), sky)
 	if y1 > split:
-		draw_rect(Rect2(x, split, w, y1 - split), dark)
+		c.draw_rect(Rect2(x, split, w, y1 - split), dark)
 
 
 ## Main thread: uploads the result and moves the overlay onto its rectangle.
@@ -227,6 +245,20 @@ func _apply(job: LightJob) -> void:
 	var w := job.rect.size.x
 	var h := job.rect.size.y
 	var image := Image.create_from_data(w, h, false, Image.FORMAT_RGB8, job.bytes)
+	var mat := material as ShaderMaterial
+	if _image != null and fade_seconds > 0.0 and mat:
+		# Fade from what was shown (lined up by where the old map's corner was).
+		if _prev == null or _prev.get_size() != Vector2(_image.get_size()):
+			_prev = ImageTexture.create_from_image(_image)
+		else:
+			_prev.update(_image)
+		mat.set_shader_parameter(&"prev_tex", _prev)
+		mat.set_shader_parameter(&"prev_size", Vector2(_image.get_size()))
+		mat.set_shader_parameter(&"cur_size", Vector2(w, h))
+		mat.set_shader_parameter(&"shift", Vector2(job.rect.position - _shown_rect.position))
+		_fade = 0.0
+		mat.set_shader_parameter(&"fade", 0.0)
+	_image = image
 	if _texture == null or _texture.get_size() != Vector2(w, h):
 		_texture = ImageTexture.create_from_image(image)
 		texture = _texture
@@ -234,5 +266,5 @@ func _apply(job: LightJob) -> void:
 		_texture.update(image)
 	position = Vector2(job.rect.position * World.TILE)
 	_shown_rect = job.rect
-	queue_redraw()
+	_outside.queue_redraw()
 	PerfStats.add("light apply (main)", Time.get_ticks_usec() - t)

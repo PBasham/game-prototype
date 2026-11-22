@@ -892,7 +892,7 @@ func test_readied_jump_spells_trigger_once_in_the_air_and_land_safe() -> void:
 	Input.action_press("jump")
 	await wait_physics_frames(2)
 	Input.action_release("jump")
-	assert_gt(absf(p.velocity.x), 20.0 * World.TILE, "leaps forward")
+	assert_gt(absf(p.velocity.x), 40.0 * World.TILE, "leaps forward, fast")
 	assert_lt(p.velocity.y, 0.0, "in an arc")
 	await wait_physics_frames(20)
 	assert_gt(absf(p.global_position.x - x), 6.0 * World.TILE, "keeps the momentum")
@@ -911,8 +911,8 @@ func test_readied_jump_spells_trigger_once_in_the_air_and_land_safe() -> void:
 	for i in 40:
 		await wait_physics_frames(1)
 		top = minf(top, p.global_position.y)
-	# (6 tiles from where it fires; the old fixed speed managed about 1)
-	assert_gt((y0 - top) / World.TILE, 3.0, "Bound rises several tiles from mid air")
+	# (4 tiles from where it fires; the old fixed speed managed about 1)
+	assert_gt((y0 - top) / World.TILE, 2.0, "Bound rises several tiles from mid air")
 	p.toggle_concentration(_spell(&"bound"))
 
 

@@ -93,7 +93,7 @@ static func scroll_recipes(c: CharacterData, max_mana_by_tier: Array[float], cos
 		var rd := d as RecipeData
 		if rd and String(rd.output).begins_with("scroll_"):
 			by_output[rd.output] = rd
-	# Spells you know, and scrolls whose recipe you've discovered (Call Spirit: from a
+	# Spells you know, and scrolls whose recipe you've discovered (Summon Forest Spirit: from a
 	# Spirit Core) even without knowing the spell.
 	var ids: Array[StringName] = c.known_spells.duplicate()
 	for out_id: StringName in by_output:

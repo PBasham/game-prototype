@@ -228,7 +228,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Spark | PROJECTILE | 8 damage (times spell power), 40 tiles/s, 20 tiles. Hold to keep casting (one per 0.3 s). 2 mana. |
 | Levitate | TOGGLE | Hovers 5 tiles (`hover_tiles`) above the ground under you and follows it; 30 tiles/s sideways. Down lowers you to the ground; you can't rise above the hover height. With no ground within 40 tiles you sink slowly. No fall damage. 4 mana/s. Tunables on the Player: `levitate_accel_time`, `levitate_follow`, `levitate_max_vertical`, `levitate_scan_tiles`, `levitate_sink`. |
 | Air Step | TOGGLE (readied) | On like Fly (F, or click), but free while on. Press Jump in the air: a second jump, steering 1.8x quicker and 15% faster until you land. 8 mana per jump, once per time in the air. That landing never hurts (`air_jump_power`, `air_control_mult`, `air_speed_mult`). |
-| Bound | TOGGLE (readied) | Same, but Jump in the air leaps far forward in an arc (30 tiles/s ahead, rising 6 tiles from wherever you press it; momentum kept unless you steer against it). 12 mana. Safe landing (`leap_speed`, `leap_height` in tiles). |
+| Bound | TOGGLE (readied) | Same, but Jump in the air leaps far forward in an arc (48 tiles/s ahead, a low arc rising 4 tiles from wherever you press it; momentum kept unless you steer against it). 12 mana. Safe landing (`leap_speed`, `leap_height` in tiles). |
 | Hyper Drill | TOOL beam | Tier 3 (needs the Dev Grimoire for now). 400 mining per second on every tile in a circle 5 tiles out from the center (`mining_area` 11, `mining_round`), reach 24. Right click: back walls. 30 mana/s. |
 | Air Push | GUST | Cone 8 tiles long, 35 degrees each side; walls and closed doors stop it. 2 damage, push 36 tiles/s. It pushes you back 26 tiles/s: in the air, or on the ground when aimed down (a gust jump). 8 mana, 0.6 s cooldown. |
 | Blink | BLINK | Up to 12 tiles toward the cursor (your middle goes there), stopping at the farthest spot you fit; nothing happens if there's no room. 15 mana, 1 s cooldown. |
@@ -239,11 +239,11 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Healing Circle | ZONE | 5 tile radius at the cursor, 10 s, heals 4/s (times spell power) while you're inside. 25 mana, 2 s cooldown. One at a time (`max_active` 1): casting again moves it, so circles don't stack. |
 | Spark Ward | WARD | A rune for 2 minutes; the first enemy on it takes 20 and knockback 20. Up to 3. 15 mana. |
 | Familiar | SUMMON | Follows you for 60 s, shoots the nearest enemy within 15 tiles every second for 5. One at a time. 30 mana. |
-| Call Spirit | SUMMON | A Forest Spirit fights for you for 90 s: charges 1 s (`summon_charge`), then shoots the nearest enemy within 20 tiles for 15, every 2.2 s. Drawn from `summon_texture`. 45 mana. Learned with its rare Spell Page at the table (see crafting.md); the scroll comes from a Spirit Core. Summons are yours: they never drop loot. |
+| Summon Forest Spirit | SUMMON | A Forest Spirit fights for you for 90 s: charges 1 s (`summon_charge`), then shoots the nearest enemy within 20 tiles for 15, every 2.2 s. Drawn from `summon_texture`. 45 mana. Learned with its rare Spell Page at the table (see crafting.md); the scroll comes from a Spirit Core. Summons are yours: they never drop loot. |
 | Conjure Platform | CONJURE | 6 tiles wide at the cursor for 30 s. 10 mana. |
 | Arcane Edge | BUFF | Melee damage x1.5 for 60 s. 20 mana. |
 | Barrier | BUFF (reactive) | Waits up to 5 minutes. When a hit would leave you under 25% health it pops: a shield soaks the next 30 damage for 10 s (a bubble, "blocked" when it soaks a whole hit). 30 mana. |
-| Chain Spark | CHAIN | Lightning toward the cursor, up to 12 tiles: 10 damage to the first thing it touches, then up to 3 jumps of 6 tiles, 20% weaker each. A miss still costs the 12 mana. |
+| Chain Spark | CHAIN | Lightning toward the cursor, up to 12 tiles: 10 damage to the first thing it touches, then up to 3 jumps of 6 tiles, 20% weaker each. A miss still costs the 12 mana. Hold the button to keep casting (every 0.6 s cooldown). |
 | Recall | RITUAL | 3 s standing still, then home (your bed, else the world spawn). 40 mana at the end. |
 | Seek Ore | SENSE | Copper ore within 30 tiles glows through everything for 15 s. 15 mana. |
 | Mend | TOGGLE | Heals 3 health per second (times spell power) while on. 6 mana/s. |
@@ -293,6 +293,9 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
     Click a movement toggle (Fly, Levitate: `SpellData.fits_movement_slot`) from the
     Spell Index, then the slot. Empty shows the default faded (Fly, else Levitate);
     right click goes back to it (`CharacterData.movement_spell`).
+  - **Holding** keeps casting: the mouse button with a spell in hand, or a quick key
+    (Z, X, C...) set to cast, as fast as the spell's cooldown and your mana allow. Q and E
+    open the wheel when held, so those cast on a tap.
   - **Cast or in hand:** each wheel slot and Z X C either **casts right away** (aimed at
     the cursor, then you're back to what you held; a toggle spell just toggles) or **puts
     the spell in your hand** (left click casts, like a tool). A small gold bolt in the
@@ -353,6 +356,34 @@ are never saved.
 
 The character saves with the world (autosave, Save, Save & Quit). A character from
 before character select is called "default" and shows up in the list like any other.
+
+## Ground kinds, biome blocks and bricks (Phase 21)
+
+Tiles say what natural ground they act as (`TileDef.kind`: `grass`, `dirt` or `stone`),
+so biome versions behave like the plain ones: grass spreads onto any dirt and turns it
+into that dirt's own grass (`grows_to`; Dark Forest Dirt grows Dark Forest Grass),
+grass covered by a block goes back to its dirt (`bare_to`), trees and bushes root in
+any grass, sticks and rocks lie on any of them, and Grass Seeds plant on any dirt.
+`TileDef.biome` marks the blocks a biome is counted from (world-generation.md).
+
+| Block | Item | Wall | Notes |
+| --- | --- | --- | --- |
+| Dark Forest Dirt | Dark Forest Dirt | Dark Forest Dirt Wall | 40 health, like dirt. |
+| Dark Forest Grass | (drops Dark Forest Dirt) | | Blue-black grass (`dark_grass`). |
+| Dark Forest Stone | Dark Forest Stone | Dark Forest Stone Wall | 80 health, like stone. |
+| Stone Bricks | Stone Bricks | Stone Bricks Wall | 2 Stone at a Furnace. Built (crisp edges), 90 health. |
+| Dark Forest Stone Bricks | Dark Forest Stone Bricks | Dark Forest Stone Bricks Wall | 2 Dark Forest Stone at a Furnace. |
+
+Right click places the wall, as with dirt and stone. Brick art: placeholders from
+`python3 tools/make_brick_art.py` (built from each stone's colors; `--force` remakes).
+
+## Moving lights
+
+Moving lights (Light Orb, Wisps, a Forest Spirit) sit between tiles: their light is
+shared over the nearest four (`LightJob._sources`), they ask for a relight every
+quarter tile, and each new light map fades in over the last one
+(`LightMap.fade_seconds`, 0.14 s; `src/world/light_map.gdshader`), so they glide instead
+of jumping a tile at a time.
 
 ## Mining
 

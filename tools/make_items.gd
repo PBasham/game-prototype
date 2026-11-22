@@ -85,6 +85,17 @@ func _items() -> Array[ItemData]:
 	# Right click places a block as the back layer (places_wall), when it has one.
 	out.append(_block(&"dirt", "Dirt", "Soft ground. Grass spreads onto it.", &"dirt_wall"))
 	out.append(_block(&"stone", "Stone", "Hard rock.", &"stone_wall"))
+	out.append(_block(&"dark_forest_dirt", "Dark Forest Dirt", "Soil from under the Dark Forest. Grass spreads onto it.", &"dark_forest_dirt_wall"))
+	out.append(_block(&"dark_forest_stone", "Dark Forest Stone", "Rock from under the Dark Forest.", &"dark_forest_stone_wall"))
+	out.append(_block(&"stone_bricks", "Stone Bricks", "Stone cut into bricks at a Furnace, for building.", &"stone_bricks_wall"))
+	out.append(_block(&"dark_forest_stone_bricks", "Dark Forest Stone Bricks", "Dark Forest Stone cut into bricks at a Furnace, for building.", &"dark_forest_stone_bricks_wall"))
+	var pendant := _base(&"forest_spirit_pendant", "Forest Spirit Pendant",
+		"Accessory. A Forest Spirit's core on a cord. +1 summon at a time, +20% summon damage.")
+	pendant.kind = ItemData.Kind.ACCESSORY
+	pendant.max_stack = 1
+	pendant.stats = {&"summon_slots": 1.0, &"summon_damage": 0.2}
+	pendant.held = _look(&"forest_spirit_pendant", &"block", Vector2(4, 6))
+	out.append(pendant)
 	out.append(_block(&"copper_ore", "Copper Ore", "Smelts into copper bars in a Furnace."))
 	out.append(_block(&"iron_ore", "Iron Ore", "Deeper than copper. Smelts into iron bars in a Furnace."))
 	# Wood is the building block too (like Terraria): it places the plank block.
@@ -560,12 +571,13 @@ func _spells() -> Array[ItemData]:
 
 	# From the Forest Spirit: its Spirit Core reveals a scroll that calls one to fight
 	# for you; its rare Spell Page, with Essence and a Core, teaches it for good.
-	var call := _spell(&"call_spirit", "Call Spirit", "A Forest Spirit fights for you for 90 seconds: it charges for a second, then shoots the nearest enemy.")
+	var call := _spell(&"call_spirit", "Summon Forest Spirit", "A Forest Spirit fights for you for 90 seconds: it charges for a second, then shoots the nearest enemy.")
 	call.cast = SpellData.Cast.SUMMON
 	call.damage = 15.0
 	call.duration = 90.0
 	call.summon_interval = 2.2
 	call.summon_charge = 1.0
+	call.summon_tint = Color(0.42, 0.5, 1.0)  # darker than wild spirits: yours
 	call.summon_tiles = 20.0
 	call.summon_texture = load("res://assets/enemies/forest_spirit.png") as Texture2D
 	call.projectile_speed = 30.0
@@ -957,6 +969,10 @@ func _recipes() -> Array[RecipeData]:
 		[&"campfire", &"", {&"wood": 5, &"stone": 3}, &"campfire", 1, []],
 		# Food & Alchemy.
 		[&"clay_flask", &"furnace", {&"clay": 2}, &"clay_flask", 1, []],
+		# Bricks: 2 stone of a kind make 1 brick of that kind (like Terraria's Gray Brick).
+		[&"stone_bricks", &"furnace", {&"stone": 2}, &"stone_bricks", 1, []],
+		[&"dark_forest_stone_bricks", &"furnace", {&"dark_forest_stone": 2}, &"dark_forest_stone_bricks", 1, []],
+		[&"forest_spirit_pendant", &"scribing", {&"spirit_core": 1, &"magic_essence": 10}, &"forest_spirit_pendant", 1, []],
 		[&"wooden_bowl", &"workbench", {&"wood": 2}, &"wooden_bowl", 2, []],
 		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
 		[&"table", &"workbench", {&"wood": 8}, &"table", 1, []],
@@ -1047,7 +1063,7 @@ const LEARN_COSTS := {&"gel_cushion": {&"slime": 20},
 const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20},
 	&"call_spirit": {&"blank_scroll": 1, &"magic_essence": 3, &"spirit_core": 1}}
 ## Hidden recipes: shown once you've had one of these items (RecipeData.unlock_items).
-const UNLOCKS := {&"scroll_call_spirit": [&"spirit_core"]}
+const UNLOCKS := {&"scroll_call_spirit": [&"spirit_core"], &"forest_spirit_pendant": [&"spirit_core"]}
 
 
 ## Paper, the Blank Scroll, a scroll for every spell (left click casts it once) and a

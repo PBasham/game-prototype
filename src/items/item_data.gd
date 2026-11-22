@@ -91,7 +91,8 @@ const SPELL_PREFIX := "spell:"
 @export var defense := 0
 ## Stat bonuses while equipped (CharacterData.STATS lists the names): max_health,
 ## max_mana (points), mana_regen (per second), move_speed, jump, melee_damage,
-## magic_damage, mining_speed (fractions: 0.1 = +10%).
+## magic_damage, mining_speed, summon_damage (fractions: 0.1 = +10%), summon_slots (extra
+## summons out at once: 1 = one more).
 @export var stats: Dictionary[StringName, float] = {}
 ## How it looks on the character: overlay textures by doll part name ("Head", "Torso",
 ## "Front Arm Upper"...), each laid out like one row of the parts sheet (see

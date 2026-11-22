@@ -103,7 +103,7 @@ extends ItemData). The full list with numbers is in [items-and-mining.md](items-
 | Change its group (tab and filters) | `group`: ATTACK, MOVEMENT, TOOLS, UTILITY, BUFF... |
 | Change Fly or Levitate speed | `move_speed`, `boost_speed_mult`, `hover_tiles` |
 | Change Air Step or Bound | `air_jump_power`, `air_control_mult`, `air_speed_mult`, `leap_speed`, `leap_height`, `mana_cost` |
-| Change a summon (Familiar, Call Spirit) | `duration`, `damage`, `summon_interval`, `summon_charge`, `summon_tiles` |
+| Change a summon (Familiar, Summon Forest Spirit) | `duration`, `damage`, `summon_interval`, `summon_charge`, `summon_tiles` |
 | Change Tele Grab | `grab_tiles`, `grab_pull_speed`, `reach_tiles`, `mana_per_second` |
 | Make a cursor spell ignore walls | `needs_sight` off |
 | Add a spell | copy one with the same `cast` type, change `id` and numbers. A new `cast` type needs code (below) |
@@ -359,3 +359,19 @@ saves still load.
 
 [playtest.md](playtest.md) lists what to check after each phase;
 [decisions.md](decisions.md) records why things are the way they are.
+
+
+## Phase 21: Dark Forest ground, biomes, bricks, Pendant
+
+| Change | Where |
+| --- | --- |
+| Biome blocks and what ground they act as | `TileDef` group Ground (`kind`, `grows_to`, `bare_to`, `biome`), `TileTypes.is_grass/is_dirt/is_ground/grass_of/dirt_of/biome_of` (use these, never compare to the dirt or grass id) |
+| Where the Dark Forest's ground is | `ForestGenerator.dark_forest_blocks_at`, settings `dark_forest_wobble_*`, `dark_forest_fringe_tiles` |
+| Which biome a tile is in | `World.biome_at`, `biome_amount`, exports group "Biome detection" |
+| Dark grass colors | `ChunkRenderer.dark_grass_colors`, `TileDef.dark_grass`, `terrain.gdshader` `gc()` |
+| Terrain slots (textures the shader holds) | `ChunkRenderer.MAX_SLOTS` (32) and the arrays in `terrain.gdshader` |
+| Trees on level ground, lean | `ForestGenerator._trunk_fits`, `PlantLayer.sapling_spot`, `tree_lean_degrees` |
+| Smooth moving lights | `light_point()` on light sources, `LightJob._sources` (shared over 4 tiles), `LightMap.fade_seconds` + `light_map.gdshader` |
+| Summon limit and damage | `World.request_spell_effect` (SUMMON), stats `summon_slots`, `summon_damage`, `Familiar.slot`, `SpellData.summon_tint` |
+| Hold to keep casting | `Player._handle_use` (spells repeat past the combo window), `Player._repeat_quick` |
+| Art placeholders | `tools/make_dark_forest_terrain.py`, `tools/make_brick_art.py` |

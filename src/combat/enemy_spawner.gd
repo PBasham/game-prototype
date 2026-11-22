@@ -69,15 +69,15 @@ func table_here() -> SpawnTable:
 	var feet := world.world_to_tile(world.player.global_position)
 	for d in Registry.get_all(&"spawns"):
 		var t := d as SpawnTable
-		if t and t.biome == biome_at(feet.x) and in_layer(t, feet):
+		if t and t.biome == biome_here(feet) and in_layer(t, feet):
 			return t
 	return null
 
 
-## The biome at a column. Only the forest exists so far.
-func biome_at(x: int) -> StringName:
-	if world and world.generator:
-		return world.generator.biome_at(x)
+## The biome at a tile, counted from the blocks around it (World.biome_at).
+func biome_here(tile: Vector2i) -> StringName:
+	if world and world.data:
+		return world.biome_at(tile)
 	return &"forest"
 
 

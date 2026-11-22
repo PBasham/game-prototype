@@ -63,7 +63,7 @@ func _process(delta: float) -> void:
 	if steering and not Input.is_action_pressed(steer_button):
 		steering = false  # let go: it stays here
 	global_position = global_position.lerp(_target(), minf((follow * 2.0 if placed else follow) * delta, 1.0))
-	var t := light_tile()
+	var t := Vector2i((light_point() * 4.0).floor())  # every quarter tile: it glides
 	if t != _last_tile:
 		_last_tile = t
 		world.lights.mark_dirty()
@@ -71,6 +71,10 @@ func _process(delta: float) -> void:
 
 
 ## The tile it lights from.
+func light_point() -> Vector2:
+	return global_position / World.TILE
+
+
 func light_tile() -> Vector2i:
 	return world.world_to_tile(global_position)
 

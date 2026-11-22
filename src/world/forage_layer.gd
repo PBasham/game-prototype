@@ -74,17 +74,11 @@ var _floor_total := 0
 var _last_seen: Dictionary[Vector2i, float] = {}
 ## Forageables that came back over time (dev console `pickups`).
 var regrown_total := 0
-var _grass_id := -1
-var _dirt_id := -1
-var _stone_id := -1
 
 
 func setup(w: World) -> void:
 	world = w
 	z_index = 1  # in front of the grass blades, so sticks don't hide in them
-	_grass_id = world.blocks.index_of(&"grass")
-	_dirt_id = world.blocks.index_of(&"dirt")
-	_stone_id = world.blocks.index_of(&"stone")
 	for d in Registry.get_all(&"forage"):
 		defs.append(d as ForageData)
 	defs.sort_custom(func(a: ForageData, b: ForageData) -> bool: return String(a.id) < String(b.id))
@@ -342,7 +336,7 @@ func try_regrow(t: Vector2i, chance: float) -> bool:
 	if _items.has(g) or (world.plants and world.plants.plant_at(g)):
 		return false
 	var id := world.data.get_block(g.x, g.y)
-	if id != _grass_id and id != _dirt_id and id != _stone_id:
+	if not world.blocks.is_ground(id):
 		return false
 	var above := g + Vector2i.UP
 	if world.data.get_block(above.x, above.y) != WorldData.AIR:
@@ -350,7 +344,7 @@ func try_regrow(t: Vector2i, chance: float) -> bool:
 	# Not in houses: nothing on tiles with a background wall or furniture.
 	if world.data.get_wall(above.x, above.y) != WorldData.AIR or world.data.get_object(above.x, above.y) != WorldData.AIR:
 		return false
-	var place := ChunkBuildJob.FLOOR_GRASS if id == _grass_id else ChunkBuildJob.FLOOR_GROUND
+	var place := ChunkBuildJob.FLOOR_GRASS if world.blocks.is_grass(id) else ChunkBuildJob.FLOOR_GROUND
 	if world.generator != null and g.y > world.generator.surface_at(g.x) + 3:
 		place = ChunkBuildJob.FLOOR_CAVE
 		chance *= cave_regrow_scale

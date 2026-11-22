@@ -297,6 +297,8 @@ var last_spell: StringName = &""
 var _quick_return: Array = []
 ## The button that keeps a quick-cast beam going (&"" = none).
 var _quick_button: StringName = &""
+## The quick key being held after a cast: casting again while it stays down.
+var _quick_repeat: StringName = &""
 ## Timed buffs on you (SpellData.Cast.BUFF): effect id to seconds left, and the spell
 ## that gave it. Not saved: they end when you leave the world.
 var buffs: Dictionary[StringName, float] = {}
@@ -1455,6 +1457,8 @@ func _update_use(delta: float) -> void:
 		for k: StringName in CharacterData.QUICK_KEYS:
 			if _just(StringName("quick_" + String(k))):
 				use_quick(k)
+				_quick_repeat = k
+		_repeat_quick()
 		if _just("quick_buff"):
 			cast_buff_set()
 	if _just("put_away"):
@@ -1502,7 +1506,11 @@ func _update_use(delta: float) -> void:
 			back = held_item != null and not stowed
 			clicked = back
 		var held_down := false
-		if not clicked and _repeats() and _combo_left > 0.0:
+		# Holding keeps using it. Spells keep trying while held, past the combo window:
+		# a cooldown (Chain Spark's 0.6 s) is longer than the window, so holding would
+		# otherwise stop after the first cast.
+		var spell_held := held_item is SpellData and not stowed
+		if not clicked and _repeats() and (_combo_left > 0.0 or spell_held):
 			back = use_back
 			held_down = _held(_button(back))
 		if (clicked or held_down) and (not use_check.is_valid() or use_check.call(back)):
@@ -1603,6 +1611,25 @@ func quick_cast(spell_id: StringName, hold_button: StringName = &"") -> bool:
 		_restore_quick()
 		return false
 	return true
+
+
+## Holding a quick key (Z, X, C...) keeps casting its spell, as fast as its cooldown
+## allows (Q and E open the wheel when held, so those are taps).
+func _repeat_quick() -> void:
+	if _quick_repeat == &"":
+		return
+	if not _held(StringName("quick_" + String(_quick_repeat))) or not character.quick_casts(_quick_repeat):
+		_quick_repeat = &""
+		return
+	if _attack != null or world == null:
+		return
+	var spell := ItemData.find(ItemData.spell_key(character.quick_spell(_quick_repeat))) as SpellData
+	if spell == null or spell.cast == SpellData.Cast.TOGGLE:
+		_quick_repeat = &""
+		return
+	if world.item_user.cooldown_left(spell) > 0.0 or not has_mana(mana_cost_of(spell)):
+		return
+	use_quick(_quick_repeat)
 
 
 func _restore_quick() -> void:

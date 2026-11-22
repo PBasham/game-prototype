@@ -34,6 +34,8 @@ const BUSH_GROWN := 1
 @export var fall_time := 0.9
 ## Degrees a tree rocks when hit.
 @export var wiggle_degrees := 4.0
+## Trees lean up to this many degrees either way (each its own, from its spot).
+@export var tree_lean_degrees := 4.0
 ## Trees need this many tiles between their trunks (planting).
 @export var tree_spacing := 3
 ## Tiles of clear space above the ground a sapling needs to grow.
@@ -181,10 +183,9 @@ func blocks_placement(tile: Vector2i) -> bool:
 ## Whether a berry bush fits on this grass tile: it takes 3 tiles of open grass (this
 ## one and one each side), none of them already holding a plant.
 func bush_room(ground: Vector2i) -> bool:
-	var grass := world.blocks.index_of(&"grass")
 	for dx in range(-1, 2):
 		var g := ground + Vector2i(dx, 0)
-		if world.data.get_block(g.x, g.y) != grass or world.data.get_block(g.x, g.y - 1) != WorldData.AIR:
+		if not world.blocks.is_grass(world.data.get_block(g.x, g.y)) or world.data.get_block(g.x, g.y - 1) != WorldData.AIR:
 			return false
 		if plant_at(world.wrap_tile(g)) != null:
 			return false
@@ -197,9 +198,13 @@ func bush_room(ground: Vector2i) -> bool:
 
 func sapling_spot(tile: Vector2i) -> Vector2i:
 	for g: Vector2i in [tile, tile + Vector2i.DOWN]:
-		if world.data.get_block(g.x, g.y) == _grass_id and world.data.get_block(g.x, g.y - 1) == WorldData.AIR:
+		if world.blocks.is_grass(world.data.get_block(g.x, g.y)) and world.data.get_block(g.x, g.y - 1) == WorldData.AIR:
 			if _plants.has(world.wrap_tile(g)) or (world.forage and world.forage.at(g)):
 				return NONE
+			# The trunk needs ground under it: a block on each side of the root too.
+			for dx in [-1, 1]:
+				if not world.is_solid(g + Vector2i(dx, 0)):
+					return NONE
 			for dx in range(-tree_spacing + 1, tree_spacing):
 				for dy in range(-3, 4):
 					var other: Plant = _plants.get(world.wrap_tile(g + Vector2i(dx, dy)))
@@ -538,9 +543,12 @@ func _spread_grass(delta: float) -> void:
 	_grass_budget -= n
 	for i in n:
 		var t := rect.position + Vector2i(randi() % rect.size.x, randi() % rect.size.y)
-		if world.data.get_block(t.x, t.y) == _dirt_id and _exposed(t) and _near_grass(t) \
+		var b := world.data.get_block(t.x, t.y)
+		if world.blocks.is_dirt(b) and _exposed(t) and _near_grass(t) \
 				and not world.is_solid(t + Vector2i.UP):  # grass doesn't grow under a block
-			world.request_set_block(t, _grass_id)
+			var g := world.blocks.grass_of(b)  # dirt -> grass, Dark Forest Dirt -> its grass
+			if g > 0:
+				world.request_set_block(t, g)
 
 
 func _exposed(t: Vector2i) -> bool:
@@ -554,7 +562,7 @@ func _exposed(t: Vector2i) -> bool:
 func _near_grass(t: Vector2i) -> bool:
 	for dy in range(-1, 2):
 		for dx in range(-1, 2):
-			if (dx != 0 or dy != 0) and world.data.get_block(t.x + dx, t.y + dy) == _grass_id:
+			if (dx != 0 or dy != 0) and world.blocks.is_grass(world.data.get_block(t.x + dx, t.y + dy)):
 				return true
 	return false
 
@@ -565,11 +573,12 @@ func _on_block_changed(tile: Vector2i, _old: int, new_id: int) -> void:
 	# Grass covered by a solid block dies back to dirt (and won't spread back under it).
 	if new_id > 0 and world.blocks.collision(new_id) == TileDef.Collision.SOLID:
 		var under := world.wrap_tile(tile + Vector2i.DOWN)
-		if world.data.get_block(under.x, under.y) == _grass_id and not _plants.has(under):
-			world.request_set_block(under, _dirt_id)
+		var ub := world.data.get_block(under.x, under.y)
+		if world.blocks.is_grass(ub) and not _plants.has(under) and world.blocks.dirt_of(ub) > 0:
+			world.request_set_block(under, world.blocks.dirt_of(ub))
 	# The ground under a plant went away (or stopped being grass/dirt): it breaks.
 	var p: Plant = _plants.get(tile)
-	if p and new_id != _grass_id and new_id != _dirt_id:
+	if p and not world.blocks.is_grass(new_id) and not world.blocks.is_dirt(new_id):
 		_break(tile, p)
 	# Something was put where a flower or sapling stood: it breaks.
 	var below := world.wrap_tile(tile + Vector2i.DOWN)
@@ -696,6 +705,14 @@ func _make_node(g: Vector2i, p: Plant, shown_chunk: Vector2i) -> void:
 	s.centered = false
 	var lift := 3 if p.kind == Kind.TREE else 1
 	s.position = Vector2(-floorf(s.texture.get_width() / 2.0), lift - s.texture.get_height())
+	if p.kind == Kind.TREE:
+		# A little variety until there's more tree art: mirrored or not, and a slight
+		# lean from the base (the same for the same tree every time).
+		var h := hash(g)
+		if h % 2 == 1:
+			s.flip_h = true
+			s.position.x = -ceilf(s.texture.get_width() / 2.0)
+		node.skew = deg_to_rad(lerpf(-tree_lean_degrees, tree_lean_degrees, float((h >> 4) % 1000) / 999.0))
 	node.add_child(s)
 	add_child(node)
 	p.node = node

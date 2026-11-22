@@ -33,9 +33,8 @@ var wall_slot: PackedInt32Array
 var stone_slot: int
 var collision: PackedInt32Array
 var atlas_row: PackedInt32Array
-var grass_id: int
-var dirt_id: int
-var stone_id: int
+## Ground kind per block index (TileTypes.kinds): grass, dirt, stone of any biome.
+var kinds: PackedByteArray
 ## Tiles below the generated surface line deeper than this count as cave floor.
 var surface_band := 3
 ## Decoration rules (pure functions of x). Null skips decorations.
@@ -142,7 +141,7 @@ func _decor() -> void:
 		# rocks and flint can lie there). Other exposed tiles go to `floors`.
 		var top := -1
 		for ly in SIZE:
-			if block(lx, ly) == grass_id and block(lx, ly - 1) == WorldData.AIR:
+			if _kind(block(lx, ly)) == TileTypes.KIND_GRASS and block(lx, ly - 1) == WorldData.AIR:
 				decor.append_array([lx, ly, tree, flower])
 				top = ly
 				break
@@ -151,9 +150,13 @@ func _decor() -> void:
 			if ly == top or block(lx, ly - 1) != WorldData.AIR:
 				continue
 			var id := block(lx, ly)
-			if id != grass_id and id != dirt_id and id != stone_id:
+			if _kind(id) == 0:
 				continue
 			if coord.y * SIZE + ly > cave_below:
 				floors.append_array([lx, ly, FLOOR_CAVE])
 			else:
-				floors.append_array([lx, ly, FLOOR_GRASS if id == grass_id else FLOOR_GROUND])
+				floors.append_array([lx, ly, FLOOR_GRASS if _kind(id) == TileTypes.KIND_GRASS else FLOOR_GROUND])
+
+
+func _kind(id: int) -> int:
+	return kinds[id] if id > 0 and id < kinds.size() else 0

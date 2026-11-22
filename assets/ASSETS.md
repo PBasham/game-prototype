@@ -280,3 +280,13 @@ or .ogg); the generator never overwrites without `--force`.
 | terrain/darkwood_logs.png, terrain/darkwood_logs_wall.png | The log block and wall recolored to darkwood. Placeholders |
 | tiles/blocks.png row 13 | Collision row for the darkwood log block (copy of the log row) |
 | objects/chair.png (+ icon, held) | Wooden Chair, 32x48 (2x3 tiles, detail 2), backrest left, seat 24 art px up. Placeholder (`art/concepts/chair/make_chair.py`) |
+
+
+## Phase 21 placeholders
+
+| Files | What |
+| --- | --- |
+| `terrain/dark_forest_{dirt,dirt_wall,stone,stone_wall}.png`, `items/{icons,held}/dark_forest_{dirt,stone}.png` | **Placeholder**: the dirt and stone art blended toward black with a hint of blue (`python3 tools/make_dark_forest_terrain.py --force`). |
+| `terrain/{stone_bricks,dark_forest_stone_bricks}{,_wall}.png`, their icons and held sprites | **Placeholder** bricks built from each stone's colors (`python3 tools/make_brick_art.py --force`). |
+| `items/{icons,held}/forest_spirit_pendant.png` | **Placeholder** pendant icon (same tool). |
+| `tiles/blocks.png` rows 14 to 18 | Copies of the dirt, grass and stone rows (dark forest blocks, bricks): collision only, the terrain shader draws them. |

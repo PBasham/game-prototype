@@ -2480,9 +2480,10 @@ static func tooltip_right(item: ItemData) -> String:
 static func stat_text(k: StringName, v: float) -> String:
 	var names := {&"max_health": "Max health", &"max_mana": "Max mana", &"mana_regen": "Mana regen",
 		&"move_speed": "Speed", &"jump": "Jump", &"melee_damage": "Melee damage",
-		&"magic_damage": "Magic damage", &"mining_speed": "Mining speed"}
+		&"magic_damage": "Magic damage", &"mining_speed": "Mining speed",
+		&"summon_slots": "Summon at a time", &"summon_damage": "Summon damage"}
 	var label: String = names.get(k, String(k).capitalize())
-	if k in [&"max_health", &"max_mana", &"mana_regen"]:
+	if k in [&"max_health", &"max_mana", &"mana_regen", &"summon_slots"]:
 		return "%+d %s" % [roundi(v), label]
 	return "%+d%% %s" % [roundi(v * 100.0), label]
 

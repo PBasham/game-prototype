@@ -24,10 +24,10 @@ uniform sampler2D materials : filter_nearest, repeat_disable;
 uniform sampler2D overlays : filter_nearest, repeat_disable;
 uniform sampler2D wall_tex : filter_nearest, repeat_disable;
 uniform sampler2D noise_tex : filter_nearest, repeat_enable;
-uniform float grass_slots[16];
-uniform float built_slots[16];
-uniform float built_walls[16];
-uniform float overhang_slots[16];
+uniform float grass_slots[32];
+uniform float built_slots[32];
+uniform float built_walls[32];
+uniform float overhang_slots[32];
 // Background walls are drawn this much darker than blocks (and a little greyer), so
 // the front layer stands out. 1 = same as the art.
 uniform float wall_shade = 0.75;
@@ -38,6 +38,22 @@ uniform vec3 grass_2 : source_color;
 uniform vec3 grass_3 : source_color;
 uniform vec3 grass_4 : source_color;
 uniform vec3 grass_5 : source_color;
+// The dark grass palette (Dark Forest Grass: grass_slots = 2).
+uniform vec3 dgrass_1 : source_color;
+uniform vec3 dgrass_2 : source_color;
+uniform vec3 dgrass_3 : source_color;
+uniform vec3 dgrass_4 : source_color;
+uniform vec3 dgrass_5 : source_color;
+
+// Grass shade i (1 to 5) for material m, from its palette.
+vec3 gc(int m, int i) {
+	bool d = grass_slots[m] > 1.5;
+	if (i == 1) return d ? dgrass_1 : grass_1;
+	if (i == 2) return d ? dgrass_2 : grass_2;
+	if (i == 3) return d ? dgrass_3 : grass_3;
+	if (i == 4) return d ? dgrass_4 : grass_4;
+	return d ? dgrass_5 : grass_5;
+}
 uniform vec2 origin;
 
 const float T = 8.0;
@@ -227,9 +243,9 @@ void fragment() {
 		int lim = 3 + int(hash(wp.x) * 2.0);
 		int side_lim = 4 + int(hash(wp.x * 0.37 + floor(wp.y / 3.0)) * 4.0);
 		if (grass && top <= lim) {
-			c = top == 1 ? grass_5 : (top == 2 ? grass_4 : (top < lim ? grass_3 : grass_1));
+			c = top == 1 ? gc(m, 5) : (top == 2 ? gc(m, 4) : (top < lim ? gc(m, 3) : gc(m, 1)));
 		} else if (grass && (lo || ro) && below > 1 && top - 1 < side_lim) {
-			c = top - 1 > 2 ? grass_2 : grass_3;
+			c = top - 1 > 2 ? gc(m, 2) : gc(m, 3);
 		} else {
 			if (top == 1) {
 				c = mix(c, min(c * 1.4, vec3(1.0)), 0.6);
@@ -280,7 +296,8 @@ void fragment() {
 				if (solid_nat(q) && grass_slots[mat_at(q)] > 0.5) {
 					int tall = hash(wp.x * 1.31 + 7.0) > 0.25 ? 1 + int(hash(wp.x * 2.17 + 3.0) * 5.0) : 0;
 					if (k <= tall) {
-						col = vec4(k == tall ? grass_5 : (k > 1 ? grass_4 : grass_3), 1.0);
+						int gm = mat_at(q);
+						col = vec4(k == tall ? gc(gm, 5) : (k > 1 ? gc(gm, 4) : gc(gm, 3)), 1.0);
 						done = true;
 					}
 				}

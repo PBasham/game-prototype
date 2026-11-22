@@ -35,7 +35,7 @@ const ALL_SLOTS: Array[StringName] = [&"head", &"chest", &"legs", &"accessory_1"
 	&"accessory_3", &"book", &"conduit"]
 ## Stat names items can raise (ItemData.stats).
 const STATS: Array[StringName] = [&"max_health", &"max_mana", &"mana_regen", &"move_speed", &"jump",
-	&"melee_damage", &"magic_damage", &"mining_speed"]
+	&"melee_damage", &"magic_damage", &"mining_speed", &"summon_slots", &"summon_damage"]
 ## Hairstyles are the .png files in this folder (Patrick draws more later).
 const HAIR_DIR := "res://assets/sprites/hair"
 const DEFAULT_HAIR := &"short"

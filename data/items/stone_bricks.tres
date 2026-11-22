@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_8bqka"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_sd61r"]
+[ext_resource type="Texture2D" path="res://assets/items/held/stone_bricks.png" id="3_i3vwq"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/stone_bricks.png" id="4_hiw3p"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_lel03"]
+
+[sub_resource type="Resource" id="Resource_x2mbf"]
+script = ExtResource("2_sd61r")
+id = &"stone_bricks"
+texture = ExtResource("3_i3vwq")
+type = &"block"
+grip = Vector2(3, 5)
+
+[resource]
+script = ExtResource("5_lel03")
+kind = 1
+icon = ExtResource("4_hiw3p")
+max_stack = 9999
+held = SubResource("Resource_x2mbf")
+impact_at = 0.2
+places_block = &"stone_bricks"
+places_wall = &"stone_bricks_wall"
+id = &"stone_bricks"
+display_name = "Stone Bricks"
+description = "Stone cut into bricks at a Furnace, for building."

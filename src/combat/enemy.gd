@@ -160,11 +160,20 @@ func _die() -> void:
 		world.request_spawn_drop(item_id, drops[item_id], global_position + Vector2(0, -data.size.y * 0.5),
 			Vector2(randf_range(-3, 3), -6) * TILE)
 	FloatingText.spawn(get_parent(), global_position + Vector2(0, -data.size.y - 10), "*pop*", Color("9ae88a"))
+	if radius > 0.0 and world and world.lights:
+		world.lights.mark_dirty()  # its light goes with it
 	queue_free()
 
 
 func _physics_process(delta: float) -> void:
 	_flash = maxf(_flash - delta, 0.0)
+	if radius > 0.0 and world and world.lights:
+		# A glowing enemy (the Forest Spirit): relight when it reaches a new tile, so its
+		# light follows it (the light map only recomputes when told to).
+		var lt := Vector2i((light_point() * 4.0).floor())  # every quarter tile: it glides
+		if lt != _light_at:
+			_light_at = lt
+			world.lights.mark_dirty()
 	_tick_poison(delta)
 	_since_hit += delta
 	_squash = maxf(_squash - delta, 0.0)
@@ -268,6 +277,7 @@ var _aim := Vector2.ZERO
 ## Light it gives off (the "light_sources" group: the light map picks it up).
 var radius := 0.0
 var color := Color.WHITE
+var _light_at := Vector2i(-1000000, 0)
 
 
 ## Darts to a spot near you (or wanders), stops and charges for a second, then shoots.
@@ -307,6 +317,11 @@ func _spirit(delta: float) -> void:
 
 
 ## Where its light comes from (the light map reads this).
+## Where its light is, in tiles (fractional), for a smooth moving light.
+func light_point() -> Vector2:
+	return (global_position + Vector2(0, -data.size.y * 0.5)) / World.TILE
+
+
 func light_tile() -> Vector2i:
 	return world.world_to_tile(global_position + Vector2(0, -data.size.y * 0.5))
 

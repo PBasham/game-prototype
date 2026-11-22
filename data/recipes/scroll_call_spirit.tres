@@ -13,4 +13,4 @@ inputs = Dictionary[StringName, int]({
 unlock_items = Array[StringName]([&"spirit_core"])
 output = &"scroll_call_spirit"
 id = &"scroll_call_spirit"
-display_name = "Scroll: Call Spirit"
+display_name = "Scroll: Summon Forest Spirit"

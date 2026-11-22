@@ -149,7 +149,8 @@ func test_a_spirit_core_reveals_the_call_spirit_scroll() -> void:
 	assert_false(ids.call().has(&"scroll_call_spirit"), "hidden before a core")
 	c.inventory.add(&"spirit_core", 1)
 	assert_true(ids.call().has(&"scroll_call_spirit"), "a core reveals it")
-	assert_eq(heard, ["Scroll: Call Spirit"] as Array[String])
+	heard.sort()
+	assert_eq(heard, ["Forest Spirit Pendant", "Scroll: Summon Forest Spirit"] as Array[String], "a core reveals its recipes")
 	# Still known after the core is used up, and after saving.
 	c.inventory.take(c.inventory.ids.find(&"spirit_core"), 1)
 	assert_true(ids.call().has(&"scroll_call_spirit"))

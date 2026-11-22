@@ -29,6 +29,8 @@ func _init() -> void:
 	# Blocks: a 16x16 cut of the terrain texture as the icon, an 8x8 cut held in hand.
 	_block("dirt", _terrain("dirt"))
 	_block("stone", _terrain("stone"))
+	_block("dark_forest_dirt", _terrain("dark_forest_dirt"))
+	_block("dark_forest_stone", _terrain("dark_forest_stone"))
 	var ore := _terrain("stone")
 	ore.blend_rect(_terrain("ore_copper"), Rect2i(0, 0, 64, 64), Vector2i.ZERO)
 	_block("copper_ore", ore)

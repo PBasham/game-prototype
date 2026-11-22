@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_uq27q"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_us43p"]
+[ext_resource type="Texture2D" path="res://assets/items/held/dark_forest_stone_bricks.png" id="3_rr16p"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/dark_forest_stone_bricks.png" id="4_djb0e"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_q08gg"]
+
+[sub_resource type="Resource" id="Resource_b2kdp"]
+script = ExtResource("2_us43p")
+id = &"dark_forest_stone_bricks"
+texture = ExtResource("3_rr16p")
+type = &"block"
+grip = Vector2(3, 5)
+
+[resource]
+script = ExtResource("5_q08gg")
+kind = 1
+icon = ExtResource("4_djb0e")
+max_stack = 9999
+held = SubResource("Resource_b2kdp")
+impact_at = 0.2
+places_block = &"dark_forest_stone_bricks"
+places_wall = &"dark_forest_stone_bricks_wall"
+id = &"dark_forest_stone_bricks"
+display_name = "Dark Forest Stone Bricks"
+description = "Dark Forest Stone cut into bricks at a Furnace, for building."

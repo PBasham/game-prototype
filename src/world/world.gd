@@ -36,6 +36,18 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 @export_group("")
 ## Minutes between autosaves (saved worlds only). 0 turns autosave off.
 @export var autosave_minutes := 5.0
+
+@export_group("Biome detection")
+## Which biome you're in is counted from the blocks and walls around you, like
+## Terraria: in a box this many tiles wide and tall, sampled every biome_sample_step...
+@export var biome_box := Vector2i(48, 32)
+@export var biome_sample_step := 2
+## ...if at least this share of the ground there belongs to a biome (its blocks'
+## TileDef.biome), you're in it. Too little ground (in the open sky): the surface
+## biome under you counts instead.
+@export_range(0.0, 1.0) var biome_share := 0.3
+@export_group("")
+var _biome_cache: Dictionary = {}
 ## Chunks kept loaded around the camera, each direction.
 @export var load_radius := Vector2i(2, 2)
 ## Max finished chunks turned into nodes per frame while moving (building happens on
@@ -332,7 +344,8 @@ func _process(delta: float) -> void:
 	var center := cam.get_screen_center_position() if cam else player.position
 	renderer.update(center)
 	if backdrop and generator:
-		backdrop.dark_target = generator.dark_forest_at(data.wrap_x(floori(center.x / TILE)))
+		var t := world_to_tile(center)
+		backdrop.dark_target = clampf(biome_amount(t, &"dark_forest") / maxf(biome_share, 0.01), 0.0, 1.0)
 	_heal_blocks(delta)
 	DebugOverlay.watch("chunks", "%d loaded, %d generated, %d queued" % [renderer.loaded_count(),
 		data.generated_chunk_count(), renderer.pending_count() + data.pending_generation_count()])
@@ -711,11 +724,23 @@ func request_spell_effect(spell: SpellData, at: Vector2, power: float) -> Node:
 			wd.setup(self, spell, ground, power)
 			return wd
 		SpellData.Cast.SUMMON:
-			for f in get_tree().get_nodes_in_group(&"familiars"):
-				f.queue_free()
+			# One summon, plus the gear's summon_slots (Forest Spirit Pendant): past that,
+			# the oldest goes. Summon damage gear makes it hit harder.
+			var limit := 1 + maxi(int(player.stat(&"summon_slots")), 0) if player else 1
+			var out := get_tree().get_nodes_in_group(&"familiars").filter(
+				func(n: Node) -> bool: return not n.is_queued_for_deletion())
+			while out.size() >= limit:
+				out.pop_front().queue_free()
 			var fam := Familiar.new()
 			effects.add_child(fam)
+			if player:
+				power *= 1.0 + player.stat(&"summon_damage")
 			fam.setup(self, spell, power)
+			var used: Array[int] = []
+			for f: Node in out:
+				used.append((f as Familiar).slot)
+			while fam.slot in used:
+				fam.slot += 1
 			return fam
 		SpellData.Cast.CONJURE:
 			var t := world_to_tile(at)
@@ -773,13 +798,18 @@ func aura_near(pos: Vector2) -> ObjectDef:
 	return null
 
 
-## Moving light sources (Light Orb): [tile, radius, color] for the light map.
+## Moving light sources (Light Orb, a Forest Spirit): [position in tiles (Vector2, the
+## middle of a tile is +0.5), radius, color] for the light map. Between tiles, its light
+## is shared over the nearest four, so it glides.
 func dynamic_lights() -> Array[Array]:
 	var out: Array[Array] = []
 	for n in get_tree().get_nodes_in_group(&"light_sources"):
 		if n.is_queued_for_deletion() or not n.has_method(&"light_tile"):
 			continue
-		out.append([n.call(&"light_tile"), float(n.get(&"radius")), n.get(&"color") as Color])
+		var at := Vector2(n.call(&"light_tile")) + Vector2(0.5, 0.5)
+		if n.has_method(&"light_point"):
+			at = n.call(&"light_point")
+		out.append([at, float(n.get(&"radius")), n.get(&"color") as Color])
 	return out
 
 
@@ -1765,3 +1795,51 @@ func request_spawn_projectile(spell: SpellData, from: Vector2, dir: Vector2, pow
 
 func drop_count() -> int:
 	return _drops.get_child_count() if _drops else 0
+
+
+# --- biomes ---------------------------------------------------------------------------
+
+## The biome at a tile: counted from the blocks and walls around it (biome_box), so it
+## follows the ground you see, dug or built. &"forest" when nothing else wins.
+func biome_at(tile: Vector2i) -> StringName:
+	return &"dark_forest" if biome_amount(tile, &"dark_forest") >= biome_share else &"forest"
+
+
+## The share (0 to 1) of the ground around a tile that belongs to `biome`. Above open
+## sky with little ground, the surface biome of the column (generator) counts instead.
+## Cached for a quarter second per area.
+func biome_amount(tile: Vector2i, biome: StringName) -> float:
+	var key := Vector3i(tile.x / 8, tile.y / 8, biome.hash())
+	var now := Time.get_ticks_msec()
+	var hit: Array = _biome_cache.get(key, [])
+	if not hit.is_empty() and now - int(hit[0]) < 250:
+		return float(hit[1])
+	if _biome_cache.size() > 256:
+		_biome_cache.clear()
+	var step := maxi(biome_sample_step, 1)
+	var ground := 0
+	var mine := 0
+	for dy in range(-biome_box.y / 2, biome_box.y / 2, step):
+		for dx in range(-biome_box.x / 2, biome_box.x / 2, step):
+			var x := tile.x + dx
+			var y := tile.y + dy
+			var b := data.get_block(x, y)
+			var id := b if b > 0 else 0
+			var types := blocks
+			if id == 0:
+				var w := data.get_wall(x, y)
+				if w <= 0:
+					continue
+				id = w
+				types = walls
+			ground += 1
+			if types.biome_of(id) == biome:
+				mine += 1
+	var total := float(biome_box.x * biome_box.y) / float(step * step)
+	var amount := float(mine) / maxf(ground, 1.0)
+	if ground < total * 0.15 and generator:
+		# Mostly open sky: the surface below decides (a tree top, a high jump).
+		var col := generator.dark_forest_at(data.wrap_x(tile.x)) if biome == &"dark_forest" else 0.0
+		amount = maxf(amount, col)
+	_biome_cache[key] = [now, amount]
+	return amount

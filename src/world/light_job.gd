@@ -30,7 +30,7 @@ var objects: Array[PackedInt32Array] = []
 var emitters := PackedFloat32Array()
 ## Fraction of a source's reach used up per tile through solid blocks, relative to air.
 var source_solid_factor := 6.0
-## Moving light sources: [tile (relative to rect), radius, color].
+## Moving lights: [position in tiles from the rect's corner (Vector2), radius, color].
 var extra: Array[Array] = []
 ## 1 where a block id is solid (index = block id).
 var solid := PackedByteArray()
@@ -177,16 +177,26 @@ func _sources(w: int, h: int, cols: int, solid_at: PackedByteArray) -> Array:
 				var key := Vector4(emitters[id * 4], emitters[id * 4 + 1], emitters[id * 4 + 2], emitters[id * 4 + 3])
 				if not groups.has(key):
 					groups[key] = []
-				groups[key].append(base + Vector2i(li % SIZE, li / SIZE))
+				groups[key].append([base + Vector2i(li % SIZE, li / SIZE), 1.0])
 	for l: Array in extra:
-		var t: Vector2i = l[0]
-		if t.x < 0 or t.y < 0 or t.x >= w or t.y >= h:
-			continue
+		# A moving light between tiles: shared over the four nearest, so it glides.
+		var at: Vector2 = l[0] - Vector2(0.5, 0.5)
+		var t0 := Vector2i(floori(at.x), floori(at.y))
+		var f := at - Vector2(t0)
 		var c: Color = l[2]
 		var key := Vector4(c.r, c.g, c.b, float(l[1]))
 		if not groups.has(key):
 			groups[key] = []
-		groups[key].append(t)
+		for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+			var t := t0 + d
+			if t.x < 0 or t.y < 0 or t.x >= w or t.y >= h:
+				continue
+			var wx := f.x if d.x == 1 else 1.0 - f.x
+			var wy := f.y if d.y == 1 else 1.0 - f.y
+			# Brightest at the nearest tile; the others a little dimmer by distance.
+			var weight := pow(wx * wy, 0.35) if wx * wy > 0.0 else 0.0
+			if weight > 0.01:
+				groups[key].append([t, weight])
 	if groups.is_empty():
 		return []
 	# (Packed arrays are values: fill local ones, then hand them out.)
@@ -205,8 +215,9 @@ func _sources(w: int, h: int, cols: int, solid_at: PackedByteArray) -> Array:
 			mult[i] = solid_m if solid_at[i] == 1 else air
 		var v := PackedFloat32Array()
 		v.resize(w * h)
-		for t: Vector2i in groups[key]:
-			v[t.y * w + t.x] = 1.0
+		for e: Array in groups[key]:
+			var t: Vector2i = e[0]
+			v[t.y * w + t.x] = maxf(v[t.y * w + t.x], float(e[1]))
 		_sweep(v, mult, w, h)
 		for i in w * h:
 			var bright := v[i]

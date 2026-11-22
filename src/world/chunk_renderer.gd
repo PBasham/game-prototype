@@ -36,6 +36,8 @@ const SHADER := preload("res://src/world/terrain.gdshader")
 const NEIGHBORS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]  # mask bits 1, 2, 4, 8
 ## Grass palette from Patrick's reference art (darkest to lightest).
 const GRASS_COLORS := ["1f5212", "2b7018", "349a20", "42a628", "4fb52f", "5cbf3a"]
+## Dark grass (TileDef.dark_grass, the Dark Forest's): blue-black, darkest to lightest.
+@export var dark_grass_colors: PackedColorArray = PackedColorArray([Color("0a141c"), Color("0f1f2c"), Color("15293c"), Color("1b344b"), Color("223f59"), Color("2a4a66")])
 
 class ChunkView:
 	var node: Node2D
@@ -64,12 +66,12 @@ var _built: Dictionary[Vector2i, ChunkBuildJob] = {}
 var _chunk_px := float(ChunkData.SIZE * TILE)
 var _collision_table := PackedInt32Array()
 var _atlas_rows := PackedInt32Array()
-var _grass_id := -1
-var _dirt_id := -1
-var _stone_id := -1
 var _block_slot := PackedInt32Array()
 var _wall_slot := PackedInt32Array()
 var _stone_slot := 0
+## Terrain textures the shader can hold (blocks and walls each; terrain.gdshader's
+## arrays are this size).
+const MAX_SLOTS := 32
 var _material: ShaderMaterial
 var _collision_set: TileSet
 var _props_set: TileSet
@@ -82,9 +84,6 @@ func setup(world: World) -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_collision_table = world.blocks.collision_table()
 	_atlas_rows = world.blocks.atlas_row_table()
-	_grass_id = world.blocks.index_of(&"grass")
-	_dirt_id = world.blocks.index_of(&"dirt")
-	_stone_id = world.blocks.index_of(&"stone")
 	_build_terrain_material()
 	_collision_set = _build_tileset(true)
 	_props_set = _build_tileset(false)
@@ -253,9 +252,7 @@ func _make_job(c: Vector2i, generate: bool) -> ChunkBuildJob:
 	job.stone_slot = _stone_slot
 	job.collision = _collision_table
 	job.atlas_row = _atlas_rows
-	job.grass_id = _grass_id
-	job.dirt_id = _dirt_id
-	job.stone_id = _stone_id
+	job.kinds = _world.blocks.kinds
 	job.generator = _world.generator
 	for dy in range(-1, 2):
 		for dx in range(-1, 2):
@@ -378,13 +375,13 @@ func _build_terrain_material() -> void:
 	var keys: Array[String] = []
 	var overlays: Array[String] = []
 	var grass := PackedFloat32Array()
-	grass.resize(16)
+	grass.resize(MAX_SLOTS)
 	var built := PackedFloat32Array()
-	built.resize(16)
+	built.resize(MAX_SLOTS)
 	var built_walls := PackedFloat32Array()
-	built_walls.resize(16)
+	built_walls.resize(MAX_SLOTS)
 	var overhang := PackedFloat32Array()
-	overhang.resize(16)
+	overhang.resize(MAX_SLOTS)
 	_block_slot.resize(blocks.size())
 	for i in range(1, blocks.size()):
 		var def := blocks.def(i)
@@ -393,7 +390,7 @@ func _build_terrain_material() -> void:
 		keys.append(def.terrain)
 		overlays.append(def.ore_overlay)
 		_block_slot[i] = keys.size()
-		grass[keys.size()] = 1.0 if def.grass_cover else 0.0
+		grass[keys.size()] = (2.0 if def.dark_grass else 1.0) if def.grass_cover else 0.0
 		built[keys.size()] = 1.0 if def.built else 0.0
 		overhang[keys.size()] = float(def.overhang_px) if def.built else 0.0
 		if def.id == &"stone":
@@ -421,6 +418,8 @@ func _build_terrain_material() -> void:
 	_material.set_shader_parameter("wall_desat", wall_desat)
 	for i in GRASS_COLORS.size():
 		_material.set_shader_parameter("grass_%d" % i, Color(GRASS_COLORS[i]))
+	for i in range(1, mini(dark_grass_colors.size(), 6)):
+		_material.set_shader_parameter("dgrass_%d" % i, dark_grass_colors[i])
 
 
 ## Packs terrain textures side by side, each in a MATERIAL_CELL square (64x64 ones are

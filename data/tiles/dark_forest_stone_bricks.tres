@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TileDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/tile_def.gd" id="1_tiledef"]
+
+[resource]
+script = ExtResource("1_tiledef")
+atlas_row = 18
+collision = 1
+climbable = false
+health = 90.0
+terrain = "dark_forest_stone_bricks"
+built = true
+id = &"dark_forest_stone_bricks"
+display_name = "Dark Forest Stone Bricks"

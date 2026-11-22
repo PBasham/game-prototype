@@ -330,7 +330,7 @@ func _register() -> void:
 		world.player.infinite_mana = not world.player.infinite_mana
 		world.player.mana = world.player.max_mana
 		_print("Infinite mana %s." % ("on" if world.player.infinite_mana else "off")))
-	_add("tp", "tp <x> <y> | tp spawn", "Teleport to a tile (feet), or the world's spawn.", _tp)
+	_add("tp", "tp <x> <y> | tp spawn | tp dark", "Teleport to a tile (feet), the world's spawn, or the middle of the Dark Forest.", _tp)
 	_add("pos", "pos", "Your tile position.", func(_a: PackedStringArray) -> void:
 		var t := world.wrap_tile(world.world_to_tile(world.player.global_position))
 		_print("tile %d, %d" % [t.x, t.y]))
@@ -721,10 +721,17 @@ func _tp(a: PackedStringArray) -> void:
 	var tile: Vector2i
 	if a.size() == 1 and a[0] == "spawn":
 		tile = world.generator.spawn_tile()
+	elif a.size() == 1 and a[0] == "dark":
+		var forest := world.generator as ForestGenerator
+		if forest == null or forest.dark_forests().is_empty():
+			_print("This world has no Dark Forest.")
+			return
+		var x := roundi(forest.dark_forests()[0].x)
+		tile = Vector2i(x, forest.surface_at(x) - 1)
 	elif a.size() == 2 and a[0].is_valid_int() and a[1].is_valid_int():
 		tile = Vector2i(int(a[0]), int(a[1]))
 	else:
-		_print("Usage: tp <x> <y> | tp spawn")
+		_print("Usage: tp <x> <y> | tp spawn | tp dark")
 		return
 	var pos := world.tile_to_world(tile) + Vector2(World.TILE * 0.5, 0)
 	world.renderer.load_all_now(pos)

@@ -83,7 +83,9 @@ tiles/s, `keep_tiles_min/max` 6 to 12 tiles away, 3 to 10 up), stops, charges fo
 `src/combat/enemy_shot.gd`, stops at blocks). It only shoots when it can see you. 30
 health, 6 contact damage, lights its surroundings (`glow_tiles` 8). Day and night.
 Drops 1 to 2 **Magic Essence**, a **Spirit Core** 1 time in 20, and its **Spell Page:
-Call Spirit** 1 time in 50 (crafting.md: discovered recipes). Sheet:
+Summon Forest Spirit** 1 time in 50 (crafting.md: discovered recipes). Its light follows
+it smoothly (see "Moving lights" in items-and-mining.md). Yours, from the spell, is
+tinted darker blue (`SpellData.summon_tint`) so you can tell them apart. Sheet:
 `assets/enemies/forest_spirit.png` (24x24 frames: drifting, charging, shooting).
 
 ## Spawning
@@ -98,7 +100,7 @@ One table per biome and layer. Only `forest_surface` exists so far.
 
 | Field | forest_surface | |
 |---|---|---|
-| `biome`, `layer` | forest, SURFACE | Where it applies. |
+| `biome`, `layer` | forest, SURFACE | Where it applies. The biome is counted from the ground around the player (`World.biome_at`, world-generation.md), so Dark Forest blocks decide it. |
 | `max_depth_tiles` | 20 | SURFACE: the player and each spawn spot must be no deeper than this below the world's natural surface. Deeper, nothing spawns (no underground tables yet). |
 | `day_seconds` / `night_seconds` | 10 / 6 | Average seconds between spawns. Lower = more often. |
 | `max_day` / `max_night` | 5 / 6 | Most enemies around the player before spawning stops. |
@@ -191,6 +193,13 @@ enemies through the same `damageable` group. See items-and-mining.md, Magic.
 - Death by an enemy: "You were slain." (same magic bag rules as survival.md).
 
 ## Equipment
+
+**Forest Spirit Pendant** (accessory, Phase 21): +1 summon at a time
+(`stats.summon_slots`) and +20% summon damage (`stats.summon_damage`). Made at the
+Spell Weaving Table from 1 Spirit Core and 10 Magic Essence (the recipe shows once you
+have a Spirit Core). Without it, one summon at a time (casting again replaces it);
+with it, two (the oldest goes past that), floating one behind the other
+(`Familiar.slot`). Placeholder icon from `tools/make_brick_art.py`.
 
 Its own window: press **P** or the **Equip (P)** button in the inventory. It opens in
 the middle of the screen, can be dragged by its title bar, and keeps its spot until you

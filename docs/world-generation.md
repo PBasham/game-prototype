@@ -319,6 +319,33 @@ the daylight, and Forest Spirits (combat.md). The edges fade over a few dozen ti
 | `dark_tree_chance` | 0.9 | Chance a spot has a tree. |
 | `dark_tree_variants` | 3 | Darkwood tree art (`assets/trees/darkwood_<n>.png`, 180 to 280 px tall). |
 | `dark_flower_chance` | 0.01 | Flowers under the dark trees. |
+| `dark_forest_wobble_tiles` | 40 | Underground, the region's sides wander in and out by up to this many tiles as they go down (less near the surface, so they meet the trees). |
+| `dark_forest_wobble_length` | 110 | One wiggle every this many tiles going down. |
+| `dark_forest_fringe_tiles` | 7 | At its edge, a band this wide where both kinds of ground mix in clumps. |
+
+**Its ground (Phase 21).** Under the Dark Forest, all the way to the bottom of the
+world, the ground is its own blocks: **Dark Forest Dirt**, **Dark Forest Grass** (the
+surface, blue-black blades) and **Dark Forest Stone**, with **Dark Forest Dirt Wall** and
+**Dark Forest Stone Wall** behind (`ForestGenerator.dark_forest_blocks_at`, swapped in
+`_block` and `_wall`). Ores and clay stay as they are. The art is a placeholder blend
+toward black with a hint of blue (`python3 tools/make_dark_forest_terrain.py --force`,
+per texture `--dirt=amount,brightness`, `--dirt_wall=`, `--stone=`, `--stone_wall=`); the
+grass colors are `ChunkRenderer.dark_grass_colors`.
+
+**Which biome you're in** is counted from the ground around you, like Terraria
+(`World.biome_at(tile)`, `biome_amount`): in a `biome_box` (48 x 32 tiles, sampled
+every `biome_sample_step` 2), if `biome_share` (30%) of the blocks and walls belong to a
+biome (`TileDef.biome`), you're in it. So digging, or building with Dark Forest blocks,
+changes it. High in the open sky (little ground around) the column's surface biome
+counts instead. It drives the spawn tables and the dark backdrop; the canopy's shade
+on the light is still by column (`dark_forest_at`).
+
+**Trees stand on level ground**: no column under the trunk lower than the root (pines:
+the root column; darkwood: a tile each side), at most one tile lower at the trunk's
+edge (`_trunk_fits`). Planted saplings need a block each side of the root too. Each
+tree is mirrored or not and leans up to `Plants.tree_lean_degrees` (4) either way.
+
+`tp dark` in the console goes to the middle of the Dark Forest.
 
 `ForestGenerator.dark_forest_at(x)` (0 to 1) and `biome_at(x)` (`forest` or
 `dark_forest`) drive the trees, the spawn tables, the backdrop (`Backdrop.DARK_LAYERS`,

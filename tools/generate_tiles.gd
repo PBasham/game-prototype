@@ -1804,6 +1804,12 @@ const GAME_BLOCKS := [
 	{"id": "reinforced_wood", "base": Color("6a5236"), "kind": "planks"},
 	{"id": "reinforced_darkwood", "base": Color("3e2636"), "kind": "planks"},
 	{"id": "darkwood_log", "base": Color("4a2c42"), "kind": "planks"},
+	# Rows 14 to 18 (Phase 21): the terrain shader draws these; rows for collision.
+	{"id": "dark_forest_dirt", "base": Color("38343e"), "kind": "dirt"},
+	{"id": "dark_forest_grass", "base": Color("38343e"), "kind": "dirt"},
+	{"id": "dark_forest_stone", "base": Color("3c3e4c"), "kind": "stone"},
+	{"id": "stone_bricks", "base": Color("757064"), "kind": "stone"},
+	{"id": "dark_forest_stone_bricks", "base": Color("3c3e4c"), "kind": "stone"},
 ]
 
 const BD_W := 1280

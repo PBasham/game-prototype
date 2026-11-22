@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TileDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/tile_def.gd" id="1_tiledef"]
+
+[resource]
+script = ExtResource("1_tiledef")
+atlas_row = 14
+collision = 1
+climbable = false
+kind = &"dirt"
+grows_to = &"dark_forest_grass"
+biome = &"dark_forest"
+health = 40.0
+terrain = "dark_forest_dirt"
+id = &"dark_forest_dirt"
+display_name = "Dark Forest Dirt"

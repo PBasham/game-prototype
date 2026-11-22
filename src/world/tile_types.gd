@@ -14,6 +14,13 @@ var _index: Dictionary[StringName, int] = {}
 var _collision := PackedInt32Array([TileDef.Collision.NONE])
 var _row := PackedInt32Array([-1])
 var _climbable := PackedByteArray([0])
+## Ground kind per index: 0 none, KIND_GRASS, KIND_DIRT, KIND_STONE.
+var kinds := PackedByteArray([0])
+const KIND_GRASS := 1
+const KIND_DIRT := 2
+const KIND_STONE := 3
+const _KIND_IDS := {&"grass": KIND_GRASS, &"dirt": KIND_DIRT, &"stone": KIND_STONE}
+var _biome: Array[StringName] = [&""]
 
 
 func _init(registry_category: StringName, registry: Node = null) -> void:
@@ -30,6 +37,8 @@ func _init(registry_category: StringName, registry: Node = null) -> void:
 		_collision.append(def.collision)
 		_row.append(def.atlas_row)
 		_climbable.append(1 if def.climbable else 0)
+		kinds.append(_KIND_IDS.get(def.kind, 0))
+		_biome.append(def.biome)
 
 
 func size() -> int:
@@ -38,6 +47,36 @@ func size() -> int:
 
 func index_of(id: StringName) -> int:
 	return _index.get(id, -1)
+
+
+func is_grass(index: int) -> bool:
+	return index > 0 and index < kinds.size() and kinds[index] == KIND_GRASS
+
+
+func is_dirt(index: int) -> bool:
+	return index > 0 and index < kinds.size() and kinds[index] == KIND_DIRT
+
+
+## Grass, dirt or stone of any biome.
+func is_ground(index: int) -> bool:
+	return index > 0 and index < kinds.size() and kinds[index] != 0
+
+
+## The grass a dirt tile turns into (-1 if it has none).
+func grass_of(dirt: int) -> int:
+	var d := def(dirt)
+	return index_of(d.grows_to) if d and d.grows_to != &"" else -1
+
+
+## The dirt a grass tile turns back into (-1 if none).
+func dirt_of(grass: int) -> int:
+	var d := def(grass)
+	return index_of(d.bare_to) if d and d.bare_to != &"" else -1
+
+
+## The biome a tile counts toward (&"" for none).
+func biome_of(index: int) -> StringName:
+	return _biome[index] if index > 0 and index < _biome.size() else &""
 
 
 ## The id at an index ("" for empty or out of range). Saves store ids, not indices.

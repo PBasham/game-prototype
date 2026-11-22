@@ -64,7 +64,7 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## can only learn from a scroll you find: they show up there while you carry one.
 @export var learnable_at_table := true
 ## Its "Learn" recipe at the table stays hidden until you've had one of these items
-## (Call Spirit: its Spell Page). Empty = always shown.
+## (Summon Forest Spirit: its Spell Page). Empty = always shown.
 @export var learn_unlock_items: Array[StringName] = []
 ## Reading its Spell Page doesn't teach it: take the page to the Spell Weaving Table
 ## (its learn_cost includes the page). The page's tooltip says so.
@@ -108,8 +108,8 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## bound: a long leap forward in an arc (leap_speed tiles/s ahead, rising leap_height
 ## tiles under normal gravity, wherever in the air you press it), the momentum kept
 ## until you land (steer against it to slow down).
-@export var leap_speed := 30.0
-@export var leap_height := 6.0
+@export var leap_speed := 48.0
+@export var leap_height := 4.0
 ## Levitate: tiles above the ground it hovers at.
 @export var hover_tiles := 5.0
 ## Mend: health per second while on (times spell power).
@@ -141,11 +141,14 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 @export var max_active := 3
 ## Familiar: shots every this many seconds, at enemies within this many tiles.
 @export var summon_interval := 1.0
-## A summon drawn from a sprite sheet instead of the little orb (Call Spirit: the Forest
+## A summon drawn from a sprite sheet instead of the little orb (Summon Forest Spirit: the Forest
 ## Spirit's 3 frames: idle, charging, shooting), and how long it charges before each
 ## shot (sparks close in; 0 = shoots right away).
 @export var summon_texture: Texture2D
 @export var summon_frame_size := Vector2i(24, 24)
+## Tints the summon's art (the summoned Forest Spirit is a darker blue than wild ones,
+## so you can tell yours apart).
+@export var summon_tint := Color.WHITE
 @export var summon_charge := 0.0
 @export var summon_tiles := 15.0
 ## Conjure Platform: width in tiles.

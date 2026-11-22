@@ -30,6 +30,11 @@ var _dirt_depth: FastNoiseLite
 var _dirt_edge: FastNoiseLite
 var _dirt_pockets: FastNoiseLite
 var _stone_pockets: FastNoiseLite
+var _dark_wobble: FastNoiseLite
+var _dark_fringe: FastNoiseLite
+## Block and wall swaps inside the Dark Forest (plain id index -> dark id index).
+var _dark_blocks: Dictionary[int, int] = {}
+var _dark_walls: Dictionary[int, int] = {}
 # Caves.
 var _tunnels: FastNoiseLite
 var _tunnel_mask: FastNoiseLite
@@ -72,6 +77,14 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	_dirt_edge = _noise(13, 1.0 / 7.0)
 	_dirt_pockets = _noise(7, 1.0 / s.dirt_pocket_size, 2)
 	_stone_pockets = _noise(8, 1.0 / 10.0, 2)
+	_dark_wobble = _noise(15, 1.0 / maxf(s.dark_forest_wobble_length, 10.0), 2)
+	_dark_fringe = _noise(16, 1.0 / 4.0)
+	for pair: Array in [[&"dirt", &"dark_forest_dirt"], [&"grass", &"dark_forest_grass"], [&"stone", &"dark_forest_stone"]]:
+		if _b.get(pair[0], -1) > 0 and _b.get(pair[1], -1) > 0:
+			_dark_blocks[_b[pair[0]]] = _b[pair[1]]
+	for pair: Array in [[&"dirt_wall", &"dark_forest_dirt_wall"], [&"stone_wall", &"dark_forest_stone_wall"]]:
+		if _w.get(pair[0], -1) > 0 and _w.get(pair[1], -1) > 0:
+			_dark_walls[_w[pair[0]]] = _w[pair[1]]
 	_tunnels = _noise(9, 1.0 / s.tunnel_spacing, 2)
 	_tunnel_mask = _noise(10, 1.0 / (s.tunnel_spacing * 2.0))
 	_tunnel_cut = _noise(14, 1.0 / maxf(s.tunnel_length, 20.0), 2)
@@ -193,7 +206,7 @@ func generate_chunk(chunk: ChunkData) -> void:
 			var y := oy + ly
 			var i := ChunkData.local_index(lx, ly)
 			chunk.blocks[i] = _block(x, y, col, entrances)
-			chunk.walls[i] = _wall(y, col)
+			chunk.walls[i] = _wall(x, y, col)
 
 
 ## Block at one tile, for tests and tools. Slower than generate_chunk (no caching).
@@ -203,7 +216,7 @@ func block_at(x: int, y: int) -> int:
 
 
 func wall_at(x: int, y: int) -> int:
-	return _wall(y, _column(posmod(x, width)))
+	return _wall(x, y, _column(posmod(x, width)))
 
 
 ## Per-column values shared by every tile in the column: [surface, dirt depth, cyl x,
@@ -219,6 +232,38 @@ func _column(x: int) -> PackedFloat32Array:
 
 
 func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloat32Array]) -> int:
+	var b := _plain_block(x, y, col, entrances)
+	if _dark_blocks.has(b) and dark_forest_blocks_at(x, y, col):
+		return _dark_blocks[b]
+	return b
+
+
+## Whether tile (x, y) is in the Dark Forest's ground: the patch's width, its sides
+## wandering with depth (dark_forest_wobble_tiles), the edge mixed in clumps.
+func dark_forest_blocks_at(x: int, y: int, col: PackedFloat32Array) -> bool:
+	if _dark.is_empty():
+		return false
+	var s := settings
+	var depth := maxf(y - col[0], 0.0)
+	var reach := s.dark_forest_wobble_tiles * clampf(depth / 60.0, 0.2, 1.0)
+	var fr := maxf(s.dark_forest_fringe_tiles, 0.5)
+	for i in _dark.size():
+		var p := _dark[i]
+		var d := float(wrap_delta(x, roundi(p.x)))
+		var side := 1.0 if d >= 0.0 else -1.0
+		var w := _dark_wobble.get_noise_2d(float(y), side * 5000.0 + i * 977.0) / 0.6 * reach
+		var margin := p.y + w - absf(d)
+		if margin > fr:
+			return true
+		if margin < -fr:
+			continue
+		var t := (margin + fr) / (2.0 * fr)
+		if _dark_fringe.get_noise_3d(col[2], col[3], float(y)) * 0.5 + 0.5 < t:
+			return true
+	return false
+
+
+func _plain_block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloat32Array]) -> int:
 	var s := settings
 	if y < 0:
 		return WorldData.AIR
@@ -256,11 +301,14 @@ func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloa
 	return block
 
 
-func _wall(y: int, col: PackedFloat32Array) -> int:
+func _wall(x: int, y: int, col: PackedFloat32Array) -> int:
 	var depth := y - int(col[0])
 	if depth < 4 or y >= height:
 		return WorldData.AIR
-	return _w[&"dirt_wall"] if depth < int(col[1]) + 2 else _w[&"stone_wall"]
+	var w: int = _w[&"dirt_wall"] if depth < int(col[1]) + 2 else _w[&"stone_wall"]
+	if _dark_walls.has(w) and dark_forest_blocks_at(x, y, col):
+		return _dark_walls[w]
+	return w
 
 
 # --- caves --------------------------------------------------------------------
@@ -400,9 +448,22 @@ func tree_at(x: int) -> int:
 	var chance := lerpf(s.clearing_tree_chance, s.grove_tree_chance, groveness(x))
 	if GenUtil.hash01(cell, 3, seed) >= chance:
 		return -1
-	if absi(surface_at(posmod(x - 2, width)) - surface_at(posmod(x + 2, width))) > s.tree_max_slope:
+	if not _trunk_fits(x, 0):  # pine trunks are under a tile wide
 		return -1
 	return floori(GenUtil.hash01(cell, 1, seed) * s.tree_variants)
+
+
+## Whether a trunk stands on ground: within `half` tiles of x no column is lower than
+## the root (it would hang over a drop); one tile further out (the trunk's edge) one
+## tile lower is fine. None more than 2 higher.
+func _trunk_fits(x: int, half: int) -> bool:
+	var root := surface_at(posmod(x, width))
+	for k in range(-half - 1, half + 2):
+		var sk := surface_at(posmod(x + k, width))
+		var drop := 0 if absi(k) <= half else 1
+		if sk > root + drop or root - sk > 2:
+			return false
+	return true
 
 
 ## Dark Forest trees: close together, nearly every spot. Variants after the pines
@@ -413,7 +474,7 @@ func _dark_tree_at(x: int) -> int:
 	var spot := cell * s.dark_tree_spacing + 1 + floori(GenUtil.hash01(cell, 22, seed) * (s.dark_tree_spacing - 2))
 	if x != spot or GenUtil.hash01(cell, 23, seed) >= s.dark_tree_chance:
 		return -1
-	if absi(surface_at(posmod(x - 2, width)) - surface_at(posmod(x + 2, width))) > s.tree_max_slope + 1:
+	if not _trunk_fits(x, 1):  # darkwood trunks are about 2.5 tiles wide
 		return -1
 	return s.tree_variants + floori(GenUtil.hash01(cell, 24, seed) * maxi(s.dark_tree_variants, 1))
 

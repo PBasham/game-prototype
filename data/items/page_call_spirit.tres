@@ -22,5 +22,5 @@ held = SubResource("Resource_gka17")
 impact_at = 0.2
 learns_spell = &"call_spirit"
 id = &"page_call_spirit"
-display_name = "Spell Page: Call Spirit"
-description = "A found page of spellcraft, too strong to read alone. Learn Call Spirit with it at a Spell Weaving Table."
+display_name = "Spell Page: Summon Forest Spirit"
+description = "A found page of spellcraft, too strong to read alone. Learn Summon Forest Spirit with it at a Spell Weaving Table."

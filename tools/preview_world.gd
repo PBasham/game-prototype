@@ -23,6 +23,9 @@ const COLORS := {
 	&"grass": Color("4f8a2c"),
 	&"dirt": Color("7a5233"),
 	&"stone": Color("6b6b70"),
+	&"dark_forest_dirt": Color("6a4652"),
+	&"dark_forest_grass": Color("3a5a3c"),
+	&"dark_forest_stone": Color("5a5a72"),
 	&"copper_ore": Color("e07a2c"),
 	&"iron_ore": Color("c8ccd8"),
 	&"clay": Color("b86a48"),
@@ -139,6 +142,8 @@ func _row(r: int) -> void:
 			col = _block_colors[id]
 		elif wall > 0:
 			col = CAVE_DIRT if wall == _dirt_wall else CAVE_STONE
+			if _walls.id_of(wall).begins_with("dark_forest"):
+				col = col.lerp(Color("3a2448"), 0.45)
 		elif y > _gen.surface_at(x):
 			col = CAVE_OPEN
 		colors[c] = col

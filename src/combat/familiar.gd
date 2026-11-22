@@ -2,7 +2,8 @@ class_name Familiar
 extends Node2D
 ## The Familiar spell: a little orb that floats behind your shoulder for `duration` and
 ## shoots a bolt at the nearest enemy within `summon_tiles` every `summon_interval`
-## seconds. One at a time; casting again replaces it.
+## seconds. One at a time (more with summon_slots gear, like the Forest Spirit Pendant);
+## casting past the limit replaces the oldest.
 
 ## Where it floats, relative to the player's feet (x flips with facing).
 @export var offset := Vector2(-16.0, -58.0)
@@ -17,6 +18,8 @@ var _cooldown := 0.5
 var _charge_left := -1.0
 var _charge_target: Enemy
 var _shot_flash := 0.0
+## Its place among your summons (0 = first): each floats a little further back and up.
+var slot := 0
 
 
 func setup(w: World, s: SpellData, spell_power: float) -> void:
@@ -31,7 +34,8 @@ func setup(w: World, s: SpellData, spell_power: float) -> void:
 
 func _target() -> Vector2:
 	var p := world.player
-	return p.global_position + Vector2(offset.x * p.facing, offset.y + sin(Time.get_ticks_msec() * 0.004) * 2.0)
+	var o := offset + Vector2(-14.0, -10.0) * slot
+	return p.global_position + Vector2(o.x * p.facing, o.y + sin(Time.get_ticks_msec() * 0.004 + slot) * 2.0)
 
 
 func _process(delta: float) -> void:
@@ -88,7 +92,7 @@ func _draw() -> void:
 		var fs := Vector2(spell.summon_frame_size)
 		var frame := 1 if _charge_left >= 0.0 else (2 if _shot_flash > 0.0 else 0)
 		draw_texture_rect_region(spell.summon_texture, Rect2(-fs * 0.5, fs),
-			Rect2(Vector2(frame * fs.x, 0), fs), Color(1, 1, 1, fade))
+			Rect2(Vector2(frame * fs.x, 0), fs), Color(spell.summon_tint, fade))
 		if _charge_left >= 0.0:
 			var k := 1.0 - clampf(_charge_left / spell.summon_charge, 0.0, 1.0)
 			var spin := Time.get_ticks_msec() * 0.004

@@ -53,7 +53,7 @@ func _job(data: WorldData, c: Vector2i) -> ChunkBuildJob:
 	job.atlas_row = blocks.atlas_row_table()
 	job.block_slot.resize(blocks.size())
 	job.wall_slot.resize(walls.size())
-	job.grass_id = blocks.index_of(&"grass")
+	job.kinds = blocks.kinds
 	job.generator = gen
 	for dy in range(-1, 2):
 		for dx in range(-1, 2):
@@ -294,9 +294,7 @@ func test_build_job_finds_floors_for_loose_pickups() -> void:
 	job.coord = Vector2i.ZERO
 	job.world_width = S * 4
 	job.world_height = S * 4
-	job.grass_id = grass
-	job.dirt_id = dirt
-	job.stone_id = stone
+	job.kinds = blocks.kinds
 	job.generator = FlatGen.new(blocks, walls, S * 4, S * 4, 1)
 	for i in 9:
 		job.blocks.append(center if i == 4 else PackedInt32Array())

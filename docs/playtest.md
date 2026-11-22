@@ -330,6 +330,21 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Your own model: follow [3d-character.md](3d-character.md), export to
       `assets/body3d/scholar.glb`, `body 3d`.
 
+**Phase 21: Dark Forest ground and more (branch phase-21-dark-forest-blocks)**
+New worlds only for the ground (old chunks keep their blocks). `tp dark` gets you there.
+- [ ] Dark Forest Dirt, Stone, Grass and walls under the Dark Forest, down to the bottom,
+      with wobbly, mixed edges. Are the colors right (`tools/make_dark_forest_terrain.py`)?
+- [ ] The dark backdrop and Forest Spirits follow the ground you're in: dig out of it,
+      or build a Dark Forest Stone room in the normal forest.
+- [ ] Grass spreads onto Dark Forest Dirt as blue-black grass; seeds work on it.
+- [ ] Stone Bricks and Dark Forest Stone Bricks at a Furnace (2 stone each).
+- [ ] Forest Spirit Pendant (Spell Weaving Table: 1 Spirit Core, 10 Magic Essence):
+      two summoned spirits, hitting 20% harder. Yours are darker blue.
+- [ ] Spirit lights glide smoothly; Light Orb too.
+- [ ] Hold the mouse button with Chain Spark in hand, or hold its quick key: keeps casting.
+- [ ] Bound: 48 tiles/s ahead, a low arc; pull back to slow down.
+- [ ] No trees hanging over drops; trunks lean a little, some mirrored.
+
 ## Known
 
 - Window positions reset when you quit. Accessories aren't drawn on the character.

@@ -261,9 +261,9 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 				if _in_reach(spot):
 					valid.append(spot + Vector2i.DOWN)
 		Mode.PLANT_GRASS:
-			var dirt := world.blocks.index_of(&"dirt")
 			for t in _tiles():
-				if world.data.get_block(t.x, t.y) == dirt and _exposed(t) and _in_reach(t):
+				var b := world.data.get_block(t.x, t.y)
+				if world.blocks.is_dirt(b) and world.blocks.grass_of(b) > 0 and _exposed(t) and _in_reach(t):
 					valid.append(t)
 			_limit_to_stack()
 
@@ -757,9 +757,9 @@ func _on_impact(item: ItemData) -> void:
 				if p.held_count() > 0 and world.plants.request_plant_tree(g, kind):
 					p.take_held()
 		Mode.PLANT_GRASS:
-			var grass := world.blocks.index_of(&"grass")
 			for t in valid:
-				if p.held_count() > 0 and world.request_set_block(t, grass):
+				var grass := world.blocks.grass_of(world.data.get_block(t.x, t.y))  # dirt's own grass
+				if p.held_count() > 0 and grass > 0 and world.request_set_block(t, grass):
 					p.take_held()
 	if not back and (item.kind == ItemData.Kind.TOOL or item.kind == ItemData.Kind.WEAPON):
 		_cut_flowers_in_swing()

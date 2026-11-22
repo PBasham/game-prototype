@@ -2,11 +2,33 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-21: Phase 21, Dark Forest ground, biomes, bricks, Pendant
+
+- **Patrick:** real blocks for the Dark Forest (Dark Forest Dirt and Stone, plus walls
+  and its grass), not a tint; biomes run to the bottom of the world like Terraria's,
+  with curvy, random edges; which biome you're in is counted from nearby blocks.
+- **Patrick:** colors: black with a hint of blue (option 1), but background walls not
+  too dark; dark blue-black grass.
+- Tiles got a ground `kind` so biome versions act like dirt, grass and stone everywhere
+  (grass spread, trees, forage, cave floors) without special cases.
+- **Patrick:** bricks from stone, any stone to its own brick (2 stone, Furnace, like
+  Terraria's Gray Brick).
+- **Patrick:** Forest Spirit Pendant: +1 summon, +20% summon damage. How you get it was
+  Claude's default: Spell Weaving Table, 1 Spirit Core + 10 Magic Essence. Summon Forest
+  Spirit's own learning cost (page + core + essence) left as it was until Patrick decides.
+- **Patrick:** "Call Spirit" renamed Summon Forest Spirit (id still `call_spirit`);
+  your summoned spirit is tinted darker blue.
+- Fixes: trees need level ground under the trunk; glowing enemies relight as they move,
+  and moving lights glide (shared between tiles, light map fades); holding casts again
+  (spells past the combo window, quick keys).
+
 ## 2026-11-21: Phase 20, 3D body prototype
 
 - Bound fix: the leap's rise was a fixed 20 tiles/s, which the jump's strong gravity
   ate in about a tile ("moves an inch up"). Now `leap_height` (6 tiles) sets the rise
   from wherever it's pressed, worked out from the jump's gravity.
+- **Patrick:** Bound should push farther and faster, mostly sideways: 48 tiles/s ahead
+  (was 30) and a lower 4 tile rise. Steering back still slows it.
 
 - **Patrick:** go with the brief's defaults: live 3D (route B) rendered on its own
   pixel canvas, placeholder until his Blender model, Scholar sized, 3 shading bands with
