@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 31, fixes
+
+- **Patrick:** Air Step and Bound seemed gone: they weren't in the dev kit's spell list,
+  so `devkit` now teaches every spell.
+- **Patrick:** "Already known" on Spell Pages for known spells; a click with a spell on
+  the mouse mustn't use the hand; tooltips narrower with smaller text, like Terraria's,
+  never off screen.
+
 ## 2026-11-26: Phase 30, book poses
 
 - **Patrick:** the book on the hip when it isn't in hand; liked a mix where the spell

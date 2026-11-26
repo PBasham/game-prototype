@@ -264,6 +264,10 @@ func give_dev_kit() -> void:
 		inventory.add(e[0], e[1])
 	for s in DEV_SPELLS:
 		learn_spell(s)
+	# Then every other spell (Air Step, Bound, Tele Grab, the summons...), so the dev kit
+	# really has them all.
+	for d in Registry.get_all(&"spells"):
+		learn_spell(d.id)
 	# Gathering spells fully empowered, like the iron pickaxe the kit used to carry.
 	empower[&"mining_spell"] = {&"mining_power": 2, &"gather_reach": 3}
 	empower[&"chopping_spell"] = {&"chopping_power": 2, &"gather_reach": 3}

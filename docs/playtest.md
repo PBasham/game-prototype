@@ -358,6 +358,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 31: fixes (branch phase-31-devkit-all-spells)**
+- [ ] `devkit` teaches every spell, Air Step and Bound included.
+- [ ] Spell Pages for spells you know say "Already known".
+- [ ] With a spell dragged onto the mouse, clicking in the world doesn't swing or cast what's in your hand.
+- [ ] Tooltips wrap into a narrow box with smaller text and stay on screen at the edges.
+
 **Phase 30: book poses (branch phase-30-book-poses)**
 - [ ] With a weapon or nothing in hand, the spellbook hangs on your hip.
 - [ ] Readying Spark, Air Push or Mining puts the book in your back hand; the hip is empty.

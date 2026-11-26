@@ -159,6 +159,10 @@ var _stock: CraftStock
 var _stock_frame := -1
 ## A mouse press began on a window; world clicks stay blocked until it's released.
 var _press_on_ui := false
+## Tooltips: the widest a line gets before it wraps (UI pixels), and the body's text
+## size (the title stays at 8).
+@export var tooltip_max_width := 150.0
+@export var tooltip_font_size := 7
 ## The tooltip's title line and its right side (a book's tier).
 var _tooltip_title: Label
 var _tooltip_right: Label
@@ -272,7 +276,7 @@ func _ready() -> void:
 	_tooltip_right.add_theme_color_override("font_color", UiSkin.GOLD)
 	head.add_child(_tooltip_right)
 	_tooltip_text = Label.new()
-	_tooltip_text.add_theme_font_size_override("font_size", 8)
+	_tooltip_text.add_theme_font_size_override("font_size", tooltip_font_size)
 	_tooltip_text.add_theme_color_override("font_color", UiSkin.TEXT)
 	tip_box.add_child(_tooltip_text)
 	_tooltip.visible = false
@@ -357,7 +361,9 @@ func _input(event: InputEvent) -> void:
 	# even if the window closes under the mouse: blocked until the button comes up.
 	var press := event as InputEventMouseButton
 	if press and press.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
-		if press.pressed and _over_pane() != null:
+		# Also a click with a spell (or anything that can't be used in the world) on the
+		# mouse: it only drops or puts that back, it never uses what's in your hand.
+		if press.pressed and (_over_pane() != null or (cursor_count > 0 and _cursor_placeable() == null)):
 			_press_on_ui = true
 			world.player.input_blocked = true
 		elif not press.pressed and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) \
@@ -2506,13 +2512,41 @@ func _update_tooltip(over: Control) -> void:
 	_tooltip_right.visible = _tooltip_right.text != ""
 	_tooltip_types.text = spell_types(item as SpellData) if item is SpellData else ""
 	_tooltip_types.visible = _tooltip_types.text != ""
+	_layout_tooltip((over if over else _tooltip).get_global_mouse_position())
+
+
+## Sizes the tooltip (long lines wrap at tooltip_max_width, like Terraria's narrow
+## tooltips; short ones keep the box small) and puts it beside the mouse: on the other
+## side when there's no room, never off screen.
+func _layout_tooltip(mouse: Vector2) -> void:
+	var font := _tooltip_text.get_theme_font(&"font")
+	_tooltip_text.text = wrap_text(_tooltip_text.text, font, tooltip_font_size, tooltip_max_width)
+	_tooltip_title.text = wrap_text(_tooltip_title.text, font, 8, tooltip_max_width)
 	_tooltip.reset_size()
-	# Hovering a chest in the world, no window is under the mouse.
-	var at := (over if over else _tooltip).get_global_mouse_position() + Vector2(10, 8)
+	var at := mouse + Vector2(10, 8)
 	var view := _view_size()
-	at.x = minf(at.x, view.x - _tooltip.size.x - 2)
-	at.y = minf(at.y, view.y - _tooltip.size.y - 2)
+	if at.x + _tooltip.size.x > view.x - 2:
+		at.x = mouse.x - _tooltip.size.x - 6
+	at.x = clampf(at.x, 2.0, maxf(view.x - _tooltip.size.x - 2, 2.0))
+	at.y = clampf(at.y, 2.0, maxf(view.y - _tooltip.size.y - 2, 2.0))
 	_tooltip.position = at
+
+
+## Breaks text into lines no wider than `width` (at spaces; a single word longer than
+## that stays whole). Existing line breaks are kept.
+static func wrap_text(text: String, font: Font, font_size: int, width: float) -> String:
+	var out := PackedStringArray()
+	for para in text.split("\n"):
+		var line := ""
+		for word in para.split(" "):
+			var trial := word if line == "" else line + " " + word
+			if line != "" and font.get_string_size(trial, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > width:
+				out.append(line)
+				line = word
+			else:
+				line = trial
+		out.append(line)
+	return "\n".join(out)
 
 
 ## The right side of a tooltip's title line: "Tier N" for spellbooks, the kind for conduits.
@@ -2544,6 +2578,8 @@ static func tooltip_for(item: ItemData, c: CharacterData = null, meta: Dictionar
 	if item is SpellData:
 		return spell_tooltip(item as SpellData, c)
 	var lines := PackedStringArray([item.display_name])
+	if item.learns_spell != &"" and c and c.knows(item.learns_spell):
+		lines.append("Already known")
 	if meta.get("infinite", false):
 		lines.append("Infinite (dev): never runs out")
 	if item.mining_damage > 0.0:

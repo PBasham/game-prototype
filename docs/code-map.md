@@ -442,3 +442,13 @@ saves still load.
 | The hip book and its glow | `Player._update_hip_book`; `PaperDoll.book`, `book_on_hip`, `book_glow`, `_book_hip` |
 | The weapon in the front hand during a quick cast | `PaperDoll.offhand`, `_offhand_front`, `offhand_angle` |
 | The motions | `data/item_types/spell_float.tres`, `spell_hip.tres`, `spell_offhand.tres` (`_spell_float`... in tools/make_item_types.gd); `ItemTypeData.floats`, `shows_item` |
+
+## Phase 31: fixes
+
+| Change | Where |
+| --- | --- |
+| Tooltip width, text size, placement | `Hud.tooltip_max_width`, `tooltip_font_size`, `Hud._layout_tooltip`, `Hud.wrap_text` |
+| "Already known" on pages | `Hud.tooltip_for` |
+| A click with a spell on the mouse | `Hud._input` (`_press_on_ui`) |
+| The dev kit's spells | `CharacterData.give_dev_kit` (DEV_SPELLS first, then every spell) |
+| Hovering UI in scripted runs | DevCli `--mouse=X:Y` |

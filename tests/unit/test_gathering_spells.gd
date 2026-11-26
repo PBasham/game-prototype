@@ -144,3 +144,9 @@ func test_glowing_box_and_the_tool_lands_on_the_middle() -> void:
 	w.console.run("phantom comet")
 	assert_eq((p.use_item() as SpellData).phantom_style, PhantomTool.Style.COMET)
 	w.console.run("phantom arc")
+
+
+func test_the_dev_kit_knows_every_spell() -> void:
+	var c := CharacterData.create_dev("Everything")
+	for d in Registry.get_all(&"spells"):
+		assert_true(c.knows(d.id), "%s" % d.id)

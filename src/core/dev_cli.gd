@@ -18,6 +18,8 @@ extends Node
 ##   --console=FRAME:CMD     run a dev console command at a frame (output also printed)
 ##   --aim=DX:DY             aim at this offset (px) from the player's chest instead of
 ##                           the mouse (mining, placing, facing)
+##   --mouse=X:Y             put the mouse here (window pixels) every frame: hover the UI
+##                           in screenshots (tooltips)
 ##   --scene=doll            open a dev scene instead of a world (doll = Doll Viewer)
 ##   --menu                  stay on the main menu (otherwise any of these arguments
 ##                           skips the menu and starts a temporary, unsaved world)
@@ -33,6 +35,7 @@ var _log_every := 0
 ## Tile column to spawn at, or -1. Read by World.
 var spawn_x := -1
 var _aim := Vector2.INF
+var _mouse := Vector2.INF
 var _console: Array[Array] = []
 var _perf := false
 var _world_kind := "forest"
@@ -94,8 +97,10 @@ func _ready() -> void:
 				hide_overlay = parts[1] == "off"
 			"aim":
 				_aim = Vector2(float(v[0]), float(v[1]))
+			"mouse":
+				_mouse = Vector2(float(v[0]), float(v[1]))
 	set_physics_process(not (_shots.is_empty() and _holds.is_empty() and _quit_at < 0 and _log_every == 0
-		and not _aim.is_finite() and _console.is_empty()))
+		and not _aim.is_finite() and not _mouse.is_finite() and _console.is_empty()))
 
 
 ## True when the command line asks for a scripted run, so the menu should be skipped.
@@ -121,6 +126,8 @@ func world_info() -> WorldInfo:
 
 func _physics_process(_delta: float) -> void:
 	_frame += 1
+	if _mouse.is_finite():
+		get_viewport().warp_mouse(_mouse)
 	if _aim.is_finite():
 		var w := get_tree().current_scene as World
 		if w and w.item_user:
