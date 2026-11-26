@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 33: the hovering tool (branch phase-33-phantom-hover)**
+- [ ] With Mining or Chopping in hand, the phantom tool floats behind your shoulder, bobbing, and follows you.
+- [ ] Mining pulls it from there into the swing (all styles and Mining v2 to v8); letting go, it drifts back.
+- [ ] With anything else in hand it's gone.
+
 **Phase 32: dev things kept in saves (branch phase-32-keep-dev-spells)**
 - [ ] With the dev kit, put Mining v2 to v8 on your Q and E wheels, Save & Quit, come back: they're all still there, on the same slots, with the dev items.
 

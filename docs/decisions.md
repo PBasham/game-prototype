@@ -2,6 +2,11 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 33, the hovering tool
+
+- **Patrick:** keep every phantom animation, but the tool should hover near you like a
+  summon and get pulled into the animation when used.
+
 ## 2026-11-26: Phase 32, dev things kept in saves
 
 - **Patrick:** after Save & Quit his Q and E spells reset and the Mining v2+ test spells

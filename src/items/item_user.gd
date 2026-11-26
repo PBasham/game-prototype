@@ -1187,7 +1187,11 @@ func _update_phantom(p: Player, show: bool) -> void:
 	var sp := _phantom()
 	pt.box_shown = sp != null and _glow_box()
 	pt.swinging = show
-	pt.visible = pt.box_shown or show
+	# While a gathering spell is in hand the tool hovers beside you (Phase 33).
+	pt.idle = sp != null and not p.stowed and not p.dead
+	pt.anchor = p.chest()
+	pt.facing = p.facing
+	pt.visible = pt.box_shown or show or pt.idle
 	if not pt.visible:
 		pt.update_light(world)
 		return

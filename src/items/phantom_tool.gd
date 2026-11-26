@@ -40,6 +40,30 @@ var tip_at := Vector2(0.88, 0.48)
 const BOX_COLOR := Color(0.45, 0.8, 1.0)
 const BAD_COLOR := Color(1.0, 0.35, 0.3)
 
+## Hovering (Phase 33): while a gathering spell is in your hand the tool floats beside
+## you like a summon; when you mine it's pulled from there into the swing, and when you
+## stop it drifts back. `idle`: show it; `anchor`: your chest; `facing`: 1 or -1.
+var idle := false
+var anchor := Vector2.ZERO
+var facing := 1
+## Where it hovers (from your chest, flipped with facing), how it bobs, how fast it
+## follows you, how long the pull into a swing takes, and how bright it is at rest.
+@export var hover_offset := Vector2(-11.0, -12.0)
+@export var hover_bob := 1.5
+@export var hover_follow := 10.0
+@export var pull_time := 0.16
+@export var hover_alpha := 0.8
+var _float_pos := Vector2.INF
+var _float_angle := 0.0
+var _float_side := 1.0
+var _was_swinging := false
+## 0 to 1: how far it's been pulled from the hover into the current swing (1 = done).
+var _pull := 1.0
+var _pull_from := Vector2.ZERO
+var _pull_from_angle := 0.0
+var _last_grip := Vector2.ZERO
+var _last_angle := 0.0
+
 var style := Style.ARC
 var texture: Texture2D
 var tint := Color(0.7, 0.9, 1.0)
@@ -115,6 +139,74 @@ func redraw() -> void:
 	_tools.queue_redraw()
 
 
+func _process(delta: float) -> void:
+	var hover := _hover_point()
+	if _float_pos == Vector2.INF:
+		_float_pos = hover
+	if swinging and not _was_swinging:
+		# Pulled from where it hovers into the swing.
+		_pull = 0.0 if idle or _float_pos.distance_to(hover) < 40.0 else 1.0
+		_pull_from = _float_pos
+		_pull_from_angle = _float_angle
+	elif not swinging and _was_swinging:
+		# Drifts back from the last swing.
+		_float_pos = _last_grip
+		_float_angle = _last_angle
+	_was_swinging = swinging
+	if swinging:
+		_pull = minf(_pull + delta / maxf(pull_time, 0.01), 1.0)
+	else:
+		var k := 1.0 - exp(-hover_follow * delta)
+		_float_pos = _float_pos.lerp(hover, k)
+		_float_angle = lerp_angle(_float_angle, _hover_angle(), k)
+		_float_side = float(facing)
+
+
+## Where it hovers now: beside your shoulder, behind you, bobbing.
+func _hover_point() -> Vector2:
+	var bob := sin(Time.get_ticks_msec() / 1000.0 * 2.2) * hover_bob
+	return anchor + Vector2(hover_offset.x * facing, hover_offset.y + bob)
+
+
+## Upright with a gentle sway (the art's diagonal turned head up).
+func _hover_angle() -> float:
+	return -PI / 4.0 * facing + sin(Time.get_ticks_msec() / 1000.0 * 1.3) * 0.12
+
+
+## The tool where the swing puts it, pulled in from the hover at the start of a swing.
+## Returns [grip, angle, alpha_mult, grow].
+func _pulled(grip: Vector2, angle: float, life: float, grow: float) -> Array:
+	if _pull >= 1.0:
+		return [grip, angle, life, grow]
+	var t := ease(_pull, 0.4)
+	return [_pull_from.lerp(grip, t), lerp_angle(_pull_from_angle, angle, t), lerpf(1.0, life, t), lerpf(1.0, grow, t)]
+
+
+## The tool itself during a swing (with the pull), remembering where it was drawn.
+func _draw_main(grip: Vector2, angle: float, life: float, grow: float) -> void:
+	var d := _pulled(grip, angle, life, grow)
+	_last_grip = d[0]
+	_last_angle = d[1]
+	_draw_tool(d[0], d[1], tool_alpha * d[2], d[3])
+
+
+func _draw_main_light(grip: Vector2, angle: float, life: float, grow: float) -> void:
+	var d := _pulled(grip, angle, life, grow)
+	_draw_tool_light(d[0], d[1], d[2], d[3])
+
+
+## At rest beside you.
+func _draw_hover(tools: bool) -> void:
+	var keep := side
+	side = _float_side
+	if tools:
+		_draw_tool(_float_pos, _float_angle, hover_alpha, 1.0)
+	else:
+		_draw_tool_light(_float_pos, _float_angle, hover_alpha * 0.8, 1.0)
+		_glow(_tip_at(_float_pos, _float_angle), 7.0, glow_alpha * 0.5)
+	side = keep
+
+
 ## The light layer (additive).
 func _draw() -> void:
 	if box_shown:
@@ -125,6 +217,8 @@ func _draw() -> void:
 				_draw_comet(false)
 			_:
 				_draw_arc_swing(style == Style.ECHO, false)
+	elif idle and texture:
+		_draw_hover(false)
 
 
 ## The tool layer (solid).
@@ -137,6 +231,8 @@ func _draw_tools() -> void:
 				_draw_comet(true)
 			_:
 				_draw_arc_swing(style == Style.ECHO, true)
+	elif idle and texture:
+		_draw_hover(true)
 
 
 # --- the target box -----------------------------------------------------------------
@@ -273,7 +369,7 @@ func _draw_arc_swing(echo: bool, tools: bool) -> void:
 				var past := _strike(swing - i * 0.035)
 				if past > 0.0:
 					_draw_tool(grip, _angle(past), tool_alpha * life * (0.5 - i * 0.1), 1.0)
-		_draw_tool(grip, angle, tool_alpha * life, grow)
+		_draw_main(grip, angle, life, grow)
 		return
 	if striking:
 		var k0 := 0.0
@@ -295,7 +391,7 @@ func _draw_arc_swing(echo: bool, tools: bool) -> void:
 					var along := float(i) / maxf(pts.size() - 1, 1)
 					col.append(Color(tint, streak_alpha * life * w[1] * along * along))
 				draw_polyline_colors(pts, col, w[0])
-	_draw_tool_light(grip, angle, life, grow)
+	_draw_main_light(grip, angle, life, grow)
 	# Its own light: around the head, flaring on the hit.
 	var flare := 0.0
 	if swing >= impact:
@@ -323,14 +419,14 @@ func _draw_comet(tools: bool) -> void:
 	var grip := tip_pos - Vector2(tip_offset.x * side, tip_offset.y).rotated(angle)
 	var grow := lerpf(0.4, 1.0, clampf(swing / appear, 0.0, 1.0))
 	if tools:
-		_draw_tool(grip, angle, tool_alpha * life, grow)
+		_draw_main(grip, angle, life, grow)
 		return
 	if swing > strike_from and swing < impact + 0.05:
 		# The tail: from where it started to where it is now.
 		var pts := PackedVector2Array([top, tip_pos])
 		for w: Array in [[6.0, 0.15], [3.0, 0.3], [1.2, 0.8]]:
 			draw_polyline_colors(pts, PackedColorArray([Color(tint, 0.0), Color(tint, streak_alpha * life * w[1])]), w[0])
-	_draw_tool_light(grip, angle, life, grow)
+	_draw_main_light(grip, angle, life, grow)
 	var flare := 0.0
 	if swing >= impact:
 		flare = 1.0 - clampf((swing - impact) / 0.18, 0.0, 1.0)

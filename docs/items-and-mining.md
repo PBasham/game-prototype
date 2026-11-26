@@ -377,6 +377,12 @@ flash, sparks and a sound (`phantom_mine` / `phantom_chop`). One swing takes
 `phantom_swing_time` (0.3 s). It glows in its rank's color (`phantom_tints` by
 `gather_rank`: spirit blue, copper, iron).
 
+While a gathering spell is in your hand, its tool **hovers beside you** like a summon
+(behind your shoulder, bobbing). When you mine it's pulled from there into the swing
+(`pull_time` 0.16 s), every style and test variant swinging as before, and when you
+stop it drifts back. Tunables on PhantomTool: `hover_offset`, `hover_bob`,
+`hover_follow`, `pull_time`, `hover_alpha`.
+
 While you hold a gathering spell, the blocks it will mine light up like Starbound's
 mining cursor: each one glows blue (no outline), and the cursor is a real light
 (`light_radius` 3 tiles, `light_color`), so the blocks show up in the dark. A tree's

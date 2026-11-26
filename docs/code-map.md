@@ -459,3 +459,9 @@ saves still load.
 | --- | --- |
 | Dev items and spells saved (debug builds) | `CharacterData.to_dict`, `Inventory.to_dict` (`OS.is_debug_build()`) |
 | Registered before a character loads | `CharacterData.load_file` calls `DevMagic._register()` |
+
+## Phase 33: the hovering tool
+
+| Change | Where |
+| --- | --- |
+| Hover, pull into the swing, drift back | `PhantomTool._process`, `_hover_point`, `_pulled`, `_draw_hover`, `_draw_main`; set from `ItemUser._update_phantom` (`idle`, `anchor`, `facing`) |

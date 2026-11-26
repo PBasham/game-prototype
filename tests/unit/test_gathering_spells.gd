@@ -150,3 +150,28 @@ func test_the_dev_kit_knows_every_spell() -> void:
 	var c := CharacterData.create_dev("Everything")
 	for d in Registry.get_all(&"spells"):
 		assert_true(c.knows(d.id), "%s" % d.id)
+
+
+func test_the_tool_hovers_beside_you_and_is_pulled_into_the_swing() -> void:
+	await _world(CharacterData.create("Hover"))
+	var p := w.player
+	var u := w.item_user
+	var pt := u._phantom_node
+	p.select_slot(0)  # the dagger: no tool
+	await wait_process_frames(3)
+	assert_false(pt.idle, "only with a gathering spell in hand")
+	p.toggle_tool_spell(&"mining_spell")
+	await wait_process_frames(30)
+	assert_true(pt.idle and pt.visible, "hovers like a summon")
+	assert_lt(pt._float_pos.distance_to(pt._hover_point()), 4.0, "beside your shoulder")
+	# Mining starts: it's pulled from there into the swing.
+	pt.swinging = true
+	pt._process(0.0)
+	assert_eq(pt._pull, 0.0)
+	assert_eq(pt._pull_from, pt._float_pos)
+	pt._process(pt.pull_time)
+	assert_eq(pt._pull, 1.0, "in the swing after pull_time")
+	pt._last_grip = pt.anchor + Vector2(40, 40)
+	pt.swinging = false
+	pt._process(0.0)
+	assert_eq(pt._float_pos, pt.anchor + Vector2(40, 40), "drifts back from where it last struck")
