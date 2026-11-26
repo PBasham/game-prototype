@@ -452,3 +452,10 @@ saves still load.
 | A click with a spell on the mouse | `Hud._input` (`_press_on_ui`) |
 | The dev kit's spells | `CharacterData.give_dev_kit` (DEV_SPELLS first, then every spell) |
 | Hovering UI in scripted runs | DevCli `--mouse=X:Y` |
+
+## Phase 32: dev things kept in saves
+
+| Change | Where |
+| --- | --- |
+| Dev items and spells saved (debug builds) | `CharacterData.to_dict`, `Inventory.to_dict` (`OS.is_debug_build()`) |
+| Registered before a character loads | `CharacterData.load_file` calls `DevMagic._register()` |

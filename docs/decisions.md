@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 32, dev things kept in saves
+
+- **Patrick:** after Save & Quit his Q and E spells reset and the Mining v2+ test spells
+  were gone. Dev spells and items were left out of saves on purpose, and registered only
+  when the world started (after the character loaded). Now debug builds keep them and
+  register them before a character loads; release builds still leave them out.
+
 ## 2026-11-26: Phase 31, fixes
 
 - **Patrick:** Air Step and Bound seemed gone: they weren't in the dev kit's spell list,

@@ -65,7 +65,8 @@ func test_character_save_and_load() -> void:
 	assert_not_null(back)
 	assert_eq(back.inventory.ids[30], &"stone")
 	assert_eq(back.inventory.counts[30], 77)
-	assert_true(back.inventory.is_empty(DevHeldItems.FIRST_SLOT), "dev items aren't saved")
+	assert_eq(back.inventory.ids[DevHeldItems.FIRST_SLOT], c.inventory.ids[DevHeldItems.FIRST_SLOT],
+		"dev items are kept in debug builds")
 	assert_eq(back.inventory.count_of(&"wood"), c.inventory.count_of(&"wood"))
 
 

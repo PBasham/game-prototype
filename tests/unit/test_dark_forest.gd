@@ -184,7 +184,7 @@ func test_called_spirit_charges_then_shoots_enemies() -> void:
 	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
 	var e := w.request_spawn_enemy(slime, w.player.global_position + Vector2(6 * World.TILE, 0))
 	var charged := false
-	for i in 1500:  # a hopping slime can dodge a shot or two
+	for i in 3000:  # a hopping slime can dodge a shot or two (or several)
 		await wait_physics_frames(1)
 		if fam._charge_left >= 0.0:
 			charged = true

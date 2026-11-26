@@ -195,7 +195,8 @@ func clear(slot: int) -> void:
 func to_dict() -> Dictionary:
 	var slots: Array = []
 	for i in size:
-		var keep := not is_empty(i) and not ItemData.is_runtime(ids[i])  # dev items aren't saved
+		# Dev items are only kept in debug builds (they don't exist in a release build).
+		var keep := not is_empty(i) and (OS.is_debug_build() or not ItemData.is_runtime(ids[i]))
 		var entry: Array = [String(ids[i]), counts[i]]
 		if keep and not metas[i].is_empty():
 			entry.append(metas[i])

@@ -358,6 +358,9 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 32: dev things kept in saves (branch phase-32-keep-dev-spells)**
+- [ ] With the dev kit, put Mining v2 to v8 on your Q and E wheels, Save & Quit, come back: they're all still there, on the same slots, with the dev items.
+
 **Phase 31: fixes (branch phase-31-devkit-all-spells)**
 - [ ] `devkit` teaches every spell, Air Step and Bound included.
 - [ ] Spell Pages for spells you know say "Already known".

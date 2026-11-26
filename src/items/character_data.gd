@@ -643,6 +643,8 @@ static func load_or_create(char_name: String) -> CharacterData:
 static func load_file(path: String) -> CharacterData:
 	if not FileAccess.file_exists(path):
 		return null
+	if OS.is_debug_build():
+		DevMagic._register()  # the dev items and test spells it may have saved
 	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
 		return null
@@ -742,19 +744,22 @@ func _migrate_spell_slots(old_book: Array) -> void:
 			inventory.clear(i)
 
 
-## Dev items and dev spells (debug builds, runtime only) are left out.
+## Dev items and dev spells (runtime only) are kept in debug builds, where they exist
+## every run (the Mining v2 to v8 test spells, the Dev Tome...); a release build leaves
+## them out.
 func to_dict() -> Dictionary:
+	var keep_dev := OS.is_debug_build()
 	var eq := {}
 	for slot: StringName in equipment:
 		var item_id: StringName = equipment[slot]
-		eq[String(slot)] = "" if ItemData.is_runtime(item_id) else String(item_id)
+		eq[String(slot)] = "" if ItemData.is_runtime(item_id) and not keep_dev else String(item_id)
 	var known: Array[String] = []
 	for s in known_spells:
-		if not ItemData.is_runtime(ItemData.spell_key(s)):
+		if keep_dev or not ItemData.is_runtime(ItemData.spell_key(s)):
 			known.append(String(s))
 	var q := {}
 	for slot: StringName in quick:
-		if String(quick[slot]).begins_with(ITEM_SHORTCUT) or not ItemData.is_runtime(ItemData.spell_key(quick[slot])):
+		if keep_dev or String(quick[slot]).begins_with(ITEM_SHORTCUT) or not ItemData.is_runtime(ItemData.spell_key(quick[slot])):
 			q[String(slot)] = String(quick[slot])
 	var modes := {}
 	for slot: StringName in quick_modes:

@@ -57,7 +57,7 @@ func test_conduit_requirements_and_bonuses() -> void:
 	assert_eq(c.spell_reach_bonus(), 4.0)
 
 
-func test_magic_saves_without_dev_things() -> void:
+func test_magic_saves_with_dev_things_in_debug_builds() -> void:
 	var c := CharacterData.create_dev(NAME)
 	c.equip(CharacterData.SLOT_CONDUIT, &"dev_focus")
 	c.set_quick(&"z", &"spark")
@@ -66,12 +66,12 @@ func test_magic_saves_without_dev_things() -> void:
 	assert_eq(c.save(), OK)
 	var back := CharacterData.load_file(SaveManager.character_path(NAME))
 	assert_true(back.knows(&"mining_spell"))
-	assert_false(back.knows(&"dev_wide_beam"), "dev spells aren't saved")
+	assert_true(back.knows(&"dev_wide_beam"), "dev spells are kept in debug builds")
 	assert_eq(back.quick_spell(&"z"), &"spark")
 	assert_true(back.quick_casts(&"z"), "Spark goes in hand by default; flipped to cast")
 	assert_eq(back.wheel_last[&"e"], &"e_2")
 	assert_eq(back.quick_spell(&"q_0"), c.quick_spell(&"q_0"))
-	assert_eq(back.equipment[CharacterData.SLOT_CONDUIT], &"", "dev conduit isn't saved")
+	assert_eq(back.equipment[CharacterData.SLOT_CONDUIT], &"dev_focus", "the dev conduit too")
 
 
 func test_wheel_segments() -> void:
