@@ -173,6 +173,10 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## target.
 @export var phantom_grip := Vector2(0.08, 0.92)
 @export var phantom_tip := Vector2(0.88, 0.48)
+## PhantomTool tunables changed for this spell only (size_mult, wind_up, appear,
+## strike_from, comet_height, tool_alpha, glow_alpha, streak_alpha), e.g. a bigger,
+## slower tool: {&"size_mult": 1.9, &"wind_up": 2.8}.
+@export var phantom_tuning: Dictionary[StringName, float] = {}
 ## The tool's glow by rank: `gather_rank` picks one (the Empower Power node raises it),
 ## so copper and iron ranks show their metal.
 @export var phantom_tints: Array[Color] = []

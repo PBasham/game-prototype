@@ -10,18 +10,30 @@ extends RefCounted
 ##   Dev Ring         accessory: defense 2, +20 max health, +20% speed, +15% jump,
 ##                    +25% magic damage (to test equipment stats)
 ##
-##   Mining / Chopping (Echo, Comet)  the gathering spells with the other phantom
-##                    swing styles, to compare with the real ones (Arc)
+##   Mining v2 to v8, Chopping (echo, comet)  the gathering spells with other phantom
+##                    swings (speed, size, style), to compare with the real ones
 ##
 ## Put in the third inventory row; Dev Wide Beam and the style test spells are added
 ## to the known spells.
 
-## The phantom style test spells: [id, base spell, style, label].
+## Test spells for the phantom tools: the real spell with another swing, to compare
+## with it (Mining itself stays as it is). [id, base, label, style, swing seconds,
+## impact, tuning].
 const STYLE_SPELLS: Array = [
-	[&"dev_mining_echo", &"mining_spell", 1, "Mining (Echo, dev)"],
-	[&"dev_mining_comet", &"mining_spell", 2, "Mining (Comet, dev)"],
-	[&"dev_chopping_echo", &"chopping_spell", 1, "Chopping (Echo, dev)"],
-	[&"dev_chopping_comet", &"chopping_spell", 2, "Chopping (Comet, dev)"],
+	[&"dev_mining_v2", &"mining_spell", "Mining v2 (quick arc)", 0, 0.2, 0.7,
+		{&"size_mult": 1.3, &"wind_up": 1.6, &"appear": 0.15, &"strike_from": 0.45}],
+	[&"dev_mining_v3", &"mining_spell", "Mining v3 (heavy arc)", 0, 0.5, 0.85,
+		{&"size_mult": 1.9, &"wind_up": 2.8, &"appear": 0.25, &"strike_from": 0.65, &"streak_alpha": 0.9}],
+	[&"dev_mining_v4", &"mining_spell", "Mining v4 (echo)", 1, 0.3, 0.8, {}],
+	[&"dev_mining_v5", &"mining_spell", "Mining v5 (rapid echo)", 1, 0.18, 0.75,
+		{&"size_mult": 1.2, &"wind_up": 1.3, &"appear": 0.12, &"strike_from": 0.4}],
+	[&"dev_mining_v6", &"mining_spell", "Mining v6 (comet)", 2, 0.3, 0.8, {}],
+	[&"dev_mining_v7", &"mining_spell", "Mining v7 (slow comet)", 2, 0.45, 0.85,
+		{&"size_mult": 1.6, &"comet_height": 6.0, &"glow_alpha": 0.75}],
+	[&"dev_mining_v8", &"mining_spell", "Mining v8 (flick)", 0, 0.24, 0.6,
+		{&"size_mult": 1.1, &"wind_up": 3.0, &"appear": 0.1, &"strike_from": 0.3, &"streak_alpha": 1.0}],
+	[&"dev_chopping_echo", &"chopping_spell", "Chopping (echo, dev)", 1, 0.3, 0.8, {}],
+	[&"dev_chopping_comet", &"chopping_spell", "Chopping (comet, dev)", 2, 0.3, 0.8, {}],
 ]
 
 const FIRST_SLOT := 20
@@ -83,8 +95,11 @@ static func _register() -> void:
 			continue
 		var s := base.duplicate() as SpellData
 		s.id = e[0]
-		s.display_name = e[3]
-		s.phantom_style = e[2]
+		s.display_name = e[2]
+		s.phantom_style = e[3]
+		s.phantom_swing_time = e[4]
+		s.phantom_impact = e[5]
+		s.phantom_tuning.assign(e[6])
 		# As strong as the dev kit's fully empowered Mining and Chopping.
 		s.reach_tiles += 6.0
 		s.mining_power += 20

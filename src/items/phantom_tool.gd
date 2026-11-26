@@ -67,6 +67,11 @@ var radius := 0.0
 var color := Color.WHITE
 var _lit_at := Vector2i(-99999, -99999)
 
+## Tunables a spell can change (SpellData.phantom_tuning); the rest keep these values.
+const TUNABLES: Array[StringName] = [&"size_mult", &"wind_up", &"appear", &"strike_from",
+	&"comet_height", &"tool_alpha", &"glow_alpha", &"streak_alpha"]
+var _defaults: Dictionary[StringName, float] = {}
+
 static var _glow_tex: GradientTexture2D
 ## The tool itself draws on this child with normal blending (solid, so it doesn't wash
 ## out over the bright sky); this node draws the light: box glow, streaks, halos.
@@ -83,6 +88,14 @@ func _ready() -> void:
 	_tools.name = "Tool"
 	add_child(_tools)
 	_tools.draw.connect(_draw_tools)
+	for k in TUNABLES:
+		_defaults[k] = float(get(k))
+
+
+## Uses a spell's own tuning, everything else back to the defaults.
+func apply_tuning(tuning: Dictionary[StringName, float]) -> void:
+	for k in TUNABLES:
+		set(k, tuning.get(k, _defaults.get(k, float(get(k)))))
 	if _glow_tex == null:
 		var g := Gradient.new()
 		g.set_color(0, Color(1, 1, 1, 1))

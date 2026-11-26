@@ -431,4 +431,4 @@ saves still load.
 | The tool, its styles, the glowing box | `PhantomTool` (src/items/phantom_tool.gd): light layer (additive) + `_tools` child (solid) |
 | When the hit lands, what drives it | `ItemUser._process` (`_swing`, `phantom_impact`), `ItemUser._update_phantom`, `_glow_box` |
 | Per spell | SpellData `phantom_style`, `phantom_impact`, `phantom_grip`, `phantom_tip`, `phantom_swing_time`, `phantom_tints` |
-| Test spells for the styles | `DevMagic.STYLE_SPELLS` (debug builds); console `phantom` |
+| Test spells for the styles (Mining v2 to v8) | `DevMagic.STYLE_SPELLS` (debug builds); console `phantom`; per spell tuning `SpellData.phantom_tuning` -> `PhantomTool.apply_tuning` |

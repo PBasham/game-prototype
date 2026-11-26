@@ -364,9 +364,14 @@ mining cursor: each one glows blue (no outline), and the cursor is a real light
 (`light_radius` 3 tiles, `light_color`), so the blocks show up in the dark. A tree's
 trunk glows the same way; where it can't work, a faint red fill.
 
-Styles (SpellData `phantom_style`; try them with console `phantom arc|echo|comet`, or
-the dev kit's test spells **Mining (Echo, dev)**, **Mining (Comet, dev)** and the
-Chopping ones, in debug builds):
+Styles (SpellData `phantom_style`; try them with console `phantom arc|echo|comet`).
+Debug builds' dev kit also has test spells to compare with Mining, which stays as it
+is: **Mining v2** (quick arc, 0.2 s), **v3** (heavy arc: big, slow, 0.5 s), **v4**
+(echo), **v5** (rapid echo, 0.18 s), **v6** (comet), **v7** (slow comet from higher
+up), **v8** (flick: a big wind up, a very fast snap), and Chopping (echo) and (comet)
+(`DevMagic.STYLE_SPELLS`). They mine at the same rate per second; only the swing
+differs. A spell can change PhantomTool's tunables for itself: SpellData
+`phantom_tuning` (e.g. `{size_mult: 1.9, wind_up: 2.8}`).
 
 | Style | What it does |
 | --- | --- |

@@ -133,8 +133,13 @@ func test_glowing_box_and_the_tool_lands_on_the_middle() -> void:
 			assert_almost_eq(tip.distance_to(pt.target), 0.0, 0.01, "the point lands on the middle")
 	# The test spells for the other styles (debug builds).
 	if OS.is_debug_build():
-		for id: StringName in [&"dev_mining_echo", &"dev_mining_comet", &"dev_chopping_echo", &"dev_chopping_comet"]:
+		for id: StringName in [&"dev_mining_v2", &"dev_mining_v8", &"dev_chopping_echo", &"dev_chopping_comet"]:
 			assert_not_null(ItemData.find(ItemData.spell_key(id)), "%s exists" % id)
+		var v3 := ItemData.find(ItemData.spell_key(&"dev_mining_v3")) as SpellData
+		pt.apply_tuning(v3.phantom_tuning)
+		assert_eq(pt.size_mult, 1.9, "a variant's own tuning")
+		pt.apply_tuning({})
+		assert_eq(pt.size_mult, 1.5, "back to the defaults")
 	w.console.run("phantom comet")
 	assert_eq((p.use_item() as SpellData).phantom_style, PhantomTool.Style.COMET)
 	w.console.run("phantom arc")

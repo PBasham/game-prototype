@@ -1197,6 +1197,7 @@ func _update_phantom(p: Player, show: bool) -> void:
 	pt.texture = sp.phantom_texture
 	pt.style = sp.phantom_style as PhantomTool.Style
 	pt.impact = sp.phantom_impact
+	pt.apply_tuning(sp.phantom_tuning)
 	pt.grip_at = sp.phantom_grip
 	pt.tip_at = sp.phantom_tip
 	pt.tint = Color(0.75, 0.9, 1.0)
