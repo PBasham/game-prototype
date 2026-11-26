@@ -49,7 +49,6 @@ func test_place_and_take_back_on_the_floor() -> void:
 func test_what_can_be_displayed() -> void:
 	var t := _floor_spot(3)
 	assert_true(w.can_display_at(t, ItemData.find(&"copper_bar")))
-	assert_false(w.can_display_at(t, ItemData.find(&"copper_pickaxe")), "no tools")
 	assert_false(w.can_display_at(t, ItemData.find(&"copper_sword")), "no weapons")
 	assert_false(w.can_display_at(t, ItemData.find(&"dirt")), "no blocks")
 	assert_false(w.can_display_at(t, ItemData.find(&"chest")), "no furniture")

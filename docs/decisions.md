@@ -2,6 +2,20 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-25: Phase 24, tools are spells
+
+- **Patrick:** no pickaxes or axes. Everyone starts with Mining I, Chopping I and a Copper
+  Dagger. The ore grind ranks the spells up through Empower (copper bars, then iron),
+  like Terraria's pickaxe ladder moved into the spellbook. Ores also still make gear.
+- **Patrick:** a phantom pickaxe or axe swings at the block each tick, glowing per rank.
+- **Patrick:** gathering is free (no mana). Dropping mana altogether is undecided.
+- **Patrick:** sticks and rocks stay as pickups but gate nothing; no stone weapons or
+  tools; flint is gone. Claude also removed the Hand Hammer (it gated the Workbench).
+- **Patrick:** more spell tiers for variety, e.g. iron Power makes mining 4x4 and
+  stronger, with Reach as its own node. Claude added Potency, Arc, Distance and Lasting.
+- Claude's choices: Mining I power 30 (copper, not iron), area 2, reach 8; Power +10
+  power, +1 area, +30% speed per rank; hits land once per 0.3 s swing.
+
 ## 2026-11-21: Phase 23, the Catalog
 
 - **Patrick:** a Catalog book showing every block and enemy you've found, with a slot to

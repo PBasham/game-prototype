@@ -1,7 +1,7 @@
 class_name PlantLayer
 extends Node2D
 ## Trees, saplings, flowers and berry bushes, plus grass spreading onto dirt. Things
-## lying on the ground (sticks, rocks, flint) are the Forage node (ForageLayer).
+## lying on the ground (sticks, rocks) are the Forage node (ForageLayer).
 ##
 ## Plants stand on a ground tile (grass) and are keyed by it (wrapped tile coords).
 ## Natural plants come from the world generator's decoration rules the first time a
@@ -287,7 +287,7 @@ func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array, _floors: PackedInt32A
 					bush.health = _days(randf_range(bush_grow_min_days, bush_grow_max_days))
 					_young.append(ground)
 			elif world.forage and world.forage.claims_flower_spot(ground):
-				continue  # a stick, rock or flint lies there instead
+				continue  # a stick or rock lies there instead
 			else:
 				_add(ground, Kind.FLOWER, spots[i + 3], false)
 	_shown[c] = wc

@@ -7,7 +7,6 @@ script = ExtResource("1_cjdqg")
 inputs = Dictionary[StringName, int]({
 &"wood": 10
 })
-requires = Array[StringName]([&"hand_hammer"])
 output = &"workbench"
 id = &"workbench"
 display_name = "Workbench"

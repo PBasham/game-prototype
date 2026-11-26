@@ -42,13 +42,13 @@ const DEFAULT_HAIR := &"short"
 
 ## [item id, count] in the dev kit. Hotbar order.
 const DEV_KIT: Array = [
-	[&"copper_pickaxe", 1], [&"copper_axe", 1], [&"iron_pickaxe", 1], [&"wood", 99],
+	[&"copper_sword", 1], [&"wooden_sword", 1], [&"wood", 99],
 	[&"wood_platform", 30], [&"rope", 30], [&"torch", 20], [&"tree_seed", 5], [&"grass_seeds", 10],
 	[&"dirt", 50],
 ]
 ## More dev kit items, added after the debug placeholders (so they fill later rows).
 const DEV_KIT_EXTRA: Array = [
-	[&"copper_sword", 1], [&"wooden_sword", 1], [&"copper_helmet", 1], [&"copper_chestplate", 1],
+	[&"copper_helmet", 1], [&"copper_chestplate", 1],
 	[&"copper_greaves", 1], [&"bed", 1], [&"berries", 10],
 ]
 ## Spells the dev kit teaches (in order); give_dev_kit also fills the quick slots.
@@ -117,6 +117,35 @@ func empower_problem(spell: SpellData, node: EmpowerNode) -> String:
 	return ""
 
 
+## A spell with this character's Empower ranks applied (a copy), or the spell itself
+## when nothing applies.
+func empowered(spell: SpellData) -> SpellData:
+	var ranks: Dictionary = empower.get(spell.id, {})
+	var copy: SpellData = null
+	for node_id: StringName in ranks:
+		var n := Registry.get_def(&"empower", node_id) as EmpowerNode
+		if n == null or n.stat != EmpowerNode.Stat.FIELDS or int(ranks[node_id]) <= 0:
+			continue
+		if copy == null:
+			copy = spell.duplicate() as SpellData
+		n.apply(copy, int(ranks[node_id]))
+	return copy if copy else spell
+
+
+## Makes `ItemData.find` hand out this character's empowered spells (the playing
+## character: the world calls it on load, and buying a rank calls it again).
+func apply_empower() -> void:
+	var out: Array[ItemData] = []
+	for spell_id: StringName in empower:
+		var base := Registry.get_def(&"spells", spell_id) as SpellData
+		if base == null:
+			continue
+		var e := empowered(base)
+		if e != base:
+			out.append(e)
+	ItemData.set_empowered(out)
+
+
 ## Buys the next rank (paying from the inventory). False if it can't.
 func buy_empower(spell: SpellData, node: EmpowerNode) -> bool:
 	if empower_problem(spell, node) != "":
@@ -128,6 +157,8 @@ func buy_empower(spell: SpellData, node: EmpowerNode) -> bool:
 	if not empower.has(spell.id):
 		empower[spell.id] = {}
 	empower[spell.id][node.id] = rank + 1
+	apply_empower()
+	magic_changed.emit()
 	return true
 
 
@@ -198,7 +229,24 @@ var temporary := false
 static func create(char_name: String) -> CharacterData:
 	var c := CharacterData.new()
 	c.name = char_name
+	c.give_starting_kit()
 	return c
+
+
+## Spells everyone knows from the start: the gathering spells (tools are spells; R and
+## Ctrl + R take them in hand). Empower makes them stronger.
+const STARTING_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell"]
+## Items a new character starts with (first hotbar slots).
+const STARTING_ITEMS: Array = [[&"copper_dagger", 1]]
+
+
+func give_starting_kit() -> void:
+	for s in STARTING_SPELLS:
+		learn_spell(s)
+	for e: Array in STARTING_ITEMS:
+		if ItemData.find(e[0]):
+			inventory.add(e[0], e[1])
+	note_inventory()
 
 
 ## A character with the dev kit (tests, scripted runs).
@@ -215,6 +263,9 @@ func give_dev_kit() -> void:
 		inventory.add(e[0], e[1])
 	for s in DEV_SPELLS:
 		learn_spell(s)
+	# Gathering spells fully empowered, like the iron pickaxe the kit used to carry.
+	empower[&"mining_spell"] = {&"mining_power": 2, &"gather_reach": 3}
+	empower[&"chopping_spell"] = {&"chopping_power": 2, &"gather_reach": 3}
 	# A starting loadout to try things with.
 	var q: Array[StringName] = [&"spark", &"arcane_bolt", &"chain_spark", &"air_push", &"familiar",
 		&"spark_ward", &"healing_circle", &"wisp"]
@@ -642,6 +693,8 @@ static func load_file(path: String) -> CharacterData:
 		c.wheel_last[StringName(w)] = StringName(String(last[w]))
 	if not d.has("quick"):
 		c._migrate_spell_slots(d.get("book_spells", []))
+	for s in STARTING_SPELLS:
+		c.learn_spell(s)  # from before tools were spells: the pickaxes and axes are gone
 	var look: Dictionary = d.get("look", {})
 	var cols: Dictionary = look.get("colors", {})
 	for group: String in cols:

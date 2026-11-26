@@ -6,7 +6,7 @@ extends SceneTree
 ##
 ##   godot --headless --path . --script res://tools/make_items.gd
 ##   godot --headless --path . --script res://tools/make_items.gd -- --force
-##   godot --headless --path . --script res://tools/make_items.gd -- --only=copper_pickaxe --force
+##   godot --headless --path . --script res://tools/make_items.gd -- --only=copper_dagger --force
 ##
 ## Without --force, existing files are kept (your Inspector edits are safe). Art comes
 ## from tools/make_item_art.gd (assets/items/icons and assets/items/held).
@@ -248,13 +248,10 @@ func _items() -> Array[ItemData]:
 	flask.cloud_seconds = 4.0
 	flask.max_stack = 30
 	out.append(flask)
-	var hammer := _small(&"hand_hammer", "Hand Hammer", "Needed in your inventory to build a Workbench.")
-	hammer.max_stack = 1
-	out.append(hammer)
 	# Furniture (crafting stations, storage, doors).
 	for f: Array in [[&"workbench", "Workbench", "A crafting station: furniture, tools and the next stations."],
 			[&"furnace", "Furnace", "A crafting station: smelts ore into bars."],
-			[&"copper_anvil", "Copper Anvil", "A crafting station: copper tools."],
+			[&"copper_anvil", "Copper Anvil", "A crafting station: copper weapons and armor."],
 			[&"chest", "Chest", "Stores 40 stacks. Right click or E to open."],
 			[&"door", "Door", "Right click or E to open and close."],
 			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: learn spells (and later, empower them)."],
@@ -282,35 +279,6 @@ func _items() -> Array[ItemData]:
 	grass.kind = ItemData.Kind.SEED
 	grass.plants = &"grass"
 	out.append(grass)
-	# Tools.
-	var pick := _tool(&"copper_pickaxe", "Copper Pickaxe", "Mines a 2x2 area per swing (Ctrl + wheel: 1x1).", &"tool")
-	pick.mining_damage = 25.0
-	pick.mining_power = 40
-	pick.mining_area = 2
-	pick.reach_tiles = 10.0
-	out.append(pick)
-	var ipick := _tool(&"iron_pickaxe", "Iron Pickaxe", "Mines a 2x2 area per swing (Ctrl + wheel: 1x1). Faster and stronger than copper.", &"tool")
-	ipick.mining_damage = 35.0
-	ipick.mining_power = 50
-	ipick.mining_area = 2
-	ipick.reach_tiles = 11.0
-	out.append(ipick)
-	var iaxe := _tool(&"iron_axe", "Iron Axe", "Chops trees, faster than copper.", &"tool")
-	iaxe.axe_damage = 35.0
-	out.append(iaxe)
-	var axe := _tool(&"copper_axe", "Copper Axe", "Chops trees.", &"tool")
-	axe.axe_damage = 25.0
-	out.append(axe)
-	var stone_pick := _tool(&"stone_pickaxe", "Stone Pickaxe", "A stone pickaxe. Mines a 2x2 area per swing (Ctrl + wheel: 1x1).", &"tool")
-	stone_pick.mining_damage = 15.0
-	stone_pick.mining_power = 35
-	stone_pick.mining_area = 2
-	stone_pick.reach_tiles = 7.0
-	out.append(stone_pick)
-	var stone_axe := _tool(&"stone_axe", "Stone Axe", "A stone axe. Chops trees, slowly.", &"tool")
-	stone_axe.axe_damage = 15.0
-	stone_axe.reach_tiles = 7.0
-	out.append(stone_axe)
 	# Combat (Phase 7).
 	out.append(_small(&"slime", "Slime", "Sticky. Drops from slimes."))
 	var wsword := _weapon(&"wooden_sword", "Wooden Sword", "A practice sword. Better than your fists.")
@@ -318,6 +286,12 @@ func _items() -> Array[ItemData]:
 	wsword.melee_reach = 4.0
 	wsword.knockback = 10.0
 	out.append(wsword)
+	var cdagger := _weapon(&"copper_dagger", "Copper Dagger", "Quick and light. Everyone starts with one.")
+	cdagger.held = _look(&"copper_dagger", &"dagger", Vector2(2, 13))
+	cdagger.melee_damage = 8.0
+	cdagger.melee_reach = 3.5
+	cdagger.knockback = 6.0
+	out.append(cdagger)
 	var csword := _weapon(&"copper_sword", "Copper Sword", "A proper blade.")
 	csword.melee_damage = 13.0
 	csword.melee_reach = 4.5
@@ -376,24 +350,30 @@ func _spells() -> Array[ItemData]:
 	var mining := SpellData.new()
 	mining.id = &"mining_spell"
 	mining.display_name = "Mining Spell"
-	mining.description = "Hold to mine with a beam (right click: the back layer). Ctrl + mouse wheel changes the area."
+	mining.description = "Hold to mine: a phantom pickaxe digs where you aim (right click: the back layer). Ctrl + mouse wheel changes the area. Empower it with bars to dig harder blocks, bigger and farther."
 	mining.icon = load("res://assets/items/icons/mining_spell.png") as Texture2D
 	mining.kind = ItemData.Kind.SPELL
 	mining.max_stack = 1
 	mining.beam = true
-	mining.mining_damage = 55.0  # per second, on every tile in the area
-	mining.mining_power = 40
+	# Everyone starts with it (Phase 24: tools are spells). Free to use; Empower's
+	# Power node (copper, then iron bars) raises power, area and speed, Reach the range.
+	mining.mining_damage = 45.0  # per second, on every tile in the area, landing once per swing
+	mining.mining_power = 30  # rank 1 (copper bars): 40, mines iron
 	mining.mining_area = 2
-	mining.mining_area_max = 3
-	mining.reach_tiles = 12.0
-	mining.mana_per_second = 4.0
+	mining.mining_area_max = 2
+	mining.reach_tiles = 8.0
+	mining.learnable_at_table = false
+	mining.phantom_texture = load("res://assets/fx/phantom_pickaxe.png") as Texture2D
+	mining.phantom_tints.assign(PHANTOM_TINTS)
 	out.append(mining)
 
-	var chop := _spell(&"chopping_spell", "Chopping Spell", "Hold to chop a tree with a beam. A bit slower than the copper axe.")
+	var chop := _spell(&"chopping_spell", "Chopping Spell", "Hold to chop: a phantom axe chops the tree you aim at. Empower it with bars to chop faster and farther.")
 	chop.beam = true
-	chop.axe_damage = 55.0  # per second (the copper axe is 25 per 0.35 s swing, about 71/s)
-	chop.reach_tiles = 12.0
-	chop.mana_per_second = 3.0
+	chop.axe_damage = 60.0  # per second, landing once per swing
+	chop.reach_tiles = 8.0
+	chop.learnable_at_table = false
+	chop.phantom_texture = load("res://assets/fx/phantom_axe.png") as Texture2D
+	chop.phantom_tints.assign(PHANTOM_TINTS)
 	out.append(chop)
 
 	var fly := _spell(&"fly", "Fly", "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up. Hold Shift to fly much faster, for a lot more mana.")
@@ -984,9 +964,6 @@ func _recipes() -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	var table: Array = [
 		# By hand.
-		[&"hand_hammer", &"", {&"stone": 1, &"wood": 1}, &"hand_hammer", 1, []],
-		[&"stone_pickaxe", &"", {&"stone": 3, &"wood": 2}, &"stone_pickaxe", 1, []],
-		[&"stone_axe", &"", {&"stone": 3, &"wood": 2}, &"stone_axe", 1, []],
 		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
 		[&"darkwood", &"", {&"dark_log": 1}, &"darkwood", 4, []],
 		[&"wood_platform", &"", {&"wood": 1}, &"wood_platform", 2, []],
@@ -1011,7 +988,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"mana_potion", &"alchemy", {&"clay_flask": 1, &"glowcap": 2}, &"mana_potion", 1, []],
 		[&"poison_coating", &"alchemy", {&"clay_flask": 1, &"duskcap": 2}, &"poison_coating", 1, []],
 		[&"poison_flask", &"alchemy", {&"clay_flask": 1, &"duskcap": 1, &"slime": 1}, &"poison_flask", 2, []],
-		[&"workbench", &"", {&"wood": 10}, &"workbench", 1, [&"hand_hammer"]],
+		[&"workbench", &"", {&"wood": 10}, &"workbench", 1, []],
 		# Workbench.
 		[&"chest", &"workbench", {&"wood": 8, &"copper_bar": 2}, &"chest", 1, []],
 		[&"door", &"workbench", {&"wood": 6}, &"door", 1, []],
@@ -1020,8 +997,7 @@ func _recipes() -> Array[RecipeData]:
 		# Furnace.
 		[&"copper_bar", &"furnace", {&"copper_ore": 3}, &"copper_bar", 1, []],
 		# Anvil.
-		[&"copper_pickaxe", &"anvil", {&"copper_bar": 10, &"wood": 3}, &"copper_pickaxe", 1, []],
-		[&"copper_axe", &"anvil", {&"copper_bar": 8, &"wood": 3}, &"copper_axe", 1, []],
+		[&"copper_dagger", &"anvil", {&"copper_bar": 4}, &"copper_dagger", 1, []],
 		# Phase 7: combat and beds.
 		[&"torch_from_slime", &"", {&"slime": 1, &"wood": 1}, &"torch", 5, []],
 		[&"wooden_sword", &"workbench", {&"wood": 10}, &"wooden_sword", 1, []],
@@ -1031,8 +1007,6 @@ func _recipes() -> Array[RecipeData]:
 		[&"copper_chestplate", &"anvil", {&"copper_bar": 16}, &"copper_chestplate", 1, []],
 		[&"copper_greaves", &"anvil", {&"copper_bar": 12}, &"copper_greaves", 1, []],
 		[&"iron_bar", &"furnace", {&"iron_ore": 3}, &"iron_bar", 1, []],
-		[&"iron_pickaxe", &"anvil", {&"iron_bar": 12, &"wood": 3}, &"iron_pickaxe", 1, []],
-		[&"iron_axe", &"anvil", {&"iron_bar": 10, &"wood": 3}, &"iron_axe", 1, []],
 		[&"iron_sword", &"anvil", {&"iron_bar": 10, &"wood": 2}, &"iron_sword", 1, []],
 		[&"iron_helmet", &"anvil", {&"iron_bar": 12}, &"iron_helmet", 1, []],
 		[&"iron_chestplate", &"anvil", {&"iron_bar": 20}, &"iron_chestplate", 1, []],
@@ -1081,6 +1055,9 @@ func _recipes() -> Array[RecipeData]:
 const SCROLL_BARS: Array[int] = [2, 5, 10]
 ## Copper bars learning a spell from its scroll costs, by tier; and exceptions.
 const LEARN_BARS: Array[int] = [4, 10, 20]
+## Phantom tool glow per gathering rank: starting (spirit blue), copper, iron.
+const PHANTOM_TINTS: Array[Color] = [Color(0.7, 0.9, 1.0), Color(1.0, 0.68, 0.42), Color(0.82, 0.86, 0.95)]
+
 const LEARN_COSTS := {&"gel_cushion": {&"slime": 20},
 	&"call_spirit": {&"spirit_core": 1, &"magic_essence": 5},
 	&"summon_slime": {&"slime_core": 1, &"slime": 20, &"magic_essence": 5}}

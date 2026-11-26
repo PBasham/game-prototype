@@ -178,7 +178,7 @@ func test_doors_open_in_place_away_from_the_player() -> void:
 
 func test_drops_are_sized_by_item() -> void:
 	var stick := ItemData.find(&"torch")
-	var axe := ItemData.find(&"stone_axe")
+	var axe := ItemData.find(&"copper_sword")
 	var bench := ItemData.find(&"workbench")
 	assert_lt(stick.drop_pixels(), axe.drop_pixels())
 	assert_lt(axe.drop_pixels(), bench.drop_pixels())

@@ -2611,7 +2611,14 @@ static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
 	if spell.mana_per_second > 0.0:
 		mana.append("%s mana per second" % _num(spell.mana_per_second * mm))
 	var off := "  (%d%% less, Empowered)" % roundi((1.0 - mm) * 100.0) if mm < 1.0 else ""
-	lines.append("Mana: " + (", ".join(mana) if not mana.is_empty() else "none") + off)
+	lines.append("Mana: " + (", ".join(mana) if not mana.is_empty() else "Free") + off)
+	if spell.mining_damage > 0.0:
+		var area: String = str(spell.mining_area) if spell.mining_area_max <= spell.mining_area \
+			else "%d to %d" % [spell.mining_area, spell.mining_area_max]
+		lines.append("Mining power %d, %s per second, area %s, reach %s tiles" % [spell.mining_power,
+			_num(spell.mining_damage), area, _num(spell.reach_tiles)])
+	elif spell.axe_damage > 0.0:
+		lines.append("Chopping %s per second, reach %s tiles" % [_num(spell.axe_damage), _num(spell.reach_tiles)])
 	if c and c.empower.has(spell.id):
 		var ranks := PackedStringArray()
 		for node in EmpowerNode.for_spell(spell):

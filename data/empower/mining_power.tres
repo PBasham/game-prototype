@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EmpowerNode" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/empower_node.gd" id="1_emp"]
+
+[resource]
+script = ExtResource("1_emp")
+stat = 2
+per_rank = 0.0
+max_rank = 2
+rank_costs = Array[Dictionary]([{
+&"copper_bar": 10
+}, {
+&"iron_bar": 12
+}])
+adds = Dictionary[StringName, float]({
+&"mining_power": 10.0,
+&"mining_area_max": 1.0,
+&"gather_rank": 1.0
+})
+scales = Dictionary[StringName, float]({
+&"mining_damage": 0.3
+})
+spells = Array[StringName]([&"mining_spell"])
+order = 0
+id = &"mining_power"
+display_name = "Power"
+description = "Copper bars, then iron: each rank digs harder blocks (power +10: copper rank mines iron), one size bigger (up to 4x4) and 30% faster."

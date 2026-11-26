@@ -41,8 +41,6 @@ func _init() -> void:
 	_save(_acorn(), "tree_seed", true)
 	_save(_grass_seeds(), "grass_seeds", true)
 	# Tools: the icon is also the held sprite (pointing up-right, handle bottom-left).
-	_save(_pickaxe(), "copper_pickaxe", false)
-	_save(_axe(), "copper_axe", false)
 	_orb().save_png(ProjectSettings.globalize_path("%s/mining_spell.png" % ICONS))  # spell icon
 	_save(_spellbook(), "basic_spellbook", false)
 	_save(_torch_icon(), "torch", true)
@@ -101,31 +99,8 @@ func _line(img: Image, a: Vector2i, b: Vector2i, c: Color, shade: Color = Color.
 			img.set_pixelv(p, c)
 
 
-func _pickaxe() -> Image:
-	var img := _canvas()
-	_line(img, Vector2i(1, 14), Vector2i(11, 4), Color("8a6a44"), Color("5e4630"))
-	# Copper head, curved across the top of the handle.
-	var head := Color("c87a3e")
-	var edge := Color("eaa868")
-	for p: Vector2i in [Vector2i(6, 2), Vector2i(7, 1), Vector2i(8, 1), Vector2i(9, 1), Vector2i(10, 2), Vector2i(11, 3),
-			Vector2i(12, 4), Vector2i(13, 5), Vector2i(14, 7), Vector2i(14, 8), Vector2i(5, 3), Vector2i(4, 4)]:
-		img.set_pixelv(p, head)
-	for p: Vector2i in [Vector2i(8, 2), Vector2i(9, 2), Vector2i(12, 5), Vector2i(13, 6)]:
-		img.set_pixelv(p, edge)
-	return img
 
 
-func _axe() -> Image:
-	var img := _canvas()
-	_line(img, Vector2i(1, 14), Vector2i(11, 4), Color("8a6a44"), Color("5e4630"))
-	var head := Color("c87a3e")
-	for y in range(1, 7):
-		for x in range(10, 15):
-			if x - 10 + absi(y - 3) < 5:
-				img.set_pixel(x, y, head)
-	for y in range(1, 7):
-		img.set_pixel(14, y, Color("eaa868"))
-	return img
 
 
 func _orb() -> Image:
@@ -473,7 +448,6 @@ func _new_spell_icons() -> void:
 func _phase5_art() -> void:
 	_save(_stick(), "stick", true)
 	_save(_rock(Color("8a8a86"), Color("b4b4ae")), "rock", true)
-	_save(_rock(Color("4a4a52"), Color("8a8a9a")), "flint", true)
 	_save(_bar(), "copper_bar", true)
 	_save(_berries(), "berries", true)
 	_bush(false).save_png(ProjectSettings.globalize_path("res://assets/decor/berry_bush_young.png"))
@@ -483,9 +457,6 @@ func _phase5_art() -> void:
 	_moon().save_png(ProjectSettings.globalize_path("res://assets/backdrop/moon.png"))
 	_phase7_art()
 	_stars().save_png(ProjectSettings.globalize_path("res://assets/backdrop/stars.png"))
-	_save(_hand_hammer(), "hand_hammer", true)
-	_save(_stone_tool(false), "stone_pickaxe", false)
-	_save(_stone_tool(true), "stone_axe", false)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/objects"))
 	var objs := {
 		"workbench": _workbench(), "furnace": _furnace(), "copper_anvil": _anvil(),
@@ -510,7 +481,7 @@ func _phase5_art() -> void:
 		var held := frame.duplicate() as Image
 		held.resize(maxi(1, fw / 2 + 1), maxi(1, fh / 2 + 1), Image.INTERPOLATE_NEAREST)
 		held.save_png(ProjectSettings.globalize_path("%s/%s.png" % [HELD, key]))
-	for kind: String in ["stick", "rock", "flint"]:
+	for kind: String in ["stick", "rock"]:
 		_pickup(kind).save_png(ProjectSettings.globalize_path("res://assets/decor/pickup_%s.png" % kind))
 
 
@@ -541,39 +512,8 @@ func _bar() -> Image:
 	return img
 
 
-func _hand_hammer() -> Image:
-	var img := _canvas()
-	_line(img, Vector2i(4, 13), Vector2i(10, 7), Color("8a6a44"), Color("5e4630"))
-	for y in range(3, 8):
-		for x in range(9, 14):
-			if (x - 11) * (x - 11) + (y - 5) * (y - 5) <= 5:
-				img.set_pixel(x, y, Color("9a9a94") if y < 5 else Color("6e6e6a"))
-	img.set_pixel(10, 7, Color("c8b080"))  # binding
-	return img
 
 
-## Stone pickaxe / axe: a flint head lashed to a stick (tool layout like the copper ones).
-func _stone_tool(axe: bool) -> Image:
-	var img := _canvas()
-	_line(img, Vector2i(1, 14), Vector2i(11, 4), Color("8a6a44"), Color("5e4630"))
-	var head := Color("5a5a64")
-	var edge := Color("9a9aaa")
-	if axe:
-		for y in range(1, 7):
-			for x in range(10, 15):
-				if x - 10 + absi(y - 3) < 4:
-					img.set_pixel(x, y, head)
-		for y in range(2, 6):
-			img.set_pixel(14, y, edge)
-	else:
-		for p: Vector2i in [Vector2i(6, 2), Vector2i(7, 2), Vector2i(8, 2), Vector2i(9, 2), Vector2i(10, 3), Vector2i(11, 3),
-				Vector2i(12, 4), Vector2i(13, 5), Vector2i(13, 6), Vector2i(5, 3)]:
-			img.set_pixelv(p, head)
-		img.set_pixel(13, 7, edge)
-		img.set_pixel(5, 4, edge)
-	img.set_pixel(10, 5, Color("c8b080"))  # lashing
-	img.set_pixel(11, 4, Color("c8b080"))
-	return img
 
 
 func _fill(img: Image, r: Rect2i, c: Color) -> void:

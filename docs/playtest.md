@@ -358,6 +358,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 24: tools are spells (branch phase-24-gathering-spells)**
+- [ ] A new character has the Copper Dagger in slot 1 and knows Mining and Chopping (R, Ctrl + R); no pickaxes or axes anywhere.
+- [ ] Mining and Chopping cost no mana (tooltip says "Mana: Free").
+- [ ] Holding them conjures a glowing phantom pickaxe or axe that winds up and strikes; blocks crack on each strike. Visible underground too.
+- [ ] Iron ore says "Too hard" until Empower > Power rank 1 (10 copper bars); the tool turns copper colored.
+- [ ] Power rank 2 (12 iron bars): area up to 4x4, iron glow. Reach adds 2 tiles a rank. Sharpness speeds chopping.
+- [ ] New tiers: Potency (damage spells), Arc (Chain Spark jumps), Distance (Blink), Lasting (buffs, lights, summons).
+- [ ] An old character loads with both spells learned.
+
 **Phase 23: the Catalog (branch phase-23-catalog)**
 - [ ] J or the Catalog button (inventory, next to the trash) opens it; x, J and Esc close it.
 - [ ] Items tab: unfound items are silhouettes; "N / M found" goes up as you pick things up.

@@ -336,7 +336,7 @@ func _register() -> void:
 		_print("tile %d, %d" % [t.x, t.y]))
 	_add("grow", "grow", "Grow every sapling into a tree now.", func(_a: PackedStringArray) -> void:
 		_print("%d saplings growing." % world.plants.grow_all()))
-	_add("pickups", "pickups [days]", "Count loose sticks, rocks and flint in the loaded area; with days, let that much time pass for them (off screen).", func(a: PackedStringArray) -> void:
+	_add("pickups", "pickups [days]", "Count loose sticks and rocks in the loaded area; with days, let that much time pass for them (off screen).", func(a: PackedStringArray) -> void:
 		if a.size() > 0:
 			var before := world.forage.regrown_total
 			world.forage.regrow_for_days(float(a[0]))

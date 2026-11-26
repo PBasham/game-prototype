@@ -25,7 +25,7 @@ func _round_trip(c: CharacterData) -> CharacterData:
 
 func test_the_catalog_is_a_panel_not_an_item() -> void:
 	assert_null(ItemData.find(&"catalog"), "no book to carry")
-	assert_true(CharacterData.create("Test").inventory.is_all_empty())
+	assert_eq(CharacterData.create("Test").inventory.count_of(&"catalog"), 0)
 
 
 func test_found_items_enemies_and_drops_are_saved() -> void:

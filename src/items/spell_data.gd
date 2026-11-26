@@ -156,6 +156,17 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## more as slimes are added. It hops after enemies and hits on contact for `damage`
 ## (times its contact damage over the first one's: a Blue Slime hits harder).
 @export var summon_enemy_ranks: Array[StringName] = []
+
+@export_group("Phantom tool (gathering spells)")
+## A beam spell with this draws a see-through tool at the target that swings, and the
+## mining or chopping lands once per swing (`phantom_swing_time`) instead of smoothly.
+@export var phantom_texture: Texture2D
+## Seconds per swing.
+@export var phantom_swing_time := 0.3
+## The tool's glow by rank: `gather_rank` picks one (the Empower Power node raises it),
+## so copper and iron ranks show their metal.
+@export var phantom_tints: Array[Color] = []
+@export var gather_rank := 0
 ## Melee summon: seconds between hops while it has an enemy (no random waits), and how
 ## close (tiles) it gets before it slides straight into the enemy instead of hopping.
 @export var summon_hop_wait := 0.35

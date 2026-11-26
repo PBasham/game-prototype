@@ -233,8 +233,8 @@ cave walls naturally.
 ### Iron
 
 Same blobs as copper, only in stone, deeper and rarer at first (like Terraria's spread).
-Where an iron and a copper blob overlap, it's iron. Iron ore needs a pickaxe with
-`mining_power` 35 (the stone pickaxe and up; see items-and-mining.md).
+Where an iron and a copper blob overlap, it's iron. Iron ore needs
+`mining_power` 35: the Mining Spell with Power rank 1 (see items-and-mining.md).
 
 | Setting | Default | What it does |
 | --- | --- | --- |

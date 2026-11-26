@@ -1,7 +1,7 @@
 class_name HoverOutline
 extends Node2D
 ## A subtle outline around what the cursor is on when right click / E would use it:
-## furniture (doors, chests, stations, beds), loose sticks, rocks and flint, ripe berry
+## furniture (doors, chests, stations, beds), loose sticks and rocks, ripe berry
 ## bushes, and interactable nodes (the magic bag). Only within reach.
 
 ## Outline color (alpha pulses between outline_alpha_min and the color's alpha).

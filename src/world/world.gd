@@ -214,6 +214,7 @@ func _ready() -> void:
 	player = PLAYER_SCENE.instantiate() as Player
 	player.world = self
 	player.character = character
+	character.apply_empower()  # spells are looked up with their Empower ranks
 	player.look = character.make_look()
 	var spawn := generator.spawn_tile()
 	if DevCli.spawn_x >= 0:
@@ -370,6 +371,7 @@ func _key_pressed(event: InputEvent, key: Key) -> bool:
 
 
 func _exit_tree() -> void:
+	ItemData.set_empowered([])
 	# Background jobs hold their own data, but finish them before the world goes away.
 	if lights:
 		lights.wait()

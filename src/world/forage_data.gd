@@ -1,7 +1,7 @@
 class_name ForageData
 extends GameData
 ## Something lying on the ground you pick up with right click or E (a forageable):
-## sticks, rocks, flint. Lives in data/forage/. The Forage node (ForageLayer) decides how
+## sticks, rocks. Lives in data/forage/. The Forage node (ForageLayer) decides how
 ## often a floor tile has one; these weights decide which one, per kind of place.
 
 ## The item it gives, and how many.

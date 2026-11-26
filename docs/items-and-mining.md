@@ -166,8 +166,7 @@ Current items:
 
 | Item | Notes |
 | --- | --- |
-| Copper Pickaxe | 25 per hit, 2x2, reach 10 |
-| Copper Axe | 25 per hit on trees (a tree has 100), reach 10 |
+| Copper Dagger | Everyone starts with one: 8 damage, reach 3.5 (`dagger` item type) |
 | Dirt, Stone, Wood, Log | Blocks (Wood places planks, Log a log cabin block whose run ends stick out 2 px, `overhang_px` on the tile); right click places them as background walls |
 | Copper Ore, Wood Platform | Blocks (front only) |
 | Rope, Torch | Tile objects |
@@ -222,8 +221,8 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 
 | Spell | Cast | Notes |
 | --- | --- | --- |
-| Mining Spell | TOOL beam | 55 mining per second per tile, area 2 (toggle 1 to 3), reach 12 |
-| Chopping Spell | TOOL beam | 55 chopping per second on the tree under the cursor (the copper axe is about 71/s), reach 12 |
+| Mining Spell | TOOL beam, phantom pickaxe | Known from the start, free. 45 mining per second per tile, landing once per swing (`phantom_swing_time` 0.3 s); power 30 (stone, dirt, copper), area 2 (toggle 1 to 2), reach 8. Empower: Power (copper then iron bars: power 40 then 50, area up to 3 then 4, 30% faster per rank), Reach (+2 tiles, 3 ranks) |
+| Chopping Spell | TOOL beam, phantom axe | Known from the start, free. 60 chopping per second, once per swing, reach 8. Empower: Sharpness (copper then iron bars, 40% faster per rank), Reach |
 | Fly | TOGGLE | Click to fly, click again to stop. WASD in every direction, Space goes up. No gravity or fall damage while flying. 34 tiles/s (`move_speed`; the Player's `fly_speed` is the fallback), `fly_accel_time` (0.15). **Hold Shift while moving to boost:** speed x2 (`boost_speed_mult`), mana x4 (`boost_mana_mult`: 40/s, a full bar in about 2.5 s). The boost is meant to become an empowerment later. Stays on when you switch items. 10 mana/s. |
 | Spark | PROJECTILE | 8 damage (times spell power), 40 tiles/s, 20 tiles. Hold to keep casting (one per 0.3 s). 2 mana. |
 | Levitate | TOGGLE | Hovers 5 tiles (`hover_tiles`) above the ground under you and follows it; 30 tiles/s sideways. Down lowers you to the ground; you can't rise above the hover height. With no ground within 40 tiles you sink slowly. No fall damage. 4 mana/s. Tunables on the Player: `levitate_accel_time`, `levitate_follow`, `levitate_max_vertical`, `levitate_scan_tiles`, `levitate_sink`. |
@@ -345,12 +344,24 @@ Focus, cast it. The dev kit fills both wheels, Z X C and the buff set to try thi
 A character is saved separately from worlds: `user://characters/<name>.gpchar` (name,
 look, inventory, equipment, spells). You pick or make one on the main menu's character
 page (see [guide.md](guide.md#starting-the-game-menu-worlds-saves)); any character can
-play any world. A new character starts with **nothing**: no items, no spells (see
-[crafting.md](crafting.md) for how to get going).
+play any world. A new character starts with the **Mining Spell** and **Chopping Spell**
+(tools are spells: R and Ctrl + R take them in hand) and a **Copper Dagger**, nothing
+else (`CharacterData.STARTING_SPELLS`, `STARTING_ITEMS`). Characters from before Phase
+24 learn both spells when loaded; their old pickaxes and axes are gone.
 
-Console `devkit` gives the old starting kit: copper pickaxe and axe, a Mining Spell
-shortcut, 99 wood, 30 platforms, 30 rope, 20 torches, 5 saplings, 10 grass seeds,
-50 dirt, and teaches Mining, Chopping, Fly and Spark (put in the book). It's
+### Phantom tools
+
+The gathering spells conjure a see-through pickaxe or axe at the target
+(`PhantomTool`, src/items/phantom_tool.gd, driven by `ItemUser`). It hangs above the
+block on your side, winds up and strikes once per `phantom_swing_time` (SpellData, 0.3
+s); the mining or chopping lands on the strike (`sound phantom_mine` / `phantom_chop`).
+It glows in its rank's color (`phantom_tints` by `gather_rank`: spirit blue, copper,
+iron) and draws above the lighting, so it shows underground. Tunables on PhantomTool:
+`size_mult` (1.4), `wind_up` (radians), `alpha`, `rim_alpha`. Art: `phantom_texture`
+(placeholders `assets/fx/phantom_pickaxe.png`, `phantom_axe.png`).
+
+Console `devkit` gives the dev kit: a copper and wooden sword, 99 wood, 30 platforms, 30 rope, 20 torches, 5 saplings, 10 grass seeds,
+50 dirt, and teaches every spell, with Mining and Chopping fully empowered. It's
 `DEV_KIT` / `DEV_SPELLS` in `src/items/character_data.gd`. Scripted runs (DevCli) start
 with it. In debug builds it also adds the placeholder weapons and test magic, which
 are never saved.
@@ -390,12 +401,12 @@ of jumping a tile at a time.
 
 - Blocks have health (`health` in `data/tiles/*.tres` and `data/walls/*.tres`): dirt
   and grass 40, stone 80, copper ore 110, iron ore 160, planks and logs 50, platforms
-  20, rope 15, background walls 30. A copper pickaxe breaks dirt in 2 hits and stone in 4.
+  20, rope 15, background walls 30. Mining I breaks dirt in 1 swing and stone in 2 (per tile).
 - **Mining power** (like Terraria's pickaxe power): a block's `min_mining_power` is the
-  `mining_power` a pickaxe (or mining spell) needs to mine it at all; below that the box
-  goes red with "Too hard". A strong enough but weaker tool just takes longer (its
-  `mining_damage`). Iron ore needs 35. Tools: Stone Pickaxe 35, Copper Pickaxe 40, Iron
-  Pickaxe 50, Mining Spell 40, Hyper Drill 55.
+  `mining_power` the Mining Spell (or another mining item) needs to mine it at all;
+  below that the box goes red with "Too hard". A strong enough but weaker spell just
+  takes longer (its `mining_damage`). Iron ore needs 35. Mining Spell 30, 40 with Power
+  1 (copper bars), 50 with Power 2 (iron bars); Hyper Drill 55.
 - Damaged blocks show cracks in 4 stages (`assets/fx/cracks.png`) and heal after
   `block_heal_seconds` (5) without a hit (`World` node).
 - Broken blocks drop their item (`drop_item`, empty = the item with the tile's id;

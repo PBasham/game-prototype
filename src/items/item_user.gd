@@ -77,6 +77,9 @@ var _ready_at: Dictionary[StringName, float] = {}
 
 func _ready() -> void:
 	z_index = 20
+	_phantom_node = PhantomTool.new()
+	_phantom_node.visible = false
+	add_child(_phantom_node)
 	world.player.use_impact.connect(_on_impact)
 	world.player.area_scrolled.connect(_on_area_scrolled)
 	world.player.use_check = can_use
@@ -105,17 +108,44 @@ func _process(delta: float) -> void:
 	if mode == Mode.GRAB and p.is_using() and not p.input_blocked and problem == "":
 		var sp := _item as SpellData
 		world.tele_grab(grab_point(), sp.grab_tiles * TILE, sp.grab_pull_speed * TILE)
-	if _item and _item.beam and mode == Mode.CHOP and p.is_using() and not p.input_blocked and tree != PlantLayer.NONE:
-		world.plants.request_hit_tree(tree, chop_damage() * delta, p.global_position.x)
-	if _item and _item.beam and mode == Mode.MINE and p.is_using() and not p.input_blocked:
+	# A phantom tool lands its hits once per swing; a plain beam works smoothly.
+	var working := _item != null and _item.beam and p.is_using() and not p.input_blocked \
+		and ((mode == Mode.CHOP and tree != PlantLayer.NONE) or (mode == Mode.MINE and not valid.is_empty()))
+	var dt := delta
+	var phantom := _phantom()
+	if working and phantom:
+		_swing += delta / maxf(phantom.phantom_swing_time, 0.05)
+		dt = 0.0
+		if _swing >= 1.0:
+			_swing -= 1.0
+			dt = phantom.phantom_swing_time
+			EventBus.sound_requested.emit(&"phantom_chop" if mode == Mode.CHOP else &"phantom_mine",
+				Vector2(rect.position * TILE) + Vector2(rect.size * TILE) * 0.5)
+	elif not working:
+		_swing = 0.0
+	if working and dt > 0.0 and mode == Mode.CHOP:
+		world.plants.request_hit_tree(tree, chop_damage() * dt, p.global_position.x)
+	if working and dt > 0.0 and mode == Mode.MINE:
 		for t in valid:
 			if back:
-				world.request_damage_wall(t, damage() * delta)
+				world.request_damage_wall(t, damage() * dt)
 			else:
-				world.request_damage_block(t, damage() * delta)
+				world.request_damage_block(t, damage() * dt)
 		if not back:
 			world.plants.request_cut_flowers(rect)
+	_update_phantom(p, working and phantom != null)
 	queue_redraw()
+
+
+## How far through its swing the phantom tool is (0 to 1), and the node that draws it.
+var _swing := 0.0
+var _phantom_node: PhantomTool
+
+
+## The gathering spell in use when it shows a phantom tool, else null.
+func _phantom() -> SpellData:
+	var sp := _item as SpellData
+	return sp if sp and sp.phantom_texture else null
 
 
 ## Mining damage of the item in use, with spell strength from the book and conduit.
@@ -1073,8 +1103,8 @@ func _draw() -> void:
 			elif ghost_tex:
 				var tint := Color(0.6, 0.6, 0.65, ghost_alpha) if back else Color(1, 1, 1, ghost_alpha)
 				draw_texture_rect_region(ghost_tex, r, Rect2(2, 2, 12, 12), tint)
-	# Beam from the hand to the target.
-	if _item.beam and p.is_using():
+	# Beam from the hand to the target (gathering spells show the phantom tool instead).
+	if _item.beam and p.is_using() and not _phantom_node.visible:
 		var from := p.casting_hand_position() if _item.is_spell() else p.doll_item_position()
 		var to := Vector2(rect.position * TILE) + Vector2(rect.size * TILE) * 0.5
 		if mode == Mode.CHOP and tree != PlantLayer.NONE:
@@ -1099,6 +1129,25 @@ func _draw() -> void:
 		var label := "%dx%d" % [rect.size.x, rect.size.y]
 		var c := Color(1, 1, 1, minf(_area_shown * 2.0, 1.0))
 		draw_string(font, Vector2(rect.end * TILE) + Vector2(2, 0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, c)
+
+
+func _update_phantom(p: Player, show: bool) -> void:
+	_phantom_node.visible = show
+	if not show:
+		return
+	var sp := _phantom()
+	var target := Vector2(rect.position * TILE) + Vector2(rect.size * TILE) * 0.5
+	if mode == Mode.CHOP:
+		target = world.plants.ground_position(tree, p.global_position) + Vector2(0, -1.5 * TILE)
+	_phantom_node.texture = sp.phantom_texture
+	_phantom_node.tint = Color(0.75, 0.9, 1.0)
+	if not sp.phantom_tints.is_empty():
+		_phantom_node.tint = sp.phantom_tints[clampi(sp.gather_rank, 0, sp.phantom_tints.size() - 1)]
+	_phantom_node.target = target
+	_phantom_node.side = 1.0 if p.global_position.x < target.x else -1.0
+	_phantom_node.swing = _swing
+	_phantom_node.hand = p.casting_hand_position()
+	_phantom_node.queue_redraw()
 
 
 ## A swirling portal (Tele Grab): a dark middle, a glowing rim and a turning spark.

@@ -138,7 +138,7 @@ func _decor() -> void:
 		var tree := generator.tree_at(wx)
 		var flower := generator.flower_at(wx)
 		# The first grass top per column is decor (tree and flower -1 when bare: sticks,
-		# rocks and flint can lie there). Other exposed tiles go to `floors`.
+		# rocks can lie there). Other exposed tiles go to `floors`.
 		var top := -1
 		for ly in SIZE:
 			if _kind(block(lx, ly)) == TileTypes.KIND_GRASS and block(lx, ly - 1) == WorldData.AIR:

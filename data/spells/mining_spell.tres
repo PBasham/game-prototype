@@ -1,24 +1,27 @@
 [gd_resource type="Resource" script_class="SpellData" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/fx/phantom_pickaxe.png" id="9_phan"]
 [ext_resource type="Texture2D" path="res://assets/items/icons/mining_spell.png" id="1_h8opb"]
 [ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_3hpad"]
 
 [resource]
 script = ExtResource("2_3hpad")
 group = 0
-mana_per_second = 4.0
 learn_cost = Dictionary[StringName, int]({
 &"copper_bar": 4
 })
 kind = 4
 icon = ExtResource("1_h8opb")
 max_stack = 1
-mining_damage = 55.0
-mining_power = 40
+mining_damage = 45.0
+mining_power = 30
 beam = true
 mining_area = 2
-mining_area_max = 3
-reach_tiles = 12.0
+mining_area_max = 2
+reach_tiles = 8.0
+learnable_at_table = false
+phantom_texture = ExtResource("9_phan")
+phantom_tints = Array[Color]([Color(0.7, 0.9, 1, 1), Color(1, 0.68, 0.42, 1), Color(0.82, 0.86, 0.95, 1)])
 id = &"mining_spell"
 display_name = "Mining Spell"
-description = "Hold to mine with a beam (right click: the back layer). Ctrl + mouse wheel changes the area."
+description = "Hold to mine: a phantom pickaxe digs where you aim (right click: the back layer). Ctrl + mouse wheel changes the area. Empower it with bars to dig harder blocks, bigger and farther."

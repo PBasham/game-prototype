@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EmpowerNode" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/empower_node.gd" id="1_emp"]
+
+[resource]
+script = ExtResource("1_emp")
+stat = 2
+per_rank = 0.0
+max_rank = 2
+rank_costs = Array[Dictionary]([{
+&"magic_essence": 5,
+&"copper_bar": 5
+}, {
+&"magic_essence": 8,
+&"iron_bar": 5
+}])
+adds = Dictionary[StringName, float]({
+&"chain_jumps": 1.0,
+&"chain_tiles": 1.0
+})
+spells = Array[StringName]([&"chain_spark"])
+order = 3
+id = &"arc"
+display_name = "Arc"
+description = "Jumps to one more enemy, a tile farther, per rank."

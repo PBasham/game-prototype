@@ -44,7 +44,7 @@ enum Collision {
 ## Walls drop the block they're the back layer of (dirt_wall drops dirt).
 @export var drop_item: StringName = &""
 @export var drop_count: int = 1
-## A second item it can drop, with this chance (stone: flint 10%).
+## A second item it can drop, with this chance (e.g. a rare gem from stone).
 @export var bonus_drop_item: StringName = &""
 @export_range(0.0, 1.0) var bonus_drop_chance := 0.0
 ## Can't be broken at all (0 health also means unbreakable).

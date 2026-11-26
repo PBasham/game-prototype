@@ -57,10 +57,10 @@ func test_drops_fly_to_the_player_and_are_picked_up() -> void:
 	assert_eq(w.drop_count(), 0)
 
 
-func test_pickaxe_mines_the_area_under_the_cursor() -> void:
+func test_mining_spell_mines_the_area_under_the_cursor() -> void:
 	var u := w.item_user
-	w.player.select_slot(0)
-	assert_eq(w.player.held_item.id, &"copper_pickaxe")
+	w.player.toggle_tool_spell(&"mining_spell")
+	assert_eq(w.player.held_item.id, &"mining_spell")
 	var t := _ground_tile()
 	var cursor := Vector2(t * World.TILE) + Vector2(World.TILE, World.TILE)  # a tile corner
 	u.update_target(cursor)
@@ -81,10 +81,11 @@ func test_spell_area_toggle() -> void:
 	w.player.area_scrolled.emit(1)
 	assert_eq(u.area_size(spell), 3)
 	w.player.area_scrolled.emit(1)
-	assert_eq(u.area_size(spell), 3, "capped at mining_area_max")
-	w.player.area_scrolled.emit(-1)
-	w.player.area_scrolled.emit(-1)
-	w.player.area_scrolled.emit(-1)
+	assert_eq(u.area_size(spell), 4, "the dev kit's Power 2/2: up to 4x4")
+	w.player.area_scrolled.emit(1)
+	assert_eq(u.area_size(spell), 4, "capped at mining_area_max")
+	for i in 4:
+		w.player.area_scrolled.emit(-1)
 	assert_eq(u.area_size(spell), 1)
 
 
@@ -219,8 +220,8 @@ func test_back_walls_mine_behind_blocks_and_drop_their_block() -> void:
 	assert_eq(drop.item_id, &"stone", "stone walls drop stone")
 
 
-func test_pickaxe_right_click_targets_walls() -> void:
-	w.player.select_slot(0)
+func test_mining_spell_right_click_targets_walls() -> void:
+	w.player.toggle_tool_spell(&"mining_spell")
 	var u := w.item_user
 	var t := _ground_tile()
 	w.request_set_wall(t, w.walls.index_of(&"dirt_wall"))
@@ -262,9 +263,9 @@ func test_tome_and_wheel_spells_cast_with_book_and_conduit() -> void:
 	c.equip(CharacterData.SLOT_BOOK, &"dev_grimoire")
 	assert_eq(w.player.held.id, &"dev_grimoire", "the hand shows the new book")
 	u.update_target(at)
-	assert_almost_eq(u.damage(), 55.0 * 1.5 * 1.25, 0.01, "book power x conduit power")
+	assert_almost_eq(u.damage(), 45.0 * 1.6 * 1.5 * 1.25, 0.01, "empowered damage x book power x conduit power")
 	w.player.select_slot(0)
-	assert_eq(w.player.held_item.id, &"copper_pickaxe")
+	assert_eq(w.player.held_item.id, &"copper_dagger")
 
 
 func test_drops_at_your_feet_are_picked_up() -> void:
@@ -298,8 +299,8 @@ func test_building_uses_the_spellbook_reach_and_shared_area() -> void:
 	assert_eq(u.area_size(planks), 3, "up to the book's build_area_max")
 	w.player.toggle_tool_spell(&"mining_spell")  # R
 	assert_eq(u.area_size(w.player.use_item()), 3, "the spell shares the area")
-	w.player.select_slot(0)
-	assert_eq(u.area_size(w.player.held_item), 2, "the pickaxe keeps its own")
+	w.player.select_slot(0)  # the dagger
+	assert_eq(u.area_size(w.player.held_item), 1, "other items keep their own")
 
 
 func test_placing_the_last_block_of_a_stack_doesnt_crash() -> void:
@@ -357,7 +358,7 @@ func test_dev_console() -> void:
 	assert_eq(inv.count_of(&"stone"), before + 25)
 	con.run("give Copper Ore 3")
 	assert_gte(inv.count_of(&"copper_ore"), 3, "by display name")
-	assert_eq(con.find_item("copper_p").id, &"copper_pickaxe", "unique prefix")
+	assert_eq(con.find_item("copper_d").id, &"copper_dagger", "unique prefix")
 	assert_null(con.find_item("copper"), "ambiguous")
 	con.run("forget mining spell")
 	assert_false(w.character.knows(&"mining_spell"))
@@ -533,7 +534,7 @@ func test_feet_follow_the_slope_over_a_step() -> void:
 
 
 func test_dev_reach() -> void:
-	w.player.select_slot(0)
+	w.player.toggle_tool_spell(&"mining_spell")
 	var u := w.item_user
 	var far := w.player.chest() + Vector2(60 * World.TILE, 20 * World.TILE)
 	u.update_target(far)
@@ -577,7 +578,7 @@ func test_materials_dont_swing() -> void:
 	w.player.select_slot(4)
 	assert_false(w.item_user.can_use(false), "bars have no use")
 	w.player.select_slot(0)
-	assert_true(w.item_user.can_use(false), "the pickaxe swings")
+	assert_true(w.item_user.can_use(false), "the dagger swings")
 
 
 func test_thrown_items_stop_quickly() -> void:
@@ -622,7 +623,7 @@ func test_tall_torches_need_room_above() -> void:
 
 func test_mining_power_gates_hard_blocks() -> void:
 	var u := w.item_user
-	var t := _ground_tile() + Vector2i(-1, -1)  # in the stone pickaxe's shorter reach
+	var t := _ground_tile() + Vector2i(-1, -1)  # in Mining I's reach
 	for dx in 2:
 		for dy in 2:
 			w.data.set_block(t.x + dx, t.y + dy, w.blocks.index_of(&"iron_ore"))
@@ -630,25 +631,26 @@ func test_mining_power_gates_hard_blocks() -> void:
 	assert_gt(iron.min_mining_power, 0, "iron ore needs some mining power")
 	assert_gt(iron.health, w.blocks.def(w.blocks.index_of(&"copper_ore")).health, "and takes longer than copper")
 	var cursor := Vector2(t * World.TILE) + Vector2(World.TILE, World.TILE)
-	# The stone pickaxe is strong enough (just slow).
-	var stone_pick := ItemData.find(&"stone_pickaxe")
-	w.character.inventory.set_slot(5, &"stone_pickaxe", 1)
-	w.player.select_slot(5)
+	# A new character's Mining I can't mine iron.
+	var c := w.character
+	c.empower.erase(&"mining_spell")
+	c.apply_empower()
+	w.player.toggle_tool_spell(&"mining_spell")
 	u.update_target(cursor)
-	assert_gt(u.valid.size(), 0, "stone pickaxe mines iron")
-	assert_eq(u.problem, "")
-	# A weaker one can't.
-	var was := stone_pick.mining_power
-	stone_pick.mining_power = iron.min_mining_power - 1
-	u.update_target(cursor)
-	stone_pick.mining_power = was
 	assert_eq(u.valid.size(), 0)
 	assert_string_contains(u.problem, "Too hard")
-	# The iron pickaxe exists, is stronger and faster than copper.
-	var ip := ItemData.find(&"iron_pickaxe")
-	var cp := ItemData.find(&"copper_pickaxe")
-	assert_gt(ip.mining_power, cp.mining_power)
-	assert_gt(ip.mining_damage, cp.mining_damage)
+	# Empower's Power rank 1 (10 copper bars) can.
+	var power := Registry.get_def(&"empower", &"mining_power") as EmpowerNode
+	var spell := Registry.get_def(&"spells", &"mining_spell") as SpellData
+	assert_string_contains(c.empower_problem(spell, power), "Copper Bar")
+	c.inventory.add(&"copper_bar", 10)
+	assert_true(c.buy_empower(spell, power))
+	assert_eq(c.inventory.count_of(&"copper_bar"), 0, "paid")
+	assert_string_contains(c.empower_problem(spell, power), "Iron Bar", "rank 2 takes iron")
+	assert_eq(w.player.use_item().mining_power, spell.mining_power + 10)
+	u.update_target(cursor)
+	assert_gt(u.valid.size(), 0, "copper rank mines iron")
+	assert_eq(u.problem, "")
 
 
 func test_iron_generates_deeper_than_copper() -> void:

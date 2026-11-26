@@ -19,9 +19,11 @@ a log back wall). **Wood** is the plank block (right click: a plank back wall) a
 wood in every recipe; a stick on the ground gives 1 Wood. There are no separate planks
 or sticks.
 
-The path: stone + wood = **Hand Hammer** (kept in your inventory, never used up), then
-stone and wood for a **Stone Pickaxe** and **Stone Axe**, wood into a **Workbench**,
-then a **Furnace** for copper bars and an **Anvil** for copper tools.
+Tools are spells (Phase 24): every character starts knowing the **Mining Spell** and
+**Chopping Spell** (R and Ctrl + R) with a **Copper Dagger**. There are no pickaxes or
+axes. The path: wood into a **Workbench**, then a **Furnace** for copper bars and an
+**Anvil** for copper weapons and armor; copper bars also go into the **Spell Weaving
+Table**, whose Empower tab ranks up Mining and Chopping (see below).
 
 For testing, the console has `devkit` (the old starting kit plus all four spells) and
 `mana` (infinite mana on or off).
@@ -144,7 +146,7 @@ name (`World.chest_names`, saved). A torch on a wall comes down with a right cli
 | `station` | Station id that makes it (`workbench`, `furnace`, `anvil`), empty = by hand |
 | `station_tier` | Minimum station tier (1 = any) |
 | `inputs` | Item id to count, used up |
-| `requires` | Item ids that must be in the inventory but aren't used up (the hand hammer) |
+| `requires` | Item ids that must be in the inventory but aren't used up (no recipe uses it now) |
 | `output`, `output_count` | What you get |
 | `unlock_items` | **Discovered recipe:** hidden until the character has had one of these items in the inventory (empty = always known). The moment one turns up: "New recipe: ..." and a chime. Remembered per character (`CharacterData.seen_items`, saved), so using the item up doesn't hide it again. Spells to learn at the table do the same with `SpellData.learn_unlock_items`. |
 
@@ -164,12 +166,10 @@ Current recipes:
 
 | Where | Recipe |
 | --- | --- |
-| Hand | Hand Hammer: 1 stone + 1 wood |
-| Hand | Stone Pickaxe, Stone Axe: 3 stone + 2 wood each |
 | Hand | Wood x4: 1 log |
 | Hand | Wood Platform x2: 1 wood |
 | Hand | Torch x5: 1 slime + 1 wood (the only torch recipe) |
-| Hand | Workbench: 10 wood (needs the hand hammer) |
+| Hand | Workbench: 10 wood |
 | Workbench | Chest: 8 wood + 2 copper bars |
 | Workbench | Door: 6 wood |
 | Workbench | Table: 8 wood |
@@ -180,14 +180,11 @@ Current recipes:
 | Darkwood Workbench (tier 2) | Reinforced Wood: 4 wood + 1 iron bar = 4 |
 | Darkwood Workbench (tier 2) | Reinforced Darkwood: 4 darkwood + 1 iron bar = 4 |
 | Furnace | Copper Bar: 3 copper ore |
-| Anvil | Copper Pickaxe: 10 bars + 3 wood; Copper Axe: 8 bars + 3 wood |
+| Anvil | Copper Dagger: 4 bars |
 | Furnace | Iron Bar: 3 iron ore |
-| Anvil | Iron Pickaxe: 12 iron bars + 3 wood; Iron Axe: 10 + 3 wood; Iron Sword: 10 + 2 wood |
+| Anvil | Iron Sword: 10 iron bars + 2 wood |
 | Anvil | Iron Helmet 12, Iron Chestplate 20, Iron Greaves 15 iron bars |
 | Hand | Campfire: 5 wood + 3 stone |
-
-Stone tools: Stone Pickaxe 15 mining in a 2x2 area (Ctrl + wheel: 1x1), Stone Axe 15 chopping, both reach 7 (the copper
-ones are stronger).
 
 Defaults are written by `tools/make_items.gd` (items, spells, objects and recipes).
 `--only=a,b` limits it to some ids; it never overwrites a file unless you pass
@@ -375,16 +372,34 @@ Two magic stations:
 
   | Field | What it does |
   | --- | --- |
-  | `stat`, `per_rank` | What a rank changes (MANA_COST -0.05 = 5% cheaper per rank) |
+  | `stat`, `per_rank` | What a rank changes (MANA_COST -0.05 = 5% cheaper per rank; FIELDS: see `adds` and `scales`) |
   | `max_rank` | Ranks (5) |
   | `cost_per_rank` | Cost of rank 1; rank n costs n times this |
+  | `rank_costs` | Costs rank by rank instead (Power: 10 copper bars, then 12 iron bars) |
+  | `adds` | FIELDS: SpellData numbers added per rank (`mining_power` 10) |
+  | `scales` | FIELDS: SpellData numbers scaled per rank (`damage` 0.1 = 10% more) |
+  | `spells` | Only these spells (by id) |
+  | `casts` | Only spells cast this way (projectiles, chains...) |
   | `groups` | Spell groups it's offered for (empty = every spell that uses mana) |
   | `requires` | A node that needs a rank first (the tree's shape; empty = first node) |
   | `order` | Order in the tree |
 
-  The only node so far: **Efficient**, 5% less mana per rank, up to 5 (25% off), 2 / 4 /
-  6 / 8 / 10 Magic Essence. Ranks are saved per character (`CharacterData.empower`); the
-  spell's tooltip shows the lower cost and "Empowered: Efficient 2/5".
+  Nodes so far. Ranks are saved per character (`CharacterData.empower`); the spell's
+  tooltip shows the new numbers and "Empowered: Power 1/2". FIELDS nodes work on a copy
+  of the spell (`CharacterData.apply_empower`, `ItemData.find`), so everything that
+  casts or checks the spell sees the empowered numbers.
+
+  | Node | Spells | Per rank | Cost |
+  | --- | --- | --- | --- |
+  | **Power** | Mining | power +10 (rank 1 mines iron), area up to +1 (4x4 at rank 2), 30% faster, iron glow | 10 copper bars, then 12 iron bars |
+  | **Sharpness** | Chopping | 40% faster, metal glow | 8 copper bars, then 10 iron bars |
+  | **Reach** | Mining, Chopping | +2 tiles (3 ranks) | 5 and 10 copper bars, then 8 iron bars |
+  | **Efficient** | anything that uses mana | 5% less mana (5 ranks) | 2 / 4 / 6 / 8 / 10 Magic Essence |
+  | **Potency** | projectiles, gusts, charged, zones, summons, chains | 10% more damage (5 ranks) | 2 / 4 / 6... Magic Essence |
+  | **Arc** | Chain Spark | one more jump, a tile farther (2 ranks) | 5 essence + 5 copper bars, then 8 essence + 5 iron bars |
+  | **Distance** | Blink | 3 tiles farther (3 ranks) | 3 / 6 / 9 Magic Essence |
+  | **Lasting** | buffs, lights, summons | 20% longer (3 ranks) | 2 / 4 / 6 Magic Essence |
+  | **Evolve** | Summon Slime | the next slime form | 6 essence + 15 slime |
 - **Scribe's Desk** (station `scribing`, 15 wood, 5 paper, 2 copper bars at the
   workbench): scribe a scroll (a one-use cast) of any spell **you know**, and only
   those. It costs the spell's scroll recipe in full, times `World.scribe_cost_mult`

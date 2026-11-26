@@ -24,11 +24,12 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Patrick supplies real art and audio; use placeholders and record them in assets/ASSETS.md.
 - No dark outlines on terrain, trees or decorations; transitions use texture.
 - Don't invent biomes, ores or content. Current scope: surface forest, copper only
-  (plus the Phase 5 stone age items: sticks, rocks, flint, stone tools; Phase 7: green
+  (plus the Phase 5 sticks and rocks (pickups that give wood and stone); Phase 7: green
   and blue slime, slime, wooden and copper swords, copper armor, bed, paper, blank and spell
   scrolls, the Spell Weaving Table, and the spells in data/spells; placeholder sounds;
   Phase 21: Dark Forest Dirt, Grass, Stone and walls, Stone Bricks and Dark Forest Stone
-  Bricks, the Forest Spirit Pendant; Phase 22: Slime Core, Summon Slime; Phase 23: the Catalog).
+  Bricks, the Forest Spirit Pendant; Phase 22: Slime Core, Summon Slime; Phase 23: the Catalog; Phase 24: no pickaxes or axes,
+  the gathering spells from the start, the Copper Dagger, Empower tiers).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

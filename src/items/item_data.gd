@@ -182,6 +182,8 @@ const RENAMED: Dictionary[StringName, StringName] = {
 
 
 static func find(item_id: StringName) -> ItemData:
+	if _empowered.has(item_id):
+		return _empowered[item_id]
 	if _runtime.has(item_id):
 		return _runtime[item_id]
 	var category := &"items"
@@ -219,6 +221,18 @@ static func runtime_items() -> Array[ItemData]:
 	var out: Array[ItemData] = []
 	out.assign(_runtime.values())
 	return out
+
+
+## The playing character's spells with their Empower ranks applied (copies of the
+## spell data), so every cast, tooltip and tool check sees the empowered numbers.
+## Set by `CharacterData.apply_empower`.
+static var _empowered: Dictionary[StringName, ItemData] = {}
+
+
+static func set_empowered(spells: Array[ItemData]) -> void:
+	_empowered.clear()
+	for s in spells:
+		_empowered[spell_key(s.id)] = s
 
 
 ## Runtime-only items aren't saved.

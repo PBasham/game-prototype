@@ -104,7 +104,7 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | items/icons/torch.png, items/held/torch.png | torch item |
 | objects/rope.png | 32x8: 4 frames of 8x8: single, top, middle, bottom |
 | objects/torch.png | 32x16: 4 frames of 8x16 (2 tiles tall): standing, on a block to the left, to the right, on a back wall |
-| items/{icons,held}/{stick,rock,flint,copper_bar,hand_hammer,stone_pickaxe,stone_axe}.png | Phase 5 materials and stone tools (stick, rock and flint icons are unused: sticks give Wood, rocks Stone, no flint) |
+| items/{icons,held}/{stick,rock,copper_bar}.png | Phase 5 materials (stick and rock icons are unused: sticks give Wood, rocks Stone) |
 | items/{icons,held}/{workbench,furnace,copper_anvil,chest,door}.png | furniture items |
 | objects/workbench.png | 40x32 (5x4 tiles), top at hip height |
 | objects/furnace.png | 32x40 (4x5 tiles), glows orange in game |
@@ -117,7 +117,7 @@ drawn from this atlas; solid rows just give the collision layer its tiles. Each 
 | decor/raspberry_bush*.png, decor/blueberry_bush*.png | Same sizes as the berry bush: recolored placeholders (`art/concepts/berries/make_berries.py`) |
 | items/icons + held: raspberries, blueberries, raspberry_compote, blueberry_mash | 16x16 icons (held 9x9 for the fruit), placeholders from the same script |
 | items/{icons,held}/berries.png | berries (food) |
-| decor/pickup_{stick,rock,flint}.png | lying on the grass, bottom-centered: stick 12x5, rock 9x7 (flint unused) |
+| decor/pickup_{stick,rock}.png | lying on the grass, bottom-centered: stick 12x5, rock 9x7 |
 | fx/cracks.png | 32x8: 4 crack stages of 8x8, lighter to heavier, drawn over damaged blocks |
 
 Replace any of these with real art under the same name; if the size changes, check the
@@ -227,7 +227,7 @@ or .ogg); the generator never overwrites without `--force`.
 | File | What |
 | --- | --- |
 | objects/campfire.png, items/{icons,held}/campfire.png | Campfire (32x24, 4x3 tiles): stone ring, crossed logs, flames. Hand-drawn placeholder |
-| items/{icons,held}/iron_{ore,bar,pickaxe,axe,sword,helmet,chestplate,greaves}.png, armor/iron_*.png | The copper versions recolored grey (wood kept) |
+| items/{icons,held}/iron_{ore,bar,sword,helmet,chestplate,greaves}.png, armor/iron_*.png | The copper versions recolored grey (wood kept) |
 | terrain/ore_iron.png | The copper ore overlay recolored |
 | tiles/blocks.png row 8 | Collision row for iron ore (copy of the copper ore row) |
 | decor/pickup_{field_mushroom,red_cap,duskcap,glowcap}.png, items/{icons,held}/ same names | Mushrooms (9x8 on the ground), hand-made placeholders. The icon and held sprites are the 9x8 ground sprite centered on 16x16 (Patrick: the full-size ones read too big) |
@@ -292,3 +292,12 @@ or .ogg); the generator never overwrites without `--force`.
 | `tiles/blocks.png` rows 14 to 18 | Copies of the dirt, grass and stone rows (dark forest blocks, bricks): collision only, the terrain shader draws them. |
 
 | `items/icons/{summon_slime,scroll_summon_slime,page_summon_slime,slime_core}.png` (and held) | **Placeholder**: the Summon Forest Spirit icons and the spirit core, turned slime green. |
+
+## Phase 24: tools are spells
+
+| File | Status |
+| --- | --- |
+| `fx/phantom_pickaxe.png`, `fx/phantom_axe.png` | **Placeholder** (32x32, pale so the rank tint colors them): the old copper pickaxe and axe art, doubled and whitened. The gathering spells' phantom tools. |
+| `items/{icons,held}/copper_dagger.png` | **Placeholder**: the Copper Sword cut short (`tools/make_dagger_art.py`). |
+| `sounds/phantom_mine.wav`, `phantom_chop.wav` | **Placeholder** (`tools/make_sounds.gd`): the phantom tool landing. |
+| Removed | Pickaxe, axe, stone tool, hand hammer and flint art (those items are gone). |

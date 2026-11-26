@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_vcva0"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_rapdc"]
+[ext_resource type="Texture2D" path="res://assets/items/held/copper_dagger.png" id="3_wdd7b"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/copper_dagger.png" id="4_hos8y"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_acgss"]
+
+[sub_resource type="Resource" id="Resource_4tgoo"]
+script = ExtResource("2_rapdc")
+id = &"copper_dagger"
+texture = ExtResource("3_wdd7b")
+type = &"dagger"
+grip = Vector2(2, 13)
+
+[resource]
+script = ExtResource("5_acgss")
+kind = 6
+icon = ExtResource("4_hos8y")
+max_stack = 1
+held = SubResource("Resource_4tgoo")
+melee_damage = 8.0
+melee_reach = 3.5
+knockback = 6.0
+id = &"copper_dagger"
+display_name = "Copper Dagger"
+description = "Quick and light. Everyone starts with one."

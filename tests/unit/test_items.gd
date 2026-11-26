@@ -37,9 +37,9 @@ func test_inventory_stacks_and_fills_hotbar_first() -> void:
 	assert_eq(inv.add(&"dirt", full + 501), 0)
 	assert_eq(inv.counts[0], full)
 	assert_eq(inv.counts[1], 501)
-	assert_eq(inv.add(&"copper_pickaxe", 2), 0)
-	assert_eq(inv.ids[2], &"copper_pickaxe")
-	assert_eq(inv.counts[3], 1, "tools don't stack")
+	assert_eq(inv.add(&"copper_dagger", 2), 0)
+	assert_eq(inv.ids[2], &"copper_dagger")
+	assert_eq(inv.counts[3], 1, "weapons don't stack")
 	assert_eq(inv.add(&"dirt", 10), 0)
 	assert_eq(inv.counts[1], 511, "tops up the existing stack")
 	assert_eq(inv.count_of(&"dirt"), full + 511)
@@ -50,14 +50,14 @@ func test_inventory_stacks_and_fills_hotbar_first() -> void:
 func test_inventory_full() -> void:
 	var inv := Inventory.new()
 	for i in inv.size:
-		inv.set_slot(i, &"copper_axe", 1)
+		inv.set_slot(i, &"copper_sword", 1)
 	assert_eq(inv.room_for(&"dirt"), 0)
 	assert_eq(inv.add(&"dirt", 5), 5, "nothing fits")
 
 
 func test_character_save_and_load() -> void:
 	var c := CharacterData.create_dev(CHAR_PATH_NAME)
-	assert_eq(c.inventory.ids[0], &"copper_pickaxe", "dev kit")
+	assert_eq(c.inventory.ids[0], &"copper_dagger", "starting dagger")
 	c.inventory.set_slot(30, &"stone", 77)
 	assert_true(ItemData.is_runtime(c.inventory.ids[DevHeldItems.FIRST_SLOT]), "dev items in row 2")
 	assert_eq(c.save(), OK)
@@ -69,7 +69,9 @@ func test_character_save_and_load() -> void:
 	assert_eq(back.inventory.count_of(&"wood"), c.inventory.count_of(&"wood"))
 
 
-func test_new_characters_start_with_nothing() -> void:
+func test_new_characters_start_with_the_gathering_spells_and_a_dagger() -> void:
 	var c := CharacterData.create("nobody")
-	assert_true(c.inventory.is_all_empty(), "no items")
-	assert_eq(c.known_spells.size(), 0, "no spells (they lost their memory)")
+	assert_eq(c.inventory.ids[0], &"copper_dagger", "first hotbar slot")
+	c.inventory.clear(0)
+	assert_true(c.inventory.is_all_empty(), "nothing else")
+	assert_eq(c.known_spells, CharacterData.STARTING_SPELLS, "only the gathering spells (they lost the rest)")

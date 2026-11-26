@@ -47,6 +47,9 @@ const SOUNDS := {
 	&"swing": [["noise", 2200, 800, 0.12, 0.3, 0.0]],
 	# World.
 	&"mine_hit": [["noise", 1800, 900, 0.06, 0.35, 0.0], ["square", 160, 120, 0.04, 0.15, 0.0]],
+	# Gathering spells: the phantom tool lands (a soft, ringing thunk).
+	&"phantom_mine": [["noise", 1600, 700, 0.05, 0.25, 0.0], ["sine", 660, 440, 0.12, 0.15, 0.0]],
+	&"phantom_chop": [["noise", 900, 500, 0.06, 0.28, 0.0], ["sine", 520, 380, 0.12, 0.15, 0.0]],
 	&"block_break": [["noise", 1400, 300, 0.16, 0.45, 0.0]],
 	&"block_place": [["noise", 900, 600, 0.05, 0.35, 0.0], ["sine", 180, 140, 0.05, 0.3, 0.0]],
 	&"item_pickup": [["sine", 880, 1320, 0.07, 0.25, 0.0]],

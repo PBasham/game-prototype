@@ -670,6 +670,8 @@ var mouse_meta: Callable
 
 ## Holds whatever is in the selected slot (after the inventory or equipment changed).
 func refresh_held() -> void:
+	if _readied and _readied.is_spell():
+		_readied = ItemData.find(ItemData.spell_key(_readied.id))  # newly empowered
 	var item: ItemData = _readied if selected < 0 else (character.inventory.item(selected) if character else null)
 	if selected < 0 and item and not item.is_spell() and character and character.inventory.count_of(item.id) <= 0:
 		item = null  # used up the item Z X C took out

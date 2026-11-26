@@ -50,29 +50,29 @@ func test_every_recipe_is_valid() -> void:
 
 func test_hand_crafting_and_required_tools() -> void:
 	var inv := Inventory.new()
-	var hammer := Registry.get_def(&"recipes", &"hand_hammer") as RecipeData
 	var bench := Registry.get_def(&"recipes", &"workbench") as RecipeData
-	assert_eq(Crafting.times_craftable(inv, hammer), 0)
-	inv.add(&"stone", 2)
-	inv.add(&"wood", 3)
-	assert_eq(Crafting.times_craftable(inv, hammer), 2)
-	assert_eq(Crafting.craft(inv, hammer, 1)[0], 1)
-	assert_eq(inv.count_of(&"hand_hammer"), 1)
-	assert_eq(inv.count_of(&"stone"), 1)
+	assert_true(bench.requires.is_empty(), "no Hand Hammer any more: wood is enough")
 	# Older saves: Rock items load as Stone.
 	var old := Inventory.new()
 	old.from_dict({"slots": [["rock", 4], ["flint", 2], ["stick", 3], ["wood_planks", 5]]})
 	assert_eq(old.count_of(&"stone"), 6, "rocks and flint load as Stone")
 	assert_eq(old.count_of(&"wood"), 8, "sticks and planks load as Wood")
+	# A recipe that needs a tool on you (not used up).
+	var r := RecipeData.new()
+	r.id = &"test_needs_dagger"
+	r.inputs = {&"wood": 2}
+	r.output = &"wood_platform"
+	r.requires.append(&"copper_dagger")
 	inv.add(&"wood", 10)
-	inv.remove(&"hand_hammer", 1)
-	assert_eq(Crafting.times_craftable(inv, bench), 0, "needs the Hand Hammer on you")
-	assert_true("Hand Hammer (not used up)" in Crafting.missing(inv, bench))
-	inv.add(&"hand_hammer", 1)
+	assert_eq(Crafting.times_craftable(inv, r), 0, "needs the dagger on you")
+	assert_true("Copper Dagger (not used up)" in Crafting.missing(inv, r))
+	inv.add(&"copper_dagger", 1)
+	assert_eq(Crafting.craft(inv, r, 1)[0], 1)
+	assert_eq(inv.count_of(&"copper_dagger"), 1, "the dagger isn't used up")
+	inv.add(&"wood", 10)
 	assert_eq(Crafting.craft(inv, bench, 1)[0], 1)
-	assert_eq(inv.count_of(&"hand_hammer"), 1, "the hammer isn't used up")
 	assert_eq(inv.count_of(&"workbench"), 1)
-	assert_true(Crafting.recipes_for(&"") .has(hammer))
+	assert_true(Crafting.recipes_for(&"").has(bench))
 	assert_false(Crafting.recipes_for(&"").has(Registry.get_def(&"recipes", &"copper_bar")), "smelting needs a furnace")
 
 

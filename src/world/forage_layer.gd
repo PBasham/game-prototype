@@ -1,7 +1,7 @@
 class_name ForageLayer
 extends Node2D
 ## Forageables: things lying on the ground you pick up with right click or E (sticks,
-## rocks, flint; the types are ForageData in data/forage/).
+## rocks; the types are ForageData in data/forage/).
 ##
 ## Seeded the first time a chunk is shown, the same way every time (a tile's roll is
 ## fixed by its position). After that they come back over time on random floor tiles
@@ -499,7 +499,7 @@ func from_dict(d: Dictionary) -> void:
 
 
 ## Older saves kept forageables with the plants: a chunk the plants saved counts as
-## seeded here too, and its loose sticks, rocks and flint come over.
+## seeded here too, and its loose sticks and rocks come over.
 func take_legacy_chunk(wc: Vector2i) -> void:
 	_seeded[wc] = true
 	_dirty[wc] = true

@@ -126,6 +126,9 @@ Bought at the Spell Weaving Table, Empower tab ([crafting.md](crafting.md)).
 | To... | Do this |
 | --- | --- |
 | Change Efficient | `per_rank` (-0.05 = 5% cheaper), `max_rank`, `cost_per_rank` (rank n costs n times it) |
+| Change what a node does to a spell | FIELDS nodes: `adds` / `scales` (SpellData field names), `rank_costs` per rank, `spells` / `casts` to pick spells |
+| Give a spell a new tier | new FIELDS `.tres` (`mining_power.tres` is the pattern); nothing in code |
+| How empowered spells reach the game | `CharacterData.empowered` / `apply_empower` put copies in `ItemData._empowered`, which `ItemData.find` checks first (world load and every rank bought) |
 | Add a node after Efficient | new `.tres` with `requires = &"efficient"`, an `order`, and `groups` to limit which spells get it |
 | Add a new kind of effect | add to `EmpowerNode.Stat`, then apply it where that number is used (mana is `CharacterData.mana_mult`) |
 
@@ -395,3 +398,14 @@ saves still load.
 | Kills and seen drops (saved) | `CharacterData.slain`, `seen_drops`, `note_kill` (from `Enemy._die`) |
 | Opening it | action `catalog` (J) in project.godot, the inventory's Catalog button (`Hud._catalog_button_rect`, `Area.CATALOG_BUTTON`) |
 | Your slime's movement (aimed hops, sliding in) | `Enemy._summon_move`, `SpellData.summon_hop_wait`, `summon_ram_tiles`, `summon_hop_reach` |
+
+## Phase 24: tools are spells
+
+| Change | Where |
+| --- | --- |
+| Starting spells and items | `CharacterData.STARTING_SPELLS`, `STARTING_ITEMS`, `give_starting_kit` (old saves learn the spells in `load_file`) |
+| Mining and Chopping numbers | `data/spells/mining_spell.tres`, `chopping_spell.tres` (free: no mana fields) |
+| Their ranks | `data/empower/mining_power.tres`, `chopping_power.tres`, `gather_reach.tres` |
+| More spell tiers | `data/empower/potency.tres`, `arc.tres`, `distance.tres`, `lasting.tres` |
+| The phantom tool | `PhantomTool` (src/items/phantom_tool.gd); swing timing and hits in `ItemUser._process` (`_swing`, `_phantom`); SpellData `phantom_texture`, `phantom_swing_time`, `phantom_tints`, `gather_rank` |
+| The Copper Dagger | `data/items/copper_dagger.tres`, recipe at the Anvil; art from `tools/make_dagger_art.py` |

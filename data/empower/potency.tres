@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EmpowerNode" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/empower_node.gd" id="1_emp"]
+
+[resource]
+script = ExtResource("1_emp")
+stat = 2
+per_rank = 0.0
+max_rank = 5
+cost_per_rank = Dictionary[StringName, int]({
+&"magic_essence": 2
+})
+scales = Dictionary[StringName, float]({
+&"damage": 0.1
+})
+casts = Array[int]([1, 3, 7, 8, 10, 12])
+order = 2
+id = &"potency"
+display_name = "Potency"
+description = "10% more damage per rank."

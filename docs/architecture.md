@@ -48,7 +48,7 @@ lands.
 Every piece of content (item, tile, recipe, spell, enemy, biome, boss) is a `.tres`
 resource extending `GameData`, in `data/<category>/`. The Registry loads them by id.
 
-- **Definitions are read-only and shared.** `ItemData` describes "Copper Pickaxe".
+- **Definitions are read-only and shared.** `ItemData` describes "Copper Dagger".
 - **Instances hold per-object state.** An `ItemStack` holds count, enchantments, etc.
   and references its definition by id.
 - **Saves store ids, never resource paths.** Ids must never be renamed after release.
