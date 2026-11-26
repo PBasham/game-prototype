@@ -360,9 +360,9 @@ flash, sparks and a sound (`phantom_mine` / `phantom_chop`). One swing takes
 `gather_rank`: spirit blue, copper, iron).
 
 While you hold a gathering spell, the blocks it will mine light up like Starbound's
-mining cursor: each one gets a blue glow, one glowing outline traces the group, and the
-cursor is a real light (`light_radius` 3 tiles, `light_color`), so the blocks show up
-in the dark. Trees get a glowing box; where it can't work, a plain red box.
+mining cursor: each one glows blue (no outline), and the cursor is a real light
+(`light_radius` 3 tiles, `light_color`), so the blocks show up in the dark. A tree's
+trunk glows the same way; where it can't work, a faint red fill.
 
 Styles (SpellData `phantom_style`; try them with console `phantom arc|echo|comet`, or
 the dev kit's test spells **Mining (Echo, dev)**, **Mining (Comet, dev)** and the
@@ -379,8 +379,7 @@ lighting (z 56), so they light up the dark. Where it strikes: SpellData `phantom
 and `phantom_tip` (fractions of the art: the pick's point, the axe's edge); the strike
 puts the tip exactly on the middle of the target. Tunables on PhantomTool: `size_mult`
 (1.5), `wind_up`, `appear` and `strike_from` (parts of the swing), `comet_height`,
-`tool_alpha`, `glow_alpha`, `streak_alpha`, `box_fill_alpha`, `box_edge_alpha`,
-`box_pulse_speed`. Art: `phantom_texture` (placeholders `assets/fx/phantom_pickaxe.png`,
+`tool_alpha`, `glow_alpha`, `streak_alpha`, `box_fill_alpha`, `box_pulse_speed`. Art: `phantom_texture` (placeholders `assets/fx/phantom_pickaxe.png`,
 `phantom_axe.png`).
 
 Console `devkit` gives the dev kit: a copper and wooden sword, 99 wood, 30 platforms, 30 rope, 20 torches, 5 saplings, 10 grass seeds,

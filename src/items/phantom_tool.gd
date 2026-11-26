@@ -33,9 +33,8 @@ var tip_at := Vector2(0.88, 0.48)
 @export var tool_alpha := 0.95
 @export var glow_alpha := 0.55
 @export var streak_alpha := 0.7
-## Target box: fill and edge brightness, and how fast it breathes.
+## Target glow: how bright the targeted blocks glow, and how fast it breathes.
 @export var box_fill_alpha := 0.12
-@export var box_edge_alpha := 0.85
 @export var box_pulse_speed := 4.0
 
 const BOX_COLOR := Color(0.45, 0.8, 1.0)
@@ -118,7 +117,7 @@ func _draw() -> void:
 ## The tool layer (solid).
 func _draw_tools() -> void:
 	if box_shown and not box_ok:
-		_tools.draw_rect(box.grow(0.5), Color(BAD_COLOR, box_edge_alpha), false, 1.0)
+		_tools.draw_rect(box, Color(BAD_COLOR, box_fill_alpha * 1.5))
 	if swinging and texture:
 		match style:
 			Style.COMET:
@@ -159,39 +158,17 @@ func update_light(world: World) -> void:
 
 
 func _draw_box() -> void:
-	var c := BOX_COLOR
+	# No outline: the blocks themselves glow (each targeted block, or the tree's box),
+	# and the cursor's light shows them in the dark.
 	var pulse := 0.75 + 0.25 * sin(Time.get_ticks_msec() / 1000.0 * box_pulse_speed)
 	if not box_ok:
-		return  # drawn solid on the tool layer (additive red turns yellow on the sky)
+		return  # a faint red fill on the tool layer (additive red turns yellow on the sky)
 	if tiles.is_empty():
-		draw_rect(box, Color(c, box_fill_alpha * pulse))
-		for i in 3:  # a soft glow outside the edge
-			draw_rect(box.grow(1.0 + i), Color(c, box_edge_alpha * 0.18 / (i + 1) * pulse), false, 1.0)
-		draw_rect(box.grow(0.5), Color(c, box_edge_alpha * pulse), false, 1.0)
+		draw_rect(box, Color(BOX_COLOR, box_fill_alpha * 1.6 * pulse))
 		return
-	# Each block it will mine lights up; one outline (with a soft glow) traces the group.
 	var t := World.TILE
-	var in_set := {}
 	for v in tiles:
-		in_set[v] = true
-	for v in tiles:
-		draw_rect(Rect2(Vector2(v * t), Vector2(t, t)), Color(c, box_fill_alpha * 1.6 * pulse))
-	var edges: Array[Array] = []
-	for v in tiles:
-		var o := Vector2(v * t)
-		if not in_set.has(v + Vector2i.UP):
-			edges.append([o, o + Vector2(t, 0), Vector2(0, -1)])
-		if not in_set.has(v + Vector2i.DOWN):
-			edges.append([o + Vector2(0, t), o + Vector2(t, t), Vector2(0, 1)])
-		if not in_set.has(v + Vector2i.LEFT):
-			edges.append([o, o + Vector2(0, t), Vector2(-1, 0)])
-		if not in_set.has(v + Vector2i.RIGHT):
-			edges.append([o + Vector2(t, 0), o + Vector2(t, t), Vector2(1, 0)])
-	for e in edges:
-		var out: Vector2 = e[2]
-		for i in 3:  # glow spilling outward
-			draw_line(e[0] + out * (1.0 + i), e[1] + out * (1.0 + i), Color(c, box_edge_alpha * 0.18 / (i + 1) * pulse), 1.0)
-		draw_line(e[0] + out * 0.5, e[1] + out * 0.5, Color(c, box_edge_alpha * pulse), 1.0)
+		draw_rect(Rect2(Vector2(v * t), Vector2(t, t)), Color(BOX_COLOR, box_fill_alpha * 1.6 * pulse))
 
 
 # --- the swing ----------------------------------------------------------------------
