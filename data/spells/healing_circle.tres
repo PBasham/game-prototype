@@ -20,6 +20,7 @@ kind = 4
 icon = ExtResource("1_btf7b")
 max_stack = 1
 impact_at = 0.3
+school = 5
 id = &"healing_circle"
 display_name = "Healing Circle"
 description = "A circle of light at the cursor for 10 seconds. Standing in it heals you."

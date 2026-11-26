@@ -35,7 +35,8 @@ const ALL_SLOTS: Array[StringName] = [&"head", &"chest", &"legs", &"accessory_1"
 	&"accessory_3", &"book", &"conduit"]
 ## Stat names items can raise (ItemData.stats).
 const STATS: Array[StringName] = [&"max_health", &"max_mana", &"mana_regen", &"move_speed", &"jump",
-	&"melee_damage", &"magic_damage", &"mining_speed", &"summon_slots", &"summon_damage"]
+	&"melee_damage", &"magic_damage", &"mining_speed", &"summon_slots", &"summon_damage",
+	&"storm_damage", &"arcane_damage", &"air_damage", &"spirit_damage", &"life_damage"]
 ## Hairstyles are the .png files in this folder (Patrick draws more later).
 const HAIR_DIR := "res://assets/sprites/hair"
 const DEFAULT_HAIR := &"short"
@@ -49,7 +50,7 @@ const DEV_KIT: Array = [
 ## More dev kit items, added after the debug placeholders (so they fill later rows).
 const DEV_KIT_EXTRA: Array = [
 	[&"copper_helmet", 1], [&"copper_chestplate", 1],
-	[&"copper_greaves", 1], [&"bed", 1], [&"berries", 10],
+	[&"copper_greaves", 1], [&"bed", 1], [&"berries", 10], [&"dual_storm_axes", 1], [&"storm_charm", 1],
 ]
 ## Spells the dev kit teaches (in order); give_dev_kit also fills the quick slots.
 const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly", &"spark", &"levitate",

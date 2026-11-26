@@ -20,6 +20,7 @@ kind = 4
 icon = ExtResource("1_yk4h7")
 max_stack = 1
 impact_at = 0.3
+school = 4
 id = &"familiar"
 display_name = "Familiar"
 description = "A little spirit follows you for a minute and shoots at enemies nearby."

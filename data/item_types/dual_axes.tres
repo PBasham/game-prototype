@@ -1,0 +1,159 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_htm7w"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_jq5d4"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_bcsve"]
+
+[sub_resource type="Resource" id="Resource_hwpd0"]
+script = ExtResource("2_jq5d4")
+
+[sub_resource type="Curve" id="Curve_f0r3b"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -140), 0.0, 200.00002, 1, 1, Vector2(0.45, -50), 200.00002, 249.99998, 1, 1, Vector2(0.75, 25), 249.99998, 40.0, 1, 1, Vector2(1, 35), 40.0, 0.0, 1, 1]
+point_count = 4
+
+[sub_resource type="Curve" id="Curve_mm6c6"]
+_data = [Vector2(0, 0.9), 0.0, 0.1666667, 1, 1, Vector2(0.6, 1), 0.1666667, -0.2500001, 1, 1, Vector2(1, 0.9), -0.2500001, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_tdnb3"]
+script = ExtResource("2_jq5d4")
+mode = 1
+angle = SubResource("Curve_f0r3b")
+reach = SubResource("Curve_mm6c6")
+
+[sub_resource type="Curve" id="Curve_e3p3w"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_80a5w"]
+_limits = [-8.0, 8.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 3.3333333, 1, 1, Vector2(0.6, 2), 3.3333333, -5.0, 1, 1, Vector2(1, 0), -5.0, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_l7bwo"]
+script = ExtResource("1_htm7w")
+name = "Chop"
+duration = 0.26
+front = SubResource("Resource_tdnb3")
+back = SubResource("Resource_hwpd0")
+item_angle = SubResource("Curve_e3p3w")
+lunge = SubResource("Curve_80a5w")
+drawn_tag = "Use"
+
+[sub_resource type="Curve" id="Curve_7dmly"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -140), 0.0, 200.00002, 1, 1, Vector2(0.45, -50), 200.00002, 249.99998, 1, 1, Vector2(0.75, 25), 249.99998, 40.0, 1, 1, Vector2(1, 35), 40.0, 0.0, 1, 1]
+point_count = 4
+
+[sub_resource type="Curve" id="Curve_7vyl5"]
+_data = [Vector2(0, 0.9), 0.0, 0.1666667, 1, 1, Vector2(0.6, 1), 0.1666667, -0.2500001, 1, 1, Vector2(1, 0.9), -0.2500001, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_ouf2p"]
+script = ExtResource("2_jq5d4")
+mode = 1
+angle = SubResource("Curve_7dmly")
+reach = SubResource("Curve_7vyl5")
+
+[sub_resource type="Resource" id="Resource_f73ik"]
+script = ExtResource("2_jq5d4")
+
+[sub_resource type="Curve" id="Curve_sxuje"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_v6pnl"]
+_limits = [-8.0, 8.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 3.3333333, 1, 1, Vector2(0.6, 2), 3.3333333, -5.0, 1, 1, Vector2(1, 0), -5.0, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_igg7c"]
+script = ExtResource("1_htm7w")
+name = "Chop2"
+duration = 0.26
+front = SubResource("Resource_f73ik")
+back = SubResource("Resource_ouf2p")
+item_angle = SubResource("Curve_sxuje")
+lunge = SubResource("Curve_v6pnl")
+
+[sub_resource type="Curve" id="Curve_qfa7p"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -150), 0.0, 20.0, 1, 1, Vector2(0.5, -140), 20.0, 533.3333, 1, 1, Vector2(0.8, 20), 533.3333, 75.00001, 1, 1, Vector2(1, 35), 75.00001, 0.0, 1, 1]
+point_count = 4
+
+[sub_resource type="Curve" id="Curve_b8maq"]
+_data = [Vector2(0, 0.9), 0.0, 0.1666667, 1, 1, Vector2(0.6, 1), 0.1666667, -0.2500001, 1, 1, Vector2(1, 0.9), -0.2500001, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_hbx7x"]
+script = ExtResource("2_jq5d4")
+mode = 1
+angle = SubResource("Curve_qfa7p")
+reach = SubResource("Curve_b8maq")
+
+[sub_resource type="Curve" id="Curve_lwsj0"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -160), 0.0, 20.0, 1, 1, Vector2(0.5, -150), 20.0, 599.99994, 1, 1, Vector2(0.8, 30), 599.99994, 50.0, 1, 1, Vector2(1, 40), 50.0, 0.0, 1, 1]
+point_count = 4
+
+[sub_resource type="Curve" id="Curve_0rck3"]
+_data = [Vector2(0, 0.9), 0.0, 0.1666667, 1, 1, Vector2(0.6, 1), 0.1666667, -0.2500001, 1, 1, Vector2(1, 0.9), -0.2500001, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_ds7nl"]
+script = ExtResource("2_jq5d4")
+mode = 1
+angle = SubResource("Curve_lwsj0")
+reach = SubResource("Curve_0rck3")
+
+[sub_resource type="Curve" id="Curve_ka47a"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_2ofla"]
+_limits = [-8.0, 8.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 3.75, 1, 1, Vector2(0.8, 3), 3.75, -15.000001, 1, 1, Vector2(1, 0), -15.000001, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_c3eit"]
+script = ExtResource("1_htm7w")
+name = "Cross"
+duration = 0.38
+front = SubResource("Resource_ds7nl")
+back = SubResource("Resource_hbx7x")
+item_angle = SubResource("Curve_ka47a")
+lunge = SubResource("Curve_2ofla")
+
+[sub_resource type="Resource" id="Resource_s1n6p"]
+script = ExtResource("2_jq5d4")
+
+[sub_resource type="Resource" id="Resource_n3sx7"]
+script = ExtResource("2_jq5d4")
+
+[sub_resource type="Curve" id="Curve_ireph"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -150), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_ohjkj"]
+script = ExtResource("1_htm7w")
+name = "Hold"
+duration = 1.0
+front = SubResource("Resource_n3sx7")
+back = SubResource("Resource_s1n6p")
+item_angle = SubResource("Curve_ireph")
+drawn_tag = "Hold1H"
+
+[resource]
+script = ExtResource("3_bcsve")
+hold = SubResource("Resource_ohjkj")
+attacks = Array[ExtResource("1_htm7w")]([SubResource("Resource_l7bwo"), SubResource("Resource_igg7c"), SubResource("Resource_c3eit")])
+combo_window = 0.3
+stow_style = 1
+dual = true
+id = &"dual_axes"
+display_name = "Dual axes"

@@ -41,7 +41,7 @@ func _process(delta: float) -> void:
 
 
 func _trigger(e: Enemy) -> void:
-	e.take_damage(spell.damage * power, world.player)
+	e.take_damage(spell.damage * power * Schools.payoff(e, spell), world.player)
 	e.knock_back(global_position + Vector2(0, 8), spell.knockback)
 	SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, global_position + Vector2(0, -4), Vector2.ZERO,
 		spell.projectile_color)

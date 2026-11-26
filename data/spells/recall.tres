@@ -18,6 +18,7 @@ kind = 4
 icon = ExtResource("1_wa20x")
 max_stack = 1
 impact_at = 0.3
+school = 2
 id = &"recall"
 display_name = "Recall"
 description = "Ritual: stand still for 3 seconds and you're sent back to your bed (or the world spawn). Moving or getting hurt breaks it. Mana is spent when it finishes."

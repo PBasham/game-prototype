@@ -18,6 +18,7 @@ learn_cost = Dictionary[StringName, int]({
 kind = 4
 icon = ExtResource("1_afklv")
 max_stack = 1
+school = 3
 id = &"fly"
 display_name = "Fly"
 description = "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up. Hold Shift to fly much faster, for a lot more mana."

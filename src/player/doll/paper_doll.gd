@@ -194,6 +194,8 @@ var hair_hidden := false:
 			_hair.visible = not v
 var _hair: Sprite2D
 var _item_sprite: Sprite2D
+## The second of a dual wielded pair, in the back hand (behind the body).
+var _offhand_sprite: Sprite2D
 var _stow_back: Sprite2D
 var _stow_hip: Sprite2D
 var _material: ShaderMaterial
@@ -225,6 +227,7 @@ func setup(doll_rig: DollRig, doll_palette: CharacterPalette = null) -> void:
 	_overlays.clear()
 
 	_stow_back = _item_node("StowBack")
+	_offhand_sprite = _item_node("Offhand")
 	var first_front_arm := -1
 	for pi in rig.part_names.size():
 		if rig.part_channels[pi] == &"front_arm" and first_front_arm < 0:
@@ -570,6 +573,8 @@ func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 	var m := motion
 	var in_hand := item != null and not stowed
 	_item_sprite.visible = in_hand and m != null
+	if _offhand_sprite:
+		_offhand_sprite.visible = in_hand and m != null and _dual()
 	if m == null:
 		for side: StringName in [&"front", &"back"]:
 			var angle := _emote_arm_angle(side)
@@ -624,6 +629,8 @@ func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 			_reach(arm, _parts_of(_channel(side)), shoulder, target)
 		if side == holding and in_hand:
 			_place_item(m, holding, shoulder, aim_angle)
+		elif side == other and in_hand and _dual():
+			_place_offhand(m, other, shoulder)
 
 
 ## Whether an arm is hanging free (no item motion, no emote): another body may swing
@@ -746,11 +753,15 @@ func _apply_item() -> void:
 		return
 	var tex := item.texture if item else null
 	var stow := item.item_type().stow_style if item and item.item_type() else ItemTypeData.StowStyle.BACK
-	for s: Sprite2D in [_item_sprite, _stow_back, _stow_hip]:
+	for s: Sprite2D in [_item_sprite, _stow_back, _stow_hip, _offhand_sprite]:
+		if s == null:
+			continue
 		s.texture = tex
 		s.offset = -item.grip if item else Vector2.ZERO
 		s.scale = Vector2.ONE / float(item.detail if item else 1)
 	_item_sprite.visible = item != null and not stowed
+	if _offhand_sprite:
+		_offhand_sprite.visible = item != null and not stowed and _dual()
 	_stow_back.visible = item != null and stowed and stow == ItemTypeData.StowStyle.BACK
 	_stow_hip.visible = item != null and stowed and stow == ItemTypeData.StowStyle.HIP
 
@@ -769,6 +780,19 @@ func _place_item(m: ItemMotion, side: StringName, shoulder: Vector2, aim_angle: 
 	_item_sprite.position = hand
 	# The texture points up-right (-45 degrees); turn that onto the item angle.
 	_item_sprite.rotation = item_rotation + PI / 4.0
+
+
+func _dual() -> bool:
+	return item != null and item.item_type() != null and item.item_type().dual
+
+
+## The second of a dual wielded pair: in the other hand, along that arm, at the same
+## item angle as the first.
+func _place_offhand(m: ItemMotion, side: StringName, shoulder: Vector2) -> void:
+	var hand: Vector2 = hands.get(side, shoulder)
+	var rot := (hand - shoulder).angle() + deg_to_rad(m.item_angle_at(motion_t))
+	_offhand_sprite.position = hand
+	_offhand_sprite.rotation = rot + PI / 4.0
 
 
 ## Where the held item is, in world space (the beam starts here).

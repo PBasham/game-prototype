@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_7eh06"]
+
+[resource]
+script = ExtResource("1_7eh06")
+station = &"scribing"
+inputs = Dictionary[StringName, int]({
+&"copper_bar": 6,
+&"magic_essence": 6
+})
+output = &"storm_charm"
+id = &"storm_charm"
+display_name = "Storm Charm"

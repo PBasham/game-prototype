@@ -20,6 +20,7 @@ kind = 4
 icon = ExtResource("1_k5y0v")
 max_stack = 1
 impact_at = 0.2
+school = 4
 id = &"wisp"
 display_name = "Wisp"
 description = "Hold to steer a wisp of light with the cursor; let go to leave it there. Up to 3 at once, 5 minutes each."

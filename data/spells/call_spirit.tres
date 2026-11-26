@@ -29,6 +29,7 @@ kind = 4
 icon = ExtResource("1_t8peg")
 max_stack = 1
 impact_at = 0.3
+school = 4
 id = &"call_spirit"
 display_name = "Summon Forest Spirit"
 description = "A Forest Spirit fights for you for 90 seconds: it charges for a second, then shoots the nearest enemy."

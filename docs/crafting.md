@@ -181,6 +181,8 @@ Current recipes:
 | Darkwood Workbench (tier 2) | Reinforced Darkwood: 4 darkwood + 1 iron bar = 4 |
 | Furnace | Copper Bar: 3 copper ore |
 | Anvil | Copper Dagger: 4 bars |
+| Anvil | Dual Storm Axes: 10 iron bars + 8 Magic Essence |
+| Scribe's Desk | Storm Charm: 6 copper bars + 6 Magic Essence |
 | Furnace | Iron Bar: 3 iron ore |
 | Anvil | Iron Sword: 10 iron bars + 2 wood |
 | Anvil | Iron Helmet 12, Iron Chestplate 20, Iron Greaves 15 iron bars |

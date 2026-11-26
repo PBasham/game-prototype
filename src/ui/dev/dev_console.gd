@@ -513,6 +513,19 @@ func _register() -> void:
 	_add("use", "use", "Use what's at the cursor (like a right click: open a station, chest or door).", func(_a: PackedStringArray) -> void:
 		_print("Used." if world.try_interact_at(world.item_user.cursor(), world.player) else "Nothing to use there (or too far)."))
 	_add("dummy", "dummy | dummy clear", "Spawn a training dummy at the cursor (to test damage spells).", _dummy)
+	_add("hold", "hold <item>", "Put an item in your selected hotbar slot and hold it (what was there goes to your inventory).", func(a: PackedStringArray) -> void:
+		var it := find_item(" ".join(a))
+		if it == null:
+			return
+		var inv := world.character.inventory
+		var slot := maxi(world.player.selected, 0)
+		var old := inv.ids[slot]
+		var old_count := inv.counts[slot]
+		inv.set_slot(slot, it.id, 1)
+		if old != &"" and old != it.id:
+			inv.add(old, old_count)
+		world.player.select_slot(slot)
+		_print("Holding %s." % it.display_name))
 	_add("ready", "ready <spell>", "Take the spellbook out with this spell.", func(a: PackedStringArray) -> void:
 		var spell := find_spell(" ".join(a))
 		if spell:

@@ -358,6 +358,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 25: weapons and schools (branch phase-25-weapons-schools)**
+- [ ] Spell tooltips name the school ("Storm spell"); the Dual Storm Axes and Storm Charm tooltips explain themselves.
+- [ ] Console `hold dual_storm_axes`: one axe in each hand; chops alternate hands, the third crosses both.
+- [ ] Axe hits leave slimes shocked (blue flicker, small damage ticks for 3 s).
+- [ ] Spark and Chain Spark do 25% more to shocked enemies; holding the axes adds 20% to Storm spells, quick casting included.
+- [ ] Right click with the axes: leap toward the cursor and slam down, hitting and shocking everything near where you land; 5 s cooldown, no fall damage.
+- [ ] Storm Charm (+15% Storm damage) stacks with the axes.
+
 **Phase 24: tools are spells (branch phase-24-gathering-spells)**
 - [ ] A new character has the Copper Dagger in slot 1 and knows Mining and Chopping (R, Ctrl + R); no pickaxes or axes anywhere.
 - [ ] Mining and Chopping cost no mana (tooltip says "Mana: Free").

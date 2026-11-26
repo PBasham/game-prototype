@@ -24,6 +24,7 @@ kind = 4
 icon = ExtResource("1_sv7jv")
 max_stack = 1
 impact_at = 0.3
+school = 4
 id = &"summon_slime"
 display_name = "Summon Slime"
 description = "A slime fights beside you for 90 seconds: it hops after the nearest enemy and hits it on contact. Empower it to grow it into a tougher slime."

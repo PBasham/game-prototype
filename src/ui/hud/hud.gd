@@ -2531,7 +2531,9 @@ static func stat_text(k: StringName, v: float) -> String:
 	var names := {&"max_health": "Max health", &"max_mana": "Max mana", &"mana_regen": "Mana regen",
 		&"move_speed": "Speed", &"jump": "Jump", &"melee_damage": "Melee damage",
 		&"magic_damage": "Magic damage", &"mining_speed": "Mining speed",
-		&"summon_slots": "Summon at a time", &"summon_damage": "Summon damage"}
+		&"summon_slots": "Summon at a time", &"summon_damage": "Summon damage",
+		&"storm_damage": "Storm damage", &"arcane_damage": "Arcane damage", &"air_damage": "Air damage",
+		&"spirit_damage": "Spirit damage", &"life_damage": "Life damage"}
 	var label: String = names.get(k, String(k).capitalize())
 	if k in [&"max_health", &"max_mana", &"mana_regen", &"summon_slots"]:
 		return "%+d %s" % [roundi(v), label]
@@ -2553,6 +2555,20 @@ static func tooltip_for(item: ItemData, c: CharacterData = null, meta: Dictionar
 		lines.append("%s chopping per hit" % str(item.axe_damage))
 	if item.reach_tiles > 0.0 and (item.mining_damage > 0.0 or item.axe_damage > 0.0):
 		lines.append("Reach %s tiles" % str(item.reach_tiles))
+	if item.kind == ItemData.Kind.WEAPON and item.melee_damage > 0.0:
+		lines.append("%s damage" % _num(item.melee_damage))
+	if item.school != ItemData.School.NONE:
+		var sn := Schools.school_name(item.school)
+		lines.append("%s weapon" % sn)
+		if item.mark_seconds > 0.0:
+			lines.append("Hits leave %s: %s damage every %ss for %ss; %s spells do %d%% more to it" % [
+				Schools.MARKS[item.school].to_lower(), _num(item.mark_damage), _num(Schools.MARK_TICK),
+				_num(item.mark_seconds), sn, roundi((Schools.MARK_PAYOFF - 1.0) * 100.0)])
+		if item.school_amp > 0.0:
+			lines.append("In hand: %s spells +%d%%" % [sn, roundi(item.school_amp * 100.0)])
+	if item.skill == ItemData.Skill.LEAP_SLAM:
+		lines.append("Right click: leap and slam down (%s damage around you, %ss cooldown)" % [
+			_num(item.skill_damage), _num(item.skill_cooldown)])
 	match item.kind:
 		ItemData.Kind.BOOK:
 			# Name | Tier (the title line), spell power, then its modifiers.
@@ -2600,6 +2616,8 @@ static func spell_types(spell: SpellData) -> String:
 
 static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
 	var lines := PackedStringArray([spell.display_name])
+	if spell.school != ItemData.School.NONE:
+		lines.append("%s spell" % Schools.school_name(spell.school))
 	if spell.description != "":
 		lines.append(spell.description)
 	var mana := PackedStringArray()

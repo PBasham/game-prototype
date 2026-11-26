@@ -197,10 +197,51 @@ in it is hit once per swing.
 
 | Item | Damage | Reach | Recipe |
 |---|---|---|---|
+| Copper Dagger | 8 | 3.5 | Anvil: 4 copper bars (everyone starts with one) |
 | Wooden Sword | 8 | 4 | Workbench: 10 wood |
 | Copper Sword | 13 | 4.5 | Anvil: 8 copper bars, 2 wood |
 | Iron Sword | 18 | 4.75 | Anvil: 10 iron bars, 2 wood |
+| Dual Storm Axes | 7 per chop | 3.75 | Anvil: 10 iron bars, 8 Magic Essence (a Storm weapon, below) |
 | Fists (empty hands) | 3 | 4 | `fist_damage`, `fist_reach_tiles`, `fist_impact_at` (0.4 of the punch) on the Player. Light knockback, no stagger. Also with the held item put away (H); pressing its hotbar number again takes it back out. Pickups don't go into an empty slot in your hand unless nothing else has room, so an empty hand stays free for punching. |
+
+## Schools and school weapons (Phase 25)
+
+Two playstyles share one system: pure magic, or a weapon that feeds your magic. Every
+spell has a **school** (`ItemData.school`): Storm (Spark, Chain Spark, Spark Ward),
+Arcane (Arcane Bolt, Arcane Edge, Barrier, Blink, Recall, Tele Grab, Conjure Platform),
+Air (Air Push, Air Step, Bound, Fly, Levitate, Gel Cushion), Spirit (Wisp, Familiar,
+Summon Forest Spirit, Summon Slime, Light Orb), Life (Mend, Healing Circle). The
+gathering spells, Seek Ore and Hyper Drill have none. The tooltip says "Storm spell".
+
+- **Gear** raises a school: stats `storm_damage`, `arcane_damage`, `air_damage`,
+  `spirit_damage`, `life_damage` (0.15 = +15%). The **Storm Charm** (accessory, Scribe's
+  Desk: 6 copper bars, 6 Magic Essence) is the first: +15% Storm damage.
+- **A school weapon** (`school` on a weapon) does three things:
+  1. **Its hits mark** the enemy with its school (`mark_damage` every
+     `Schools.MARK_TICK` (0.5 s) for `mark_seconds`). Storm's mark is **shocked**: the
+     enemy flickers blue and takes a few ticks of damage. One mark at a time.
+  2. **That school's spells cash the mark in:** they do `Schools.MARK_PAYOFF` (1.25,
+     +25%) to a marked enemy (projectiles, Chain Spark, gusts, wards). The weapon never
+     casts the spell itself: it sets up, the spell finishes.
+  3. **In hand, it amplifies its school** (`school_amp`): +20% for the axes. It counts
+     while you quick cast or ready a spell too (the weapon in your hotbar slot,
+     `Player.weapon_in_hand`).
+- **Weapon skills** (right click, `skill`): `LEAP_SLAM` leaps toward the cursor
+  (`skill_leap_speed`, `skill_leap_height`), falls hard (`Player.slam_fall_gravity` 2)
+  and slams where you land: `skill_damage` to everything within `skill_radius_tiles`,
+  strong knockback, and the weapon's mark. `skill_cooldown` seconds between uses. No
+  fall damage from the leap.
+
+Spell power for a spell: book and conduit x (1 + magic damage) x `Player.school_mult`
+(1 + the school's gear stat + a same-school weapon's `school_amp`).
+
+**Dual Storm Axes:** 7 per chop (alternating hands, then a crossing chop), shocked for
+3 s (2 every 0.5 s), Storm spells +20% while held. Right click: leap and slam, 14 damage
+in 4 tiles, 5 s cooldown. Held one in each hand (`dual_axes` item type, `dual`: the
+second axe rides in the back hand, `PaperDoll._offhand_sprite`).
+
+Ideas not built yet: weapons that cast a spell on their skill, more schools' weapons
+and charms, armor sets with school bonuses.
 
 ## Spells against enemies
 

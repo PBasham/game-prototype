@@ -96,6 +96,15 @@ func _items() -> Array[ItemData]:
 	pendant.stats = {&"summon_slots": 1.0, &"summon_damage": 0.2}
 	pendant.held = _look(&"forest_spirit_pendant", &"block", Vector2(4, 6))
 	out.append(pendant)
+	# Phase 25: the first Storm gear. Builds lean on schools: gear raises a school,
+	# a school weapon marks enemies for that school's spells.
+	var charm := _base(&"storm_charm", "Storm Charm",
+		"Accessory. A charged stone on a cord. +15% Storm damage.")
+	charm.kind = ItemData.Kind.ACCESSORY
+	charm.max_stack = 1
+	charm.stats = {&"storm_damage": 0.15}
+	charm.held = _look(&"storm_charm", &"block", Vector2(8, 3))
+	out.append(charm)
 	out.append(_block(&"copper_ore", "Copper Ore", "Smelts into copper bars in a Furnace."))
 	out.append(_block(&"iron_ore", "Iron Ore", "Deeper than copper. Smelts into iron bars in a Furnace."))
 	# Wood is the building block too (like Terraria): it places the plank block.
@@ -292,6 +301,23 @@ func _items() -> Array[ItemData]:
 	cdagger.melee_reach = 3.5
 	cdagger.knockback = 6.0
 	out.append(cdagger)
+	var axes := _weapon(&"dual_storm_axes", "Dual Storm Axes",
+		"A pair of crackling hand axes. Hits leave enemies shocked; Storm spells hit shocked enemies harder. Holding them powers up Storm spells. Right click: leap and slam.")
+	axes.held = _look(&"dual_storm_axes", &"dual_axes", Vector2(2, 13))
+	axes.melee_damage = 7.0
+	axes.melee_reach = 3.75
+	axes.knockback = 5.0
+	axes.school = ItemData.School.STORM
+	axes.school_amp = 0.2
+	axes.mark_damage = 2.0
+	axes.mark_seconds = 3.0
+	axes.skill = ItemData.Skill.LEAP_SLAM
+	axes.skill_damage = 14.0
+	axes.skill_radius_tiles = 4.0
+	axes.skill_cooldown = 5.0
+	axes.skill_leap_speed = 26.0
+	axes.skill_leap_height = 3.5
+	out.append(axes)
 	var csword := _weapon(&"copper_sword", "Copper Sword", "A proper blade.")
 	csword.melee_damage = 13.0
 	csword.melee_reach = 4.5
@@ -696,6 +722,7 @@ func _spells() -> Array[ItemData]:
 		&"wisp": SpellData.Group.LIGHT}
 	for sp in out:
 		(sp as SpellData).group = groups.get(sp.id, SpellData.Group.ATTACK)
+		sp.school = SCHOOLS.get(sp.id, ItemData.School.NONE)
 	for sp in out:
 		var spell := sp as SpellData
 		spell.learn_cost.assign(LEARN_COSTS.get(spell.id, {&"copper_bar": LEARN_BARS[clampi(spell.tier, 1, 3) - 1]}))
@@ -973,6 +1000,8 @@ func _recipes() -> Array[RecipeData]:
 		# Bricks: 2 stone of a kind make 1 brick of that kind (like Terraria's Gray Brick).
 		[&"stone_bricks", &"furnace", {&"stone": 2}, &"stone_bricks", 1, []],
 		[&"dark_forest_stone_bricks", &"furnace", {&"dark_forest_stone": 2}, &"dark_forest_stone_bricks", 1, []],
+		[&"dual_storm_axes", &"anvil", {&"iron_bar": 10, &"magic_essence": 8}, &"dual_storm_axes", 1, []],
+		[&"storm_charm", &"scribing", {&"copper_bar": 6, &"magic_essence": 6}, &"storm_charm", 1, []],
 		[&"forest_spirit_pendant", &"scribing", {&"spirit_core": 1, &"magic_essence": 10, &"iron_bar": 10}, &"forest_spirit_pendant", 1, []],
 		[&"wooden_bowl", &"workbench", {&"wood": 2}, &"wooden_bowl", 2, []],
 		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
@@ -1055,6 +1084,34 @@ func _recipes() -> Array[RecipeData]:
 const SCROLL_BARS: Array[int] = [2, 5, 10]
 ## Copper bars learning a spell from its scroll costs, by tier; and exceptions.
 const LEARN_BARS: Array[int] = [4, 10, 20]
+## Spell schools (Phase 25); spells not listed are NONE (the gathering spells, Seek Ore,
+## Hyper Drill).
+const SCHOOLS := {
+	&"spark": ItemData.School.STORM,
+	&"chain_spark": ItemData.School.STORM,
+	&"spark_ward": ItemData.School.STORM,
+	&"arcane_bolt": ItemData.School.ARCANE,
+	&"arcane_edge": ItemData.School.ARCANE,
+	&"barrier": ItemData.School.ARCANE,
+	&"blink": ItemData.School.ARCANE,
+	&"recall": ItemData.School.ARCANE,
+	&"tele_grab": ItemData.School.ARCANE,
+	&"conjure_platform": ItemData.School.ARCANE,
+	&"air_push": ItemData.School.AIR,
+	&"air_step": ItemData.School.AIR,
+	&"bound": ItemData.School.AIR,
+	&"fly": ItemData.School.AIR,
+	&"levitate": ItemData.School.AIR,
+	&"gel_cushion": ItemData.School.AIR,
+	&"wisp": ItemData.School.SPIRIT,
+	&"familiar": ItemData.School.SPIRIT,
+	&"call_spirit": ItemData.School.SPIRIT,
+	&"summon_slime": ItemData.School.SPIRIT,
+	&"light_orb": ItemData.School.SPIRIT,
+	&"mend": ItemData.School.LIFE,
+	&"healing_circle": ItemData.School.LIFE,
+}
+
 ## Phantom tool glow per gathering rank: starting (spirit blue), copper, iron.
 const PHANTOM_TINTS: Array[Color] = [Color(0.7, 0.9, 1.0), Color(1.0, 0.68, 0.42), Color(0.82, 0.86, 0.95)]
 

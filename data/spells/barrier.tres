@@ -19,6 +19,7 @@ kind = 4
 icon = ExtResource("1_jihw8")
 max_stack = 1
 impact_at = 0.3
+school = 2
 id = &"barrier"
 display_name = "Barrier"
 description = "Waits up to 5 minutes. When a hit would take you under a quarter of your health, a shield pops up and soaks the next 30 damage (10 seconds)."

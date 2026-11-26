@@ -2,6 +2,19 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-25: Phase 25, weapons and schools
+
+- **Patrick:** two playstyles, pure magic and weapons with magic imbued and amplified;
+  build both and remove one later if it doesn't fit. Builds lean on schools (a fire
+  build: fire spells plus gear that raises fire), never locked in.
+- **Patrick:** Dual Storm Axes: left click swings and leaves a shock (a few ticks of
+  damage), right click leaps and slams for an area attack, holding them amplifies Storm
+  spells. Maybe the axes cast a spell one day (not built).
+- Claude's model: a weapon's hits mark enemies for its school and that school's spells
+  hit marked enemies 25% harder, so the weapon sets up and the spell finishes (Patrick
+  didn't want a dagger that just casts Spark). Schools: Storm, Arcane, Air, Spirit,
+  Life, assigned to the existing spells. The Storm Charm (+15% Storm) shows gear builds.
+
 ## 2026-11-25: Phase 24, tools are spells
 
 - **Patrick:** no pickaxes or axes. Everyone starts with Mining I, Chopping I and a Copper

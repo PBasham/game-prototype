@@ -44,7 +44,7 @@ func _physics_process(delta: float) -> void:
 			return
 		for node in get_tree().get_nodes_in_group(&"damageable"):
 			if node != source and (node.call(&"hit_rect") as Rect2).grow(maxf(size - 1.0, 0.0) * 2.5).has_point(global_position):
-				node.call(&"take_damage", spell.damage * power, source)
+				node.call(&"take_damage", spell.damage * power * Schools.payoff(node, spell), source)
 				_fizzle()
 				return
 	if _travelled >= spell.projectile_range * TILE:

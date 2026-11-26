@@ -15,6 +15,7 @@ kind = 4
 icon = ExtResource("1_snh8o")
 max_stack = 1
 impact_at = 0.35
+school = 1
 id = &"spark"
 display_name = "Spark"
 description = "A small bolt toward the cursor. Hold to keep casting."

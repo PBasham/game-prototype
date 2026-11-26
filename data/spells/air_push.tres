@@ -19,6 +19,7 @@ kind = 4
 icon = ExtResource("1_vnpvo")
 max_stack = 1
 impact_at = 0.3
+school = 3
 id = &"air_push"
 display_name = "Air Push"
 description = "A gust toward the cursor that shoves enemies away. Walls stop it. It pushes you back too: in the air, or aimed down at the ground for a gust jump."

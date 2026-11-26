@@ -81,6 +81,7 @@ func _ready() -> void:
 	_phantom_node.visible = false
 	add_child(_phantom_node)
 	world.player.use_impact.connect(_on_impact)
+	world.player.weapon_slammed.connect(slam)
 	world.player.area_scrolled.connect(_on_area_scrolled)
 	world.player.use_check = can_use
 
@@ -191,12 +192,15 @@ static func _places(item: ItemData) -> bool:
 		and (item.places_block != &"" or item.places_wall != &"" or item.places_object != &"" or item.plants != &"")
 
 
-func _spell_power() -> float:
+## Spell strength: book and conduit (or tome), magic damage, and the spell's school
+## (gear and a school weapon in hand). `spell` defaults to the item in use.
+func _spell_power(spell: ItemData = null) -> float:
 	var p := world.player
 	if p.character == null:
 		return 1.0
+	var s := spell if spell else _item
 	var tome := p.held_item if p.held_item and p.held_item.tome_spell != &"" else null
-	return p.character.spell_power(tome) * (1.0 + p.stat(&"magic_damage"))
+	return p.character.spell_power(tome) * (1.0 + p.stat(&"magic_damage")) * p.school_mult(s.school if s else 0)
 
 
 ## Where the player is aiming (world px).
@@ -375,6 +379,42 @@ func melee_rect(item: ItemData) -> Rect2:
 	return Rect2(x, top, reach_px, feet_y + below * World.TILE - top)
 
 
+## A school weapon's hit leaves its school's mark (Storm: shocked, a few ticks of damage).
+func _leave_mark(node: Node, item: ItemData) -> void:
+	if item.school != ItemData.School.NONE and item.mark_seconds > 0.0 and node.has_method(&"mark"):
+		node.call(&"mark", item.school, item.mark_damage * (1.0 + world.player.stat(&"melee_damage")), item.mark_seconds)
+
+
+## A weapon skill's slam (LEAP_SLAM, when you land): hits everything within
+## `skill_radius_tiles` of where you landed, knocks it away and leaves the weapon's
+## mark. Returns how many were hit.
+func slam(item: ItemData, at: Vector2) -> int:
+	var p := world.player
+	var radius := item.skill_radius_tiles * TILE
+	var amount := item.skill_damage * (1.0 + p.stat(&"melee_damage"))
+	var hit := 0
+	for node in get_tree().get_nodes_in_group(&"damageable"):
+		if node == p or not is_instance_valid(node):
+			continue
+		var r: Rect2 = node.call(&"hit_rect")
+		var c := r.get_center()
+		if c.distance_to(at + Vector2(0, -TILE)) > radius + r.size.length() * 0.5:
+			continue
+		if not world.line_clear(at + Vector2(0, -TILE), c):
+			continue
+		node.call(&"take_damage", amount, p)
+		if node.has_method(&"knock_back"):
+			node.call(&"knock_back", at, item.knockback * 1.5, true)
+		_leave_mark(node, item)
+		hit += 1
+	var color := Schools.color(item.school) if item.school != ItemData.School.NONE else Color(1, 0.95, 0.8)
+	var ring := SpellEffect.spawn(world.effects, SpellEffect.Kind.BURST, at + Vector2(0, -2), Vector2.ZERO, color)
+	if ring:
+		ring.scale = Vector2.ONE * maxf(item.skill_radius_tiles / 2.0, 1.0)
+	EventBus.sound_requested.emit(&"slam", at)
+	return hit
+
+
 ## Hits everything damageable in the swing (once each). Returns how many were hit.
 func melee_hit(item: ItemData) -> int:
 	var p := world.player
@@ -392,6 +432,7 @@ func melee_hit(item: ItemData) -> int:
 		node.call(&"take_damage", amount, p)
 		if node.has_method(&"knock_back"):
 			node.call(&"knock_back", p.chest(), item.knockback, item.staggers)
+		_leave_mark(node, item)
 		var held_meta := p.held_meta()
 		var coat := Coating.use(held_meta) if item == p.held_item else null
 		if coat and p.character:
@@ -484,7 +525,7 @@ func cast_scroll() -> bool:
 			return true
 		SpellData.Cast.CHARGED:
 			var from := p.casting_hand_position()
-			var bolt := world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
+			var bolt := world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(spell), p)
 			ok = bolt != null
 			if bolt:
 				bolt.size = 1.8
@@ -832,7 +873,7 @@ func cast(spell: SpellData) -> bool:
 	EventBus.sound_requested.emit(StringName("cast_" + SpellData.Cast.keys()[spell.cast].to_lower()), from)
 	match spell.cast:
 		SpellData.Cast.PROJECTILE:
-			world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(), p)
+			world.request_spawn_projectile(spell, from, (cursor() - from).normalized(), _spell_power(spell), p)
 		SpellData.Cast.GUST:
 			gust(spell, from, (cursor() - from).normalized())
 		SpellData.Cast.BLINK:
@@ -854,7 +895,7 @@ func cast(spell: SpellData) -> bool:
 					and not world.line_clear(p.chest(), cursor().move_toward(p.chest(), World.TILE)):
 				EventBus.debug_message.emit("Out of sight")
 				return false
-			if world.request_spell_effect(spell, cursor(), _spell_power()) == null:
+			if world.request_spell_effect(spell, cursor(), _spell_power(spell)) == null:
 				EventBus.debug_message.emit(world.spell_problem if world.spell_problem != "" else "It fizzles")
 				return false
 		SpellData.Cast.CHAIN:
@@ -904,7 +945,7 @@ func release_charge() -> SpellProjectile:
 	_ready_at[spell.id] = _now() + spell.cooldown
 	var from := p.casting_hand_position()
 	var bolt := world.request_spawn_projectile(spell, from, (cursor() - from).normalized(),
-		_spell_power() * lerpf(spell.charge_min_damage, 1.0, k), p)
+		_spell_power(spell) * lerpf(spell.charge_min_damage, 1.0, k), p)
 	if bolt:
 		bolt.size = lerpf(0.6, 1.8, k)
 	EventBus.sound_requested.emit(&"bolt_fire", from)
@@ -948,12 +989,12 @@ func chain(spell: SpellData, from: Vector2) -> int:
 	var path := PackedVector2Array([from])
 	var hit: Array[Node] = []
 	var current := first
-	var amount := spell.damage * _spell_power()
+	var amount := spell.damage * _spell_power(spell)
 	while current:
 		var at: Vector2 = (current.call(&"hit_rect") as Rect2).get_center()
 		path.append(at)
 		hit.append(current)
-		current.call(&"take_damage", amount, p)
+		current.call(&"take_damage", amount * Schools.payoff(current, spell), p)
 		if hit.size() > spell.chain_jumps:
 			break
 		amount *= 1.0 - spell.chain_falloff
@@ -992,7 +1033,7 @@ func gust(spell: SpellData, from: Vector2, dir: Vector2) -> int:
 		if not world.line_clear(from, r.get_center()):
 			continue  # walls and closed doors stop the gust
 		if spell.damage > 0.0:
-			node.call(&"take_damage", spell.damage * _spell_power(), p)
+			node.call(&"take_damage", spell.damage * _spell_power(spell) * Schools.payoff(node, spell), p)
 		if node.has_method(&"knock_back"):
 			node.call(&"knock_back", from, spell.gust_push)
 		hit += 1

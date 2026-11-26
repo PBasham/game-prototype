@@ -12,6 +12,13 @@ extends GameData
 
 ## New kinds go at the end (saved .tres files store the number).
 enum Kind { MATERIAL, BLOCK, WALL, TOOL, SPELL, SEED, WEAPON, BOOK, CONDUIT, TOME, FURNITURE, FOOD, ARMOR, ACCESSORY, SCROLL, PAGE }
+## Schools of magic (Phase 25): every spell has one, and so do school weapons. Gear
+## raises a school's damage (`<school>_damage` stats), a school weapon in hand
+## amplifies its school's spells (`school_amp`), and its hits leave the school's mark,
+## which that school's spells cash in (`Schools.MARK_PAYOFF`).
+enum School { NONE, STORM, ARCANE, AIR, SPIRIT, LIFE }
+## Weapon skills on right click.
+enum Skill { NONE, LEAP_SLAM }
 
 const SPELL_PREFIX := "spell:"
 
@@ -83,6 +90,25 @@ const SPELL_PREFIX := "spell:"
 ## A hit staggers: the enemy's hop or slither is cut short and it starts over. Off for a
 ## light push that doesn't interrupt (fists), so a flurry can't keep an enemy pinned.
 @export var staggers := true
+@export_group("School weapon")
+## Its school: hits leave that school's mark, and it amplifies that school's spells
+## while it's in your hand (or your hotbar slot, while you cast).
+@export var school := School.NONE
+## While held: that school's spells do this much more (0.2 = +20%).
+@export var school_amp := 0.0
+## The mark its hits leave: damage per tick, ticks every Schools.MARK_TICK seconds for
+## this long (Storm: shocked).
+@export var mark_damage := 0.0
+@export var mark_seconds := 0.0
+## Right click: a weapon skill (LEAP_SLAM: leap toward the cursor, axes up, and slam
+## down for an area hit).
+@export var skill := Skill.NONE
+@export var skill_damage := 0.0
+@export var skill_radius_tiles := 4.0
+@export var skill_cooldown := 4.0
+## LEAP_SLAM: speed forward and height of the leap (tiles/s, tiles).
+@export var skill_leap_speed := 28.0
+@export var skill_leap_height := 3.0
 @export_group("Equipment")
 ## Armor slot: &"head", &"chest" or &"legs" (kind ARMOR). Accessories go in any
 ## accessory slot.
@@ -91,8 +117,9 @@ const SPELL_PREFIX := "spell:"
 @export var defense := 0
 ## Stat bonuses while equipped (CharacterData.STATS lists the names): max_health,
 ## max_mana (points), mana_regen (per second), move_speed, jump, melee_damage,
-## magic_damage, mining_speed, summon_damage (fractions: 0.1 = +10%), summon_slots (extra
-## summons out at once: 1 = one more).
+## magic_damage, mining_speed, summon_damage, storm_damage, arcane_damage, air_damage,
+## spirit_damage, life_damage (fractions: 0.1 = +10%), summon_slots (extra summons out
+## at once: 1 = one more).
 @export var stats: Dictionary[StringName, float] = {}
 ## How it looks on the character: overlay textures by doll part name ("Head", "Torso",
 ## "Front Arm Upper"...), each laid out like one row of the parts sheet (see

@@ -19,6 +19,7 @@ kind = 4
 icon = ExtResource("1_06w8l")
 max_stack = 1
 impact_at = 0.3
+school = 2
 id = &"arcane_edge"
 display_name = "Arcane Edge"
 description = "Your melee weapons hit 50% harder for a minute."

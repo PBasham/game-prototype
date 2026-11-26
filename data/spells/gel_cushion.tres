@@ -22,6 +22,7 @@ kind = 4
 icon = ExtResource("1_fncmb")
 max_stack = 1
 impact_at = 0.3
+school = 3
 id = &"gel_cushion"
 display_name = "Gel Cushion"
 description = "A slime cushion: the next fall that would hurt you doesn't. Lasts 2 minutes or one fall. Uses 5 Slime."

@@ -301,3 +301,11 @@ or .ogg); the generator never overwrites without `--force`.
 | `items/{icons,held}/copper_dagger.png` | **Placeholder**: the Copper Sword cut short (`tools/make_dagger_art.py`). |
 | `sounds/phantom_mine.wav`, `phantom_chop.wav` | **Placeholder** (`tools/make_sounds.gd`): the phantom tool landing. |
 | Removed | Pickaxe, axe, stone tool, hand hammer and flint art (those items are gone). |
+
+## Phase 25: weapons and schools
+
+| File | Status |
+| --- | --- |
+| `items/icons/dual_storm_axes.png` (two crossed), `items/held/dual_storm_axes.png` (one axe, drawn in each hand) | **Placeholder** (`tools/make_storm_art.py`) |
+| `items/{icons,held}/storm_charm.png` | **Placeholder** (`tools/make_storm_art.py`) |
+| `sounds/slam.wav` | **Placeholder** (`tools/make_sounds.gd`): the leap slam landing |

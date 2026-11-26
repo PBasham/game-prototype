@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_g4rtl"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_341yw"]
+[ext_resource type="Texture2D" path="res://assets/items/held/storm_charm.png" id="3_hdp0w"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/storm_charm.png" id="4_xx4lu"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_xrbsj"]
+
+[sub_resource type="Resource" id="Resource_5gex4"]
+script = ExtResource("2_341yw")
+id = &"storm_charm"
+texture = ExtResource("3_hdp0w")
+type = &"block"
+grip = Vector2(8, 3)
+
+[resource]
+script = ExtResource("5_xrbsj")
+kind = 13
+icon = ExtResource("4_xx4lu")
+max_stack = 1
+held = SubResource("Resource_5gex4")
+stats = Dictionary[StringName, float]({
+&"storm_damage": 0.15
+})
+id = &"storm_charm"
+display_name = "Storm Charm"
+description = "Accessory. A charged stone on a cord. +15% Storm damage."

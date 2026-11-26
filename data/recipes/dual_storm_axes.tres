@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_dkorp"]
+
+[resource]
+script = ExtResource("1_dkorp")
+station = &"anvil"
+inputs = Dictionary[StringName, int]({
+&"iron_bar": 10,
+&"magic_essence": 8
+})
+output = &"dual_storm_axes"
+id = &"dual_storm_axes"
+display_name = "Dual Storm Axes"

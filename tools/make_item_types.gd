@@ -67,7 +67,7 @@ func _update_holds() -> void:
 
 func _types() -> Array[ItemTypeData]:
 	return [_tool(), _big_tool(), _dagger(), _sword(), _greatsword(), _wand(), _spell_book(),
-		_crossbow(), _bow(), _unarmed(), _block(), _spell()]
+		_crossbow(), _bow(), _unarmed(), _block(), _spell(), _dual_axes()]
 
 
 # --- types --------------------------------------------------------------------------------
@@ -103,6 +103,25 @@ func _dagger() -> ItemTypeData:
 			[[0, 0]], [[0, 0], [0.4, 3], [1, 0]]),
 		_attack("Slash", 0.28, _pose([[0, -90], [0.6, 40], [1, 50]], [[0, 0.95]]), null,
 			[[0, 0]], [[0, 0], [0.6, 2], [1, 0]]),
+	]
+	return t
+
+
+## A pair of hand axes (Dual Storm Axes): one in each hand. Chops alternate hands, the
+## third crosses both down.
+func _dual_axes() -> ItemTypeData:
+	var t := _type(&"dual_axes", "Dual axes")
+	t.dual = true
+	t.stow_style = ItemTypeData.StowStyle.HIP
+	t.combo_window = 0.3
+	t.hold = _natural_hold(-60)
+	var chop := [[0, -140], [0.45, -50], [0.75, 25], [1, 35]]
+	var reach := [[0, 0.9], [0.6, 1.0], [1, 0.9]]
+	t.attacks = [
+		_attack("Chop", 0.26, _pose(chop, reach), null, [[0, 0]], [[0, 0], [0.6, 2], [1, 0]], "Use"),
+		_attack("Chop2", 0.26, null, _pose(chop, reach), [[0, 0]], [[0, 0], [0.6, 2], [1, 0]]),
+		_attack("Cross", 0.38, _pose([[0, -160], [0.5, -150], [0.8, 30], [1, 40]], reach),
+			_pose([[0, -150], [0.5, -140], [0.8, 20], [1, 35]], reach), [[0, 0]], [[0, 0], [0.8, 3], [1, 0]]),
 	]
 	return t
 

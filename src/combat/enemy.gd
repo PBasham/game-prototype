@@ -131,6 +131,43 @@ func is_poisoned() -> bool:
 	return _poison_left > 0.0
 
 
+## A school's mark (ItemData.School), left by a school weapon's hits: `damage` every
+## Schools.MARK_TICK seconds for `seconds`, and that school's spells hit harder
+## (Schools.payoff). One mark at a time; a new one replaces it.
+var _mark_school := 0
+var _mark_left := 0.0
+var _mark_damage := 0.0
+var _mark_tick := 0.0
+
+
+func mark(school: int, damage: float, seconds: float) -> void:
+	if health <= 0.0 or school == 0 or seconds <= 0.0:
+		return
+	if _mark_school != school:
+		_mark_tick = 0.0
+	_mark_school = school
+	_mark_damage = damage
+	_mark_left = maxf(_mark_left if _mark_school == school else 0.0, seconds)
+
+
+func is_marked(school: int) -> bool:
+	return _mark_left > 0.0 and _mark_school == school
+
+
+func _tick_mark(delta: float) -> void:
+	if _mark_left <= 0.0:
+		return
+	_mark_left -= delta
+	_mark_tick += delta
+	if _mark_tick >= Schools.MARK_TICK and _mark_damage > 0.0:
+		_mark_tick -= Schools.MARK_TICK
+		health -= _mark_damage
+		FloatingText.spawn(get_parent(), global_position + Vector2(randf_range(-4, 4), -data.size.y - 6),
+			str(roundi(_mark_damage)), Schools.color(_mark_school))
+		if health <= 0.0:
+			_die()
+
+
 func _tick_poison(delta: float) -> void:
 	if _poison_left <= 0.0:
 		return
@@ -215,6 +252,7 @@ func _physics_process(delta: float) -> void:
 			_light_at = lt
 			world.lights.mark_dirty()
 	_tick_poison(delta)
+	_tick_mark(delta)
 	_since_hit += delta
 	_squash = maxf(_squash - delta, 0.0)
 	velocity.y = minf(velocity.y + data.gravity * TILE * delta, 90.0 * TILE)
@@ -452,6 +490,7 @@ func _update_look() -> void:
 		_sprite.modulate = data.tint if _flash <= 0.0 else Color(2.0, 2.0, 2.0)
 		if _flash <= 0.0 and _poison_left > 0.0:
 			_sprite.modulate = data.tint * Color(0.7, 1.15, 0.6)
+		_tint_mark()
 		if _halo:
 			_halo.position = Vector2(0, -data.size.y * 0.5)
 			var k := 0.0
@@ -481,6 +520,15 @@ func _update_look() -> void:
 	_sprite.modulate = data.tint if _flash <= 0.0 else Color(2.0, 2.0, 2.0)
 	if _flash <= 0.0 and _poison_left > 0.0:
 		_sprite.modulate = data.tint * Color(0.7, 1.15, 0.6)  # poisoned: green
+	_tint_mark()
+
+
+## Marked: flickers toward its school's color (Storm: a crackling blue).
+func _tint_mark() -> void:
+	if _flash > 0.0 or _mark_left <= 0.0:
+		return
+	var k := 0.35 + 0.25 * sin(Time.get_ticks_msec() * 0.04)
+	_sprite.modulate = _sprite.modulate.lerp(Schools.color(_mark_school) * 1.4, k)
 
 
 func _draw() -> void:

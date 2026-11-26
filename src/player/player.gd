@@ -895,6 +895,7 @@ func _physics_process(delta: float) -> void:
 			facing = 1 if dx > 0.0 else -1
 	elif input_x != 0.0:
 		facing = 1 if input_x > 0.0 else -1
+	_update_slam(delta)
 	_track_fall()
 	_animate(delta)
 	_debug_watch()
@@ -1231,6 +1232,31 @@ func apply_stats() -> void:
 
 
 ## An equipment bonus (0 when nothing raises it), plus food buffs' move speed.
+## The weapon you're fighting with: the one in hand, or, while a spell is readied or
+## quick cast, the one in your hotbar slot (so a Storm weapon still amplifies Storm
+## spells while you cast them). Null without one.
+func weapon_in_hand() -> ItemData:
+	if held_item and held_item.kind == ItemData.Kind.WEAPON:
+		return held_item
+	if selected < 0 and character:
+		var it := character.inventory.item(_slot_before_book)
+		if it and it.kind == ItemData.Kind.WEAPON:
+			return it
+	return null
+
+
+## How much stronger a school's spells are for you: gear (`storm_damage`...) plus a
+## weapon of that school in hand (`school_amp`).
+func school_mult(school: int) -> float:
+	if school == ItemData.School.NONE:
+		return 1.0
+	var m := 1.0 + stat(Schools.damage_stat(school))
+	var wpn := weapon_in_hand()
+	if wpn and wpn.school == school:
+		m += wpn.school_amp
+	return m
+
+
 func stat(stat_name: StringName) -> float:
 	var v: float = stat_bonus.get(stat_name, 0.0)
 	if stat_name == &"move_speed":
@@ -1498,6 +1524,8 @@ func _update_use(delta: float) -> void:
 			# Anything outlined under the cursor (furniture, a stick or rock, a ripe bush)
 			# wins over the back layer, so you pick it up instead of mining the wall.
 			var outlined: bool = world != null and world.hover_outline != null and world.hover_outline.hovered() != null
+			if not outlined and try_weapon_skill():
+				return
 			var back_first: bool = held_item != null and not stowed and world != null and not outlined \
 				and not world.usable_object_at(aim_point()) and use_check.is_valid() and use_check.call(true)
 			if not back_first:
@@ -1927,6 +1955,65 @@ func chest() -> Vector2:
 
 func _body_center() -> Vector2:
 	return global_position + Vector2(0.0, -30.0)
+
+
+## Weapon skills (right click, ItemData.skill). LEAP_SLAM: leap toward the cursor and
+## slam down where you land, hitting everything around (ItemUser.slam).
+signal weapon_slammed(item: ItemData, at: Vector2)
+## Falling faster on the way down of a slam leap (times gravity).
+@export var slam_fall_gravity := 2.0
+var _slamming: ItemData = null
+var _slam_time := 0.0
+var _skill_ready: Dictionary[StringName, float] = {}
+
+
+## Right click with a skill weapon in hand: starts its skill. True if right click was
+## used up (started, or not ready yet).
+func try_weapon_skill() -> bool:
+	var wpn := held_item
+	if wpn == null or stowed or dead or wpn.kind != ItemData.Kind.WEAPON or wpn.skill == ItemData.Skill.NONE:
+		return false
+	if _slamming:
+		return true
+	var now := Time.get_ticks_msec() / 1000.0
+	if float(_skill_ready.get(wpn.id, 0.0)) > now:
+		EventBus.debug_message.emit("Not ready yet")
+		return true
+	_skill_ready[wpn.id] = now + wpn.skill_cooldown
+	var dir := signf(aim_point().x - global_position.x)
+	if dir == 0.0:
+		dir = float(facing)
+	var g := jump_values(_jump_height(), time_to_apex).x
+	velocity = Vector2(dir * wpn.skill_leap_speed * TILE, -sqrt(2.0 * g * wpn.skill_leap_height * TILE))
+	facing = int(dir)
+	_leaping = true
+	_rising_jump = false
+	_safe_landing = true
+	_slamming = wpn
+	_slam_time = 0.0
+	EventBus.sound_requested.emit(&"cast_gust", global_position)
+	return true
+
+
+## Seconds until a weapon's skill is ready again (0 = ready).
+func skill_cooldown_left(item_id: StringName) -> float:
+	return maxf(float(_skill_ready.get(item_id, 0.0)) - Time.get_ticks_msec() / 1000.0, 0.0)
+
+
+func is_slamming() -> bool:
+	return _slamming != null
+
+
+func _update_slam(delta: float) -> void:
+	if _slamming == null:
+		return
+	_slam_time += delta
+	if velocity.y > 0.0:  # on the way down: slam down hard
+		velocity.y += jump_values(_jump_height(), time_to_apex).x * (slam_fall_gravity - 1.0) * delta
+	if (is_on_floor() and _slam_time > 0.12) or _slam_time > 2.0 or _climbing:
+		var wpn := _slamming
+		_slamming = null
+		weapon_slammed.emit(wpn, global_position)
 
 
 ## The readied jump spell, if one is on and not used yet this time in the air.

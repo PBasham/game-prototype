@@ -409,3 +409,17 @@ saves still load.
 | More spell tiers | `data/empower/potency.tres`, `arc.tres`, `distance.tres`, `lasting.tres` |
 | The phantom tool | `PhantomTool` (src/items/phantom_tool.gd); swing timing and hits in `ItemUser._process` (`_swing`, `_phantom`); SpellData `phantom_texture`, `phantom_swing_time`, `phantom_tints`, `gather_rank` |
 | The Copper Dagger | `data/items/copper_dagger.tres`, recipe at the Anvil; art from `tools/make_dagger_art.py` |
+
+## Phase 25: weapons and schools
+
+| Change | Where |
+| --- | --- |
+| Schools, mark payoff, colors, mark names | `Schools` (src/combat/schools.gd); `ItemData.School` |
+| Which school a spell is | `school` in `data/spells/<id>.tres` (`SCHOOLS` in tools/make_items.gd) |
+| School damage from gear | stats `storm_damage`... (`CharacterData.STATS`), applied in `Player.school_mult`, used by `ItemUser._spell_power(spell)` |
+| A weapon's school, mark, amp, skill | ItemData "School weapon" group (`data/items/dual_storm_axes.tres`) |
+| Marks on enemies | `Enemy.mark`, `is_marked`, `_tick_mark`, `_tint_mark`; left by `ItemUser._leave_mark` (melee and slam) |
+| Spells cashing marks in | `Schools.payoff` in `SpellProjectile`, `SpellWard`, `ItemUser.chain` and `gust` |
+| Weapon skills (right click) | `Player.try_weapon_skill`, `_update_slam`, `weapon_slammed` -> `ItemUser.slam` |
+| Dual wielding | `ItemTypeData.dual`, `data/item_types/dual_axes.tres` (`_dual_axes` in tools/make_item_types.gd), `PaperDoll._offhand_sprite`, `_place_offhand` |
+| Console `hold <item>` | `src/ui/dev/dev_console.gd` |

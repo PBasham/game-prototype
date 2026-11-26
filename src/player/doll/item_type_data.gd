@@ -23,6 +23,9 @@ enum StowStyle { BACK, HIP, HIDDEN }
 @export var stow_style := StowStyle.BACK
 ## Two-handed items: GRIP arms hold the item's grip2.
 @export var two_handed := false
+## Dual wielded (a pair of axes): a second copy rides in the other hand, angled like the
+## first, and that arm follows its own track (the motions' back track).
+@export var dual := false
 
 
 func validate() -> PackedStringArray:

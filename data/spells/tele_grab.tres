@@ -17,6 +17,7 @@ icon = ExtResource("1_fst62")
 max_stack = 1
 beam = true
 reach_tiles = 25.0
+school = 2
 id = &"tele_grab"
 display_name = "Tele Grab"
 description = "Hold: a portal opens at the cursor and pulls loose items near it into a portal at your hand. Needs sight of the spot."
