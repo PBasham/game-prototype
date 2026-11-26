@@ -7,6 +7,8 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Patrick:** an illuminated blue target box instead of the white one; every tick the
   tool comes into existence, swings fast with a streak and its own light, aimed at the
   middle of the area. Options welcome, several tools to compare.
+- **Patrick (clarified):** the hover should illuminate like Starbound's mining cursor.
+  Claude made it a real light at the cursor plus a glow on each targeted block.
 - Claude made three styles (Arc, Echo, Comet) as test spells and a console switch; Arc
   is the default until Patrick picks.
 

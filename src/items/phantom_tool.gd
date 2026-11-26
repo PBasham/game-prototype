@@ -56,6 +56,17 @@ var swinging := false
 var box := Rect2()
 var box_shown := false
 var box_ok := true
+## The blocks it will mine (tiles): each one lights up and the group gets one outline
+## around it, like Starbound's matter manipulator. Empty: just the box (trees).
+var tiles: Array[Vector2i] = []
+
+## While aiming it's a real light (the light map's "light_sources"), so the blocks
+## under the cursor show up in the dark: radius in tiles, and its color.
+@export var light_radius := 3.0
+@export var light_color := Color(0.55, 0.8, 1.0)
+var radius := 0.0
+var color := Color.WHITE
+var _lit_at := Vector2i(-99999, -99999)
 
 static var _glow_tex: GradientTexture2D
 ## The tool itself draws on this child with normal blending (solid, so it doesn't wash
@@ -106,6 +117,8 @@ func _draw() -> void:
 
 ## The tool layer (solid).
 func _draw_tools() -> void:
+	if box_shown and not box_ok:
+		_tools.draw_rect(box.grow(0.5), Color(BAD_COLOR, box_edge_alpha), false, 1.0)
 	if swinging and texture:
 		match style:
 			Style.COMET:
@@ -116,13 +129,69 @@ func _draw_tools() -> void:
 
 # --- the target box -----------------------------------------------------------------
 
+## The light it casts while you aim (World.dynamic_lights reads these).
+func light_point() -> Vector2:
+	return box.get_center() / World.TILE
+
+
+func light_tile() -> Vector2i:
+	return Vector2i((box.get_center() / World.TILE).floor())
+
+
+## Called by ItemUser after it sets the box: joins or leaves the light sources and
+## relights when the aim moves (every quarter tile).
+func update_light(world: World) -> void:
+	var on := box_shown and box_ok and visible
+	radius = light_radius
+	color = light_color.lerp(tint, 0.35)
+	if on != is_in_group(&"light_sources"):
+		if on:
+			add_to_group(&"light_sources")
+		else:
+			remove_from_group(&"light_sources")
+		_lit_at = Vector2i(-99999, -99999)
+		world.lights.mark_dirty()
+	if on:
+		var t := Vector2i((light_point() * 4.0).floor())
+		if t != _lit_at:
+			_lit_at = t
+			world.lights.mark_dirty()
+
+
 func _draw_box() -> void:
-	var c := BOX_COLOR if box_ok else BAD_COLOR
+	var c := BOX_COLOR
 	var pulse := 0.75 + 0.25 * sin(Time.get_ticks_msec() / 1000.0 * box_pulse_speed)
-	draw_rect(box, Color(c, box_fill_alpha * pulse))
-	for i in 3:  # a soft glow outside the edge
-		draw_rect(box.grow(1.0 + i), Color(c, box_edge_alpha * 0.18 / (i + 1) * pulse), false, 1.0)
-	draw_rect(box.grow(0.5), Color(c, box_edge_alpha * pulse), false, 1.0)
+	if not box_ok:
+		return  # drawn solid on the tool layer (additive red turns yellow on the sky)
+	if tiles.is_empty():
+		draw_rect(box, Color(c, box_fill_alpha * pulse))
+		for i in 3:  # a soft glow outside the edge
+			draw_rect(box.grow(1.0 + i), Color(c, box_edge_alpha * 0.18 / (i + 1) * pulse), false, 1.0)
+		draw_rect(box.grow(0.5), Color(c, box_edge_alpha * pulse), false, 1.0)
+		return
+	# Each block it will mine lights up; one outline (with a soft glow) traces the group.
+	var t := World.TILE
+	var in_set := {}
+	for v in tiles:
+		in_set[v] = true
+	for v in tiles:
+		draw_rect(Rect2(Vector2(v * t), Vector2(t, t)), Color(c, box_fill_alpha * 1.6 * pulse))
+	var edges: Array[Array] = []
+	for v in tiles:
+		var o := Vector2(v * t)
+		if not in_set.has(v + Vector2i.UP):
+			edges.append([o, o + Vector2(t, 0), Vector2(0, -1)])
+		if not in_set.has(v + Vector2i.DOWN):
+			edges.append([o + Vector2(0, t), o + Vector2(t, t), Vector2(0, 1)])
+		if not in_set.has(v + Vector2i.LEFT):
+			edges.append([o, o + Vector2(0, t), Vector2(-1, 0)])
+		if not in_set.has(v + Vector2i.RIGHT):
+			edges.append([o + Vector2(t, 0), o + Vector2(t, t), Vector2(1, 0)])
+	for e in edges:
+		var out: Vector2 = e[2]
+		for i in 3:  # glow spilling outward
+			draw_line(e[0] + out * (1.0 + i), e[1] + out * (1.0 + i), Color(c, box_edge_alpha * 0.18 / (i + 1) * pulse), 1.0)
+		draw_line(e[0] + out * 0.5, e[1] + out * 0.5, Color(c, box_edge_alpha * pulse), 1.0)
 
 
 # --- the swing ----------------------------------------------------------------------

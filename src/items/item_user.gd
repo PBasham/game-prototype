@@ -1189,6 +1189,7 @@ func _update_phantom(p: Player, show: bool) -> void:
 	pt.swinging = show
 	pt.visible = pt.box_shown or show
 	if not pt.visible:
+		pt.update_light(world)
 		return
 	pt.box = Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE))
 	pt.box_ok = problem == "" and (not valid.is_empty() or tree != PlantLayer.NONE)
@@ -1203,6 +1204,8 @@ func _update_phantom(p: Player, show: bool) -> void:
 		pt.tint = sp.phantom_tints[clampi(sp.gather_rank, 0, sp.phantom_tints.size() - 1)]
 	pt.side = 1.0 if p.global_position.x < pt.target.x else -1.0
 	pt.swing = _swing
+	pt.tiles = valid if mode == Mode.MINE else ([] as Array[Vector2i])
+	pt.update_light(world)
 	pt.redraw()
 
 

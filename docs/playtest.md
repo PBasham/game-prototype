@@ -359,7 +359,7 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
 - [ ] With the Pendant: a slime and a spirit together.
 
 **Phase 26: phantom swings (branch phase-26-phantom-swings)**
-- [ ] Holding Mining or Chopping shows a glowing blue target box (red where it can't work), not the white outline.
+- [ ] Holding Mining or Chopping lights up the blocks under the cursor (Starbound style): a glow on each block, one blue outline around them, and real light that shows them in the dark. Red box where it can't work.
 - [ ] Each swing the tool appears, strikes the middle of the box fast with a streak and a flash, and fades.
 - [ ] Compare the styles: Mining (Echo, dev) and Mining (Comet, dev) from the spell window, or console `phantom echo` / `phantom comet` / `phantom arc`.
 - [ ] Underground it lights up the dark around the strike.

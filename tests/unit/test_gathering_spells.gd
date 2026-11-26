@@ -121,6 +121,9 @@ func test_glowing_box_and_the_tool_lands_on_the_middle() -> void:
 	assert_true(pt.box_shown, "the glowing blue box while aiming")
 	assert_false(pt.swinging, "no tool until you mine")
 	assert_true(pt.box_ok)
+	assert_eq(pt.tiles, u.valid, "outlines exactly the blocks it will mine")
+	assert_true(pt.is_in_group(&"light_sources"), "a real light while aiming")
+	assert_true(w.dynamic_lights().any(func(l: Array) -> bool: return (l[0] as Vector2).distance_to(pt.light_point()) < 0.01))
 	for style in 3:
 		pt.style = style as PhantomTool.Style
 		pt.side = 1.0
