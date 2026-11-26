@@ -99,7 +99,10 @@ static func _register() -> void:
 		s.phantom_style = e[3]
 		s.phantom_swing_time = e[4]
 		s.phantom_impact = e[5]
-		s.phantom_tuning.assign(e[6])
+		# Its own dictionary: duplicate() shares the base spell's, and Mining must stay as it is.
+		var tuning: Dictionary[StringName, float] = {}
+		tuning.assign(e[6])
+		s.phantom_tuning = tuning
 		# As strong as the dev kit's fully empowered Mining and Chopping.
 		s.reach_tiles += 6.0
 		s.mining_power += 20

@@ -140,6 +140,7 @@ func test_glowing_box_and_the_tool_lands_on_the_middle() -> void:
 		assert_eq(pt.size_mult, 1.9, "a variant's own tuning")
 		pt.apply_tuning({})
 		assert_eq(pt.size_mult, 1.5, "back to the defaults")
+		assert_true((Registry.get_def(&"spells", &"mining_spell") as SpellData).phantom_tuning.is_empty(), "Mining itself untouched")
 	w.console.run("phantom comet")
 	assert_eq((p.use_item() as SpellData).phantom_style, PhantomTool.Style.COMET)
 	w.console.run("phantom arc")
