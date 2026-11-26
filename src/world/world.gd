@@ -144,7 +144,7 @@ var _autosave_left := 0.0
 
 func _ready() -> void:
 	if OS.is_debug_build():
-		DevMagic._register()  # so `give dev_focus` and the Dev items window have them
+		DevMagic._register()  # so `give dev_focus` and the Creative window have them
 	Game.set_state(Game.State.LOADING)
 	blocks = TileTypes.new(&"tiles")
 	walls = TileTypes.new(&"walls")
@@ -370,6 +370,11 @@ func _key_pressed(event: InputEvent, key: Key) -> bool:
 	return k != null and k.pressed and not k.echo and k.physical_keycode == key
 
 
+## Pause menu > Quit Game > Quit without saving: leaving doesn't save (anything the
+## autosave already wrote stays).
+var skip_save := false
+
+
 func _exit_tree() -> void:
 	ItemData.set_empowered([])
 	# Background jobs hold their own data, but finish them before the world goes away.
@@ -379,8 +384,9 @@ func _exit_tree() -> void:
 		renderer.wait_all()
 	if data:
 		data.wait_all()
-		save()
-	elif character:
+		if not skip_save:
+			save()
+	elif character and not skip_save:
 		character.save()
 	EventBus.world_unloaded.emit()
 

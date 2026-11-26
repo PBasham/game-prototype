@@ -317,9 +317,18 @@ func _register() -> void:
 	_add("devkit", "devkit", "Tools, blocks, torches, all spells and the dev test items.", func(_a: PackedStringArray) -> void:
 		world.character.give_dev_kit()
 		_print("Dev kit given."))
-	_add("creative", "creative", "Open the Dev items window (also F7): every item, take as many as you like.", func(_a: PackedStringArray) -> void:
-		world.hud.toggle_dev_items()
-		_print("Dev items window %s." % ("open" if world.hud.dev_items_open else "closed")))
+	_add("creative", "creative [tab]", "Open the Creative window (also F7): every item, dev and test things, enemies to spawn. With a tab name (dev, test, enemies...) it opens on that tab.", func(a: PackedStringArray) -> void:
+		var win := world.hud._creative
+		if a.size() > 0:
+			for i in CreativeWindow.TABS.size():
+				if String(CreativeWindow.TABS[i][0]).to_lower().begins_with(a[0].to_lower()):
+					win.tab = i
+					win.scroll = 0
+			if not world.hud.creative_open:
+				world.hud.toggle_creative()
+		else:
+			world.hud.toggle_creative()
+		_print("Creative window %s." % ("open" if world.hud.creative_open else "closed")))
 	_add("books", "books", "Give the tier 1, 2 and 3 spellbooks.", func(_a: PackedStringArray) -> void:
 		for t in range(1, 4):
 			world.character.inventory.add(StringName("spellbook_t%d" % t), 1)

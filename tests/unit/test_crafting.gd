@@ -446,11 +446,11 @@ func test_furniture_faces_the_way_you_placed_it() -> void:
 	assert_false(w.is_flipped(a))
 
 
-func test_dev_items_window_gives_stacks() -> void:
+func test_creative_window_gives_stacks() -> void:
 	var hud := w.hud
-	hud.toggle_dev_items()
-	assert_true(hud.dev_items_open)
-	var win := hud._dev_items
+	hud.toggle_creative()
+	assert_true(hud.creative_open)
+	var win := hud._creative
 	assert_gt(win.all_items().size(), 50)
 	assert_false(win.all_items().any(func(it: ItemData) -> bool: return it.is_spell()), "no spells")
 	win.search = "wood platform"
@@ -492,7 +492,7 @@ func test_dev_items_window_gives_stacks() -> void:
 	hud.cursor_count = 0
 	hud.cursor_id = &""
 	hud.cursor_meta = {}
-	hud.toggle_dev_items()
+	hud.toggle_creative()
 	hud.set_open(false)
 
 
@@ -608,3 +608,54 @@ func test_darkwood_workbench_upgrade_makes_reinforced_wood() -> void:
 		assert_gt(w.blocks.index_of(id), 0)
 		assert_gt(w.walls.index_of(StringName(String(id) + "_wall")), 0)
 		assert_gt(w.blocks.def(w.blocks.index_of(id)).health, w.blocks.def(w.blocks.index_of(&"wood_planks")).health)
+
+
+func test_creative_window_dev_test_and_enemy_tabs() -> void:
+	var hud := w.hud
+	hud.toggle_creative()
+	var win := hud._creative
+	assert_eq(win.title, "Creative", "a creative mode window, not dev items")
+	win.tab = CreativeWindow.DEV_TAB
+	var dev := win.shown().map(func(it: ItemData) -> StringName: return it.id)
+	assert_has(dev, &"dev_grimoire")
+	assert_does_not_have(dev, &"spellbook_t1")
+	win.tab = CreativeWindow.TEST_TAB
+	var test := win.shown().map(func(it: ItemData) -> StringName: return it.id)
+	assert_has(test, &"spellbook_t1", "test books")
+	assert_has(test, &"dev_mining_v2", "test spells")
+	assert_false(test.has(&"dev_grimoire"))
+	# A test spell goes on the mouse, for a quick slot.
+	var i := win.shown().find(ItemData.find(ItemData.spell_key(&"dev_mining_v2")))
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = win.cell(i).get_center()
+	win.body_click(click)
+	assert_eq(hud.cursor_id, ItemData.spell_key(&"dev_mining_v2"))
+	hud._clear_cursor()
+	# Enemies: click spawns one in front of you.
+	win.tab = CreativeWindow.ENEMY_TAB
+	var enemies := win.shown()
+	assert_eq(enemies.size(), Registry.get_all(&"enemies").size())
+	w.spawner.peaceful = true
+	var before := w.enemies().size()
+	click.position = win.cell(0).get_center()
+	win.body_click(click)
+	assert_eq(w.enemies().size(), before + 1, "spawned")
+	click.shift_pressed = true
+	win.body_click(click)
+	assert_eq(w.enemies().size(), before + 6, "Shift: 5")
+	for t in CreativeWindow.TABS.size():
+		assert_ne(win.tab_rect(t), Rect2(), "tab %d laid out" % t)
+		assert_lte(win.tab_rect(t).end.x, win.search_rect().end.x + 0.5, "tabs wrap inside the window")
+
+
+func test_quit_game_asks_first() -> void:
+	var menu := w._pause_menu
+	menu.toggle()
+	menu._show_quit()
+	await wait_process_frames(2)
+	var labels := menu._root.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
+	assert_has(labels, "Cancel", "a way back")
+	assert_true(labels.has("Quit") or labels.has("Quit without saving"), "quit without saving")
+	menu.toggle()

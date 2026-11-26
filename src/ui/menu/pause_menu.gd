@@ -46,8 +46,31 @@ func _show_main() -> VBoxContainer:
 		box.add_child(UiKit.button("Save", func() -> void: world.save()))
 	box.add_child(UiKit.button("Settings", _show_settings))
 	box.add_child(UiKit.button("Save & Quit to Menu" if world.is_saved() else "Quit to Menu", Game.quit_to_menu))
-	box.add_child(UiKit.button("Quit Game", func() -> void: get_tree().quit()))
+	box.add_child(UiKit.button("Quit Game", _show_quit))
 	return box
+
+
+## Quit Game asks first: save and quit, quit without saving, or go back.
+func _show_quit() -> void:
+	var box := _page()
+	box.add_child(UiKit.label("Quit Game?", 14))
+	if world.is_saved():
+		box.add_child(UiKit.label("Quit without saving?", 8, UiKit.DIM))
+		box.add_child(UiKit.button("Save & Quit", quit_game.bind(true)))
+		box.add_child(UiKit.button("Quit without saving", quit_game.bind(false)))
+	else:
+		box.add_child(UiKit.label("This world isn't saved.", 8, UiKit.DIM))
+		box.add_child(UiKit.button("Quit", quit_game.bind(false)))
+	var back := UiKit.button("Cancel", _show_main)
+	box.add_child(back)
+	back.grab_focus.call_deferred()
+
+
+func quit_game(save_first: bool) -> void:
+	if save_first:
+		world.save()
+	world.skip_save = true  # saved just now, or not wanted
+	get_tree().quit()
 
 
 func _show_settings() -> void:

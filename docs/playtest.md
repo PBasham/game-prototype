@@ -172,7 +172,7 @@ guesses; the docs listed say where each tunable lives.
       leave and come back: you're at your bed / spawn.
 - [ ] `give spellbook_t2` works.
 - [ ] Place a bed / workbench facing left: it's mirrored (and stays so after reload).
-- [ ] F7 (or `creative`): Dev items window; tabs, search, click for a stack.
+- [ ] F7 (or `creative`): Creative window; tabs, search, click for a stack.
 - [ ] `books`: tier 1 / 2 / 3 test books.
 - [ ] Concentrating (Fly): its icon and name under the held item.
 - [ ] Mushrooms look small in the inventory and hand.
@@ -249,7 +249,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Place a chest, Lumber Rack or Potion Cabinet: no error (the hover name tooltip
       crashed with no window under the mouse).
 - [ ] Mining Spell, Chopping Spell, Fly / Levitate tooltips: "Has its own key".
-- [ ] Dev items (F7): click 1, Shift 10, Ctrl a stack, right click an infinite stack
+- [ ] Creative window (F7): click 1, Shift 10, Ctrl a stack, right click an infinite stack
       (place or eat from it forever; its tooltip says so).
 - [ ] Air Push: no hits through walls; stronger push; aim down on the ground: a gust jump.
 
@@ -357,6 +357,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       into them up close) and hits them, stays
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
+
+**Phase 34: Creative window, quit confirmation (branch phase-34-creative-window)**
+- [ ] F7 opens the **Creative** window (not "Dev items"); the tabs wrap onto two rows.
+- [ ] Dev tab: Dev Grimoire, Dev Focus, Dev Ring, Dev Tome. Test tab: placeholder held items, test books, Mining v2+ (click one, drop it on a quick slot).
+- [ ] Enemies tab: click spawns one in front of you, Shift + click 5.
+- [ ] Pause > Quit Game asks: Save & Quit, Quit without saving, Cancel.
 
 **Phase 33: the hovering tool (branch phase-33-phantom-hover)**
 - [ ] With Mining or Chopping in hand, the phantom tool floats behind your shoulder, bobbing, and follows you.

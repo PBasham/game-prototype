@@ -289,7 +289,7 @@ option (`WorldInfo.DeathDrop`). The magic bag: `src/items/item_bag.gd`. Details 
 
 `src/ui/hud/hud.gd` draws the inventory, hotbar, crafting, chests, tooltips, the spell
 wheel and pickup notes. Separate windows: `equipment_window.gd`, `spell_window.gd`,
-`dev_items_window.gd`, `map_view.gd`. Look: `src/ui/ui_skin.gd` (wooden windows,
+`creative_window.gd`, `map_view.gd`. Look: `src/ui/ui_skin.gd` (wooden windows,
 buttons) and `src/ui/satchel_look.gd` (the satchel inventory: colors are the consts at
 its top). The trash slot is `CharacterData.trash`. Menus: `src/ui/menu/`.
 
@@ -356,7 +356,7 @@ saves still load.
 | Tool | Where |
 | --- | --- |
 | Console (`~` in debug builds; `help` lists commands) | `src/ui/dev/dev_console.gd` |
-| F3 overlay, F6 regenerate, F7 dev items | `debug_overlay.gd`, `world.gd`, `dev_items_window.gd` |
+| F3 overlay, F6 regenerate, F7 Creative window | `debug_overlay.gd`, `world.gd`, `creative_window.gd` |
 | Scripted runs and screenshots (`--shot`, `--tap`, `--console`, `--aim`) | `src/core/dev_cli.gd`, [README.md](../README.md) |
 | Tests | `tests/unit/test_<area>.gd`; run all: `godot --headless --path . -s addons/gut/gut_cmdln.gd` |
 
@@ -465,3 +465,10 @@ saves still load.
 | Change | Where |
 | --- | --- |
 | Hover, pull into the swing, drift back | `PhantomTool._process`, `_hover_point`, `_pulled`, `_draw_hover`, `_draw_main`; set from `ItemUser._update_phantom` (`idle`, `anchor`, `facing`) |
+
+## Phase 34: Creative window, quit confirmation
+
+| Change | Where |
+| --- | --- |
+| The Creative window (F7), its tabs, spawning | `CreativeWindow` (src/ui/hud/creative_window.gd, was DevItemsWindow): `TABS`, `DEV_TAB`, `TEST_TAB`, `ENEMY_TAB`, `TEST_BOOKS`, `spawn`, `spawn_tiles`; `Hud.toggle_creative`; console `creative [tab]` |
+| Quit Game asks first | `PauseMenu._show_quit`, `quit_game`; `World.skip_save` |

@@ -77,8 +77,8 @@ var crafting := false
 var equipping := false
 ## The Spell Index (L) is open.
 var spells_open := false
-## Dev builds: the Dev items window (F7) is shown.
-var dev_items_open := false
+## Dev builds: the Creative window (F7) is shown.
+var creative_open := false
 ## Stack held on the mouse (inventory open). "spell:<id>" = a spell being placed.
 var cursor_id: StringName = &""
 var cursor_count := 0
@@ -125,7 +125,7 @@ var _craft: Pane
 var _chest: Pane
 var _equip: EquipmentWindow
 var _spells: SpellWindow
-var _dev_items: DevItemsWindow
+var _creative: CreativeWindow
 var _catalog: CatalogWindow
 var catalog_open := false
 var _status: Pane
@@ -210,9 +210,9 @@ func _ready() -> void:
 	_spells = SpellWindow.new(self)
 	_spells.close_pressed.connect(toggle_spells)
 	add_child(_spells)
-	_dev_items = DevItemsWindow.new(self)
-	_dev_items.close_pressed.connect(toggle_dev_items)
-	add_child(_dev_items)
+	_creative = CreativeWindow.new(self)
+	_creative.close_pressed.connect(toggle_creative)
+	add_child(_creative)
 	_catalog = CatalogWindow.new(self)
 	_catalog.close_pressed.connect(toggle_catalog)
 	add_child(_catalog)
@@ -343,7 +343,7 @@ func _redraw() -> void:
 	_chest.queue_redraw()
 	_equip.queue_redraw()
 	_spells.queue_redraw()
-	_dev_items.queue_redraw()
+	_creative.queue_redraw()
 	_catalog.queue_redraw()
 
 
@@ -371,13 +371,13 @@ func _input(event: InputEvent) -> void:
 			_press_on_ui = false
 	var key := event as InputEventKey
 	if key and key.pressed and not key.echo and key.physical_keycode == KEY_F7 and OS.is_debug_build():
-		toggle_dev_items()
+		toggle_creative()
 		get_viewport().set_input_as_handled()
 		return
 	if renaming and _rename_key(key):
 		get_viewport().set_input_as_handled()
 		return
-	if _dev_items.searching and _dev_items.search_key(key):
+	if _creative.searching and _creative.search_key(key):
 		get_viewport().set_input_as_handled()
 		return
 	if _amount_typing and _amount_key(event):
@@ -417,7 +417,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Something else has the keyboard (the console, a search box, renaming, the amount).
 func _typing_elsewhere() -> bool:
-	return (world.console != null and world.console.open) or _spells.searching or _dev_items.searching \
+	return (world.console != null and world.console.open) or _spells.searching or _creative.searching \
 		or renaming or weave_searching or _amount_typing or map_view.visible
 
 
@@ -430,7 +430,7 @@ func toggle_map() -> void:
 func _process(delta: float) -> void:
 	_update_notes(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
-		or _dev_items.searching or renaming \
+		or _creative.searching or renaming \
 		or weave_searching or chat.open
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
@@ -504,7 +504,7 @@ func _process(delta: float) -> void:
 
 ## The window under the mouse, or null.
 func _over_pane() -> Control:
-	for pane: Control in [_catalog, _dev_items, _spells, _equip, _craft, _chest, _inv]:
+	for pane: Control in [_catalog, _creative, _spells, _equip, _craft, _chest, _inv]:
 		if pane.visible and pane.get_global_rect().has_point(pane.get_global_mouse_position()):
 			return pane
 	return null
@@ -520,7 +520,7 @@ func set_open(value: bool) -> void:
 		crafting = false
 		equipping = false
 		spells_open = false
-		dev_items_open = false
+		creative_open = false
 		catalog_open = false
 		if cursor_count > 0:
 			if _cursor_is_spell():
@@ -554,15 +554,15 @@ func toggle_equipment() -> void:
 	_layout()
 
 
-## F7 (dev builds) or console `creative`: the Dev items window (with the inventory).
-func toggle_dev_items() -> void:
-	dev_items_open = not dev_items_open
-	if dev_items_open:
+## F7 (dev builds) or console `creative`: the Creative window (with the inventory).
+func toggle_creative() -> void:
+	creative_open = not creative_open
+	if creative_open:
 		open = true
 	_layout()
 
 
-## Puts `count` of an item on the mouse (the Dev items window). The same item adds up
+## Puts `count` of an item on the mouse (the Creative window). The same item adds up
 ## to a stack; something else on the mouse goes back to the inventory first.
 func give_cursor(item_id: StringName, count: int, meta: Dictionary = {}) -> void:
 	if cursor_count > 0 and cursor_id != item_id:
@@ -740,14 +740,14 @@ func _layout() -> void:
 		_equip.refresh_look()
 	else:
 		_equip.visible = false
-	if open and dev_items_open:
+	if open and creative_open:
 		var screen := _view_size()
-		_dev_items.layout()
-		_dev_items.show_at(Vector2(screen.x - _dev_items.size.x - 8, screen.y - _dev_items.size.y - 8))
+		_creative.layout()
+		_creative.show_at(Vector2(screen.x - _creative.size.x - 8, screen.y - _creative.size.y - 8))
 	else:
-		_dev_items.visible = false
-		if _dev_items.searching:
-			_dev_items.set_searching(false)
+		_creative.visible = false
+		if _creative.searching:
+			_creative.set_searching(false)
 	if open and catalog_open:
 		_catalog.show_at(_catalog.centered())
 	else:

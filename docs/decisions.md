@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 34, Creative window, quit confirmation
+
+- **Patrick:** F7 is a creative mode window, not "Dev items"; add Dev and Test tabs and
+  an Enemy tab to spawn enemies. Claude: Dev = the dev cheat items, Test = placeholder
+  held items, test books and the test spells; enemies spawn in front of you.
+- **Patrick:** Quit asks first ("Quit without saving?"). Quitting used to save on the
+  way out; now the choice is Save & Quit or Quit without saving.
+
 ## 2026-11-26: Phase 33, the hovering tool
 
 - **Patrick:** keep every phantom animation, but the tool should hover near you like a
