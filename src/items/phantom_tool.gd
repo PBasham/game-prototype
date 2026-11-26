@@ -1,52 +1,283 @@
 class_name PhantomTool
 extends Node2D
-## The see-through pickaxe or axe a gathering spell conjures (ItemUser drives it). It
-## hangs above the target on your side, winds up, and strikes down onto it once per
-## swing, glowing in its rank's color. Drawn above the lighting (LightMap is z 50) so it
-## glows underground too.
+## The gathering spells' phantom pickaxe or axe (ItemUser drives it) and their glowing
+## target box. Every swing the tool comes into being, strikes the middle of the target
+## fast, lights things up and fades away; the next swing conjures it again. The hit
+## lands at `impact` (SpellData.phantom_impact) of the swing.
+##
+## Styles (SpellData.phantom_style):
+##   ARC    raised beside the target, a fast arc down with a glowing crescent streak
+##   ECHO   the same arc, leaving fading copies of itself behind (afterimages)
+##   COMET  appears high above, spins once as it drops onto the target, a comet tail
+##
+## Drawn above the lighting (LightMap is z 50): the tool, its streak and its glow are
+## additive light, so they read as light underground too.
 
-## Where the grip sits in the art (fraction of its size) and where the head is: the
-## art is the usual tool diagonal, grip bottom left, head top right.
-const GRIP := Vector2(0.15, 0.85)
-const HEAD := Vector2(0.75, 0.25)
-## Turn (radians) from the raised pose to the strike.
-@export var wind_up := 2.3
-## How big it's drawn (1 = the art's size: 2 tiles).
-@export var size_mult := 1.4
-## Glow strength (0 to 1) and the soft rim around it.
-@export var alpha := 0.85
-@export var rim_alpha := 0.25
+enum Style { ARC, ECHO, COMET }
 
+## Where the grip and the striking point sit in the art (fractions of its size; set
+## from SpellData.phantom_grip and phantom_tip).
+var grip_at := Vector2(0.08, 0.92)
+var tip_at := Vector2(0.88, 0.48)
+## How big the tool is drawn (1 = the art's size, 2 tiles).
+@export var size_mult := 1.5
+## Turn (radians) from raised to the strike (ARC, ECHO).
+@export var wind_up := 2.2
+## Parts of the swing (0 to 1): fading in until `appear`, raised until `strike_from`,
+## then the fast strike lands at the spell's impact, then it fades out.
+@export var appear := 0.22
+@export var strike_from := 0.55
+## COMET: how high above the target it appears (tiles).
+@export var comet_height := 4.0
+## How bright the tool, its glow and its streak are.
+@export var tool_alpha := 0.95
+@export var glow_alpha := 0.55
+@export var streak_alpha := 0.7
+## Target box: fill and edge brightness, and how fast it breathes.
+@export var box_fill_alpha := 0.12
+@export var box_edge_alpha := 0.85
+@export var box_pulse_speed := 4.0
+
+const BOX_COLOR := Color(0.45, 0.8, 1.0)
+const BAD_COLOR := Color(1.0, 0.35, 0.3)
+
+var style := Style.ARC
 var texture: Texture2D
-var tint := Color.WHITE
-## The point it strikes, and which side you're on (+1: you're left of it).
+var tint := Color(0.7, 0.9, 1.0)
+## The point it strikes (the middle of the target), and which side you're on (+1:
+## you're left of it).
 var target := Vector2.ZERO
 var side := 1.0
-## 0 to 1 through the swing (it strikes at 1).
+## 0 to 1 through the current swing; `impact` is where it lands.
 var swing := 0.0
-var hand := Vector2.ZERO
+var impact := 0.8
+var swinging := false
+## The target box (px), shown while you hold a gathering spell; red when it can't work.
+var box := Rect2()
+var box_shown := false
+var box_ok := true
+
+static var _glow_tex: GradientTexture2D
+## The tool itself draws on this child with normal blending (solid, so it doesn't wash
+## out over the bright sky); this node draws the light: box glow, streaks, halos.
+var _tools: Node2D
 
 
 func _ready() -> void:
 	z_as_relative = false
 	z_index = 56
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD  # light, not paint
+	material = mat
+	_tools = Node2D.new()
+	_tools.name = "Tool"
+	add_child(_tools)
+	_tools.draw.connect(_draw_tools)
+	if _glow_tex == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.add_point(0.35, Color(1, 1, 1, 0.45))
+		_glow_tex = GradientTexture2D.new()
+		_glow_tex.gradient = g
+		_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+		_glow_tex.fill_from = Vector2(0.5, 0.5)
+		_glow_tex.fill_to = Vector2(1.0, 0.5)
+		_glow_tex.width = 64
+		_glow_tex.height = 64
 
 
+func redraw() -> void:
+	queue_redraw()
+	_tools.queue_redraw()
+
+
+## The light layer (additive).
 func _draw() -> void:
-	if texture == null:
-		return
-	var size := Vector2(texture.get_size()) / 2.0 * size_mult  # detailed art: 2 art px per world px
-	var head := (HEAD - GRIP) * size
-	var reach := head.length()
-	# The grip hangs up and back from the target, so the head comes down onto it.
-	var grip := target + Vector2(-side * 0.7, -0.7) * reach
-	var strike := PI / 2.0
-	var angle := side * lerpf(strike - wind_up, strike, ease(swing, 3.2))
-	draw_line(hand, grip, Color(tint, 0.15), 1.0)  # the thread back to your hand
+	if box_shown:
+		_draw_box()
+	if swinging and texture:
+		match style:
+			Style.COMET:
+				_draw_comet(false)
+			_:
+				_draw_arc_swing(style == Style.ECHO, false)
+
+
+## The tool layer (solid).
+func _draw_tools() -> void:
+	if swinging and texture:
+		match style:
+			Style.COMET:
+				_draw_comet(true)
+			_:
+				_draw_arc_swing(style == Style.ECHO, true)
+
+
+# --- the target box -----------------------------------------------------------------
+
+func _draw_box() -> void:
+	var c := BOX_COLOR if box_ok else BAD_COLOR
+	var pulse := 0.75 + 0.25 * sin(Time.get_ticks_msec() / 1000.0 * box_pulse_speed)
+	draw_rect(box, Color(c, box_fill_alpha * pulse))
+	for i in 3:  # a soft glow outside the edge
+		draw_rect(box.grow(1.0 + i), Color(c, box_edge_alpha * 0.18 / (i + 1) * pulse), false, 1.0)
+	draw_rect(box.grow(0.5), Color(c, box_edge_alpha * pulse), false, 1.0)
+
+
+# --- the swing ----------------------------------------------------------------------
+
+## Size of the tool in px, and the tip relative to the grip in the art's frame.
+func _size() -> Vector2:
+	return Vector2(texture.get_size()) / 2.0 * size_mult  # detailed art: 2 art px per world px
+
+
+func _tip_offset() -> Vector2:
+	return (tip_at - grip_at) * _size()
+
+
+## How visible the tool is: fades in, holds, fades out after the hit.
+func _life() -> float:
+	if swing < appear:
+		return swing / appear
+	if swing > impact:
+		return clampf(1.0 - (swing - impact) / maxf(1.0 - impact, 0.01), 0.0, 1.0)
+	return 1.0
+
+
+## 0 (raised) to 1 (striking) through the swing: still while it appears, a short
+## wind up, then a fast strike that lands exactly at `impact`.
+func _strike(t: float) -> float:
+	if t <= strike_from:
+		return -0.08 * clampf((t - appear) / maxf(strike_from - appear, 0.01), 0.0, 1.0)  # draws back a hair
+	if t >= impact:
+		return 1.0 + 0.06 * sin(clampf((t - impact) / 0.1, 0.0, 1.0) * PI)  # a little bite past the hit
+	var k := (t - strike_from) / maxf(impact - strike_from, 0.01)
+	return k * k * k  # slow, then very fast
+
+
+## The tool's rotation at strike progress `k` (ARC, ECHO), mirrored for your side: at
+## k = 1 the tip points from the grip straight at the target.
+func _angle(k: float) -> float:
+	var tip := _tip_offset()
+	var strike_dir := Vector2(side * 0.55, 1.0).normalized()  # down and away from you
+	var strike := strike_dir.angle() - Vector2(tip.x * side, tip.y).angle()
+	return strike - side * wind_up * (1.0 - k)
+
+
+## Where the grip sits so the tip lands on the target at the strike.
+func _grip() -> Vector2:
+	var tip := _tip_offset()
+	var mirrored := Vector2(tip.x * side, tip.y)
+	return target - mirrored.rotated(_angle(1.0))
+
+
+func _tip_at(grip: Vector2, angle: float) -> Vector2:
+	var tip := _tip_offset()
+	return grip + Vector2(tip.x * side, tip.y).rotated(angle)
+
+
+func _draw_tool(grip: Vector2, angle: float, alpha: float, scale_k: float = 1.0) -> void:
+	var size := _size() * scale_k
+	_tools.draw_set_transform(grip, angle, Vector2(side, 1.0))
+	var r := Rect2(-grip_at * size, size)
+	_tools.draw_texture_rect(texture, r, false, Color(tint.lightened(0.35), alpha))
+	_tools.draw_set_transform(Vector2.ZERO)
+
+
+## The tool's light outline: the art again, bigger and faint, on the light layer.
+func _draw_tool_light(grip: Vector2, angle: float, alpha: float, scale_k: float = 1.0) -> void:
+	var size := _size() * scale_k
 	draw_set_transform(grip, angle, Vector2(side, 1.0))
-	var r := Rect2(-GRIP * size, size)
-	draw_texture_rect(texture, r.grow(1.0), false, Color(tint, rim_alpha))
-	draw_texture_rect(texture, r, false, Color(tint, alpha))
+	var r := Rect2(-grip_at * size, size)
+	draw_texture_rect(texture, r.grow(1.5), false, Color(tint, alpha * 0.45))
 	draw_set_transform(Vector2.ZERO)
-	if swing < 0.15:  # just landed: a little flash on the block
-		draw_circle(target, 3.5 * (1.0 - swing / 0.15), Color(tint, 0.6))
+
+
+func _glow(at: Vector2, radius: float, alpha: float) -> void:
+	draw_texture_rect(_glow_tex, Rect2(at - Vector2(radius, radius), Vector2(radius, radius) * 2.0), false, Color(tint, alpha))
+
+
+func _draw_arc_swing(echo: bool, tools: bool) -> void:
+	var life := _life()
+	var k := _strike(swing)
+	var grip := _grip()
+	var angle := _angle(clampf(k, -0.2, 1.1))
+	var tip := _tip_at(grip, angle)
+	# Appearing: it grows in from a spark.
+	var grow := lerpf(0.6, 1.0, clampf(swing / appear, 0.0, 1.0))
+	var striking := swing > strike_from and swing < impact + 0.12
+	if tools:
+		if striking and echo:
+			# Afterimages: where it was a moment ago, fainter the older they are.
+			for i in range(4, 0, -1):
+				var past := _strike(swing - i * 0.035)
+				if past > 0.0:
+					_draw_tool(grip, _angle(past), tool_alpha * life * (0.5 - i * 0.1), 1.0)
+		_draw_tool(grip, angle, tool_alpha * life, grow)
+		return
+	if striking:
+		var k0 := 0.0
+		if echo:
+			for i in range(4, 0, -1):
+				var past := _strike(swing - i * 0.035)
+				if past > 0.0:
+					_draw_tool_light(grip, _angle(past), life * (0.5 - i * 0.1))
+		else:
+			# A glowing crescent along the path the tip swept.
+			var pts := PackedVector2Array()
+			var steps := 14
+			for i in steps + 1:
+				var kk := lerpf(k0, minf(k, 1.0), float(i) / steps)
+				pts.append(_tip_at(grip, _angle(kk)))
+			for w: Array in [[5.0, 0.18], [3.0, 0.35], [1.2, 0.9]]:
+				var col := PackedColorArray()
+				for i in pts.size():
+					var along := float(i) / maxf(pts.size() - 1, 1)
+					col.append(Color(tint, streak_alpha * life * w[1] * along * along))
+				draw_polyline_colors(pts, col, w[0])
+	_draw_tool_light(grip, angle, life, grow)
+	# Its own light: around the head, flaring on the hit.
+	var flare := 0.0
+	if swing >= impact:
+		flare = 1.0 - clampf((swing - impact) / 0.15, 0.0, 1.0)
+	_glow(tip, 10.0 + 8.0 * flare, glow_alpha * life * (0.6 + flare))
+	if flare > 0.0:
+		_glow(target, 14.0 * flare + 6.0, glow_alpha * flare)
+		for i in 6:  # sparks off the block
+			var a := TAU * i / 6.0 + target.x
+			draw_line(target, target + Vector2.from_angle(a) * (4.0 + 6.0 * (1.0 - flare)), Color(tint, flare * 0.8), 1.0)
+
+
+func _draw_comet(tools: bool) -> void:
+	var life := _life()
+	var drop := 0.0  # 0 high above, 1 on the target
+	if swing > strike_from:
+		var k := clampf((swing - strike_from) / maxf(impact - strike_from, 0.01), 0.0, 1.0)
+		drop = k * k
+	var top := target + Vector2(-side * 6.0, -comet_height * 8.0)
+	var tip_offset := _tip_offset()
+	# One full turn on the way down, ending pointed at the target.
+	var final_angle := Vector2(0.0, 1.0).angle() - Vector2(tip_offset.x * side, tip_offset.y).angle()
+	var angle := final_angle - side * TAU * (1.0 - drop)
+	var tip_pos := top.lerp(target, drop)
+	var grip := tip_pos - Vector2(tip_offset.x * side, tip_offset.y).rotated(angle)
+	var grow := lerpf(0.4, 1.0, clampf(swing / appear, 0.0, 1.0))
+	if tools:
+		_draw_tool(grip, angle, tool_alpha * life, grow)
+		return
+	if swing > strike_from and swing < impact + 0.05:
+		# The tail: from where it started to where it is now.
+		var pts := PackedVector2Array([top, tip_pos])
+		for w: Array in [[6.0, 0.15], [3.0, 0.3], [1.2, 0.8]]:
+			draw_polyline_colors(pts, PackedColorArray([Color(tint, 0.0), Color(tint, streak_alpha * life * w[1])]), w[0])
+	_draw_tool_light(grip, angle, life, grow)
+	var flare := 0.0
+	if swing >= impact:
+		flare = 1.0 - clampf((swing - impact) / 0.18, 0.0, 1.0)
+	_glow(tip_pos, 9.0 + 10.0 * flare, glow_alpha * life * (0.6 + flare))
+	if flare > 0.0:
+		_glow(target, 18.0 * flare + 6.0, glow_alpha * flare)
+		for i in 8:
+			var a := -PI * float(i) / 7.0
+			draw_line(target, target + Vector2.from_angle(a) * (5.0 + 8.0 * (1.0 - flare)), Color(tint, flare * 0.8), 1.0)

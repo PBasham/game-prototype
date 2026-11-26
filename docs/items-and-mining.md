@@ -351,14 +351,35 @@ else (`CharacterData.STARTING_SPELLS`, `STARTING_ITEMS`). Characters from before
 
 ### Phantom tools
 
-The gathering spells conjure a see-through pickaxe or axe at the target
-(`PhantomTool`, src/items/phantom_tool.gd, driven by `ItemUser`). It hangs above the
-block on your side, winds up and strikes once per `phantom_swing_time` (SpellData, 0.3
-s); the mining or chopping lands on the strike (`sound phantom_mine` / `phantom_chop`).
-It glows in its rank's color (`phantom_tints` by `gather_rank`: spirit blue, copper,
-iron) and draws above the lighting, so it shows underground. Tunables on PhantomTool:
-`size_mult` (1.4), `wind_up` (radians), `alpha`, `rim_alpha`. Art: `phantom_texture`
-(placeholders `assets/fx/phantom_pickaxe.png`, `phantom_axe.png`).
+The gathering spells conjure a pickaxe or axe of light (`PhantomTool`,
+src/items/phantom_tool.gd, driven by `ItemUser`). Every swing it comes into being,
+strikes the middle of the target fast and fades; the next swing conjures it again. The
+mining or chopping lands at the strike (`phantom_impact`, 0.8 of the swing), with a
+flash, sparks and a sound (`phantom_mine` / `phantom_chop`). One swing takes
+`phantom_swing_time` (0.3 s). It glows in its rank's color (`phantom_tints` by
+`gather_rank`: spirit blue, copper, iron).
+
+While you hold a gathering spell the target box is a glowing, breathing **blue box**
+(red when it can't work there) instead of the white outline.
+
+Styles (SpellData `phantom_style`; try them with console `phantom arc|echo|comet`, or
+the dev kit's test spells **Mining (Echo, dev)**, **Mining (Comet, dev)** and the
+Chopping ones, in debug builds):
+
+| Style | What it does |
+| --- | --- |
+| Arc (0, default) | Appears raised beside the target, a fast arc down, a glowing crescent streak behind the point |
+| Echo (1) | The same arc, leaving fading copies of itself behind |
+| Comet (2) | Appears high above the target, spins once as it drops onto it, a comet tail |
+
+The tool is drawn solid; its streak, glow, box and flash are additive light above the
+lighting (z 56), so they light up the dark. Where it strikes: SpellData `phantom_grip`
+and `phantom_tip` (fractions of the art: the pick's point, the axe's edge); the strike
+puts the tip exactly on the middle of the target. Tunables on PhantomTool: `size_mult`
+(1.5), `wind_up`, `appear` and `strike_from` (parts of the swing), `comet_height`,
+`tool_alpha`, `glow_alpha`, `streak_alpha`, `box_fill_alpha`, `box_edge_alpha`,
+`box_pulse_speed`. Art: `phantom_texture` (placeholders `assets/fx/phantom_pickaxe.png`,
+`phantom_axe.png`).
 
 Console `devkit` gives the dev kit: a copper and wooden sword, 99 wood, 30 platforms, 30 rope, 20 torches, 5 saplings, 10 grass seeds,
 50 dirt, and teaches every spell, with Mining and Chopping fully empowered. It's

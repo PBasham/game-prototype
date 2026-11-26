@@ -526,6 +526,17 @@ func _register() -> void:
 			inv.add(old, old_count)
 		world.player.select_slot(slot)
 		_print("Holding %s." % it.display_name))
+	_add("phantom", "phantom <arc|echo|comet>", "Swing style of the Mining and Chopping spells' phantom tools (this session; the Echo and Comet test spells are in the dev kit too).", func(a: PackedStringArray) -> void:
+		var styles := ["arc", "echo", "comet"]
+		var i := styles.find(a[0].to_lower() if a.size() > 0 else "")
+		if i < 0:
+			_print("phantom arc, echo or comet")
+			return
+		for id: StringName in CharacterData.STARTING_SPELLS:
+			var s := ItemData.find(ItemData.spell_key(id)) as SpellData
+			if s:
+				s.phantom_style = i
+		_print("Phantom tools: %s." % styles[i]))
 	_add("ready", "ready <spell>", "Take the spellbook out with this spell.", func(a: PackedStringArray) -> void:
 		var spell := find_spell(" ".join(a))
 		if spell:

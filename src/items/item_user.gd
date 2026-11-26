@@ -115,13 +115,16 @@ func _process(delta: float) -> void:
 	var dt := delta
 	var phantom := _phantom()
 	if working and phantom:
+		var before := _swing
 		_swing += delta / maxf(phantom.phantom_swing_time, 0.05)
 		dt = 0.0
-		if _swing >= 1.0:
-			_swing -= 1.0
+		# The hit lands when the swing passes its impact point.
+		if before < phantom.phantom_impact and _swing >= phantom.phantom_impact:
 			dt = phantom.phantom_swing_time
 			EventBus.sound_requested.emit(&"phantom_chop" if mode == Mode.CHOP else &"phantom_mine",
 				Vector2(rect.position * TILE) + Vector2(rect.size * TILE) * 0.5)
+		if _swing >= 1.0:
+			_swing -= 1.0  # the next swing conjures it again
 	elif not working:
 		_swing = 0.0
 	if working and dt > 0.0 and mode == Mode.CHOP:
@@ -136,6 +139,11 @@ func _process(delta: float) -> void:
 			world.plants.request_cut_flowers(rect)
 	_update_phantom(p, working and phantom != null)
 	queue_redraw()
+
+
+## Whether the target box is the phantom tool's glowing one (gathering spells).
+func _glow_box() -> bool:
+	return _phantom() != null and mode in [Mode.MINE, Mode.CHOP] and not world.player.stowed
 
 
 ## How far through its swing the phantom tool is (0 to 1), and the node that draws it.
@@ -1145,7 +1153,7 @@ func _draw() -> void:
 				var tint := Color(0.6, 0.6, 0.65, ghost_alpha) if back else Color(1, 1, 1, ghost_alpha)
 				draw_texture_rect_region(ghost_tex, r, Rect2(2, 2, 12, 12), tint)
 	# Beam from the hand to the target (gathering spells show the phantom tool instead).
-	if _item.beam and p.is_using() and not _phantom_node.visible:
+	if _item.beam and p.is_using() and not _phantom_node.swinging:
 		var from := p.casting_hand_position() if _item.is_spell() else p.doll_item_position()
 		var to := Vector2(rect.position * TILE) + Vector2(rect.size * TILE) * 0.5
 		if mode == Mode.CHOP and tree != PlantLayer.NONE:
@@ -1156,8 +1164,10 @@ func _draw() -> void:
 		var core := beam_color if ok else invalid_color
 		core.a *= 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.03)
 		draw_line(from, to, core, 1.0)
-	# Target box (a circle for a round area).
-	if _item.mining_round and mode == Mode.MINE:
+	# Target box (a circle for a round area). Gathering spells: the glowing blue one.
+	if _glow_box():
+		pass
+	elif _item.mining_round and mode == Mode.MINE:
 		var box := Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE))
 		draw_arc(box.get_center(), box.size.x * 0.5, 0.0, TAU, 48, color, 1.0)
 	else:
@@ -1173,22 +1183,27 @@ func _draw() -> void:
 
 
 func _update_phantom(p: Player, show: bool) -> void:
-	_phantom_node.visible = show
-	if not show:
-		return
+	var pt := _phantom_node
 	var sp := _phantom()
-	var target := Vector2(rect.position * TILE) + Vector2(rect.size * TILE) * 0.5
-	if mode == Mode.CHOP:
-		target = world.plants.ground_position(tree, p.global_position) + Vector2(0, -1.5 * TILE)
-	_phantom_node.texture = sp.phantom_texture
-	_phantom_node.tint = Color(0.75, 0.9, 1.0)
+	pt.box_shown = sp != null and _glow_box()
+	pt.swinging = show
+	pt.visible = pt.box_shown or show
+	if not pt.visible:
+		return
+	pt.box = Rect2(Vector2(rect.position * TILE), Vector2(rect.size * TILE))
+	pt.box_ok = problem == "" and (not valid.is_empty() or tree != PlantLayer.NONE)
+	pt.target = pt.box.get_center()
+	pt.texture = sp.phantom_texture
+	pt.style = sp.phantom_style as PhantomTool.Style
+	pt.impact = sp.phantom_impact
+	pt.grip_at = sp.phantom_grip
+	pt.tip_at = sp.phantom_tip
+	pt.tint = Color(0.75, 0.9, 1.0)
 	if not sp.phantom_tints.is_empty():
-		_phantom_node.tint = sp.phantom_tints[clampi(sp.gather_rank, 0, sp.phantom_tints.size() - 1)]
-	_phantom_node.target = target
-	_phantom_node.side = 1.0 if p.global_position.x < target.x else -1.0
-	_phantom_node.swing = _swing
-	_phantom_node.hand = p.casting_hand_position()
-	_phantom_node.queue_redraw()
+		pt.tint = sp.phantom_tints[clampi(sp.gather_rank, 0, sp.phantom_tints.size() - 1)]
+	pt.side = 1.0 if p.global_position.x < pt.target.x else -1.0
+	pt.swing = _swing
+	pt.redraw()
 
 
 ## A swirling portal (Tele Grab): a dark middle, a glowing rim and a turning spark.

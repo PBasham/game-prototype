@@ -10,7 +10,19 @@ extends RefCounted
 ##   Dev Ring         accessory: defense 2, +20 max health, +20% speed, +15% jump,
 ##                    +25% magic damage (to test equipment stats)
 ##
-## Put in the third inventory row; Dev Wide Beam is added to the known spells.
+##   Mining / Chopping (Echo, Comet)  the gathering spells with the other phantom
+##                    swing styles, to compare with the real ones (Arc)
+##
+## Put in the third inventory row; Dev Wide Beam and the style test spells are added
+## to the known spells.
+
+## The phantom style test spells: [id, base spell, style, label].
+const STYLE_SPELLS: Array = [
+	[&"dev_mining_echo", &"mining_spell", 1, "Mining (Echo, dev)"],
+	[&"dev_mining_comet", &"mining_spell", 2, "Mining (Comet, dev)"],
+	[&"dev_chopping_echo", &"chopping_spell", 1, "Chopping (Echo, dev)"],
+	[&"dev_chopping_comet", &"chopping_spell", 2, "Chopping (Comet, dev)"],
+]
 
 const FIRST_SLOT := 20
 
@@ -28,6 +40,8 @@ static func add_to(c: CharacterData) -> void:
 			break
 		inv.set_slot(slot, item_id, 1)
 	c.learn_spell(&"dev_wide_beam")
+	for e: Array in STYLE_SPELLS:
+		c.learn_spell(e[0])
 
 
 static func _register() -> void:
@@ -62,6 +76,21 @@ static func _register() -> void:
 	wide.tier = 2  # the Basic Spellbook can't hold it: the Dev Grimoire can
 	wide.icon = _crystal(Color("ff9a5a"))
 	ItemData.register_runtime(wide)
+
+	for e: Array in STYLE_SPELLS:
+		var base := Registry.get_def(&"spells", e[1]) as SpellData
+		if base == null:
+			continue
+		var s := base.duplicate() as SpellData
+		s.id = e[0]
+		s.display_name = e[3]
+		s.phantom_style = e[2]
+		# As strong as the dev kit's fully empowered Mining and Chopping.
+		s.reach_tiles += 6.0
+		s.mining_power += 20
+		s.mining_area_max += 2 if s.mining_damage > 0.0 else 0
+		s.gather_rank = 2
+		ItemData.register_runtime(s)
 
 	var ring := _item(&"dev_ring", "Dev Ring (dev)", "Accessory to test stats.", ItemData.Kind.ACCESSORY)
 	ring.defense = 2

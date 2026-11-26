@@ -358,6 +358,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 26: phantom swings (branch phase-26-phantom-swings)**
+- [ ] Holding Mining or Chopping shows a glowing blue target box (red where it can't work), not the white outline.
+- [ ] Each swing the tool appears, strikes the middle of the box fast with a streak and a flash, and fades.
+- [ ] Compare the styles: Mining (Echo, dev) and Mining (Comet, dev) from the spell window, or console `phantom echo` / `phantom comet` / `phantom arc`.
+- [ ] Underground it lights up the dark around the strike.
+
 **Phase 25: weapons and schools (branch phase-25-weapons-schools)**
 - [ ] Spell tooltips name the school ("Storm spell"); the Dual Storm Axes and Storm Charm tooltips explain themselves.
 - [ ] Console `hold dual_storm_axes`: one axe in each hand; chops alternate hands, the third crosses both.

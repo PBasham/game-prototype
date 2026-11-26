@@ -399,6 +399,7 @@ func _spells() -> Array[ItemData]:
 	chop.reach_tiles = 8.0
 	chop.learnable_at_table = false
 	chop.phantom_texture = load("res://assets/fx/phantom_axe.png") as Texture2D
+	chop.phantom_tip = Vector2(0.9, 0.22)  # the axe's edge
 	chop.phantom_tints.assign(PHANTOM_TINTS)
 	out.append(chop)
 

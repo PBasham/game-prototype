@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-25: Phase 26, phantom swings
+
+- **Patrick:** an illuminated blue target box instead of the white one; every tick the
+  tool comes into existence, swings fast with a streak and its own light, aimed at the
+  middle of the area. Options welcome, several tools to compare.
+- Claude made three styles (Arc, Echo, Comet) as test spells and a console switch; Arc
+  is the default until Patrick picks.
+
 ## 2026-11-25: Phase 25, weapons and schools
 
 - **Patrick:** two playstyles, pure magic and weapons with magic imbued and amplified;

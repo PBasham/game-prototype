@@ -105,3 +105,33 @@ func test_the_phantom_pickaxe_lands_once_per_swing() -> void:
 	await wait_seconds(swing)
 	Input.action_release("use_primary")
 	assert_gt(w.block_damage(t), 0.0, "the swing landed")
+
+
+func test_glowing_box_and_the_tool_lands_on_the_middle() -> void:
+	await _world(CharacterData.create("Box"))
+	var p := w.player
+	var u := w.item_user
+	p.toggle_tool_spell(&"mining_spell")
+	var feet := w.world_to_tile(p.global_position)
+	var t := Vector2i(feet.x + 3, feet.y + 1)
+	w.request_set_block(t, w.blocks.index_of(&"stone"))
+	u.cursor_override = Vector2(t * World.TILE) + Vector2(4, 4)
+	await wait_process_frames(3)
+	var pt := u._phantom_node
+	assert_true(pt.box_shown, "the glowing blue box while aiming")
+	assert_false(pt.swinging, "no tool until you mine")
+	assert_true(pt.box_ok)
+	for style in 3:
+		pt.style = style as PhantomTool.Style
+		pt.side = 1.0
+		pt.target = Vector2(100, 50)
+		if style != PhantomTool.Style.COMET:
+			var tip := pt._tip_at(pt._grip(), pt._angle(1.0))
+			assert_almost_eq(tip.distance_to(pt.target), 0.0, 0.01, "the point lands on the middle")
+	# The test spells for the other styles (debug builds).
+	if OS.is_debug_build():
+		for id: StringName in [&"dev_mining_echo", &"dev_mining_comet", &"dev_chopping_echo", &"dev_chopping_comet"]:
+			assert_not_null(ItemData.find(ItemData.spell_key(id)), "%s exists" % id)
+	w.console.run("phantom comet")
+	assert_eq((p.use_item() as SpellData).phantom_style, PhantomTool.Style.COMET)
+	w.console.run("phantom arc")

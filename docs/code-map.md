@@ -423,3 +423,12 @@ saves still load.
 | Weapon skills (right click) | `Player.try_weapon_skill`, `_update_slam`, `weapon_slammed` -> `ItemUser.slam` |
 | Dual wielding | `ItemTypeData.dual`, `data/item_types/dual_axes.tres` (`_dual_axes` in tools/make_item_types.gd), `PaperDoll._offhand_sprite`, `_place_offhand` |
 | Console `hold <item>` | `src/ui/dev/dev_console.gd` |
+
+## Phase 26: phantom swings
+
+| Change | Where |
+| --- | --- |
+| The tool, its styles, the glowing box | `PhantomTool` (src/items/phantom_tool.gd): light layer (additive) + `_tools` child (solid) |
+| When the hit lands, what drives it | `ItemUser._process` (`_swing`, `phantom_impact`), `ItemUser._update_phantom`, `_glow_box` |
+| Per spell | SpellData `phantom_style`, `phantom_impact`, `phantom_grip`, `phantom_tip`, `phantom_swing_time`, `phantom_tints` |
+| Test spells for the styles | `DevMagic.STYLE_SPELLS` (debug builds); console `phantom` |

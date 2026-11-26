@@ -161,8 +161,18 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## A beam spell with this draws a see-through tool at the target that swings, and the
 ## mining or chopping lands once per swing (`phantom_swing_time`) instead of smoothly.
 @export var phantom_texture: Texture2D
-## Seconds per swing.
+## Seconds per swing: the tool appears, strikes and fades in this time.
 @export var phantom_swing_time := 0.3
+## When in the swing (0 to 1) it lands: the hit happens here.
+@export_range(0.3, 1.0) var phantom_impact := 0.8
+## How it swings (PhantomTool.Style): ARC (a crescent streak), ECHO (afterimages),
+## COMET (drops from above, spinning).
+@export var phantom_style := 0
+## Where the grip and the striking point are in the tool's art (fractions of its size):
+## the pick's point, the axe's edge. The strike lands that point on the middle of the
+## target.
+@export var phantom_grip := Vector2(0.08, 0.92)
+@export var phantom_tip := Vector2(0.88, 0.48)
 ## The tool's glow by rank: `gather_rank` picks one (the Empower Power node raises it),
 ## so copper and iron ranks show their metal.
 @export var phantom_tints: Array[Color] = []
