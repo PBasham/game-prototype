@@ -67,7 +67,8 @@ func _update_holds() -> void:
 
 func _types() -> Array[ItemTypeData]:
 	return [_tool(), _big_tool(), _dagger(), _sword(), _greatsword(), _wand(), _spell_book(),
-		_crossbow(), _bow(), _unarmed(), _block(), _spell(), _dual_axes()]
+		_crossbow(), _bow(), _unarmed(), _block(), _spell(), _dual_axes(), _spell_float(), _spell_hip(),
+		_spell_offhand()]
 
 
 # --- types --------------------------------------------------------------------------------
@@ -181,6 +182,53 @@ func _spell_book() -> ItemTypeData:
 		[[0, -45]], [[0, 0], [0.35, 1], [1, 0]], "", true)
 	cast.item_angle_mode = ItemMotion.ItemAngle.FIXED
 	t.attacks = [cast]
+	return t
+
+
+## FLOAT spells (Phase 30): the book hovers open in front of the chest and both hands
+## push toward the cursor.
+func _spell_float() -> ItemTypeData:
+	var t := _type(&"spell_float", "Spell, two hands (the book floats in front)")
+	t.floats = true
+	t.stow_style = ItemTypeData.StowStyle.HIDDEN
+	var front := _pose([[0, 0]], [[0, 0.85]])
+	var back := _pose([[0, 6]], [[0, 0.8]])
+	t.hold = _hold(front, back, ItemMotion.ItemAngle.FIXED, [[0, -45]], "", true)
+	var push := _attack("Channel", 0.3, _pose([[0, 0]], [[0, 0.9], [0.4, 1.0], [1, 0.95]]),
+		_pose([[0, 6]], [[0, 0.85], [0.4, 0.97], [1, 0.9]]), [[0, -45]], null, "", true)
+	push.item_angle_mode = ItemMotion.ItemAngle.FIXED
+	t.attacks = [push]
+	t.combo_window = 0.2
+	return t
+
+
+## HIP spells (Phase 30): the book stays on the hip (glowing); the front hand gestures.
+func _spell_hip() -> ItemTypeData:
+	var t := _type(&"spell_hip", "Spell, a gesture (the book stays on the hip)")
+	t.shows_item = false
+	t.stow_style = ItemTypeData.StowStyle.HIDDEN
+	t.hold = _hold(_pose([[0, 10]], [[0, 0.65]]), null, ItemMotion.ItemAngle.FIXED, [[0, -45]], "", true)
+	var gesture := _attack("Gesture", 0.35, _pose([[0, 10], [0.4, -5], [1, 0]], [[0, 0.65], [0.4, 1.0], [1, 0.85]]),
+		null, [[0, -45]], null, "", true)
+	gesture.item_angle_mode = ItemMotion.ItemAngle.FIXED
+	t.attacks = [gesture]
+	t.combo_window = 0.2
+	return t
+
+
+## A quick cast with a weapon out (Phase 30): the weapon stays in the front hand (the
+## doll's `offhand`), the book comes out in the back hand and is thrust at the cursor.
+func _spell_offhand() -> ItemTypeData:
+	var t := _type(&"spell_offhand", "Spell from the back hand (a weapon stays in the front)")
+	t.held_in = ItemTypeData.Hand.BACK
+	t.stow_style = ItemTypeData.StowStyle.HIDDEN
+	var book_arm := _pose([[0, 0]], [[0, 0.8]])
+	t.hold = _hold(null, book_arm, ItemMotion.ItemAngle.FIXED, [[0, -45]], "", true)
+	var cast := _attack("Cast", 0.35, null, _pose([[0, 0]], [[0, 0.8], [0.35, 1.0], [1, 0.9]]),
+		[[0, -45]], null, "", true)
+	cast.item_angle_mode = ItemMotion.ItemAngle.FIXED
+	t.attacks = [cast]
+	t.combo_window = 0.2
 	return t
 
 

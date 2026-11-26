@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_lmoo7"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_myfx2"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_33n7r"]
+
+[sub_resource type="Curve" id="Curve_b6uyi"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_p3482"]
+_data = [Vector2(0, 0.8), 0.0, 0.57142854, 1, 1, Vector2(0.35, 1), 0.57142854, -0.15384619, 1, 1, Vector2(1, 0.9), -0.15384619, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_lgkny"]
+script = ExtResource("2_myfx2")
+mode = 1
+angle = SubResource("Curve_b6uyi")
+reach = SubResource("Curve_p3482")
+
+[sub_resource type="Resource" id="Resource_rw7rt"]
+script = ExtResource("2_myfx2")
+
+[sub_resource type="Curve" id="Curve_b50cn"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -45), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_0gxgg"]
+script = ExtResource("1_lmoo7")
+name = "Cast"
+aims = true
+front = SubResource("Resource_rw7rt")
+back = SubResource("Resource_lgkny")
+item_angle_mode = 2
+item_angle = SubResource("Curve_b50cn")
+
+[sub_resource type="Curve" id="Curve_1yxyn"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_dpvj7"]
+_data = [Vector2(0, 0.8), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_afnaj"]
+script = ExtResource("2_myfx2")
+mode = 1
+angle = SubResource("Curve_1yxyn")
+reach = SubResource("Curve_dpvj7")
+
+[sub_resource type="Resource" id="Resource_ftxh4"]
+script = ExtResource("2_myfx2")
+
+[sub_resource type="Curve" id="Curve_x17mw"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -45), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_bnmd0"]
+script = ExtResource("1_lmoo7")
+name = "Hold"
+duration = 1.0
+aims = true
+front = SubResource("Resource_ftxh4")
+back = SubResource("Resource_afnaj")
+item_angle_mode = 2
+item_angle = SubResource("Curve_x17mw")
+
+[resource]
+script = ExtResource("3_33n7r")
+held_in = 1
+hold = SubResource("Resource_bnmd0")
+attacks = Array[ExtResource("1_lmoo7")]([SubResource("Resource_0gxgg")])
+combo_window = 0.2
+stow_style = 2
+id = &"spell_offhand"
+display_name = "Spell from the back hand (a weapon stays in the front)"

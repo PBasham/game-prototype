@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 30, book poses
+
+- **Patrick:** the book on the hip when it isn't in hand; liked a mix where the spell
+  decides. Claude's rule, which Patrick approved: hip by default; HAND spells put it in
+  the back hand (quick casts too, a weapon staying in the front hand); FLOAT spells
+  (big beams, charged casts) float it in front with both hands pushing; HIP spells
+  (buffs, heals) leave it on the hip, glowing, with a gesture.
+
 ## 2026-11-25: Phase 26, phantom swings
 
 - **Patrick:** an illuminated blue target box instead of the white one; every tick the

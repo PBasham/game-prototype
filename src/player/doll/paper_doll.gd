@@ -27,6 +27,12 @@ const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 ## Item at the hip.
 @export var stow_hip_offset := Vector2(3, 20)
 @export var stow_hip_angle := 105.0
+## The spellbook on the hip when it isn't in hand (Phase 30): where (from the front
+## shoulder) and at what angle, and where it floats for FLOAT spells.
+@export var book_hip_offset := Vector2(-3, 19)
+@export var book_hip_angle := -20.0
+@export var book_float_distance := 10.0
+@export var book_float_bob := 1.0
 @export_group("")
 ## Show code-posed arms even when drawn frames exist (to compare).
 @export var force_posed := false
@@ -196,6 +202,21 @@ var _hair: Sprite2D
 var _item_sprite: Sprite2D
 ## The second of a dual wielded pair, in the back hand (behind the body).
 var _offhand_sprite: Sprite2D
+## Something else held in the other hand (Phase 30: your weapon in the front hand while
+## the book quick casts from the back one), drawn in front of the body.
+var offhand: HeldItemLook:
+	set(v):
+		offhand = v
+		_apply_offhand()
+var _offhand_front: Sprite2D
+## The spellbook: shown on the hip while `book_on_hip`, glowing by `book_glow` (0 to 1).
+var book: HeldItemLook:
+	set(v):
+		book = v
+		_apply_book()
+var book_on_hip := false
+var book_glow := 0.0
+var _book_hip: Sprite2D
 var _stow_back: Sprite2D
 var _stow_hip: Sprite2D
 var _material: ShaderMaterial
@@ -232,8 +253,10 @@ func setup(doll_rig: DollRig, doll_palette: CharacterPalette = null) -> void:
 	for pi in rig.part_names.size():
 		if rig.part_channels[pi] == &"front_arm" and first_front_arm < 0:
 			first_front_arm = pi
+			_book_hip = _item_node("BookHip")
 			_stow_hip = _item_node("StowHip")
 			_item_sprite = _item_node("Item")
+			_offhand_front = _item_node("OffhandFront")
 		var slot := Node2D.new()
 		slot.name = rig.part_names[pi].replace(" ", "")
 		slot.use_parent_material = true
@@ -255,10 +278,14 @@ func setup(doll_rig: DollRig, doll_palette: CharacterPalette = null) -> void:
 			_hair.use_parent_material = true
 			add_child(_hair)
 	if _item_sprite == null:
+		_book_hip = _item_node("BookHip")
 		_stow_hip = _item_node("StowHip")
 		_item_sprite = _item_node("Item")
+		_offhand_front = _item_node("OffhandFront")
 	_apply_look()
 	_apply_item()
+	_apply_offhand()
+	_apply_book()
 	play(&"Breath")
 	_update()
 
@@ -572,9 +599,11 @@ func _shoulder(side: StringName, body_abs: int, shift: Vector2) -> Vector2:
 func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 	var m := motion
 	var in_hand := item != null and not stowed
-	_item_sprite.visible = in_hand and m != null
+	_item_sprite.visible = in_hand and m != null and _shows_item()
 	if _offhand_sprite:
 		_offhand_sprite.visible = in_hand and m != null and _dual()
+	if _offhand_front:
+		_offhand_front.visible = in_hand and m != null and offhand != null
 	if m == null:
 		for side: StringName in [&"front", &"back"]:
 			var angle := _emote_arm_angle(side)
@@ -631,6 +660,10 @@ func _pose_arms(legs_abs: int, body_abs: int, shift: Vector2) -> void:
 			_place_item(m, holding, shoulder, aim_angle)
 		elif side == other and in_hand and _dual():
 			_place_offhand(m, other, shoulder)
+		elif side == other and in_hand and offhand != null:
+			var hand: Vector2 = hands.get(side, shoulder)
+			_offhand_front.position = hand
+			_offhand_front.rotation = (hand - shoulder).angle() + deg_to_rad(offhand_angle) + PI / 4.0
 
 
 ## Whether an arm is hanging free (no item motion, no emote): another body may swing
@@ -759,7 +792,7 @@ func _apply_item() -> void:
 		s.texture = tex
 		s.offset = -item.grip if item else Vector2.ZERO
 		s.scale = Vector2.ONE / float(item.detail if item else 1)
-	_item_sprite.visible = item != null and not stowed
+	_item_sprite.visible = item != null and not stowed and _shows_item()
 	if _offhand_sprite:
 		_offhand_sprite.visible = item != null and not stowed and _dual()
 	_stow_back.visible = item != null and stowed and stow == ItemTypeData.StowStyle.BACK
@@ -780,6 +813,38 @@ func _place_item(m: ItemMotion, side: StringName, shoulder: Vector2, aim_angle: 
 	_item_sprite.position = hand
 	# The texture points up-right (-45 degrees); turn that onto the item angle.
 	_item_sprite.rotation = item_rotation + PI / 4.0
+	if item.item_type() and item.item_type().floats:
+		# Held up by magic in front of the chest, upright, bobbing a little.
+		var dir := Vector2.from_angle(aim_angle) if m.aims else Vector2.RIGHT
+		var bob := sin(Time.get_ticks_msec() / 1000.0 * 3.0) * book_float_bob
+		_item_sprite.position = shoulder + dir * book_float_distance + Vector2(0, 2.0 + bob)
+		_item_sprite.rotation = 0.0
+		item_rotation = -PI / 4.0
+
+
+## The other hand's item's angle along its arm (degrees), like a tool hanging at rest.
+@export var offhand_angle := -60.0
+
+
+func _shows_item() -> bool:
+	return item == null or item.item_type() == null or item.item_type().shows_item
+
+
+func _apply_offhand() -> void:
+	if _offhand_front == null:
+		return
+	_offhand_front.texture = offhand.texture if offhand else null
+	_offhand_front.offset = -offhand.grip if offhand else Vector2.ZERO
+	_offhand_front.scale = Vector2.ONE / float(offhand.detail if offhand else 1)
+	_offhand_front.visible = offhand != null and item != null and not stowed
+
+
+func _apply_book() -> void:
+	if _book_hip == null:
+		return
+	_book_hip.texture = book.texture if book else null
+	_book_hip.offset = -book.grip if book else Vector2.ZERO
+	_book_hip.scale = Vector2.ONE / float(book.detail if book else 1)
 
 
 func _dual() -> bool:
@@ -816,13 +881,21 @@ func _grip_point(texture_px: Vector2) -> Vector2:
 
 
 func _place_stowed(body_abs: int, shift: Vector2) -> void:
+	var shoulder := _shoulder(&"front", body_abs, shift)
+	if _book_hip:
+		_book_hip.visible = book != null and book_on_hip
+		_book_hip.position = shoulder + book_hip_offset
+		_book_hip.rotation = deg_to_rad(book_hip_angle)
+		var g := clampf(book_glow, 0.0, 1.0)
+		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 1000.0 * 12.0)
+		_book_hip.modulate = Color(1, 1, 1).lerp(Color(1.6, 1.8, 2.2), g * (0.6 + 0.4 * pulse))
 	if item == null:
 		return
-	var shoulder := _shoulder(&"front", body_abs, shift)
 	_stow_back.position = shoulder + stow_back_offset
 	_stow_back.rotation = deg_to_rad(stow_back_angle + _sway_angle * 0.5) + PI / 4.0
 	_stow_hip.position = shoulder + stow_hip_offset
 	_stow_hip.rotation = deg_to_rad(stow_hip_angle) + PI / 4.0
+
 
 
 # --- look -------------------------------------------------------------------------------

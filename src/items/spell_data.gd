@@ -157,6 +157,14 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## (times its contact damage over the first one's: a Blue Slime hits harder).
 @export var summon_enemy_ranks: Array[StringName] = []
 
+## Where the spellbook is while you cast it (Phase 30):
+## HAND: in the off hand, the main hand aims (most spells; a quick cast with a weapon
+##   out keeps the weapon in the main hand and the book flashes into the other).
+## FLOAT: it hovers open in front of you and both hands push (big beams, charged casts).
+## HIP: it stays on the hip and glows; you cast with a gesture (buffs, heals).
+enum BookPose { HAND, FLOAT, HIP }
+@export var book_pose := BookPose.HAND
+
 @export_group("Phantom tool (gathering spells)")
 ## A beam spell with this draws a see-through tool at the target that swings, and the
 ## mining or chopping lands once per swing (`phantom_swing_time`) instead of smoothly.

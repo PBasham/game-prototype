@@ -17,6 +17,7 @@ kind = 4
 icon = ExtResource("1_t6ox6")
 max_stack = 1
 school = 5
+book_pose = 2
 id = &"mend"
 display_name = "Mend"
 description = "Concentration. Slowly heals you while it's on."

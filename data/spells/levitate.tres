@@ -17,6 +17,7 @@ kind = 4
 icon = ExtResource("1_avmln")
 max_stack = 1
 school = 3
+book_pose = 2
 id = &"levitate"
 display_name = "Levitate"
 description = "Concentration. Float about 5 blocks above the ground and glide fast. Down lowers you; you can't rise higher."

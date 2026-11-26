@@ -724,6 +724,7 @@ func _spells() -> Array[ItemData]:
 	for sp in out:
 		(sp as SpellData).group = groups.get(sp.id, SpellData.Group.ATTACK)
 		sp.school = SCHOOLS.get(sp.id, ItemData.School.NONE)
+		(sp as SpellData).book_pose = BOOK_POSES.get(sp.id, SpellData.BookPose.HAND)
 	for sp in out:
 		var spell := sp as SpellData
 		spell.learn_cost.assign(LEARN_COSTS.get(spell.id, {&"copper_bar": LEARN_BARS[clampi(spell.tier, 1, 3) - 1]}))
@@ -1111,6 +1112,25 @@ const SCHOOLS := {
 	&"light_orb": ItemData.School.SPIRIT,
 	&"mend": ItemData.School.LIFE,
 	&"healing_circle": ItemData.School.LIFE,
+}
+
+## Where the book is while casting (Phase 30); the rest are HAND. FLOAT: big beams and
+## charged casts (the book hovers, both hands push). HIP: buffs, heals, movement
+## toggles (a gesture; the book glows on the hip).
+const BOOK_POSES := {
+	&"hyper_drill": SpellData.BookPose.FLOAT,
+	&"chain_spark": SpellData.BookPose.FLOAT,
+	&"arcane_bolt": SpellData.BookPose.FLOAT,
+	&"arcane_edge": SpellData.BookPose.HIP,
+	&"barrier": SpellData.BookPose.HIP,
+	&"gel_cushion": SpellData.BookPose.HIP,
+	&"healing_circle": SpellData.BookPose.HIP,
+	&"mend": SpellData.BookPose.HIP,
+	&"levitate": SpellData.BookPose.HIP,
+	&"fly": SpellData.BookPose.HIP,
+	&"air_step": SpellData.BookPose.HIP,
+	&"bound": SpellData.BookPose.HIP,
+	&"seek_ore": SpellData.BookPose.HIP,
 }
 
 ## Phantom tool glow per gathering rank: starting (spirit blue), copper, iron.

@@ -678,6 +678,7 @@ func refresh_held() -> void:
 	if mouse_stack:
 		item = mouse_stack
 	var new_look := _look_for(item)
+	_doll.offhand = _quick_weapon().held if new_look and new_look.type == &"spell_offhand" else null
 	if item == held_item and new_look == held:
 		return
 	held_item = item
@@ -691,7 +692,10 @@ func use_item() -> ItemData:
 	return held_item
 
 
-## How an item looks in hand. Spells show the equipped spellbook in the back hand.
+## How an item looks in hand. Spells show the equipped spellbook, posed by the spell's
+## `book_pose` (Phase 30): in the back hand (spell), floating in front (spell_float), or
+## left on the hip with a gesture (spell_hip). A quick cast with a weapon out keeps the
+## weapon in the front hand and the book comes out in the back one (spell_offhand).
 func _look_for(item: ItemData) -> HeldItemLook:
 	if item == null:
 		return null
@@ -699,15 +703,64 @@ func _look_for(item: ItemData) -> HeldItemLook:
 		var book := character.book()
 		if book == null or book.held == null:
 			return null
-		if not _book_looks.has(book.id):
+		var type := &"spell"
+		match (item as SpellData).book_pose:
+			SpellData.BookPose.FLOAT:
+				type = &"spell_float"
+			SpellData.BookPose.HIP:
+				type = &"spell_hip"
+			_:
+				if _quick_weapon():
+					type = &"spell_offhand"
+		var key := StringName("%s/%s" % [book.id, type])
+		if not _book_looks.has(key):
 			var book_look := HeldItemLook.new()
 			book_look.id = book.id
-			book_look.type = &"spell"
+			book_look.type = type
 			book_look.texture = book.held.texture
 			book_look.grip = book.held.grip
-			_book_looks[book.id] = book_look
-		return _book_looks[book.id]
+			book_look.detail = book.held.detail
+			_book_looks[key] = book_look
+		return _book_looks[key]
 	return item.held
+
+
+## During a quick cast: the weapon you had out (it stays in your front hand), else null.
+var _quick_from := -1
+
+
+func _quick_weapon() -> ItemData:
+	var slot := _quick_from if _quick_return.is_empty() else int(_quick_return[0])
+	if character == null or slot < 0:
+		return null
+	var it := character.inventory.item(slot)
+	return it if it and it.kind == ItemData.Kind.WEAPON and it.held else null
+
+
+## The spellbook on the hip (Phase 30): there whenever it isn't in your hand or
+## floating; glows while a HIP spell is cast (or held ready).
+var _hip_book_looks: Dictionary[StringName, HeldItemLook] = {}
+
+
+func _update_hip_book(delta: float) -> void:
+	var book := character.book() if character else null
+	var look: HeldItemLook = null
+	if book and book.held:
+		if not _hip_book_looks.has(book.id):
+			var l := HeldItemLook.new()
+			l.id = book.id
+			l.texture = book.held.texture
+			l.grip = book.held.grip
+			l.detail = book.held.detail
+			_hip_book_looks[book.id] = l
+		look = _hip_book_looks[book.id]
+	if _doll.book != look:
+		_doll.book = look
+	var out := held != null and not stowed and held.type in [&"spell", &"spell_float", &"spell_offhand"]
+	_doll.book_on_hip = look != null and not out
+	var gesture := held != null and not stowed and held.type == &"spell_hip"
+	var target := (1.0 if _attack != null else 0.35) if gesture else 0.0
+	_doll.book_glow = move_toward(_doll.book_glow, target, delta * 6.0)
 
 
 ## Throws the selected stack in front of the player (Q).
@@ -897,6 +950,7 @@ func _physics_process(delta: float) -> void:
 		facing = 1 if input_x > 0.0 else -1
 	_update_slam(delta)
 	_track_fall()
+	_update_hip_book(delta)
 	_animate(delta)
 	_debug_watch()
 
@@ -1629,7 +1683,9 @@ func quick_cast(spell_id: StringName, hold_button: StringName = &"") -> bool:
 	if _attack != null:
 		return false
 	var back_to := [selected, _readied, _slot_before_book, last_spell]
+	_quick_from = selected  # the look checks it: a weapon out stays in hand
 	ready_spell(spell_id)
+	_quick_from = -1
 	_quick_return = back_to
 	_quick_button = hold_button
 	use_back = false

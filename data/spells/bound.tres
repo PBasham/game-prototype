@@ -16,6 +16,7 @@ kind = 4
 icon = ExtResource("1_cw2b6")
 max_stack = 1
 school = 3
+book_pose = 2
 id = &"bound"
 display_name = "Bound"
 description = "Readied. Turn it on (F, or click); then press Jump in the air to leap far forward in an arc. 12 mana per leap. That landing never hurts."

@@ -16,6 +16,7 @@ kind = 4
 icon = ExtResource("1_0dyes")
 max_stack = 1
 school = 3
+book_pose = 2
 id = &"air_step"
 display_name = "Air Step"
 description = "Readied. Turn it on (F, or click); then press Jump in the air for a second jump, with much better steering until you land. 8 mana per jump. That landing never hurts."

@@ -349,6 +349,24 @@ play any world. A new character starts with the **Mining Spell** and **Chopping 
 else (`CharacterData.STARTING_SPELLS`, `STARTING_ITEMS`). Characters from before Phase
 24 learn both spells when loaded; their old pickaxes and axes are gone.
 
+### Where the spellbook is (Phase 30)
+
+The equipped spellbook rests on your **hip** (`PaperDoll._book_hip`, `book_hip_offset`,
+`book_hip_angle`) whenever it isn't in use. Each spell says where it goes while you cast
+it (SpellData `book_pose`):
+
+| Pose | Looks like | Spells |
+| --- | --- | --- |
+| HAND (default) | in the back hand, the front hand aims (item type `spell`) | most: Spark, Air Push, Mining, Chopping, summons... |
+| FLOAT | hovers open in front of the chest, both hands push (`spell_float`; `book_float_distance`, `book_float_bob`) | Chain Spark, Arcane Bolt, Hyper Drill |
+| HIP | stays on the hip and glows, the front hand gestures (`spell_hip`) | Arcane Edge, Barrier, Gel Cushion, Healing Circle, Mend, Levitate, Fly, Air Step, Bound, Seek Ore |
+
+A **quick cast** of a HAND spell (Z, X, C or a wheel) with a weapon out keeps the
+weapon in your front hand (`PaperDoll.offhand`, `offhand_angle`) and the book comes out
+in the back hand, thrust at the cursor (`spell_offhand`), then goes back to the hip.
+The weapon still counts as in hand (school amp). Change a spell's pose in its `.tres`
+(`book_pose`: 0 HAND, 1 FLOAT, 2 HIP) or in `BOOK_POSES` (tools/make_items.gd).
+
 ### Phantom tools
 
 The gathering spells conjure a pickaxe or axe of light (`PhantomTool`,

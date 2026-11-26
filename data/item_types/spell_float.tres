@@ -1,0 +1,105 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_cr2su"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_js26k"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_8ok7p"]
+
+[sub_resource type="Curve" id="Curve_jnqee"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 6), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_05ppu"]
+_data = [Vector2(0, 0.85), 0.0, 0.3, 1, 1, Vector2(0.4, 0.97), 0.3, -0.11666675, 1, 1, Vector2(1, 0.9), -0.11666675, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_dmifd"]
+script = ExtResource("2_js26k")
+mode = 1
+angle = SubResource("Curve_jnqee")
+reach = SubResource("Curve_05ppu")
+
+[sub_resource type="Curve" id="Curve_pej1r"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_bu4ay"]
+_data = [Vector2(0, 0.9), 0.0, 0.25000006, 1, 1, Vector2(0.4, 1), 0.25000006, -0.08333335, 1, 1, Vector2(1, 0.95), -0.08333335, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_xxdts"]
+script = ExtResource("2_js26k")
+mode = 1
+angle = SubResource("Curve_pej1r")
+reach = SubResource("Curve_bu4ay")
+
+[sub_resource type="Curve" id="Curve_227u8"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -45), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_gahhb"]
+script = ExtResource("1_cr2su")
+name = "Channel"
+duration = 0.3
+aims = true
+front = SubResource("Resource_xxdts")
+back = SubResource("Resource_dmifd")
+item_angle_mode = 2
+item_angle = SubResource("Curve_227u8")
+
+[sub_resource type="Curve" id="Curve_da8bn"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 6), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_lq6rk"]
+_data = [Vector2(0, 0.8), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_0ptva"]
+script = ExtResource("2_js26k")
+mode = 1
+angle = SubResource("Curve_da8bn")
+reach = SubResource("Curve_lq6rk")
+
+[sub_resource type="Curve" id="Curve_g04xw"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, 0), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_fltxf"]
+_data = [Vector2(0, 0.85), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_bapur"]
+script = ExtResource("2_js26k")
+mode = 1
+angle = SubResource("Curve_g04xw")
+reach = SubResource("Curve_fltxf")
+
+[sub_resource type="Curve" id="Curve_eip6l"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -45), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_ed2wh"]
+script = ExtResource("1_cr2su")
+name = "Hold"
+duration = 1.0
+aims = true
+front = SubResource("Resource_bapur")
+back = SubResource("Resource_0ptva")
+item_angle_mode = 2
+item_angle = SubResource("Curve_eip6l")
+
+[resource]
+script = ExtResource("3_8ok7p")
+hold = SubResource("Resource_ed2wh")
+attacks = Array[ExtResource("1_cr2su")]([SubResource("Resource_gahhb")])
+combo_window = 0.2
+stow_style = 2
+floats = true
+id = &"spell_float"
+display_name = "Spell, two hands (the book floats in front)"

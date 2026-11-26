@@ -26,6 +26,11 @@ enum StowStyle { BACK, HIP, HIDDEN }
 ## Dual wielded (a pair of axes): a second copy rides in the other hand, angled like the
 ## first, and that arm follows its own track (the motions' back track).
 @export var dual := false
+## The item hovers in front of the chest instead of sitting in a hand (spell_float: a
+## book held up by magic while both hands cast).
+@export var floats := false
+## False: nothing in hand while it plays (spell_hip: the book stays on the hip).
+@export var shows_item := true
 
 
 func validate() -> PackedStringArray:

@@ -185,7 +185,11 @@ func _register() -> void:
 				if not world.item_user.cast(spell):
 					return
 		_print("Cast %s." % spell.display_name))
-	_add("quick", "quick <slot> <spell>", "Put a known spell in a quick slot: q1..q8, e1..e8, z, x, c, buff1..buff6 (learns it if needed). \"quick <slot> none\" empties it.", func(a: PackedStringArray) -> void:
+	_add("quick", "quick <slot> <spell> [cast|ready]", "Put a known spell in a quick slot: q1..q8, e1..e8, z, x, c, buff1..buff6 (learns it if needed); cast or ready sets whether the key casts right away. \"quick <slot> none\" empties it.", func(a: PackedStringArray) -> void:
+		var mode := ""
+		if a.size() > 2 and a[a.size() - 1] in ["cast", "ready"]:
+			mode = a[a.size() - 1]
+			a = a.slice(0, a.size() - 1)
 		if a.size() < 2:
 			_print("Usage: quick <slot> <spell>")
 			return
@@ -203,6 +207,8 @@ func _register() -> void:
 			return
 		c.learn_spell(spell.id)
 		if c.set_quick(slot, spell.id):
+			if mode != "":
+				c.quick_modes[slot] = mode == "cast"
 			_print("%s: %s (%s)." % [a[0], spell.display_name, "casts right away" if c.quick_casts(slot) else "in hand"])
 		else:
 			_print("Only Buff spells go in the buff set."))

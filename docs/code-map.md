@@ -432,3 +432,13 @@ saves still load.
 | When the hit lands, what drives it | `ItemUser._process` (`_swing`, `phantom_impact`), `ItemUser._update_phantom`, `_glow_box` |
 | Per spell | SpellData `phantom_style`, `phantom_impact`, `phantom_grip`, `phantom_tip`, `phantom_swing_time`, `phantom_tints` |
 | Test spells for the styles (Mining v2 to v8) | `DevMagic.STYLE_SPELLS` (debug builds); console `phantom`; per spell tuning `SpellData.phantom_tuning` -> `PhantomTool.apply_tuning` |
+
+## Phase 30: book poses
+
+| Change | Where |
+| --- | --- |
+| A spell's pose | SpellData `book_pose` (`BOOK_POSES` in tools/make_items.gd) |
+| Which look a spell gets | `Player._look_for`, `_quick_weapon` (quick cast with a weapon out) |
+| The hip book and its glow | `Player._update_hip_book`; `PaperDoll.book`, `book_on_hip`, `book_glow`, `_book_hip` |
+| The weapon in the front hand during a quick cast | `PaperDoll.offhand`, `_offhand_front`, `offhand_angle` |
+| The motions | `data/item_types/spell_float.tres`, `spell_hip.tres`, `spell_offhand.tres` (`_spell_float`... in tools/make_item_types.gd); `ItemTypeData.floats`, `shows_item` |

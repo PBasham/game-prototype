@@ -358,6 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 30: book poses (branch phase-30-book-poses)**
+- [ ] With a weapon or nothing in hand, the spellbook hangs on your hip.
+- [ ] Readying Spark, Air Push or Mining puts the book in your back hand; the hip is empty.
+- [ ] Quick casting Spark (Z) with the Dual Storm Axes out: one axe stays in the front hand, the book thrusts out from the back hand, then returns to the hip.
+- [ ] Chain Spark (or Arcane Bolt): the book floats in front of your chest, both hands push.
+- [ ] Barrier, Mend, Levitate: the book stays on the hip and glows while you gesture.
+
 **Phase 26: phantom swings (branch phase-26-phantom-swings)**
 - [ ] Holding Mining or Chopping lights up the blocks under the cursor (Starbound style): a blue glow on each block (no outline) and real light that shows them in the dark. Red box where it can't work.
 - [ ] Each swing the tool appears, strikes the middle of the box fast with a streak and a flash, and fades.

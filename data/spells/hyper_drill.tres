@@ -21,6 +21,7 @@ beam = true
 mining_area = 11
 mining_round = true
 reach_tiles = 24.0
+book_pose = 1
 id = &"hyper_drill"
 display_name = "Hyper Drill"
 description = "Hold for a huge drilling beam that tears through a round area. Very mana hungry. Right click: back walls."
