@@ -67,6 +67,16 @@ var _ocean_floor: FastNoiseLite
 var _beach_mix: FastNoiseLite
 ## Ponds: [center x, half width, depth, water row] each.
 var _ponds: Array[Vector4] = []
+# The Deep (Phase 64).
+var _chasm_half := 0.0
+var _deep_noise: FastNoiseLite
+var _tunnel_noise: FastNoiseLite
+var _chasm_noise: FastNoiseLite  # bends (x 0), width (x 400)
+var _jag_noise: FastNoiseLite  # left wall (x 0), right wall (x 400), where it's jagged (x 800)
+## Arena middle (x is the ocean's middle) and half size; scene caverns: center, half size.
+var _arena := Vector2.ZERO
+var _arena_half := Vector2.ZERO
+var _scenes: Array[Rect2] = []
 
 
 func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: int,
@@ -228,6 +238,121 @@ func _place_ocean() -> void:
 		return
 	_ocean_half = w * 0.5
 	_ocean_c = posmod(s.spawn_x + roundi(s.ocean_distance * width), width)
+	_place_deep()
+
+
+func _place_deep() -> void:
+	var s := settings
+	_deep_noise = _noise(61, 1.0 / maxf(s.deep_cave_tiles, 4.0), 2)
+	_tunnel_noise = _noise(62, 1.0 / maxf(s.deep_tunnel_tiles, 4.0), 1)
+	_chasm_noise = _noise(63, 1.0 / maxf(s.chasm_bend_tiles, 8.0), 2)
+	_jag_noise = _noise(65, 1.0 / maxf(s.chasm_jag_tiles, 2.0), 2)
+	var zone := _ocean_half - s.deep_margin
+	var bottom := float(_deep_bottom())
+	_arena_half = Vector2(minf(s.arena_width * 0.5, zone * 0.8), s.arena_height * 0.5)
+	_arena = Vector2(0.0, bottom - _arena_half.y - 2.0)
+	_chasm_half = minf(lerpf(s.chasm_width_min, s.chasm_width_max, GenUtil.hash01(7, 63, seed)) * 0.5, _arena_half.x * 0.8)
+	# Scene caverns: spread over both sides of the chasm, at varied depths.
+	_scenes.clear()
+	var top := float(_sea + _upper_depth() + 30)
+	for i in s.scene_caverns:
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var along := lerpf(0.35, 0.8, float(i / 2) / maxf(float(s.scene_caverns / 2 - 1), 1.0)) if s.scene_caverns > 2 else 0.55
+		var cx := side * along * zone
+		var cy := lerpf(top, bottom - s.scene_cavern_height, GenUtil.hash01(i, 64, seed))
+		_scenes.append(Rect2(cx, cy, s.scene_cavern_width * 0.5, s.scene_cavern_height * 0.5))
+
+
+## The upper sea floor's deepest point below sea level.
+func _upper_depth() -> float:
+	return minf(settings.ocean_depth, (height - _sea) * 0.5)
+
+
+## The bottom of the Deep: the rock floor under it.
+func _deep_bottom() -> int:
+	return height - settings.floor_rows - settings.deep_floor_rows
+
+
+## The chasm at row y: its left and right walls, x relative to the ocean's middle.
+## It starts straight under the middle of the sea floor, then winds, swells and narrows,
+## with jagged stretches, down into the arena.
+func _chasm_walls(y: int) -> Vector2:
+	var s := settings
+	var fy := float(y)
+	var top := float(_sea) + _upper_depth()
+	# Ease the bends in over the first 60 rows, so the mouth sits in the middle.
+	var settle := smoothstep(0.0, 60.0, fy - top)
+	var room := maxf(_ocean_half - s.deep_margin - _chasm_half - s.chasm_wobble - s.chasm_jag - 8.0, 0.0)
+	var c := clampf(_chasm_noise.get_noise_2d(0.0, fy) / 0.5, -1.0, 1.0) * minf(s.chasm_wander, room)
+	c += clampf(_chasm_noise.get_noise_2d(1200.0, fy * s.chasm_bend_tiles / maxf(s.chasm_kink_tiles, 4.0)) / 0.5, -1.0, 1.0) * minf(s.chasm_kink, room * 0.3)
+	c = clampf(c * settle, -room, room)
+	var half := _chasm_half + clampf(_chasm_noise.get_noise_2d(400.0, fy) / 0.5, -1.0, 1.0) * s.chasm_wobble
+	# Jagged only where a slow mask is up, so some stretches stay smooth.
+	var rough := clampf(_chasm_noise.get_noise_2d(800.0, fy * 2.0) / 0.4 + 0.2, 0.0, 1.0) * s.chasm_jag
+	var left := c - half + absf(_jag_noise.get_noise_2d(0.0, fy)) / 0.6 * rough
+	var right := c + half - absf(_jag_noise.get_noise_2d(400.0, fy)) / 0.6 * rough
+	return Vector2(left, maxf(right, left + 6.0))
+
+
+## True inside the chasm (open water): from the sea floor down to the arena.
+func chasm_open(x: int, y: int) -> bool:
+	if _ocean_c < 0 or y >= roundi(_arena.y) or y < _sea:
+		return false
+	var dx := float(wrap_delta(posmod(x, width), _ocean_c))
+	var w := _chasm_walls(y)
+	return dx > w.x and dx < w.y
+
+
+## The chasm's middle at row y, in world x (for tests and the dev console).
+func chasm_center(y: int) -> int:
+	var w := _chasm_walls(y)
+	return posmod(_ocean_c + roundi((w.x + w.y) * 0.5), width)
+
+
+## True where the Deep is open (flooded): its caverns and tunnels, the arena and the
+## scene caverns, under the upper sea floor within the ocean's width.
+func deep_open(x: int, y: int) -> bool:
+	if _ocean_c < 0:
+		return false
+	var s := settings
+	var dx := float(wrap_delta(posmod(x, width), _ocean_c))
+	var zone := _ocean_half - s.deep_margin
+	if absf(dx) >= zone or y >= _deep_bottom():
+		return false
+	var p := Vector2(dx, float(y))
+	if ((p - _arena) / _arena_half).length_squared() < 1.0:
+		return true
+	for sc in _scenes:
+		if ((p - sc.position) / sc.size).length_squared() < 1.0:
+			return true
+	if chasm_open(x, y):
+		return true
+	var top := _sea_floor(x, absf(dx)) + s.ocean_sand_depth + s.ocean_hard_sand_depth + s.deep_crust
+	if y <= top:
+		return false
+	# Fade the caves out toward the Deep's edges, so they don't end in straight lines.
+	var edge := minf(minf(zone - absf(dx), float(y - top)), float(_deep_bottom() - y)) / 20.0
+	var n := _deep_noise.get_noise_2d(dx, float(y))
+	if n > s.deep_open + (1.0 - clampf(edge, 0.0, 1.0)) * 0.5:
+		return true
+	return absf(_tunnel_noise.get_noise_2d(dx, float(y) * 1.4)) < s.deep_tunnel * clampf(edge, 0.0, 1.0)
+
+
+## Where sunlight stops in this column (the light map's sky floor): the surface, but in
+## the ocean only sunlit_water_tiles below sea level.
+func light_floor_at(x: int) -> int:
+	var ground := surface_at(x)
+	if _ocean_c >= 0 and absf(float(wrap_delta(posmod(x, width), _ocean_c))) < _ocean_half + settings.beach_width:
+		return mini(ground, _sea + settings.sunlit_water_tiles)
+	return ground
+
+
+## The arena (center, half size, in world tiles) and the scene caverns, for tests and
+## the map preview.
+func deep_layout() -> Dictionary:
+	return {"arena": Rect2(Vector2(_ocean_c, _arena.y), _arena_half), "scenes": _scenes.map(
+		func(r: Rect2) -> Rect2: return Rect2(Vector2(_ocean_c + r.position.x, r.position.y), r.size)),
+		"chasm_half": _chasm_half}
 
 
 ## The sea floor row at distance d from the ocean's middle: a shallow shelf near each
@@ -240,7 +365,7 @@ func _sea_floor(x: int, d: float) -> int:
 	if t > shelf_start:
 		depth = s.ocean_shelf_depth * smoothstep(1.0, shelf_start + (1.0 - shelf_start) * 0.3, t)
 	else:
-		depth = lerpf(s.ocean_shelf_depth, s.ocean_depth, smoothstep(shelf_start, 0.0, t))
+		depth = lerpf(s.ocean_shelf_depth, _upper_depth(), smoothstep(shelf_start, 0.0, t))
 	var p := _cyl(x)
 	depth += s.ocean_floor_bumps * _ocean_floor.get_noise_2d(p.x, p.y) / 0.6 * clampf((1.0 - t) * 4.0, 0.0, 1.0)
 	return mini(roundi(_sea + maxf(depth, 1.0)), height - settings.floor_rows - 2)
@@ -311,11 +436,16 @@ func ocean() -> Vector2:
 func water_at(x: int, y: int) -> bool:
 	x = posmod(x, width)
 	if y >= surface_at(x):
-		return false
+		return _ocean_c >= 0 and deep_open(x, y)
 	if _ocean_c >= 0 and absf(float(wrap_delta(x, _ocean_c))) < _ocean_half + settings.beach_width:
 		return y >= _sea
 	var pond := _pond_index(x)
 	return pond >= 0 and y >= int(_ponds[pond].w)
+
+
+## True where the Deep's flooded caves are (water below the sea floor).
+func _deep_water(x: int, y: int) -> bool:
+	return deep_open(x, y)
 
 
 func sea_plant_at(x: int) -> Vector3i:
@@ -417,6 +547,8 @@ func _column(x: int) -> PackedFloat32Array:
 
 
 func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloat32Array]) -> int:
+	if _ocean_c >= 0 and y > int(col[0]) and deep_open(x, y):
+		return WorldData.AIR  # the Deep (water fills it)
 	if _ocean_c >= 0 and y >= int(col[0]) and y < height - settings.floor_rows and _sandy(x, y):
 		var depth := y - int(col[0])
 		if depth < settings.ocean_sand_depth:
@@ -517,9 +649,8 @@ func _carved(x: int, y: int, depth: int, col: PackedFloat32Array, entrances: Arr
 	var s := settings
 	if y >= height - s.floor_rows - 1:
 		return false
-	if (ocean_at(x) > 0.0 and depth < settings.ocean_sand_depth + settings.ocean_hard_sand_depth + settings.ocean_cave_crust) \
-			or (_pond_index(x) >= 0 and depth < 12):
-		return false  # a solid crust under the sea and ponds (the water would pour in)
+	if ocean_at(x) > 0.0 or (_pond_index(x) >= 0 and depth < 12):
+		return false  # no dry caves under the sea (only the Deep's flooded ones) or ponds
 	for e in entrances:
 		if _in_entrance(x, depth, e):
 			return true

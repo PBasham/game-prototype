@@ -592,6 +592,14 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 64: the deep ocean
+
+| Change | Where |
+| --- | --- |
+| Chasm, arena, Deep caves, scene caverns | `ForestGenerator._place_deep`, `_chasm_floor`, `deep_open`, `deep_layout`, `_upper_depth`; "The Deep" in `ForestGenSettings` |
+| Sunlight in the sea | `WorldGenerator.light_floor_at`; `LightMap._surface` uses it |
+| `fullbright` | `DevConsole` |
+
 ## Phase 62: fireflies
 
 | Change | Where |

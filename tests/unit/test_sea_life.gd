@@ -67,9 +67,12 @@ func test_fish_swim_in_water_and_stay_there() -> void:
 	_tank(6)
 	var fish := w.request_spawn_enemy(_enemy(&"fish"), w.tile_to_world(floor_tile + Vector2i(8, -3)) + Vector2(4, 4))
 	var start := fish.global_position
-	await wait_seconds(3.0)
+	var far := 0.0
+	for i in 6:
+		await wait_seconds(0.5)
+		far = maxf(far, fish.global_position.distance_to(start))
 	assert_true(is_instance_valid(fish))
-	assert_gt(fish.global_position.distance_to(start), 4.0, "it swims")
+	assert_gt(far, 4.0, "it swims (it may wander back, so the farthest it got)")
 	assert_true(fish._in_water(), "still in the water")
 	assert_eq(_enemy(&"fish").loot[0].item, &"raw_fish")
 

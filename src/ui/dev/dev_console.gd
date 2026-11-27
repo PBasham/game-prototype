@@ -355,6 +355,9 @@ func _register() -> void:
 		world.player.infinite_mana = not world.player.infinite_mana
 		world.player.mana = world.player.max_mana
 		_print("Infinite mana %s." % ("on" if world.player.infinite_mana else "off")))
+	_add("fullbright", "fullbright", "Toggle the lighting off (everything fully lit) and back on, to look around dark places.", func(_a: PackedStringArray) -> void:
+		world.lights.visible = not world.lights.visible
+		_print("Full bright %s." % ("off" if world.lights.visible else "on")))
 	_add("tp", "tp <x> <y> | tp spawn | tp dark", "Teleport to a tile (feet), the world's spawn, or the middle of the Dark Forest.", _tp)
 	_add("pos", "pos", "Your tile position.", func(_a: PackedStringArray) -> void:
 		var t := world.wrap_tile(world.world_to_tile(world.player.global_position))

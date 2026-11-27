@@ -83,6 +83,16 @@ func water_at(_x: int, _y: int) -> bool:
 	return false
 
 
+## Where sunlight stops in column x (the light map's sky floor). The surface by default.
+func light_floor_at(x: int) -> int:
+	return surface_at(x)
+
+
+## True where the Deep's flooded caves are (under the ocean). None by default.
+func deep_open(_x: int, _y: int) -> bool:
+	return false
+
+
 ## The plant on the ground of column x (SeaFlora): Vector3i(kind, size, ground row).
 ## Kinds: 0 none, 1 seagrass (size = art variant), 2 kelp (size = tiles tall), 3 dune
 ## grass (size = art variant).

@@ -30,7 +30,8 @@ func test_there_is_one_ocean_far_from_spawn() -> void:
 
 func test_the_ocean_is_deep_water_over_sand_and_hard_sand() -> void:
 	var g := _gen()
-	var c := roundi(g.ocean().x)
+	# Off to the side of the chasm, which opens the floor in the middle.
+	var c := roundi(g.ocean().x - g.ocean().y * 0.3)
 	var floor_y := g.surface_at(c)
 	var sea := floor_y
 	while sea > 0 and g.water_at(c, sea - 1):
@@ -123,3 +124,89 @@ func test_generated_water_fills_the_voxel_layer_once() -> void:
 	await wait_physics_frames(2)
 	WorldSave.delete(PATH)
 	Game.world_info = null
+
+
+## Phase 64: the chasm, the Deep's flooded caves, the arena, and sunlight in the sea.
+func test_the_chasm_drops_to_the_arena() -> void:
+	var g := _gen()
+	var c := roundi(g.ocean().x)
+	var deep := g.deep_layout()
+	var arena: Rect2 = deep["arena"]
+	assert_gt(float(deep["chasm_half"]), 20.0, "a wide chasm")
+	assert_gt(arena.position.y, g.height - 80.0, "the arena is near the bottom of the world")
+	var mouth := g.surface_at(c)
+	var sea := g.surface_at(c - roundi(g.ocean().y) + 3)
+	assert_gt(mouth - sea, 180, "the upper sea floor is deep")
+	var off := 0
+	var widths := {}
+	for y in range(mouth + 2, roundi(arena.position.y), 11):
+		var m := g.chasm_center(y)
+		assert_true(g.water_at(m, y), "open water all the way down (row %d)" % y)
+		off = maxi(off, absi(g.wrap_delta(m, c)))
+		var w := 0
+		while g.chasm_open(m + w, y):
+			w += 1
+		widths[w / 2] = true
+	assert_gt(off, 10, "the chasm winds")
+	assert_gt(widths.size(), 4, "its walls are uneven")
+	assert_true(g.water_at(c, roundi(arena.position.y)), "it opens into the arena")
+
+
+func test_the_deep_is_flooded_caves_with_scene_caverns() -> void:
+	var g := _gen()
+	var deep := g.deep_layout()
+	var scenes: Array = deep["scenes"]
+	assert_eq(scenes.size(), g.settings.scene_caverns)
+	for r: Rect2 in scenes:
+		var x := roundi(r.position.x)
+		var y := roundi(r.position.y)
+		assert_true(g.deep_open(x, y), "the scene cavern is open")
+		assert_true(g.water_at(x, y), "and full of water")
+		assert_eq(g.block_at(x, y), WorldData.AIR)
+	# A good share of the Deep is open, the rest rock.
+	var o := g.ocean()
+	var open := 0
+	var total := 0
+	for x in range(roundi(o.x - o.y * 0.7), roundi(o.x + o.y * 0.7), 9):
+		for y in range(g.surface_at(x) + 40, g.height - 20, 9):
+			total += 1
+			if g.deep_open(x, y):
+				open += 1
+	assert_between(float(open) / total, 0.15, 0.6, "caverns and rock")
+
+
+func test_no_deep_away_from_the_ocean() -> void:
+	var g := _gen()
+	var s := g.settings.spawn_x
+	for y in range(g.surface_at(s) + 10, g.height - 10, 13):
+		assert_false(g.deep_open(s, y))
+
+
+func test_sunlight_stops_a_little_way_down() -> void:
+	var g := _gen()
+	var c := roundi(g.ocean().x)
+	var sea := g.surface_at(c - roundi(g.ocean().y) + 5)
+	assert_lt(g.light_floor_at(c), g.surface_at(c), "the deep water isn't open sky")
+	assert_lte(g.light_floor_at(c) - sea, g.settings.sunlit_water_tiles + 1)
+	assert_eq(g.light_floor_at(g.settings.spawn_x), g.surface_at(g.settings.spawn_x), "land is unchanged")
+
+
+## Every water tile in a small world's whole ocean (sea, chasm and Deep) has water or
+## something solid beside and below it: nothing leaks.
+func test_the_whole_ocean_is_contained() -> void:
+	var g := _gen(1024, 512, 7)
+	var o := g.ocean()
+	assert_gte(o.x, 0.0)
+	var leaks := 0
+	var count := 0
+	var b := g.settings.beach_width
+	for x in range(roundi(o.x - o.y) - b, roundi(o.x + o.y) + b):
+		for y in range(0, g.height - 3):
+			if not g.water_at(x, y):
+				continue
+			count += 1
+			for n: Vector2i in [Vector2i(x - 1, y), Vector2i(x + 1, y), Vector2i(x, y + 1)]:
+				if g.block_at(n.x, n.y) == WorldData.AIR and not g.water_at(n.x, n.y):
+					leaks += 1
+	assert_gt(count, 10000)
+	assert_eq(leaks, 0)

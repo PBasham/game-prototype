@@ -363,19 +363,46 @@ get none.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `ocean_share`, `ocean_min_width` | 0.12, 140 | Width of the water at sea level |
-| `ocean_depth` | 80 | Deepest point below sea level, in the middle |
-| `ocean_shelf`, `ocean_shelf_depth` | 0.3, 6 | A shallow shelf near each shore (share of the half width, depth) before the drop |
+| `ocean_share`, `ocean_min_width` | 0.25, 140 | Width of the water at sea level |
+| `ocean_depth` | 220 | The upper sea floor's deepest point below sea level, around the chasm's mouth (at most half the world below sea level) |
+| `ocean_shelf`, `ocean_shelf_depth` | 0.3, 8 | A shallow shelf near each shore (share of the half width, depth) before the drop |
 | `ocean_floor_bumps` | 3 | Bumps on the sea floor (deeper parts only) |
-| `beach_width` | 45 | Each beach, from the water's edge to the land. It never dips below sea level, so the water can't spill over it |
+| `beach_width` | 60 | Each beach, from the water's edge to the land. It never dips below sea level, so the water can't spill over it |
 | `sea_level_below` | 3 | Sea level, tiles below the baseline surface (`surface_level`) |
 | `ocean_sand_depth`, `ocean_hard_sand_depth` | 6, 14 | Sand on top, then Hard Sand, then stone (and its ores) |
-| `ocean_cave_crust` | 8 | Rock under the Hard Sand before caves may start, so the sea can't drain into one |
+| `sunlit_water_tiles` | 24 | Sunlight reaches this far down into the sea (`light_floor_at`); deeper water darkens like caves |
 
 The beach's land end mixes sand and grass in clumps. No trees, flowers or Dark Forest on
 the ocean or its beaches. Walls: Sand Wall, then Hard Sand Wall. The ocean is its own
 biome (`biome_at` = `ocean`; Sand and Hard Sand carry `biome = ocean`); there's no spawn
 table for it yet, so nothing spawns there.
+
+### The Deep (Phase 64)
+
+Under the ocean, down to the world's floor:
+
+- **The chasm:** a shaft of open water from the middle of the sea floor down to the
+  **arena**: an empty chamber `arena_width` x `arena_height` (140 x 70) at the bottom, for
+  a boss later. `chasm_width_min`/`max` (50 to 80) wide. It isn't straight:
+  - big bends up to `chasm_wander` (70) tiles off the middle, about every
+    `chasm_bend_tiles` (260) rows, plus kinks up to `chasm_kink` (12) about every
+    `chasm_kink_tiles` (45); the bends ease in over the first 60 rows so the mouth sits
+    in the middle of the sea floor
+  - its width swells and narrows by up to `chasm_wobble` (8) each side
+  - jagged rock on the walls, up to `chasm_jag` (7) tiles in spikes about
+    `chasm_jag_tiles` (6) tall, only on some stretches
+  - `ForestGenerator.chasm_open(x, y)`, `chasm_center(y)`
+- **Flooded caves** under the upper sea floor across the ocean's width (less
+  `deep_margin` 24 of rock each side, for the barrier), below `deep_crust` (6) of rock
+  under the Hard Sand and above `deep_floor_rows` (8) of floor: caverns where a noise
+  (`deep_cave_tiles` 120) is over `deep_open` (0.22), tunnels where a second noise
+  (`deep_tunnel_tiles` 160) is within `deep_tunnel` (0.045) of zero. They thin out toward
+  the edges so they don't end in straight lines.
+- **Scene caverns:** `scene_caverns` (4) empty `scene_cavern_width` x `scene_cavern_height`
+  (40 x 20) caverns spread over both sides, for scenes later.
+- No dry caves anywhere under the ocean or its beaches: only the flooded ones.
+- `ForestGenerator.deep_open(x, y)`, `deep_layout()` (arena, scenes, chasm width).
+- Dev console `fullbright` turns the lighting off to look around (the Deep is black).
 
 ### Sea plants (Phase 56)
 

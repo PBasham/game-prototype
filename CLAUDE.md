@@ -34,7 +34,7 @@ tunables change: Patrick tweaks things by hand from these docs.
   Bottle, Clay Jug, Glass Vial, Glass Bottle, Glass Flask, Large Potion Cabinet, Potion Shelf;
   Phase 37: Healing and Mana in each bottle, Pantry Rack, Food Pantry, Bookshelf, Barrel,
   Crate, three Hanging Nets, Liquid Barrel, Iron Liquid Barrel; later: Long Hanging Net,
-  Siphon Liquid, Bookshelf (tall), Glow Potion, Shaping Spell; Phase 52: Sand Bricks, the Bomb, voxel sand and water; Phase 54: thirst, swimming, bottles of water; Phase 55: the ocean (beaches, Hard Sand) and ponds; Phase 56: crabs, fish, raw and cooked crab and fish, dune grass, seagrass, kelp; Phase 62: fireflies, the Bug Net, the Firefly Lamp).
+  Siphon Liquid, Bookshelf (tall), Glow Potion, Shaping Spell; Phase 52: Sand Bricks, the Bomb, voxel sand and water; Phase 54: thirst, swimming, bottles of water; Phase 55: the ocean (beaches, Hard Sand) and ponds; Phase 56: crabs, fish, raw and cooked crab and fish, dune grass, seagrass, kelp; Phase 62: fireflies, the Bug Net, the Firefly Lamp; Phase 64: the Deep (chasm, arena, flooded caves, scene caverns, all empty for now)).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

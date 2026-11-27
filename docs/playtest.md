@@ -358,6 +358,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 64: the deep ocean (branch phase-64-the-deep)**
+- [ ] The ocean is about twice as wide, its floor sloping to about 220 tiles deep.
+- [ ] In the middle, a chasm of open water drops to near the bottom of the world, into a
+      big empty arena chamber. It winds side to side, with jagged stretches of wall.
+- [ ] Under the sea floor, the Deep: flooded caverns and tunnels, a few bigger empty
+      caverns, black without a light (`fullbright` to look around).
+- [ ] Sunlight only reaches about 24 tiles down into the sea.
+
 **Phase 63: water on the map (branch phase-63-map-water)**
 - [ ] Explore a pond or the ocean, open the map (N): the water shows blue.
 

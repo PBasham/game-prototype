@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 64, the deep ocean
+
+- **Patrick:** the ocean a lot larger and significantly deeper; the middle opens into a
+  drop-off far down to an underwater cave system, with room for a large Leviathan-type
+  boss, scenes and enemies later; the ocean bottom goes all the way to the bottom of the map.
+- **Claude (agreed brief):** 25% of the world wide, upper floor to 150 deep, a 50 to 80
+  wide chasm to an empty 140 x 70 arena at the bottom, flooded caves under the whole
+  ocean, 4 empty scene caverns, sunlight 24 tiles down.
+- **Patrick (follow-up):** the upper ocean a bit deeper; the chasm not straight down but
+  curvy and jagged in parts. Now 220 deep, and the chasm winds (big bends and kinks),
+  swells and narrows, with jagged stretches.
+
 ## 2026-11-27: Phase 63, water on the map
 
 - **Patrick:** start with the water on the map.

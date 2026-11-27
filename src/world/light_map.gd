@@ -151,7 +151,7 @@ func _sky_scale(x: int) -> float:
 func _surface(x: int) -> int:
 	var wx := posmod(x, world.data.width)
 	if not _surfaces.has(wx):
-		_surfaces[wx] = world.generator.surface_at(wx) if world.generator else 0
+		_surfaces[wx] = world.generator.light_floor_at(wx) if world.generator else 0
 	return _surfaces[wx]
 
 
