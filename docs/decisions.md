@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 61, water fixes, critters, torches on trees
+
+- **Patrick:** the character should be behind the water layer; slimes float and bob on
+  water; peaceful creatures get a different entity cap; fish in water; placing sand stops
+  working after a bit; place torches on trees.
+- **Claude:** water drawn over everything that moves; slimes float; critters on their own
+  cap and clock per spawn table, fish added to the forest table (ponds); loose sand cells
+  count as something to build against; torches hang on bare trunk (60% of the height,
+  pines 1 tile wide, darkwood 3) and drop when the tree falls.
+
 ## 2026-11-27: Phase 60, dark caves
 
 - **Patrick:** caves are too bright this far down.

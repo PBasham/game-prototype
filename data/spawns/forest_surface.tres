@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://src/combat/kill_count_condition.gd" id="4_3vud0"]
 [ext_resource type="Resource" path="res://data/enemies/blue_slime.tres" id="5_qe5rb"]
 [ext_resource type="Script" path="res://src/combat/spawn_table.gd" id="6_8ejdu"]
+[ext_resource type="Resource" path="res://data/enemies/fish.tres" id="7_fish"]
 
 [sub_resource type="Resource" id="Resource_taoo8"]
 script = ExtResource("1_d32di")
@@ -20,8 +21,14 @@ enemy = ExtResource("5_qe5rb")
 weight = 12.0
 conditions = Array[ExtResource("2_jinop")]([SubResource("Resource_3ma2q")])
 
+[sub_resource type="Resource" id="Entry_fish"]
+script = ExtResource("1_d32di")
+enemy = ExtResource("7_fish")
+
 [resource]
 script = ExtResource("6_8ejdu")
-entries = Array[ExtResource("1_d32di")]([SubResource("Resource_taoo8"), SubResource("Resource_4hgp8")])
+critter_seconds = 2.0
+max_critters = 6
+entries = Array[ExtResource("1_d32di")]([SubResource("Resource_taoo8"), SubResource("Resource_4hgp8"), SubResource("Entry_fish")])
 id = &"forest_surface"
 display_name = "Forest surface"

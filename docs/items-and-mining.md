@@ -120,7 +120,9 @@ left click (`places_object`).
   (`ItemUser.rope_end`). Ropes side by side are joined by a short rope across.
 - **Torch:** 2 tiles tall (`height_tiles`; drawn upward from its tile, which needs no
   solid block above it). Gives warm light (radius 11, see Lighting in the guide). Goes on a solid
-  block below or beside it, or on a back wall, and shows the matching frame (standing,
+  block below or beside it, on a back wall, or on a tree's bare trunk (Phase 61:
+  `PlantLayer.trunk_at`, the lower `trunk_share` 60% of it; it drops when the tree is
+  cut), and shows the matching frame (standing,
   leaning left or right, on the wall). It can't go inside a solid block. When what holds
   it is mined, it pops off as an item. Held, a torch is out in front of you (item type
   `torch`) and lights around you (`ItemData.held_light_radius` 24, `held_light_color`;
@@ -622,6 +624,10 @@ tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are
   only takes the missing grains (they become the block). Sand Bricks work the same way
   (16 a tile, a bitten tile takes only the missing bricks). Other cells in the way: other solid
   cells are lost, water is pushed into the tile above.
+- **Drawn over you:** the voxel layer (and the sea plants) sit at `VoxelLayer.Z` 3, over
+  the player, enemies and drops, so whatever is in the water is seen through it.
+- **Building against loose sand:** a tile of sand cells (or a bitten brick) counts as
+  something to place against, and a part-full tile can be topped up.
 - **Collision:** solid cells have 2x2 px collision (a hidden TileMapLayer), so you walk
   on piles; water has none. Thrown items stop on solid cells.
 - **Explosions** (the Bomb, `boom`): sand and Sand Bricks tiles near the blast become

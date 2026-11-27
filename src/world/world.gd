@@ -205,10 +205,12 @@ func _ready() -> void:
 	renderer.setup(self)
 	voxels = VoxelLayer.new()
 	voxels.name = "Voxels"
+	voxels.z_index = VoxelLayer.Z  # over you, enemies and drops: you're in the water
 	add_child(voxels)
 	voxels.setup(self)
 	sea_flora = SeaFlora.new()
 	sea_flora.name = "SeaFlora"
+	sea_flora.z_index = VoxelLayer.Z  # drawn right after the water (tinted under it)
 	add_child(sea_flora)
 	sea_flora.setup(self)
 	object_layer = ObjectLayer.new()
@@ -936,8 +938,21 @@ func enemies() -> Array[Enemy]:
 	return out
 
 
+## Hostile enemies around (critters counted apart: critter_count).
 func enemy_count() -> int:
-	return enemies().size()
+	var n := 0
+	for e in enemies():
+		if not e.data.is_critter():
+			n += 1
+	return n
+
+
+func critter_count() -> int:
+	var n := 0
+	for e in enemies():
+		if e.data.is_critter():
+			n += 1
+	return n
 
 
 func enemies_near(pos: Vector2, tiles: float) -> Array[Enemy]:
@@ -1709,7 +1724,12 @@ func _room_above(tile: Vector2i, def: ObjectDef) -> bool:
 ## Torch support: a solid block below or beside, or a back wall behind.
 func _supported(tile: Vector2i) -> bool:
 	return is_solid(tile + Vector2i.DOWN) or is_solid(tile + Vector2i.LEFT) or is_solid(tile + Vector2i.RIGHT) \
-		or data.get_wall(tile.x, tile.y) > 0
+		or data.get_wall(tile.x, tile.y) > 0 or (plants != null and plants.trunk_at(tile))
+
+
+## Objects at and around a tile that lost their support pop off (a tree cut down).
+func check_supports(tile: Vector2i) -> void:
+	_check_supports(tile)
 
 
 ## After a block or wall changed: objects there or next to it that lost their support

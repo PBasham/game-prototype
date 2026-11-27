@@ -57,6 +57,10 @@ func _process(delta: float) -> void:
 			spawned_total += 1
 		else:
 			failed_total += 1
+	# Critters (crabs, fish) on their own cap and clock.
+	if table.has_critters() and world.critter_count() < table.max_critters and rate_scale > 0.0 \
+			and randf() < clampf(delta / maxf(table.critter_seconds / rate_scale, 0.01), 0.0, 1.0):
+		try_spawn(table, true)
 
 
 func is_night() -> bool:
@@ -112,8 +116,9 @@ func spawn_chance(table: SpawnTable, delta: float) -> float:
 
 ## Picks an enemy from the table and spawns it at a free spot in the table's layer.
 ## The new enemy or null.
-func try_spawn(table: SpawnTable) -> Enemy:
-	var data := table.pick(is_night(), randf(), world)
+## Spawns one from the table: an enemy, or with `critters` a critter.
+func try_spawn(table: SpawnTable, critters: bool = false) -> Enemy:
+	var data := table.pick(is_night(), randf(), world, critters)
 	if data == null:
 		return null
 	var spot := find_spot(data)

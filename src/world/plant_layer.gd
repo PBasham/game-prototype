@@ -38,6 +38,8 @@ const BUSH_GROWN := 1
 @export var tree_lean_degrees := 4.0
 ## Trees need this many tiles between their trunks (planting).
 @export var tree_spacing := 3
+## How much of a tree's height (from the ground) is bare trunk you can hang a torch on.
+@export_range(0.1, 1.0) var trunk_share := 0.6
 ## Tiles of clear space above the ground a sapling needs to grow.
 @export var grow_clearance := 10
 @export_group("Saplings")
@@ -168,6 +170,22 @@ func ground_position(ground: Vector2i, near: Vector2) -> Vector2:
 func supports(tile: Vector2i) -> bool:
 	var plant: Plant = _plants.get(world.wrap_tile(tile))
 	return plant != null and plant.kind == Kind.TREE
+
+
+## True when `tile` is on a tree's trunk (below its canopy): torches can hang there.
+## Pine trunks are one tile wide, darkwood trunks three.
+func trunk_at(tile: Vector2i) -> bool:
+	for dy in range(1, 40):
+		for dx: int in [0, -1, 1]:
+			var g := world.wrap_tile(tile + Vector2i(dx, dy))
+			var p: Plant = _plants.get(g)
+			if p == null or p.kind != Kind.TREE:
+				continue
+			var dark := p.variant % _trees.size() >= _pines
+			if dx != 0 and not dark:
+				continue
+			return dy <= roundi(_height_tiles(p) * trunk_share)
+	return false
 
 
 ## True when a block placed on `tile` would go through a tree trunk.
@@ -614,10 +632,17 @@ func _remove(g: Vector2i) -> void:
 		return
 	if p.node:
 		p.node.queue_free()
+	var was_tree := p.kind == Kind.TREE
+	var tall := roundi(_height_tiles(p) * trunk_share) if was_tree else 0
 	_plants.erase(g)
 	var wc := _chunk_of(g)
 	(_by_chunk[wc] as Array).erase(g)
 	_dirty[wc] = true
+	if was_tree:
+		# Torches hung on its trunk come off with it.
+		for dy in range(1, tall + 1):
+			for dx: int in [-1, 0, 1]:
+				world.check_supports(g + Vector2i(dx, -dy))
 
 
 ## Breaks a plant where it stands (ground gone, cut): drops what it drops.

@@ -137,3 +137,71 @@ func test_sea_plants_only_by_the_sea() -> void:
 			assert_eq(p.z, g.surface_at(x))
 	assert_true(kinds.has(1) and kinds.has(2) and kinds.has(3), "seagrass, kelp and dune grass")
 	assert_eq(g.sea_plant_at(g.settings.spawn_x).x, 0, "none at spawn")
+
+
+func test_slimes_float_at_the_surface() -> void:
+	_tank(6)
+	var slime := w.request_spawn_enemy(_enemy(&"green_slime"), w.tile_to_world(floor_tile + Vector2i(8, -1)) + Vector2(4, 0))
+	await wait_seconds(2.0)
+	var surface_y := float((floor_tile.y - 6) * World.TILE)
+	var lowest := -INF
+	for i in 30:
+		await wait_physics_frames(3)
+		lowest = maxf(lowest, slime.global_position.y)
+	assert_lt(lowest, surface_y + 16.0, "stays up at the surface (it may hop off it), never sinks to the bottom")
+
+
+func test_critters_have_their_own_cap() -> void:
+	_tank(6)
+	for i in 5:
+		w.request_spawn_enemy(_enemy(&"fish"), w.tile_to_world(floor_tile + Vector2i(2 + i * 2, -3)))
+	await wait_physics_frames(2)
+	assert_eq(w.critter_count(), 5)
+	assert_eq(w.enemy_count(), 0, "fish don't count against the enemy cap")
+	var table := Registry.get_def(&"spawns", &"forest_surface") as SpawnTable
+	assert_true(table.has_critters(), "fish in the forest (ponds)")
+	assert_eq(table.pick(false, 0.5, w, true).id, &"fish")
+	assert_ne(table.pick(false, 0.5, w, false).id, &"fish")
+
+
+func test_you_can_build_against_loose_sand() -> void:
+	_tank(0)
+	var t := floor_tile + Vector2i(4, -1)
+	var code := w.voxels.code_of(&"sand")
+	for i in 4:
+		w.voxels._set_cell(Vector2i(t.x * 4 + i, t.y * 4 + 3), code)
+	w.request_set_block(floor_tile + Vector2i(4, 0), WorldData.AIR)  # nothing under it but sand cells... and stone around
+	var above := t + Vector2i.UP + Vector2i.UP
+	assert_false(w.item_user._anchored(above + Vector2i.UP, false), "open air two above isn't")
+	assert_true(w.item_user._anchored(t + Vector2i.UP, false), "right on top of loose sand is")
+	assert_true(w.item_user._anchored(t, false), "a tile of loose sand itself can be topped up")
+
+
+func test_water_is_drawn_over_you() -> void:
+	assert_gt(w.voxels.z_index, w.player.z_index)
+	assert_gt(w.voxels.z_index, 2, "over enemies and drops too")
+
+
+func test_torches_hang_on_tree_trunks() -> void:
+	# A pine on flat ground right of spawn.
+	var feet := w.world_to_tile(w.player.global_position)
+	var g := Vector2i(feet.x + 14, feet.y)
+	while w.data.get_block(g.x, g.y) == WorldData.AIR:
+		g.y += 1
+	w.plants._add(w.wrap_tile(g), PlantLayer.Kind.TREE, 0)
+	assert_not_null(w.plants.plant_at(g))
+	var torch := w.objects.index_of(&"torch")
+	var def := w.objects.def(torch) as ObjectDef
+	var spot := g + Vector2i(0, -3)
+	if w.data.get_wall(spot.x, spot.y) > 0:
+		pending("a wall behind this tree")
+		return
+	assert_true(w.plants.trunk_at(spot))
+	assert_true(w.can_place_object(spot, def), "on the trunk")
+	assert_true(w.request_set_object(spot, torch))
+	assert_false(w.plants.trunk_at(spot + Vector2i(3, 0)), "not beside it")
+	for i in 20:
+		w.plants.request_hit_tree(g, 1000.0, float(g.x * World.TILE - 40))
+		if w.plants.plant_at(g) == null:
+			break
+	assert_eq(w.data.get_object(spot.x, spot.y), 0, "the torch came off with the tree")

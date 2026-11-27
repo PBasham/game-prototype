@@ -177,7 +177,7 @@ func test_spawn_chance_and_weighted_picks() -> void:
 	assert_gt(t.cap(true), t.cap(false), "a higher cap at night")
 	# Blue Slime is locked until a Green Slime has been slain in this world.
 	for i in 200:
-		assert_eq(t.pick(false, i / 200.0, w).id, &"green_slime", "only green before the first kill")
+		assert_eq(t.pick(false, i / 200.0, w, false).id, &"green_slime", "only green before the first kill")
 	var e := w.request_spawn_enemy(_slime(), w.player.global_position + Vector2(80, -20))
 	await wait_physics_frames(1)
 	e.kill()
@@ -185,7 +185,7 @@ func test_spawn_chance_and_weighted_picks() -> void:
 	# Weighted picks: now Blue Slime is the rare one.
 	var blue := 0
 	for i in 1000:
-		if t.pick(false, i / 1000.0, w).id == &"blue_slime":
+		if t.pick(false, i / 1000.0, w, false).id == &"blue_slime":
 			blue += 1
 	assert_almost_eq(blue, roundi(1000.0 * 12.0 / 112.0), 2.0, "about 11% Blue Slime")
 	var only_night := SpawnTable.new()

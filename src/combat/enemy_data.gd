@@ -56,8 +56,18 @@ enum AI { SLIME, SPIRIT, CRAB, FISH }
 @export var aggro_tiles_vertical := 16.0
 ## Gravity in tiles/s².
 @export var gravity := 110.0
+## Slimes float: in water they bob at the surface (and can hop off it) instead of sinking.
+@export var floats := false
+## How fast a floating slime rises when pushed under (tiles per second).
+@export var float_rise := 7.0
 ## Critters (crabs, fish): no touch damage until you hit it (a crab then pinches back).
 @export var harmless_until_hit := false
+
+
+## Critters (harmless until hit: crabs, fish) spawn under their own cap and rate
+## (SpawnTable max_critters), apart from the enemies.
+func is_critter() -> bool:
+	return harmless_until_hit
 @export_group("Crab (scuttles on the ground)")
 ## Tiles per second sideways, and how long it scuttles or stops (seconds, random).
 @export var scuttle_speed := 4.0

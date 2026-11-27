@@ -23,6 +23,7 @@ chance = 0.01
 script = ExtResource("2_vnykk")
 texture = ExtResource("3_vsx11")
 tint = Color(0.55, 1, 0.45, 1)
+floats = true
 loot = Array[ExtResource("1_roai4")]([SubResource("Resource_wbqt7"), SubResource("Loot_slime_core"), SubResource("Loot_page_summon_slime")])
 id = &"green_slime"
 display_name = "Green Slime"

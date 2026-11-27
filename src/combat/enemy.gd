@@ -256,7 +256,17 @@ func _physics_process(delta: float) -> void:
 	_since_hit += delta
 	_squash = maxf(_squash - delta, 0.0)
 	var wet := data.swims and _in_water()
-	if not wet:
+	_floating = data.floats and world.voxels != null \
+		and world.voxels.liquid_at(global_position + Vector2(0.0, -data.size.y * 0.35))
+	if _floating and velocity.y > -data.float_rise * TILE * 1.5:
+		# Afloat: pushed up while more than a third under, bobbing at the surface.
+		var deep := world.voxels.liquid_at(global_position + Vector2(0.0, -data.size.y * 0.75))
+		var bob := sin(Time.get_ticks_msec() * 0.004 + get_instance_id()) * 1.2 * TILE
+		var target := -data.float_rise * TILE if deep else -data.float_rise * 0.3 * TILE + bob
+		# Splashing down is stopped hard by the water; rising back up is gentler.
+		velocity.y = move_toward(velocity.y, target, (180.0 if velocity.y > target else 40.0) * TILE * delta)
+		velocity.x = move_toward(velocity.x, 0.0, 8.0 * TILE * delta) if _hop_vx == 0.0 else velocity.x
+	elif not wet:
 		velocity.y = minf(velocity.y + data.gravity * TILE * delta, 90.0 * TILE)
 	match data.ai:
 		EnemyData.AI.SLIME:
@@ -280,7 +290,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _slime(delta: float) -> void:
-	if not is_on_floor():
+	if not is_on_floor() and not _floating:
 		if _hop_vx != 0.0:
 			velocity.x = _hop_vx
 		return
@@ -392,6 +402,8 @@ func _crab(delta: float) -> void:
 
 # --- Fish ------------------------------------------------------------------------
 
+## A slime afloat on water (it can hop from there like from the ground).
+var _floating := false
 var _heading := Vector2.RIGHT
 var _turn_left := 0.0
 
@@ -590,7 +602,7 @@ func _update_look() -> void:
 	if data.ai == EnemyData.AI.CRAB or data.ai == EnemyData.AI.FISH:
 		_critter_look()
 		return
-	if not is_on_floor():
+	if not is_on_floor() and not _floating:
 		_set_frame(2)
 		_sprite.scale = Vector2(0.92, 1.1)
 	elif _squash > 0.0:

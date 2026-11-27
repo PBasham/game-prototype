@@ -166,8 +166,17 @@ beaten) are a small script each, extending `SpawnCondition` with `met(world)` an
 **Kills** are counted per world (`World.kills`, saved with it), by anyone, including
 `butcher`. Enemies that despawn don't count.
 
-The **Ocean** table (`data/spawns/ocean.tres`, biome `ocean`): Crab 40, Fish 60, a spawn
-every 4 s by day (5 at night), at most 10 (8 at night). Ponds are forest, so no fish there.
+**Critters** (`EnemyData.is_critter`, the harmless-until-hit ones: crabs, fish) spawn
+apart from enemies, under their own cap: each table's `critter_seconds` and
+`max_critters` (Critters group), and they don't count toward `max_day`/`max_night`
+(`World.enemy_count` leaves them out; `critter_count`).
+
+The **Ocean** table (`data/spawns/ocean.tres`, biome `ocean`): Crab 40, Fish 60, a critter
+every 2 s, at most 14. The forest table has Fish too (critters every 2 s, at most 6):
+they only find room in ponds (`EnemySpawner._water_spot`).
+
+**Slimes float** (`EnemyData.floats`, `float_rise` 7): in water they're pushed up while
+more than a third under, splash down hard, bob at the surface and hop off it.
 
 ### Despawning
 

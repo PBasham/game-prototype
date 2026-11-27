@@ -33,6 +33,7 @@ hop_tiles_min = 3.0
 hop_tiles = 7.0
 hop_wait_min = 0.6
 hop_wait_max = 1.8
+floats = true
 loot = Array[ExtResource("1_j3x2u")]([SubResource("Resource_lhn1y"), SubResource("Loot_slime_core"), SubResource("Loot_page_summon_slime")])
 id = &"blue_slime"
 display_name = "Blue Slime"

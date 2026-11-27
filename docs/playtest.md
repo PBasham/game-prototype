@@ -358,6 +358,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 61: water fixes, critters, torches on trees (branch phase-61-water-fixes)**
+- [ ] Wade into water: your legs (and fish, crabs, items) show through it, tinted.
+- [ ] Slimes in water float up and bob at the surface, and hop off it.
+- [ ] Crabs and fish don't use up the enemy count: slimes still spawn at the beach edge
+      and forest with fish around. Fish turn up in ponds (from a little way off).
+- [ ] Place sand against a loose sand pile: it keeps working (it used to stop).
+- [ ] Torches go on tree trunks (not the canopy); cut the tree and they drop.
+
 **Phase 60: dark caves (branch phase-60-dark-caves)**
 - [ ] Deep caves are black without a light; daylight down a shaft or cave mouth fades out
       about 20 tiles in. Torches light caves as before.

@@ -592,6 +592,16 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 61: water fixes, critters, torches on trees
+
+| Change | Where |
+| --- | --- |
+| Water over the player | `VoxelLayer.Z`, `World` (z of Voxels and SeaFlora) |
+| Floating slimes | `EnemyData.floats`, `float_rise`; `Enemy._floating` in `_physics_process`, `_slime` |
+| Critter cap | `EnemyData.is_critter`; `SpawnTable.critter_seconds`, `max_critters`, `pick(..., critters)`, `has_critters`; `EnemySpawner._process`, `try_spawn(table, critters)`; `World.enemy_count`, `critter_count` |
+| Building against loose sand | `ItemUser._anchored` |
+| Torches on trunks | `PlantLayer.trunk_at`, `trunk_share`, `_remove`; `World._supported`, `check_supports` |
+
 ## Phase 60: dark caves
 
 | Change | Where |

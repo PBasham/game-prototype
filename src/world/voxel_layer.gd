@@ -14,6 +14,9 @@ const N := 4  ## cells per tile side
 const CELLS := 16  ## cells per tile
 const CELL_PX := 2  ## World.TILE / N
 const TILE := World.TILE
+## Drawn over the player (0), enemies (1) and drops (2), so what's in the water is
+## seen through it.
+const Z := 3
 
 ## Simulation steps per second.
 @export var ticks_per_second := 30.0

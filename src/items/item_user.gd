@@ -843,10 +843,14 @@ func _anchored(t: Vector2i, walls: bool) -> bool:
 		return true  # behind a door
 	if not walls and world.data.get_wall(t.x, t.y) > 0:
 		return true
+	if not walls and world.voxels.has_minable(t):
+		return true  # a tile of loose sand to top up
 	for d: Vector2i in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
 		var b := world.data.get_block(t.x + d.x, t.y + d.y)
 		if b > 0 or b == WorldData.OUT_OF_BOUNDS:
 			return true
+		if world.voxels.has_minable(t + d):
+			return true  # loose sand (or a bitten brick) counts as something to build on
 		if walls and world.data.get_wall(t.x + d.x, t.y + d.y) > 0:
 			return true
 		if _anchors(t + d):
