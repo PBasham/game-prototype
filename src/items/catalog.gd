@@ -16,7 +16,7 @@ static func all_items() -> Array[ItemData]:
 	var out: Array[ItemData] = []
 	for d in Registry.get_all(&"items"):
 		var it := d as ItemData
-		if it and not it.is_spell():
+		if it and not it.is_spell() and not it.obsolete:
 			out.append(it)
 	out.sort_custom(func(a: ItemData, b: ItemData) -> bool: return a.display_name < b.display_name)
 	return out

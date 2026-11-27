@@ -304,7 +304,7 @@ func _items() -> Array[ItemData]:
 			[&"lumber_rack", "Lumber Rack", "Storage for logs and wood: 1,000 of them. It fills up as you stock it."],
 			[&"potion_cabinet", "Potion Cabinet", "Glass fronted storage for potions and bottles: 10 stacks, shown on its shelves. Furniture can stand on top."],
 			[&"potion_bookcase", "Large Potion Cabinet", "A tall glass fronted case for potions and bottles: 16 stacks on 5 shelves. Furniture can stand on top."],
-			[&"potion_shelf", "Potion Shelf", "Hangs on a back wall: 4 stacks of potions and bottles on display."],
+			[&"potion_shelf", "Shelf", "Hangs on a back wall: 4 stacks of anything, shown in its 4 spots."],
 			[&"pantry_rack", "Pantry Rack", "Open shelves for food: 8 stacks, shown on its shelves. Furniture can stand on top."],
 			[&"food_pantry", "Food Pantry", "A cupboard for food: 14 stacks, shown on its open shelves. Furniture can stand on top."],
 			[&"bookshelf", "Bookshelf", "Books, spellbooks, scrolls, pages and paper: 12 stacks. Books stand on its shelves, the rest in the drawer."],
@@ -327,6 +327,7 @@ func _items() -> Array[ItemData]:
 		furn.places_object = f[0]
 		furn.place_area_max = 1
 		furn.max_stack = 99
+		furn.obsolete = furn.id == &"shelf"  # the old display Shelf (Phase 46: the Shelf is potion_shelf)
 		out.append(furn)
 	var acorn := _small(&"tree_seed", "Sapling", "From pine trees. Plant on grass to grow a pine.")
 	acorn.kind = ItemData.Kind.SEED
@@ -808,7 +809,7 @@ func _objects() -> Array[ObjectDef]:
 			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 5, &""],
 			[&"darkwood_workbench", "Darkwood Workbench", 5, 4, &"workbench"],
 			[&"chair", "Wooden Chair", 2, 3, &""],
-			[&"potion_bookcase", "Large Potion Cabinet", 4, 6, &""], [&"potion_shelf", "Potion Shelf", 3, 2, &""],
+			[&"potion_bookcase", "Large Potion Cabinet", 4, 6, &""], [&"potion_shelf", "Shelf", 3, 2, &""],
 			# Phase 37 (18 to 27).
 			[&"pantry_rack", "Pantry Rack", 3, 3, &""], [&"food_pantry", "Food Pantry", 3, 4, &""],
 			[&"bookshelf", "Bookshelf", 3, 4, &""], [&"barrel", "Barrel", 2, 2, &""], [&"crate", "Crate", 2, 2, &""],
@@ -856,11 +857,13 @@ func _objects() -> Array[ObjectDef]:
 		out[i].fill_look = ObjectDef.FillLook.BOTTLES
 	out[13].front_frame = 1  # glass doors over the bottles
 	out[16].front_frame = 1
-	out[13].container_slots = 10
+	out[13].container_slots = 12
+	out[13].slots_per_shelf = 3  # one slot per spot: 4 shelves of 3
 	out[13].bottle_shelves.assign([72, 56, 40, 24])
 	out[13].bottles_per_shelf = 8
 	out[13].bottle_x0 = 4.0
-	out[16].container_slots = 16
+	out[16].container_slots = 20
+	out[16].slots_per_shelf = 4  # 5 shelves of 4
 	out[16].bottle_shelves.assign([88, 72, 56, 40, 24])
 	out[16].bottles_per_shelf = 11
 	out[16].bottle_x0 = 4.0
@@ -870,13 +873,20 @@ func _objects() -> Array[ObjectDef]:
 	out[17].bottle_x0 = 4.0
 	out[17].needs_floor = false
 	out[17].needs_wall = true  # hangs on a back wall
+	out[17].slots_per_shelf = 4
+	out[17].container_accepts = &""  # the Shelf (was the Potion Shelf): anything
 	# Phase 37 storage: pantries (food on shelves), bookshelf, barrel, crate, nets, liquid
 	# barrels.
 	for i in range(18, 29):
 		out[i].detail = 2
 	out[18].container_slots = 8
+	out[18].slots_per_shelf = 4
+	out[18].floor_or_wall = true
 	out[18].bottle_shelves.assign([44, 24])
 	out[19].container_slots = 14
+	out[19].slots_per_shelf = 4  # 2 shelves of 4 on show, 6 more in the cupboard
+	for i in [13, 16, 18, 19]:
+		out[i].container_stack_mult = 4  # 4 stacks a slot: beats a chest for its kind
 	out[19].bottle_shelves.assign([40, 22])
 	for i in [18, 19]:
 		out[i].container_accepts = &"food"
@@ -1138,7 +1148,6 @@ func _recipes() -> Array[RecipeData]:
 		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
 		[&"table", &"workbench", {&"wood": 8}, &"table", 1, []],
 		[&"chair", &"workbench", {&"wood": 4}, &"chair", 1, []],
-		[&"shelf", &"workbench", {&"wood": 4}, &"shelf", 1, []],
 		[&"roasted_berries", &"cooking", {&"berries": 3}, &"roasted_berries", 1, []],
 		[&"cooked_mushroom", &"cooking", {&"field_mushroom": 1}, &"cooked_mushroom", 1, []],
 		[&"raspberry_compote", &"cooking", {&"raspberries": 4, &"wooden_bowl": 1}, &"raspberry_compote", 1, []],

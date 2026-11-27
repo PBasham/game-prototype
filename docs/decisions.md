@@ -2,6 +2,19 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 46, shelf spots, Creative tabs, wall pantry rack
+
+- **Patrick:** cabinets didn't fill up; each slot should be a section of the shelf and
+  the window should look like the shelves. Claude: slots per shelf (Potion Cabinet 4 x 3
+  = 12, Large 5 x 4 = 20, Shelf 4, pantries 2 x 4); the window lays them out like the
+  shelves.
+- **Patrick:** special storage has to beat a chest (40 slots). Claude: 4 stacks a slot
+  (`container_stack_mult`) on the potion cabinets and pantries: the Large Potion Cabinet
+  holds 2,400 potions to a chest's 1,200, in about the same footprint as two chests.
+- **Patrick:** retire the display Shelf; the Potion Shelf becomes the Shelf (anything).
+  Pantry Rack goes on a wall too. Creative: Food becomes Consumables, more tabs. A
+  stowed torch stops lighting you.
+
 ## 2026-11-26: Phase 45, liquid barrels, Siphon Liquid, nets, shelf spacing
 
 - **Patrick:** Liquid Barrels should open (a gauge window, empty until liquids); add a

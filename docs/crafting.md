@@ -270,11 +270,21 @@ can't mine the floor under furniture.
 | Object | Size | Holds | Capacity | Recipe (workbench) |
 | --- | --- | --- | --- | --- |
 | Lumber Rack | 3x3 | Any logs and wood (Log, Darkwood Log, Wood, Darkwood, both Reinforced) | 10 full stacks (9,999 each) | 25 Wood + 4 Logs |
-| Potion Cabinet | 3x5, glass doors, 4 shelves | Potions, coatings, bottles | 10 normal stacks | 20 Wood + 2 Copper Bars + 4 Glass |
-| Large Potion Cabinet (id `potion_bookcase`) | 4x6, 5 shelves | Potions, coatings, bottles | 16 normal stacks | 30 Wood + 4 Copper Bars + 6 Glass |
-| Potion Shelf | 3x2, on a back wall | Potions, coatings, bottles | 4 normal stacks | 6 Wood |
-| Pantry Rack | 3x3, 2 open shelves | Food (not potions or coatings) | 8 stacks | 12 Wood |
-| Food Pantry | 3x4, 2 open shelves over a cupboard | Food | 14 stacks | 20 Wood + 2 Copper Bars |
+| Potion Cabinet | 3x5, glass doors, 4 shelves of 3 spots | Potions, coatings, bottles | 12 slots of 4 stacks (120 potions a slot) | 20 Wood + 2 Copper Bars + 4 Glass |
+| Large Potion Cabinet (id `potion_bookcase`) | 4x6, 5 shelves of 4 spots | Potions, coatings, bottles | 20 slots of 4 stacks | 30 Wood + 4 Copper Bars + 6 Glass |
+| Shelf (id `potion_shelf`) | 3x2, on a back wall, 4 spots | Anything | 4 normal stacks | 6 Wood |
+| Pantry Rack | 3x3, 2 open shelves of 4 spots, on a floor or a back wall | Food (not potions or coatings) | 8 slots of 4 stacks | 12 Wood |
+| Food Pantry | 3x4, 2 open shelves of 4 spots over a cupboard | Food | 14 slots of 4 stacks (6 in the cupboard) | 20 Wood + 2 Copper Bars |
+
+- **Spots:** shelved storage gives each slot its own spot on a shelf
+  (`ObjectDef.slots_per_shelf`): slot 0 is the top shelf's left spot, reading left to
+  right, top shelf down, and the storage window lays its slots out the same way, with a
+  plank under each shelf's row. A spot shows as many of its item as fit, times how full
+  the stack is (at least one), spread evenly. `container_stack_mult` (4 on the potion
+  cabinets and pantries) lets each slot hold that many of the item's stacks, so special
+  storage beats a chest (40 slots of 1 stack) for its kind. The old display Shelf is
+  retired (`ItemData.obsolete`: no recipe, not in Creative or the Catalog; placed ones
+  still work); the Potion Shelf is now the Shelf and takes anything.
 | Bookshelf | 3x4, 2 shelves and a drawer | Books, spellbooks, tomes, scrolls, pages, paper | 12 stacks | 20 Wood |
 
 - **Storage for anything** (like a chest, its picture doesn't change): **Barrel** (2x2, 10

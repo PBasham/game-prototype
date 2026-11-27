@@ -768,7 +768,11 @@ func _layout() -> void:
 	if _chest.visible:
 		var store := _store()
 		var n := store.size if store else 40
-		_chest.size = Vector2(PAD * 2 + 10 * STEP - GAP, 22 + _rows(n) * STEP - GAP + 6 + 16 + PAD)
+		var cols := _shelf_cols()
+		var grid_h := _rows(n) * STEP - GAP
+		if cols > 0:
+			grid_h = ceili(n / float(cols)) * (STEP + PLANK_H) - GAP
+		_chest.size = Vector2(PAD * 2 + 10 * STEP - GAP, 22 + grid_h + 6 + 16 + PAD)
 		_chest.position = Vector2(view.x - _chest.size.x - window_right, window_top)
 	if open and equipping:
 		_equip.show_at(_equip_spot())
@@ -881,6 +885,28 @@ func _known() -> Array[StringName]:
 
 
 ## Rect of slot `i` in a 10-wide block starting at `origin`.
+## The open storage's sections per shelf (ObjectDef.slots_per_shelf), 0 for a chest.
+func _shelf_cols() -> int:
+	if chest == World.NO_TILE or bag != null:
+		return 0
+	var def := world.object_at(chest)
+	return def.slots_per_shelf if def else 0
+
+
+## Extra room under each row of a shelved storage's slots: a shelf plank.
+const PLANK_H := 4
+
+
+## A slot in the open chest window: 10 to a row, or laid out like the storage's shelves
+## (top shelf first), with a plank under each row.
+func _store_cell(i: int) -> Rect2:
+	var cols := _shelf_cols()
+	if cols <= 0:
+		return _cell(Vector2(PAD, 22), i)
+	var x0 := PAD + (10 * STEP - GAP - (cols * STEP - GAP)) * 0.5
+	return Rect2(Vector2(x0 + (i % cols) * STEP, 22 + (i / cols) * (STEP + PLANK_H)), Vector2(SLOT, SLOT))
+
+
 func _cell(origin: Vector2, i: int) -> Rect2:
 	return Rect2(origin + Vector2((i % 10) * STEP, (i / 10) * STEP), Vector2(SLOT, SLOT))
 
@@ -1287,7 +1313,7 @@ func _chest_hit(local: Vector2) -> Array:
 	var store := _store()
 	if store:
 		for i in store.size:
-			if _cell(Vector2(PAD, 22), i).has_point(local):
+			if _store_cell(i).has_point(local):
 				return [Area.CHEST, i]
 	var b := _chest_buttons()
 	if b[0].has_point(local):
@@ -1335,8 +1361,19 @@ func _draw_chest(g: Control) -> void:
 		g.draw_rect(bar, Color(0.1, 0.07, 0.05))
 		g.draw_rect(Rect2(bar.position, Vector2(bar.size.x * store.fill(), bar.size.y)), Color("b8823e"))
 	if store:
+		var cols := _shelf_cols()
+		if cols > 0:
+			# A plank under each shelf's row of slots (the cupboard rows below have none).
+			var shelf_def := world.object_at(chest)
+			for row in ceili(store.size / float(cols)):
+				var first := _store_cell(row * cols)
+				var w := cols * STEP - GAP + 6
+				var y := first.end.y + 1
+				if row < shelf_def.bottle_shelves.size():
+					g.draw_rect(Rect2(first.position.x - 3, y, w, 2), Color("a0703f"))
+					g.draw_rect(Rect2(first.position.x - 3, y + 2, w, 1), Color("5a3a20"))
 		for i in store.size:
-			var r := _cell(Vector2(PAD, 22), i)
+			var r := _store_cell(i)
 			UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hover[0] == Area.CHEST and hover[1] == i else UiSkin.SlotLook.NORMAL)
 			var item := store.item(i)
 			if item:

@@ -176,6 +176,9 @@ func redraw_all() -> void:
 ## many as it is full, each drawn as the bottle it comes in (ItemData.bottle_shape). In
 ## art pixels of its picture.
 func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
+	if def.slots_per_shelf > 0:
+		_draw_sections(view, dest, inv, flip, def)
+		return
 	# Each bottle is its item's shelf sprite (ItemData.shelf_sprite, else its icon at half
 	# size, shrunk to fit under the shelf above), standing on the shelves bottom shelf
 	# first. Each item shows as many bottles as its share of the storage takes of all the
@@ -235,6 +238,57 @@ func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: O
 			var at := Vector2(left, def.bottle_shelves[shelf] - size.y)
 			view.draw_texture_rect(tex, Rect2(dest.position + at * s, size * s), false)
 			at_x += size.x + gap
+
+
+## Sectioned shelves (ObjectDef.slots_per_shelf): each slot has its own section of a
+## shelf (top shelf first, left to right). Its stack shows as many as fit in the section
+## times how full the stack is (at least one), spread evenly across it.
+func _draw_sections(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
+	var per := def.slots_per_shelf
+	var shelves := def.bottle_shelves.size()
+	var shelf_w := float(def.bottles_per_shelf) * def.bottle_step
+	var sec_w := shelf_w / per
+	var art_w := dest.size.x * def.detail
+	var s := dest.size.x / art_w
+	for i in mini(inv.size, per * shelves):
+		if inv.is_empty(i):
+			continue
+		var row := i / per  # 0 = the top shelf
+		var shelf := shelves - 1 - row  # bottle_shelves lists the bottom shelf first
+		var room := shelf_room(def, shelf)
+		var tex := shelf_texture(ItemData.find(inv.ids[i]), int(room))
+		if tex == null:
+			continue
+		if tex.get_width() > sec_w:
+			tex = shelf_fit(ItemData.find(inv.ids[i]), int(sec_w), int(room))
+		var size := Vector2(tex.get_size())
+		var fits := maxi(1, int((sec_w + 1.0) / (size.x + 1.0)))
+		var full := clampf(inv.counts[i] / maxf(float(inv.cap_for(inv.ids[i])), 1.0), 0.0, 1.0)
+		var n := clampi(ceili(full * fits), 1, fits)
+		var gap := (sec_w - n * size.x) / (n + 1)
+		var x0 := def.bottle_x0 + (i % per) * sec_w
+		for k in n:
+			var left := roundf(x0 + gap + k * (size.x + gap))
+			if flip:
+				left = art_w - left - size.x
+			view.draw_texture_rect(tex, Rect2(dest.position + Vector2(left, def.bottle_shelves[shelf] - size.y) * s, size * s), false)
+
+
+## A shelf sprite shrunk to fit `max_w` wide and `max_h` tall (keeping its shape).
+static func shelf_fit(it: ItemData, max_w: int, max_h: int) -> Texture2D:
+	var key := StringName("%s@%dx%d" % [it.id, max_w, max_h])
+	if _shelf_cache.has(key):
+		return _shelf_cache[key]
+	var full := shelf_texture(it)
+	var out: Texture2D = full
+	if full:
+		var k := minf(float(max_w) / full.get_width(), float(max_h) / full.get_height())
+		if k < 1.0:
+			var img := full.get_image()
+			img.resize(maxi(1, roundi(img.get_width() * k)), maxi(1, roundi(img.get_height() * k)), Image.INTERPOLATE_NEAREST)
+			out = ImageTexture.create_from_image(img)
+	_shelf_cache[key] = out
+	return out
 
 
 static var _shelf_cache: Dictionary[StringName, Texture2D] = {}

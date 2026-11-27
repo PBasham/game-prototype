@@ -1257,7 +1257,7 @@ func _update_held_light() -> void:
 	if p == null:
 		return
 	var it := p.held_item
-	var r := it.held_light_radius if it and not p.dead else 0.0
+	var r := it.held_light_radius if it and not p.dead and not p.stowed else 0.0  # put away: dark
 	if r <= 0.0 and _held_light == null:
 		return
 	if _held_light == null:

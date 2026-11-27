@@ -155,6 +155,9 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 ## Its picture standing on a potion shelf, in art px of the furniture (detail 2). Empty:
 ## the icon at half size (ObjectLayer.shelf_texture).
 @export var shelf_sprite: Texture2D
+## Retired (the old display Shelf): kept so old saves load, left out of the Creative
+## window and the Catalog, and no longer crafted.
+@export var obsolete := false
 @export_group("Spell page")
 ## A Spell Page (found, not crafted): left click learns this spell for good, and the
 ## page is used up. The only way to learn spells that aren't `learnable_at_table`.

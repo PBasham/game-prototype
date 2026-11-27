@@ -19,21 +19,46 @@ const TAB_H := 12
 enum Part { NONE, ITEM, TAB, SEARCH }
 
 ## Tab name -> the kinds it shows (empty = all; the special tabs are matched by name).
+## [name, category] (`category_of`); the last three are special lists.
 const TABS: Array = [
-	["All", []],
-	["Blocks", [ItemData.Kind.BLOCK, ItemData.Kind.WALL, ItemData.Kind.SEED]],
-	["Furniture", [ItemData.Kind.FURNITURE]],
-	["Tools", [ItemData.Kind.TOOL, ItemData.Kind.WEAPON, ItemData.Kind.ARMOR, ItemData.Kind.ACCESSORY]],
-	["Magic", [ItemData.Kind.BOOK, ItemData.Kind.CONDUIT, ItemData.Kind.TOME, ItemData.Kind.SCROLL, ItemData.Kind.PAGE]],
-	["Food", [ItemData.Kind.FOOD]],
-	["Materials", [ItemData.Kind.MATERIAL]],
-	["Dev", []],  # the dev cheat items (Dev Grimoire, Dev Focus, Dev Ring, Dev Tome)
-	["Test", []],  # test things: the placeholder held items, test books, test spells
-	["Enemies", []],  # every enemy: click to spawn
+	["All", &""], ["Blocks", &"blocks"], ["Furniture", &"furniture"], ["Stations", &"stations"],
+	["Storage", &"storage"], ["Weapons", &"weapons"], ["Armor", &"armor"], ["Magic", &"magic"],
+	["Consumables", &"consumables"], ["Materials", &"materials"],
+	["Dev", &""],  # the dev cheat items (Dev Grimoire, Dev Focus, Dev Ring, Dev Tome)
+	["Test", &""],  # test things: the placeholder held items, test books, test spells
+	["Enemies", &""],  # every enemy: click to spawn
 ]
-const DEV_TAB := 7
-const TEST_TAB := 8
-const ENEMY_TAB := 9
+const DEV_TAB := 10
+const TEST_TAB := 11
+const ENEMY_TAB := 12
+
+
+## Which Creative tab an item goes on: blocks (and walls, seeds, torches, rope),
+## furniture, stations, storage (chests, cabinets, barrels, nets), weapons (and tools),
+## armor (and accessories), magic (books, conduits, tomes, scrolls, pages),
+## consumables (food, potions, coatings, throwables) or materials (the rest).
+static func category_of(it: ItemData) -> StringName:
+	match it.kind:
+		ItemData.Kind.BLOCK, ItemData.Kind.WALL, ItemData.Kind.SEED:
+			return &"blocks"
+		ItemData.Kind.TOOL, ItemData.Kind.WEAPON:
+			return &"weapons"
+		ItemData.Kind.ARMOR, ItemData.Kind.ACCESSORY:
+			return &"armor"
+		ItemData.Kind.BOOK, ItemData.Kind.CONDUIT, ItemData.Kind.TOME, ItemData.Kind.SCROLL, ItemData.Kind.PAGE:
+			return &"magic"
+		ItemData.Kind.FOOD:
+			return &"consumables"
+		ItemData.Kind.FURNITURE:
+			var def := Registry.get_def(&"objects", it.places_object) as ObjectDef
+			if def and def.station != &"":
+				return &"stations"
+			if def and (def.container_slots > 0 or def.liquid_capacity > 0):
+				return &"storage"
+			return &"furniture"
+	if it.throw_speed > 0.0 or it.buff_poison_hits > 0:
+		return &"consumables"
+	return &"materials"
 ## Test books (console `books`).
 const TEST_BOOKS: Array[StringName] = [&"spellbook_t1", &"spellbook_t2", &"spellbook_t3"]
 ## Where an enemy appears: this many tiles in front of you.
@@ -56,7 +81,7 @@ func all_items() -> Array[ItemData]:
 		var seen := {}
 		for d in Registry.get_all(&"items"):
 			var it := d as ItemData
-			if it and not it.is_spell() and not seen.has(it.id):
+			if it and not it.is_spell() and not it.obsolete and not seen.has(it.id):
 				seen[it.id] = true
 				_all.append(it)
 		for it in ItemData.runtime_items():
@@ -98,8 +123,8 @@ func _tab_entries() -> Array:
 			var enemies: Array = Registry.get_all(&"enemies").duplicate()
 			enemies.sort_custom(func(a: GameData, b: GameData) -> bool: return a.display_name < b.display_name)
 			return enemies
-	var kinds: Array = TABS[tab][1]
-	return all_items().filter(func(it: ItemData) -> bool: return kinds.is_empty() or it.kind in kinds)
+	var cat: StringName = TABS[tab][1]
+	return all_items().filter(func(it: ItemData) -> bool: return cat == &"" or category_of(it) == cat)
 
 
 ## Test things: the placeholder held items (DevHeldItems) and the test books.

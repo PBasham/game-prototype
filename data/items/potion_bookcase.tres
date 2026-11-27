@@ -24,4 +24,4 @@ places_object = &"potion_bookcase"
 place_area_max = 1
 id = &"potion_bookcase"
 display_name = "Large Potion Cabinet"
-description = "A tall glass fronted case for potions and bottles: 16 stacks on 5 shelves. Furniture can stand on top."
+description = "A tall glass fronted case for potions and bottles: 20 slots of 4 stacks each (120 potions), each in its own spot on the 5 shelves. Furniture can stand on top."

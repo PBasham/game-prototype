@@ -1159,12 +1159,20 @@ func _can_place_furniture(anchor: Vector2i, def: ObjectDef) -> bool:
 		if plants and plants.blocks_placement(t + Vector2i(0, 1)):
 			return false
 	if def.needs_floor:
+		var floored := true
 		for dx in def.width_tiles:
 			var below := anchor + Vector2i(dx, 1)
 			var b := data.get_block(below.x, below.y)
 			if not (is_solid(below) or (b > 0 and blocks.collision(b) == TileDef.Collision.PLATFORM)
 					or is_flat_top(below)):
+				floored = false
+				break
+		if not floored:
+			if not def.floor_or_wall:
 				return false
+			for t in footprint(anchor, def):
+				if data.get_wall(t.x, t.y) <= 0:
+					return false
 	if def.needs_wall:
 		for t in footprint(anchor, def):
 			if data.get_wall(t.x, t.y) <= 0:
@@ -1531,6 +1539,7 @@ func _new_container(def: ObjectDef) -> Inventory:
 	var inv := Inventory.new(def.container_slots)
 	inv.accepts_tag = def.container_accepts
 	inv.stack_cap = def.container_stack_cap
+	inv.stack_mult = def.container_stack_mult
 	if def.fill_look != ObjectDef.FillLook.NONE:
 		inv.changed.connect(func() -> void:
 			if object_layer:

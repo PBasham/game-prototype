@@ -22,6 +22,9 @@ var metas: Array[Dictionary] = []
 var accepts_tag: StringName = &""
 ## Special storage: each slot holds this many of an item (0 = the item's own stack).
 var stack_cap := 0
+## Special storage: holds this many times an item's own stack per slot (Potion
+## Cabinets: 4 x 30 potions), when stack_cap is 0.
+var stack_mult := 1
 
 
 func _init(slots: int = DEFAULT_SIZE) -> void:
@@ -57,7 +60,7 @@ func accepts(item_id: StringName) -> bool:
 
 ## How many of an item one slot holds here.
 func cap_for(item_id: StringName) -> int:
-	return stack_cap if stack_cap > 0 else max_stack(item_id)
+	return stack_cap if stack_cap > 0 else max_stack(item_id) * maxi(stack_mult, 1)
 
 
 ## How full it is, 0 to 1: each slot counts as its share of a full stack there.

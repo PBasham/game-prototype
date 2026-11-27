@@ -24,4 +24,4 @@ places_object = &"food_pantry"
 place_area_max = 1
 id = &"food_pantry"
 display_name = "Food Pantry"
-description = "A cupboard for food: 14 stacks, shown on its open shelves. Furniture can stand on top."
+description = "A cupboard for food: 14 slots of 4 stacks each, 8 on its open shelves. Furniture can stand on top."

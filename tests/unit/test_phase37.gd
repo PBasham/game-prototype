@@ -232,3 +232,36 @@ func test_liquid_barrels_open_and_siphon_liquid() -> void:
 	var long := w.objects.def(w.objects.index_of(&"hanging_net_long")) as ObjectDef
 	assert_eq([long.width_tiles, long.height_tiles], [2, 5])
 	assert_eq((w.objects.def(w.objects.index_of(&"hanging_net_small")) as ObjectDef).width_tiles, 4)
+
+
+func test_shelf_sections_stack_mult_and_creative_tabs() -> void:
+	var cab := w.objects.def(w.objects.index_of(&"potion_bookcase")) as ObjectDef
+	assert_eq(cab.slots_per_shelf * cab.bottle_shelves.size(), cab.container_slots, "one slot per spot: 5 x 4")
+	var a := _floor_spot(4)
+	assert_true(w.request_place_object(a, w.objects.index_of(&"potion_cabinet")))
+	var inv := w.container_at(a)
+	assert_eq(inv.cap_for(&"healing_potion"), 120, "4 stacks a slot")
+	var shelf := w.objects.def(w.objects.index_of(&"potion_shelf")) as ObjectDef
+	assert_eq(shelf.display_name, "Shelf")
+	assert_eq(shelf.container_accepts, &"", "the Shelf takes anything")
+	assert_true(ItemData.find(&"shelf").obsolete, "the old display shelf is retired")
+	assert_does_not_have(Catalog.all_items(), ItemData.find(&"shelf"))
+	assert_eq(CreativeWindow.category_of(ItemData.find(&"poison_flask")), &"consumables")
+	assert_eq(CreativeWindow.category_of(ItemData.find(&"healing_potion")), &"consumables")
+	assert_eq(CreativeWindow.category_of(ItemData.find(&"potion_cabinet")), &"storage")
+	assert_eq(CreativeWindow.category_of(ItemData.find(&"furnace")), &"stations")
+	var rack := w.objects.def(w.objects.index_of(&"pantry_rack")) as ObjectDef
+	var sky := _floor_spot(4) + Vector2i(8, -12)
+	assert_false(w.can_place_object(sky, rack), "nothing under it, no wall")
+	for t in w.footprint(sky, rack):
+		w.data.set_wall(t.x, t.y, w.walls.index_of(&"wood_wall"))
+	assert_true(w.can_place_object(sky, rack), "on a back wall")
+
+
+func test_put_away_torch_is_dark() -> void:
+	w.character.inventory.set_slot(0, &"torch", 5)
+	w.player.select_slot(0)
+	w.player.stowed = true
+	w.item_user._update_held_light()
+	assert_false(w.item_user._held_light != null and w.item_user._held_light.is_in_group(&"light_sources"))
+	w.player.stowed = false

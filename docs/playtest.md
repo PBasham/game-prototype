@@ -358,6 +358,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 46: shelf spots, Creative tabs, wall pantry rack (branch phase-46-shelf-slots)**
+- [ ] Potion cabinets, the Shelf and pantries: each slot is its own spot on a shelf; the window shows the slots as shelves (top shelf first) with planks.
+- [ ] A cabinet slot holds 120 potions (4 stacks); a spot fills up with bottles as its stack fills.
+- [ ] The Potion Shelf is now the Shelf (anything goes); the old display Shelf can't be crafted any more.
+- [ ] Pantry Rack goes on a floor or a back wall.
+- [ ] Creative tabs: Blocks, Furniture, Stations, Storage, Weapons, Armor, Magic, Consumables (food, potions, coatings, throwables), Materials.
+- [ ] A torch put away (stowed) stops lighting you.
+
 **Phase 45: liquid barrels, Siphon Liquid, nets, shelf spacing (branch phase-45-liquid-nets)**
 - [ ] Right click a Liquid Barrel: a window with its gauge (empty, 0 / 1,000 or 2,500). The wooden one has a tap too.
 - [ ] Spell Weaving Table: learn Siphon Liquid (does nothing yet); its Empower tree has Reach and Area.

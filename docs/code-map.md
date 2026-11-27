@@ -559,3 +559,13 @@ saves still load.
 | Siphon Liquid | `tools/make_items.gd`; `data/spells/siphon_liquid.tres`; Reach and Area nodes list it |
 | Nets, tap | `tools/make_phase37_art.py`; object index 28 (Long net) in `tools/make_items.gd` |
 | Even shelves | `ObjectLayer._draw_bottles` |
+
+## Phase 46: shelf spots, Creative tabs, wall pantry rack
+
+| Change | Where |
+| --- | --- |
+| One spot per slot | `ObjectDef.slots_per_shelf`; `ObjectLayer._draw_sections`, `shelf_fit`; window: `Hud._shelf_cols`, `_store_cell`, `PLANK_H` |
+| 4 stacks a slot | `ObjectDef.container_stack_mult`; `Inventory.stack_mult`, `cap_for` |
+| Floor or wall | `ObjectDef.floor_or_wall`; `World._can_place_furniture` |
+| Retired items | `ItemData.obsolete` (Creative, Catalog) |
+| Creative tabs | `CreativeWindow.TABS`, `category_of` |

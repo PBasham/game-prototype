@@ -5,6 +5,8 @@
 
 [resource]
 script = ExtResource("2_asq28")
+container_stack_mult = 4
+slots_per_shelf = 4
 front_frame = 1
 frames = ExtResource("1_unu0m")
 style = 2
@@ -18,7 +20,7 @@ bottle_shelves = Array[int]([88, 72, 56, 40, 24])
 bottles_per_shelf = 11
 bottle_x0 = 4.0
 flat_top = true
-container_slots = 16
+container_slots = 20
 health = 1.0
 drop_item = &"potion_bookcase"
 id = &"potion_bookcase"

@@ -24,4 +24,4 @@ places_object = &"pantry_rack"
 place_area_max = 1
 id = &"pantry_rack"
 display_name = "Pantry Rack"
-description = "Open shelves for food: 8 stacks, shown on its shelves. Furniture can stand on top."
+description = "Open shelves for food, on the floor or a back wall: 8 slots of 4 stacks each, each in its own spot."

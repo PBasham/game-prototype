@@ -34,6 +34,8 @@ enum Style {
 @export var display_surface := false
 ## Every tile of it needs a back wall when placed (wall shelves).
 @export var needs_wall := false
+## Goes on a floor or, failing that, against back walls (the Pantry Rack): either works.
+@export var floor_or_wall := false
 
 ## Art pixels per world pixel: 1 normal, 2 for double-detail art (a 5x4 tile workbench
 ## is then 80x64 px instead of 40x32). sprite_width_px stays in world pixels.
@@ -80,6 +82,9 @@ enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 ## each slot holds `container_stack_cap` (0 = the item's own stack).
 @export var container_accepts: StringName = &""
 @export var container_stack_cap := 0
+## Special storage: each slot holds this many of an item's own stacks (potion cabinets
+## and pantries 4: a slot takes 120 potions), so it beats a chest for its kind.
+@export var container_stack_mult := 1
 ## How it shows how full it is: FRAMES = its strip has 11 frames, 0% to 100% in 10%
 ## steps (Lumber Rack); BOTTLES = bottles on its shelves in the colors of what's
 ## inside (Potion Cabinet).
@@ -100,6 +105,12 @@ enum FillLook { NONE, FRAMES, BOTTLES, PILE, BOOKS, NET }
 @export var bottles_per_shelf := 7
 @export var bottle_x0 := 8.0
 @export var bottle_step := 5.0
+## BOTTLES: the shelves split into this many sections each, one per storage slot: slot 0
+## is the top shelf's leftmost section, reading left to right, top shelf down (the window
+## lays its slots out the same way). Each section shows its own stack, as many as fit
+## by how full the stack is. Slots past the shelves are hidden (a cupboard). 0 = the
+## old flowing layout.
+@export var slots_per_shelf := 0
 ## NET: the bag's inside, in art px of its picture (items heap up from its bottom).
 @export var net_bag := Rect2i(4, 8, 40, 20)
 ## Liquid storage (Liquid Barrels): how much liquid it holds, in buckets. Liquids
