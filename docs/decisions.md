@@ -2,6 +2,11 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 49, plank section, Tele Grab forage
+
+- **Patrick:** board ends looked funny in the rack: boards now lie flat in a left
+  section. Tele Grab should pick up forageables: they come loose as items in its pull.
+
 ## 2026-11-26: Phase 48, Lumber Rack, storage capacity
 
 - **Patrick:** the Lumber Rack should show Darkwood purple and be bigger. It's 5x4 now,

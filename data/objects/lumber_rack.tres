@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_5vcf8")
+pile_boards = 0.4
 front_frame = 1
 pile_area = Rect2i(6, 7, 68, 51)
 frames = ExtResource("1_4sdqb")

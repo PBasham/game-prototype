@@ -315,9 +315,10 @@ can't mine the floor under furniture.
   `ItemData.storage_tags`: every log and wood is `lumber`; healing and mana potions, poison
   coatings and flasks, and clay flasks are `potion`), `container_stack_cap` (a stack size
   that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (a sprite sheet of 11 frames, 0% to 100% in 10% steps; not used
-  now), `PILE` (the Lumber Rack: each kind in its own color, so Darkwood shows purple,
-  round ends for logs and square ends for boards, in staggered rows filling
-  `pile_area` from the bottom, `ObjectLayer._draw_pile`) or `BOTTLES` (the potion furniture draws the bottles inside on its shelves).
+  now), `PILE` (the Lumber Rack: each kind in its own color, so Darkwood shows purple;
+  boards lie flat in the left `pile_boards` share (0.4) of `pile_area`, logs show round
+  ends in staggered rows on the right, each filling from the bottom,
+  `ObjectLayer._draw_pile`) or `BOTTLES` (the potion furniture draws the bottles inside on its shelves).
 - **Bottles on shelves:** each bottle is drawn from its item's `shelf_sprite` if it has
   one, else its icon cropped and halved (`ObjectLayer.shelf_texture`, each 2x2 block keeps
   its most solid pixel). So a Clay Jug or Glass Flask is wider than a vial and takes more

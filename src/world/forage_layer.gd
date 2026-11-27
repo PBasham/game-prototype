@@ -155,6 +155,29 @@ func request_pick_up(tile: Vector2i, who: Player) -> bool:
 	return true
 
 
+## Tele Grab: the forageables lying within `radius` px of `point` come loose as items
+## (dropped where they lay, for the grab to pull in). Returns how many.
+func request_lift_near(point: Vector2, radius: float) -> int:
+	if not Game.is_authority():
+		return 0
+	var center := world.world_to_tile(point)
+	var r := ceili(radius / World.TILE) + 1
+	var lifted := 0
+	for dy in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			var g := world.wrap_tile(center + Vector2i(dx, dy))
+			var f: Forage = _items.get(g)
+			if f == null:
+				continue
+			var pos := world.tile_to_world(center + Vector2i(dx, dy)) + Vector2(World.TILE * 0.5, -2.0)
+			if pos.distance_to(point) > radius:
+				continue
+			world.request_spawn_drop(f.def.item, f.def.count, pos, Vector2(0, -3) * World.TILE)
+			_remove(g)
+			lifted += 1
+	return lifted
+
+
 # --- chunks --------------------------------------------------------------------------
 
 func _on_chunk_shown(c: Vector2i, spots: PackedInt32Array, floors: PackedInt32Array) -> void:

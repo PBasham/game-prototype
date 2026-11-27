@@ -853,6 +853,7 @@ func _objects() -> Array[ObjectDef]:
 	out[12].container_accepts = &"lumber"
 	out[12].fill_look = ObjectDef.FillLook.PILE  # each log and board end in its own color
 	out[12].pile_area = Rect2i(6, 7, 68, 51)
+	out[12].pile_boards = 0.4  # boards lie flat on the left, log ends on the right
 	out[12].front_frame = 1  # the front posts over the logs
 	# Potion storage (Phase 35): bottles on the shelves, drawn as the bottle each comes in.
 	for i in [13, 16, 17]:

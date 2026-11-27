@@ -486,37 +486,48 @@ static func icon_color(it: ItemData) -> Color:
 ## it is full; each item gets its share in slot order. Logs are round ends with a ring,
 ## wood is square board ends. In art pixels of its 48x48 picture.
 func _draw_pile(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
-	# Staggered rows of ends 7 art px apart, each row in the dips of the one below,
-	# filling ObjectDef.pile_area from the bottom.
-	var area := def.pile_area
+	# Two sections of ObjectDef.pile_area: boards (wood, darkwood, reinforced) lie flat in
+	# the left part (`pile_boards`, a share of the width), stacked from the bottom; logs
+	# show their round ends in the right part, staggered rows 7 art px apart. Each
+	# section is full when the whole rack holds that kind.
+	var area := Rect2(def.pile_area)
+	var split := area.position.x + roundf(area.size.x * def.pile_boards)
+	var board_area := Rect2(area.position, Vector2(split - area.position.x - 2.0, area.size.y))
+	var log_area := Rect2(Vector2(split + 2.0, area.position.y), Vector2(area.end.x - split - 2.0, area.size.y))
+	if def.pile_boards <= 0.0:
+		log_area = area
 	var spots: Array[Vector2] = []
-	var rows := maxi(1, int((area.size.y - 6) / 6.0) + 1)
+	var rows := maxi(1, int((log_area.size.y - 6) / 6.0) + 1)
 	for row in rows:
-		var x0 := float(area.position.x) + 3.5 + (3.5 if row % 2 else 0.0)
-		var n := int((area.end.x - 3.5 - x0) / 7.0) + 1
+		var x0 := log_area.position.x + 3.5 + (3.5 if row % 2 else 0.0)
+		var n := int((log_area.end.x - 3.5 - x0) / 7.0) + 1
 		for k in n:
-			spots.append(Vector2(x0 + k * 7.0, area.end.y - 3.5 - row * 6.0))
-	var kinds: Array[ItemData] = []
-	var total := 0.0
+			spots.append(Vector2(x0 + k * 7.0, log_area.end.y - 3.5 - row * 6.0))
+	var board_rows := int(board_area.size.y / 3.0) if def.pile_boards > 0.0 else 0
+	var logs: Array[ItemData] = []
+	var boards: Array[ItemData] = []
 	for i in inv.size:
 		if inv.is_empty(i):
 			continue
+		var it := ItemData.find(inv.ids[i])
 		var share := inv.counts[i] / float(maxi(inv.cap_for(inv.ids[i]), 1)) / inv.size
-		total += share
-		var n := maxi(1, roundi(share * spots.size()))
-		for _k in n:
-			kinds.append(ItemData.find(inv.ids[i]))
-	var shown := mini(kinds.size(), maxi(roundi(total * spots.size()), 1 if total > 0.0 else 0))
+		var is_log := it != null and String(it.id).ends_with("log")
+		if is_log or board_rows == 0:
+			for _k in maxi(1, roundi(share * spots.size())):
+				logs.append(it)
+		else:
+			for _k in maxi(1, roundi(share * board_rows)):
+				boards.append(it)
 	var art_w := dest.size.x * def.detail
 	var s := dest.size.x / art_w
-	for b in mini(shown, spots.size()):
+	for b in mini(logs.size(), spots.size()):
 		var p := spots[b]
 		if flip:
 			p.x = art_w - p.x
 		var at := dest.position + p * s
-		var c := shelf_color(kinds[b])
+		var c := shelf_color(logs[b])
 		var dark := c.darkened(0.45)
-		if kinds[b] and String(kinds[b].id).ends_with("log"):
+		if logs[b] and String(logs[b].id).ends_with("log"):
 			view.draw_circle(at, 3.4 * s, dark)
 			view.draw_circle(at, 2.6 * s, c)
 			view.draw_arc(at, 1.4 * s, 0.0, TAU, 10, dark, 0.5 * s)
@@ -524,7 +535,19 @@ func _draw_pile(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: Obje
 		else:
 			view.draw_rect(Rect2(at - Vector2(3.2, 2.8) * s, Vector2(6.4, 5.6) * s), dark)
 			view.draw_rect(Rect2(at - Vector2(2.6, 2.2) * s, Vector2(5.2, 4.4) * s), c)
-			view.draw_line(at + Vector2(-2.6, 0) * s, at + Vector2(2.6, 0) * s, dark, 0.5 * s)
+	# Boards: one plank a row, seen from the side, a little shorter every other row.
+	for r in mini(boards.size(), board_rows):
+		var c := shelf_color(boards[r])
+		var dark := c.darkened(0.45)
+		var inset := 1.0 if r % 2 else 0.0
+		var x := board_area.position.x + inset
+		var w := board_area.size.x - inset * 2.0
+		if flip:
+			x = art_w - x - w
+		var y := board_area.end.y - 3.0 * (r + 1)
+		view.draw_rect(Rect2(dest.position + Vector2(x, y) * s, Vector2(w, 3) * s), dark)
+		view.draw_rect(Rect2(dest.position + Vector2(x + 0.5, y + 0.5) * s, Vector2(w - 1.0, 2) * s), c)
+		view.draw_rect(Rect2(dest.position + Vector2(x + 0.5, y + 0.5) * s, Vector2(w - 1.0, 0.5) * s), c.lightened(0.25))
 
 
 static var _shelf_colors: Dictionary[StringName, Color] = {}

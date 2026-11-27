@@ -279,3 +279,21 @@ func test_bookshelves_and_creative_search_by_name() -> void:
 	assert_does_not_have(names, &"potion_bookcase", "ids don't match the search, names do")
 	assert_has(names, &"tall_bookshelf")
 	win.search = ""
+
+
+func test_tele_grab_lifts_forageables() -> void:
+	var g := _floor_spot(5) + Vector2i.DOWN
+	w.forage._add(w.wrap_tile(g), Registry.get_def(&"forage", &"stick") as ForageData)
+	var drops := w.drop_count()
+	var wood := w.character.inventory.count_of(&"wood")
+	var at := w.tile_to_world(g + Vector2i.UP) + Vector2(4, 4)
+	w.tele_grab(at, 3.0 * World.TILE, 10.0 * World.TILE)
+	assert_null(w.forage.at(g), "the stick came loose")
+	assert_true(w.drop_count() > drops or w.character.inventory.count_of(&"wood") > wood,
+		"as an item, for the grab to pull in (or already caught)")
+
+
+func test_lumber_rack_boards_and_logs() -> void:
+	var rack := w.objects.def(w.objects.index_of(&"lumber_rack")) as ObjectDef
+	assert_eq([rack.width_tiles, rack.height_tiles], [5, 4])
+	assert_gt(rack.pile_boards, 0.0, "boards lie flat on the left")

@@ -114,6 +114,9 @@ enum FillLook { NONE, FRAMES, BOTTLES, PILE, BOOKS, NET }
 ## PILE: where the heap goes, in art px of its picture (log ends and board ends in
 ## staggered rows, bottom row first).
 @export var pile_area := Rect2i(6, 8, 36, 36)
+## PILE: the share of pile_area's width (from the left) where boards lie flat; logs take
+## the rest. 0 = everything as ends.
+@export_range(0.0, 0.9) var pile_boards := 0.0
 ## NET: the bag's inside, in art px of its picture (items heap up from its bottom).
 @export var net_bag := Rect2i(4, 8, 40, 20)
 ## Liquid storage (Liquid Barrels): how much liquid it holds, in buckets. Liquids

@@ -1843,6 +1843,8 @@ func request_set_wall(tile: Vector2i, id: int) -> bool:
 ## Tele Grab: loose items within `radius` (px) of `portal` fly into it and come out at
 ## the player's hand. Returns how many drops were caught this frame.
 func tele_grab(portal: Vector2, radius: float, speed: float) -> int:
+	if forage:
+		forage.request_lift_near(portal, radius)  # sticks, rocks, mushrooms come loose too
 	var n := 0
 	var w := float(data.width * TILE)
 	for c in _drops.get_children():

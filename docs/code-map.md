@@ -584,3 +584,10 @@ saves still load.
 | --- | --- |
 | The rack's heap | `ObjectDef.pile_area`; `ObjectLayer._draw_pile`; art `lumber_rack()` in `tools/make_phase37_art.py` |
 | Stacks a slot by space | `container_stack_mult` in `tools/make_items.gd` and the objects |
+
+## Phase 49: plank section, Tele Grab forage
+
+| Change | Where |
+| --- | --- |
+| Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
+| Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |

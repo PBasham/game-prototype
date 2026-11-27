@@ -358,6 +358,10 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 49: plank section, Tele Grab forage (branch phase-49-plank-section)**
+- [ ] Lumber Rack: boards lie flat in the left part, log ends on the right.
+- [ ] Tele Grab pulls in sticks, rocks and mushrooms lying in its pull.
+
 **Phase 48: Lumber Rack, storage capacity (branch phase-48-lumber-rack)**
 - [ ] Lumber Rack is 5x4; logs and boards heap in their own colors (Darkwood purple) behind its front posts. Old placed racks: pick up and place again.
 - [ ] Potion cabinets hold 6 stacks a slot (180 potions), Pantry Rack and bookshelves 5, Food Pantry 4, Shelf 2.

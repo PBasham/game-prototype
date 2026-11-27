@@ -254,7 +254,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Recall | RITUAL | 3 s standing still, then home (your bed, else the world spawn). 40 mana at the end. |
 | Seek Ore | SENSE | Copper ore within 30 tiles glows through everything for 15 s. 15 mana. |
 | Mend | TOGGLE | Heals 3 health per second (times spell power) while on. 6 mana/s. |
-| Tele Grab | GRAB | Hold: portal up to 25 tiles away, pulls loose items within 3 tiles of it (18 tiles/s) to your hand. 3 mana/s. Learned at the Spell Weaving Table; name is temporary. |
+| Tele Grab | GRAB | Hold: portal up to 25 tiles away, pulls loose items within 3 tiles of it (18 tiles/s) to your hand. 3 mana/s. Learned at the Spell Weaving Table; name is temporary. Sticks, rocks and other forageables in its pull come loose and fly in too. |
 
 Damageable things are nodes in the `damageable` group with `hit_rect()` and
 `take_damage(amount, from)`; enemies will use the same.
