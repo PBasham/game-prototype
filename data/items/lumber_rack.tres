@@ -24,4 +24,4 @@ places_object = &"lumber_rack"
 place_area_max = 1
 id = &"lumber_rack"
 display_name = "Lumber Rack"
-description = "Storage for logs and wood: 1,000 of them. It fills up as you stock it."
+description = "Storage for logs and wood: 10 slots of 9,999. Each log and board end shows in its own color."

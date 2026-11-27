@@ -24,4 +24,4 @@ places_object = &"bookshelf"
 place_area_max = 1
 id = &"bookshelf"
 display_name = "Small Bookshelf"
-description = "Books, spellbooks, scrolls, pages and paper: 12 slots of 4 stacks. Books stand on its 2 shelves, the rest go in the cupboard."
+description = "Books, spellbooks, scrolls, pages and paper: 12 slots of 5 stacks. Books stand on its 2 shelves, the rest go in the cupboard."

@@ -150,7 +150,7 @@ func draw_chunk(view: ChunkObjects) -> void:
 				if store and def.fill_look == ObjectDef.FillLook.BOTTLES:
 					_draw_bottles(view, dest, store, flip, def)
 				elif store and def.fill_look == ObjectDef.FillLook.PILE:
-					_draw_pile(view, dest, store, flip)
+					_draw_pile(view, dest, store, flip, def)
 				elif store and def.fill_look == ObjectDef.FillLook.BOOKS:
 					_draw_books(view, dest, store, flip, def)
 				elif store and def.fill_look == ObjectDef.FillLook.NET:
@@ -485,13 +485,17 @@ static func icon_color(it: ItemData) -> Color:
 ## Lumber Rack: staggered rows of 5, 4, 5, 4, 5 ends (23), bottom row first, as many as
 ## it is full; each item gets its share in slot order. Logs are round ends with a ring,
 ## wood is square board ends. In art pixels of its 48x48 picture.
-func _draw_pile(view: Node2D, dest: Rect2, inv: Inventory, flip: bool) -> void:
+func _draw_pile(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
+	# Staggered rows of ends 7 art px apart, each row in the dips of the one below,
+	# filling ObjectDef.pile_area from the bottom.
+	var area := def.pile_area
 	var spots: Array[Vector2] = []
-	for row in 5:
-		var n := 5 if row % 2 == 0 else 4
-		var x0 := 9.0 if row % 2 == 0 else 12.5
-		for i in n:
-			spots.append(Vector2(x0 + i * 7.0, 38.0 - row * 6.0))
+	var rows := maxi(1, int((area.size.y - 6) / 6.0) + 1)
+	for row in rows:
+		var x0 := float(area.position.x) + 3.5 + (3.5 if row % 2 else 0.0)
+		var n := int((area.end.x - 3.5 - x0) / 7.0) + 1
+		for k in n:
+			spots.append(Vector2(x0 + k * 7.0, area.end.y - 3.5 - row * 6.0))
 	var kinds: Array[ItemData] = []
 	var total := 0.0
 	for i in inv.size:
@@ -503,11 +507,12 @@ func _draw_pile(view: Node2D, dest: Rect2, inv: Inventory, flip: bool) -> void:
 		for _k in n:
 			kinds.append(ItemData.find(inv.ids[i]))
 	var shown := mini(kinds.size(), maxi(roundi(total * spots.size()), 1 if total > 0.0 else 0))
-	var s := dest.size.x / 48.0
+	var art_w := dest.size.x * def.detail
+	var s := dest.size.x / art_w
 	for b in mini(shown, spots.size()):
 		var p := spots[b]
 		if flip:
-			p.x = 48.0 - p.x
+			p.x = art_w - p.x
 		var at := dest.position + p * s
 		var c := shelf_color(kinds[b])
 		var dark := c.darkened(0.45)

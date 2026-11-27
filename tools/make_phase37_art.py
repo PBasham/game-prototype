@@ -232,3 +232,43 @@ furniture("hanging_net_small", net(64, 32, [30], 7, 3), 64)
 furniture("hanging_net_medium", net(32, 48, [14], 9, 2), 32)
 furniture("hanging_net_long", net(32, 80, [14], 9, 2), 32)
 furniture("hanging_net_large", net(96, 64, [22, 70], 9, 3), 96)
+
+
+# --- Phase 48: the Lumber Rack, bigger (5x4 tiles, 80x64), drawn as a heap in code -----
+def lumber_rack() -> Image.Image:
+    """Two frames: the rack behind the logs (floor, back posts), then its front posts and
+    top bar, drawn over the logs."""
+    w, h = 80, 64
+    back = Image.new("RGBA", (w, h))
+    front = Image.new("RGBA", (w, h))
+    b = ImageDraw.Draw(back)
+    f = ImageDraw.Draw(front)
+    post, postl, postd = (110, 72, 42, 255), (146, 98, 58, 255), (74, 46, 26, 255)
+    b.rectangle((2, h - 6, w - 3, h - 3), fill=post)  # the floor rail
+    b.line((2, h - 6, w - 3, h - 6), fill=postl)
+    b.line((2, h - 3, w - 3, h - 3), fill=postd)
+    for x0 in (8, w // 2 - 2, w - 12):  # back posts, darker
+        b.rectangle((x0, 6, x0 + 3, h - 6), fill=postd)
+    for x0 in (2, w - 6):  # front posts and the top bar
+        f.rectangle((x0, 4, x0 + 3, h - 3), fill=post)
+        f.line((x0, 4, x0, h - 3), fill=postl)
+        f.line((x0 + 3, 4, x0 + 3, h - 3), fill=postd)
+    f.rectangle((1, 2, w - 2, 5), fill=postl)
+    f.line((1, 5, w - 2, 5), fill=postd)
+    out = Image.new("RGBA", (w * 2, h))
+    out.alpha_composite(back, (0, 0))
+    out.alpha_composite(front, (w, 0))
+    return out
+
+
+rack = lumber_rack()
+save(rack, "objects/lumber_rack.png")
+whole = rack.crop((0, 0, 80, 64))
+whole.alpha_composite(rack.crop((80, 0, 160, 64)))
+d = ImageDraw.Draw(whole)
+for row in range(7):  # a full heap for the icon
+    for i in range(10 - row % 2):
+        cx, cy = 10 + i * 7 + (3.5 if row % 2 else 0), 54 - row * 6
+        d.ellipse((cx - 3, cy - 3, cx + 3, cy + 3), fill=(150, 104, 60, 255), outline=(82, 52, 28, 255))
+save(shrink(whole), "items/icons/lumber_rack.png")
+save(shrink(whole), "items/held/lumber_rack.png")

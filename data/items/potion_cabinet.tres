@@ -24,4 +24,4 @@ places_object = &"potion_cabinet"
 place_area_max = 1
 id = &"potion_cabinet"
 display_name = "Potion Cabinet"
-description = "Glass fronted storage for potions and bottles: 12 slots of 4 stacks each (120 potions), each in its own spot on the 4 shelves. Furniture can stand on top."
+description = "Glass fronted storage for potions and bottles: 12 slots of 6 stacks each (180 potions), each in its own spot on the 4 shelves. Furniture can stand on top."

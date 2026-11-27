@@ -301,14 +301,14 @@ func _items() -> Array[ItemData]:
 			[&"door", "Door", "Right click or E to open and close."],
 			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: learn spells (and later, empower them)."],
 			[&"scribes_desk", "Scribe's Desk", "A crafting station: scribe scrolls of the spells you know onto blank scrolls."],
-			[&"lumber_rack", "Lumber Rack", "Storage for logs and wood: 1,000 of them. It fills up as you stock it."],
-			[&"potion_cabinet", "Potion Cabinet", "Glass fronted storage for potions and bottles: 10 stacks, shown on its shelves. Furniture can stand on top."],
-			[&"potion_bookcase", "Large Potion Cabinet", "A tall glass fronted case for potions and bottles: 16 stacks on 5 shelves. Furniture can stand on top."],
-			[&"potion_shelf", "Shelf", "Hangs on a back wall: 4 stacks of anything, shown in its 4 spots."],
-			[&"pantry_rack", "Pantry Rack", "Open shelves for food: 8 stacks, shown on its shelves. Furniture can stand on top."],
-			[&"food_pantry", "Food Pantry", "A cupboard for food: 14 stacks, shown on its open shelves. Furniture can stand on top."],
-			[&"bookshelf", "Small Bookshelf", "Books, spellbooks, scrolls, pages and paper: 12 slots of 4 stacks. Books stand on its 2 shelves, the rest go in the cupboard."],
-			[&"tall_bookshelf", "Bookshelf", "Books, spellbooks, scrolls, pages and paper: 24 slots of 4 stacks. Books stand on its 3 shelves, the rest go in the cupboard. Furniture can stand on top."],
+			[&"lumber_rack", "Lumber Rack", "Storage for logs and wood: 10 slots of 9,999. Each log and board end shows in its own color."],
+			[&"potion_cabinet", "Potion Cabinet", "Glass fronted storage for potions and bottles: 12 slots of 6 stacks each (180 potions), each in its own spot on the 4 shelves. Furniture can stand on top."],
+			[&"potion_bookcase", "Large Potion Cabinet", "A tall glass fronted case for potions and bottles: 20 slots of 6 stacks each (180 potions), each in its own spot on the 5 shelves. Furniture can stand on top."],
+			[&"potion_shelf", "Shelf", "Hangs on a back wall: 4 slots of 2 stacks of anything, shown in its 4 spots."],
+			[&"pantry_rack", "Pantry Rack", "Open shelves for food, on the floor or a back wall: 8 slots of 5 stacks each, each in its own spot."],
+			[&"food_pantry", "Food Pantry", "A cupboard for food: 14 slots of 4 stacks each, 8 on its open shelves. Furniture can stand on top."],
+			[&"bookshelf", "Small Bookshelf", "Books, spellbooks, scrolls, pages and paper: 12 slots of 5 stacks. Books stand on its 2 shelves, the rest go in the cupboard."],
+			[&"tall_bookshelf", "Bookshelf", "Books, spellbooks, scrolls, pages and paper: 24 slots of 5 stacks. Books stand on its 3 shelves, the rest go in the cupboard. Furniture can stand on top."],
 			[&"barrel", "Barrel", "Storage for anything: 10 stacks. Furniture can stand on top."],
 			[&"crate", "Crate", "Storage for anything: 12 stacks. Furniture can stand on top."],
 			[&"hanging_net_small", "Small Hanging Net", "Hangs by a rope from a block above: 6 stacks of anything, heaped in the net."],
@@ -807,7 +807,7 @@ func _objects() -> Array[ObjectDef]:
 			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""],
 			# Added later go last, so the indexes below stay put.
 			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"],
-			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 5, &""],
+			[&"lumber_rack", "Lumber Rack", 5, 4, &""], [&"potion_cabinet", "Potion Cabinet", 3, 5, &""],
 			[&"darkwood_workbench", "Darkwood Workbench", 5, 4, &"workbench"],
 			[&"chair", "Wooden Chair", 2, 3, &""],
 			[&"potion_bookcase", "Large Potion Cabinet", 4, 6, &""], [&"potion_shelf", "Shelf", 3, 2, &""],
@@ -851,7 +851,9 @@ func _objects() -> Array[ObjectDef]:
 	out[12].detail = 2
 	out[12].container_slots = 10
 	out[12].container_accepts = &"lumber"
-	out[12].fill_look = ObjectDef.FillLook.FRAMES
+	out[12].fill_look = ObjectDef.FillLook.PILE  # each log and board end in its own color
+	out[12].pile_area = Rect2i(6, 7, 68, 51)
+	out[12].front_frame = 1  # the front posts over the logs
 	# Potion storage (Phase 35): bottles on the shelves, drawn as the bottle each comes in.
 	for i in [13, 16, 17]:
 		out[i].detail = 2
@@ -887,8 +889,10 @@ func _objects() -> Array[ObjectDef]:
 	out[18].bottle_shelves.assign([44, 24])
 	out[19].container_slots = 14
 	out[19].slots_per_shelf = 4  # 2 shelves of 4 on show, 6 more in the cupboard
-	for i in [13, 16, 18, 19]:
-		out[i].container_stack_mult = 4  # 4 stacks a slot: beats a chest for its kind
+	# Stacks a slot: display storage holds at least what chests would in the same space
+	# (a chest: 40 stacks in 9 tiles, about 4.4 a tile).
+	for pair: Array in [[13, 6], [16, 6], [17, 2], [18, 5], [19, 4]]:
+		out[pair[0]].container_stack_mult = pair[1]
 	out[19].bottle_shelves.assign([40, 22])
 	for i in [18, 19]:
 		out[i].container_accepts = &"food"
@@ -905,7 +909,7 @@ func _objects() -> Array[ObjectDef]:
 		out[i].container_accepts = &"book"
 		out[i].fill_look = ObjectDef.FillLook.BOOKS
 		out[i].bottle_x0 = 4.0
-		out[i].container_stack_mult = 4
+		out[i].container_stack_mult = 5
 	out[21].container_slots = 10
 	out[22].container_slots = 12
 	# Hanging nets: [slots, rope columns, the bag's inside in art px].

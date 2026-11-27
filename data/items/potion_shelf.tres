@@ -24,4 +24,4 @@ places_object = &"potion_shelf"
 place_area_max = 1
 id = &"potion_shelf"
 display_name = "Shelf"
-description = "Hangs on a back wall: 4 stacks of anything, shown in its 4 spots."
+description = "Hangs on a back wall: 4 slots of 2 stacks of anything, shown in its 4 spots."

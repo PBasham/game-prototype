@@ -240,7 +240,7 @@ func test_shelf_sections_stack_mult_and_creative_tabs() -> void:
 	var a := _floor_spot(4)
 	assert_true(w.request_place_object(a, w.objects.index_of(&"potion_cabinet")))
 	var inv := w.container_at(a)
-	assert_eq(inv.cap_for(&"healing_potion"), 120, "4 stacks a slot")
+	assert_eq(inv.cap_for(&"healing_potion"), 180, "6 stacks a slot")
 	var shelf := w.objects.def(w.objects.index_of(&"potion_shelf")) as ObjectDef
 	assert_eq(shelf.display_name, "Shelf")
 	assert_eq(shelf.container_accepts, &"", "the Shelf takes anything")

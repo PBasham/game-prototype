@@ -269,24 +269,25 @@ can't mine the floor under furniture.
 
 | Object | Size | Holds | Capacity | Recipe (workbench) |
 | --- | --- | --- | --- | --- |
-| Lumber Rack | 3x3 | Any logs and wood (Log, Darkwood Log, Wood, Darkwood, both Reinforced) | 10 full stacks (9,999 each) | 25 Wood + 4 Logs |
-| Potion Cabinet | 3x5, glass doors, 4 shelves of 3 spots | Potions, coatings, bottles | 12 slots of 4 stacks (120 potions a slot) | 20 Wood + 2 Copper Bars + 4 Glass |
-| Large Potion Cabinet (id `potion_bookcase`) | 4x6, 5 shelves of 4 spots | Potions, coatings, bottles | 20 slots of 4 stacks | 30 Wood + 4 Copper Bars + 6 Glass |
-| Shelf (id `potion_shelf`) | 3x2, on a back wall, 4 spots | Anything | 4 normal stacks | 6 Wood |
-| Pantry Rack | 3x3, 2 open shelves of 4 spots, on a floor or a back wall | Food (not potions or coatings) | 8 slots of 4 stacks | 12 Wood |
+| Lumber Rack | 5x4 | Any logs and wood (Log, Darkwood Log, Wood, Darkwood, both Reinforced) | 10 full stacks (9,999 each) | 25 Wood + 4 Logs |
+| Potion Cabinet | 3x5, glass doors, 4 shelves of 3 spots | Potions, coatings, bottles | 12 slots of 6 stacks (180 potions a slot) | 20 Wood + 2 Copper Bars + 4 Glass |
+| Large Potion Cabinet (id `potion_bookcase`) | 4x6, 5 shelves of 4 spots | Potions, coatings, bottles | 20 slots of 6 stacks | 30 Wood + 4 Copper Bars + 6 Glass |
+| Shelf (id `potion_shelf`) | 3x2, on a back wall, 4 spots | Anything | 4 slots of 2 stacks | 6 Wood |
+| Pantry Rack | 3x3, 2 open shelves of 4 spots, on a floor or a back wall | Food (not potions or coatings) | 8 slots of 5 stacks | 12 Wood |
 | Food Pantry | 3x4, 2 open shelves of 4 spots over a cupboard | Food | 14 slots of 4 stacks (6 in the cupboard) | 20 Wood + 2 Copper Bars |
 
 - **Spots:** shelved storage gives each slot its own spot on a shelf
   (`ObjectDef.slots_per_shelf`): slot 0 is the top shelf's left spot, reading left to
   right, top shelf down, and the storage window lays its slots out the same way, with a
   plank under each shelf's row. A spot shows as many of its item as fit, times how full
-  the stack is (at least one), spread evenly. `container_stack_mult` (4 on the potion
-  cabinets and pantries) lets each slot hold that many of the item's stacks, so special
-  storage beats a chest (40 slots of 1 stack) for its kind. The old display Shelf is
+  the stack is (at least one), spread evenly. `container_stack_mult` lets each slot hold that many
+  of the item's stacks. The rule: display storage holds at least what chests would in
+  the same space (a chest: 40 stacks in 9 tiles, about 4.4 a tile), so potion cabinets
+  are 6, the Pantry Rack and bookshelves 5, the Food Pantry 4, the Shelf 2. The old display Shelf is
   retired (`ItemData.obsolete`: no recipe, not in Creative or the Catalog; placed ones
   still work); the Potion Shelf is now the Shelf and takes anything.
-| Small Bookshelf (id `bookshelf`) | 3x4, 2 shelves over a cupboard | Books, spellbooks, tomes, scrolls, pages, paper | 12 slots of 4 stacks | 20 Wood |
-| Bookshelf (id `tall_bookshelf`) | 4x6, 3 shelves over a cupboard | the same | 24 slots of 4 stacks | 36 Wood |
+| Small Bookshelf (id `bookshelf`) | 3x4, 2 shelves over a cupboard | Books, spellbooks, tomes, scrolls, pages, paper | 12 slots of 5 stacks | 20 Wood |
+| Bookshelf (id `tall_bookshelf`) | 4x6, 3 shelves over a cupboard | the same | 24 slots of 5 stacks | 36 Wood |
 
 - **Storage for anything** (like a chest, its picture doesn't change): **Barrel** (2x2, 10
   stacks, 10 Wood + 1 Copper Bar), **Crate** (2x2, 12 stacks, 12 Wood), and three
@@ -313,12 +314,10 @@ can't mine the floor under furniture.
   Fields on the `ObjectDef`: `container_accepts` (a storage tag; items list theirs in
   `ItemData.storage_tags`: every log and wood is `lumber`; healing and mana potions, poison
   coatings and flasks, and clay flasks are `potion`), `container_stack_cap` (a stack size
-  that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (the Lumber Rack:
-  a sprite sheet of 11 frames, 0% to 100% in 10% steps, its log ends in staggered rows
-  filled a layer at a time; how full counts each slot as its share of a full stack),
-  `PILE` (not used now: draws each kind in its own color, round ends for logs and
-  square ends for boards, `ObjectLayer._draw_pile`; set the rack's `fill_look` to PILE
-  to try it) or `BOTTLES` (the potion furniture draws the bottles inside on its shelves).
+  that replaces the items' own, 0 = theirs), and `fill_look`: `FRAMES` (a sprite sheet of 11 frames, 0% to 100% in 10% steps; not used
+  now), `PILE` (the Lumber Rack: each kind in its own color, so Darkwood shows purple,
+  round ends for logs and square ends for boards, in staggered rows filling
+  `pile_area` from the bottom, `ObjectLayer._draw_pile`) or `BOTTLES` (the potion furniture draws the bottles inside on its shelves).
 - **Bottles on shelves:** each bottle is drawn from its item's `shelf_sprite` if it has
   one, else its icon cropped and halved (`ObjectLayer.shelf_texture`, each 2x2 block keeps
   its most solid pixel). So a Clay Jug or Glass Flask is wider than a vial and takes more

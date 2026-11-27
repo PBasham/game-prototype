@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 48, Lumber Rack, storage capacity
+
+- **Patrick:** the Lumber Rack should show Darkwood purple and be bigger. It's 5x4 now,
+  drawn as a colored heap (`PILE`) with its front posts over it.
+- **Patrick:** how should display storage justify its space? Claude: hold at least what
+  chests would in the same space (about 4.4 stacks a tile); stacks a slot set to match.
+
 ## 2026-11-26: Phase 47, bookshelves, fuller spots, right click fix
 
 - **Patrick:** a bigger Bookshelf (the old one is the Small Bookshelf), bottom half a

@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_7li5r")
+container_stack_mult = 2
 slots_per_shelf = 4
 frames = ExtResource("1_gsvum")
 style = 2

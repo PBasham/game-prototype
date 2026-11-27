@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("2_6rf1i")
-container_stack_mult = 4
+container_stack_mult = 5
 floor_or_wall = true
 slots_per_shelf = 4
 frames = ExtResource("1_jt0yp")

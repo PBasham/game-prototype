@@ -577,3 +577,10 @@ saves still load.
 | Bookshelves | `ObjectLayer._draw_books`; object index 29 (`tall_bookshelf`) in `tools/make_items.gd`; art `bookcase()` in `tools/make_phase37_art.py` |
 | Overlapping spots | `ObjectLayer._draw_sections` |
 | Far furniture right click | `Player` (the right click branch) |
+
+## Phase 48: Lumber Rack, storage capacity
+
+| Change | Where |
+| --- | --- |
+| The rack's heap | `ObjectDef.pile_area`; `ObjectLayer._draw_pile`; art `lumber_rack()` in `tools/make_phase37_art.py` |
+| Stacks a slot by space | `container_stack_mult` in `tools/make_items.gd` and the objects |

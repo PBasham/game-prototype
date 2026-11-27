@@ -111,6 +111,9 @@ enum FillLook { NONE, FRAMES, BOTTLES, PILE, BOOKS, NET }
 ## by how full the stack is. Slots past the shelves are hidden (a cupboard). 0 = the
 ## old flowing layout.
 @export var slots_per_shelf := 0
+## PILE: where the heap goes, in art px of its picture (log ends and board ends in
+## staggered rows, bottom row first).
+@export var pile_area := Rect2i(6, 8, 36, 36)
 ## NET: the bag's inside, in art px of its picture (items heap up from its bottom).
 @export var net_bag := Rect2i(4, 8, 40, 20)
 ## Liquid storage (Liquid Barrels): how much liquid it holds, in buckets. Liquids

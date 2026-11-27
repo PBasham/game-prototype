@@ -358,6 +358,10 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 48: Lumber Rack, storage capacity (branch phase-48-lumber-rack)**
+- [ ] Lumber Rack is 5x4; logs and boards heap in their own colors (Darkwood purple) behind its front posts. Old placed racks: pick up and place again.
+- [ ] Potion cabinets hold 6 stacks a slot (180 potions), Pantry Rack and bookshelves 5, Food Pantry 4, Shelf 2.
+
 **Phase 47: bookshelves, fuller spots, right click fix (branch phase-47-bookshelves)**
 - [ ] Bookshelf (4x6, 3 shelves over a cupboard) and Small Bookshelf (3x4): one spine per book; scrolls and paper don't show.
 - [ ] Shelf spots fill up with overlapping bottles as the stack grows (one item: one; two or more: two or more).
