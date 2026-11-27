@@ -67,6 +67,11 @@ func in_bounds_y(y: int) -> bool:
 	return y >= 0 and y < height
 
 
+## Freshly generated chunks with water in them (ChunkData.water), for the voxel layer to
+## pick up on the main thread (VoxelLayer.import_generated).
+var fresh_water: Array[ChunkData] = []
+
+
 ## Returns the chunk, generating it now if needed (waiting for its background job if one
 ## is running). x is wrapped; y must be in range. Gameplay queries use this; streaming
 ## uses request_chunk() so the main thread never generates.
@@ -86,6 +91,8 @@ func get_chunk(chunk_coord: Vector2i) -> ChunkData:
 		generator.call(chunk)
 		PerfStats.add("chunk generate (main)", Time.get_ticks_usec() - t)
 	_chunks[c] = chunk
+	if not chunk.water.is_empty():
+		fresh_water.append(chunk)
 	return chunk
 
 
@@ -167,6 +174,8 @@ func _finish_job(c: Vector2i) -> void:
 	WorkerThreadPool.wait_for_task_completion(job.task)
 	if not _chunks.has(c):
 		_chunks[c] = job.chunk
+		if not job.chunk.water.is_empty():
+			fresh_water.append(job.chunk)
 	PerfStats.add("chunk generate (worker)", job.usec)
 
 

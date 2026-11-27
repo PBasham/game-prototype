@@ -54,3 +54,36 @@ if atlas.height < 22 * 8:
     grown.paste(atlas.crop((0, 17 * 8, atlas.width, 18 * 8)), (0, 21 * 8))  # like Stone Bricks' row
     grown.save(atlas_path)
     print("blocks.png: added row 21")
+
+
+# Phase 55: Hard Sand (block and wall, 128x128 like sand) from the sand picture: darker,
+# packed, with flat layers. Its icon and held sprite are the block shrunk. Row 22 of
+# blocks.png is its collision row (a copy of stone's).
+def hard_sand(src_name, out_name, darken):
+    src = Image.open(os.path.join(ASSETS, "terrain", src_name)).convert("RGBA")
+    out = src.copy()
+    px = out.load()
+    w, h = out.size
+    for y in range(h):
+        band = 0.93 if (y // 6) % 3 == 0 else (1.04 if (y // 6) % 3 == 1 else 1.0)
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            k = darken * band
+            # Packed sand: a bit redder and darker.
+            px[x, y] = (min(255, int(r * k * 0.98)), min(255, int(g * k * 0.9)), min(255, int(b * k * 0.78)), a)
+    save(out, "terrain/" + out_name)
+    return out
+
+
+block = hard_sand("sand.png", "hard_sand.png", 0.86)
+hard_sand("sand_wall.png", "hard_sand_wall.png", 0.86)
+icon = block.crop((0, 0, 32, 32)).resize((16, 16), Image.LANCZOS)
+save(icon, "items/icons/hard_sand.png")
+save(icon, "items/held/hard_sand.png")
+atlas = Image.open(atlas_path).convert("RGBA")
+if atlas.height < 23 * 8:
+    grown = Image.new("RGBA", (atlas.width, 23 * 8))
+    grown.paste(atlas, (0, 0))
+    grown.paste(atlas.crop((0, 2 * 8, atlas.width, 3 * 8)), (0, 22 * 8))  # like stone's row
+    grown.save(atlas_path)
+    print("blocks.png: added row 22")

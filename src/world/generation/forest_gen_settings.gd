@@ -215,6 +215,48 @@ extends GameData
 @export_range(0.0, 1.0) var dark_flower_chance := 0.01
 
 
+@export_group("Ocean")
+## One ocean: a wide stretch of deep water with sandy beaches on both sides. Off = none.
+@export var ocean := true
+## Where its middle is: this share of the world width away from spawn (0.5 = the far side).
+@export_range(0.1, 0.9) var ocean_distance := 0.5
+## Width of the water at sea level: this share of the world width, at least ocean_min_width.
+@export_range(0.0, 0.5) var ocean_share := 0.12
+@export var ocean_min_width := 140
+## Deepest point below sea level, in the middle.
+@export var ocean_depth := 80.0
+## How much of each side is a shallow shelf before it drops off (0 to 1 of the half width).
+@export_range(0.0, 0.9) var ocean_shelf := 0.3
+## Shelf depth below sea level.
+@export var ocean_shelf_depth := 6.0
+## Bumps on the sea floor (tiles up or down).
+@export var ocean_floor_bumps := 3.0
+## Each beach: this many tiles from the land down to the water's edge.
+@export var beach_width := 45
+## Sea level: this many tiles below the baseline surface (surface_level).
+@export var sea_level_below := 3
+## Sand on top, then Hard Sand, then stone (depth in tiles from the beach or sea floor).
+@export var ocean_sand_depth := 6
+@export var ocean_hard_sand_depth := 14
+## Solid rock under the Hard Sand before any cave (so the sea can't drain into one).
+@export var ocean_cave_crust := 8
+
+@export_group("Ponds")
+## A pond spot every this many columns (on fairly flat ground, away from spawn and the
+## ocean), and the chance a spot has one.
+@export var pond_spacing := 140
+@export_range(0.0, 1.0) var pond_chance := 0.6
+## Pond width and depth (tiles), picked per pond between these.
+@export var pond_width_min := 8
+@export var pond_width_max := 18
+@export var pond_depth_min := 3
+@export var pond_depth_max := 6
+## Ground can't rise or fall more than this over a pond's width.
+@export var pond_max_slope := 5
+## No ponds this close to spawn.
+@export var pond_spawn_clear := 40
+
+
 func validate() -> PackedStringArray:
 	var problems := super()
 	if dirt_depth_min > dirt_depth_max:
@@ -227,6 +269,8 @@ func validate() -> PackedStringArray:
 		problems.append("%s: surface_min must be below surface_max" % id)
 	if dark_tree_spacing < 3:
 		problems.append("%s: dark_tree_spacing must be at least 3" % id)
+	if pond_width_min > pond_width_max or pond_depth_min > pond_depth_max:
+		problems.append("%s: pond min > max" % id)
 	if tree_spacing < 3:
 		problems.append("%s: tree_spacing must be at least 3" % id)
 	return problems

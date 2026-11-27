@@ -84,11 +84,11 @@ func test_no_caves_open_near_spawn() -> void:
 			assert_ne(g.block_at(x, y), WorldData.AIR, "solid ground under spawn area at %+d, depth %d" % [dx, y - top])
 
 
-func test_only_forest_blocks() -> void:
+func test_only_forest_and_ocean_blocks() -> void:
 	var g := _gen(3)
 	var allowed := [WorldData.AIR]
 	for id: StringName in [&"dirt", &"grass", &"stone", &"copper_ore", &"iron_ore", &"clay",
-			&"dark_forest_dirt", &"dark_forest_grass", &"dark_forest_stone"]:
+			&"dark_forest_dirt", &"dark_forest_grass", &"dark_forest_stone", &"sand", &"hard_sand"]:
 		allowed.append(blocks.index_of(id))
 	for x in range(0, W, 37):
 		for y in range(0, H, 11):

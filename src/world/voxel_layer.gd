@@ -34,6 +34,9 @@ const TILE := World.TILE
 ## Brightness of sand and brick cells next to the blocks the terrain shader draws (so
 ## a loose pile matches a sand block).
 @export_range(0.5, 1.2) var cell_shade := 0.84
+## How far (art pixels, 2 a world pixel) water is painted into the rock beside it, to
+## fill the rounded edges the terrain shader cuts out of natural blocks.
+@export var water_fringe := 3
 ## Water cells' opacity.
 @export_range(0.0, 1.0) var water_alpha := 0.72
 
@@ -70,6 +73,8 @@ const REGION := 16
 var _paint: Dictionary[Vector2i, bool] = {}
 var _regions: Dictionary[Vector2i, Array] = {}  # region -> [Image, ImageTexture]
 var _width_cells := 0
+## Chunks whose generated water is already in `tiles` (saved, so it isn't added twice).
+var _imported: Dictionary[Vector2i, bool] = {}
 
 
 func setup(w: World) -> void:
@@ -385,8 +390,41 @@ func _wake_around(t: Vector2i) -> void:
 			_active[n] = 0
 
 
+## Fills the water the generator put in newly made chunks (oceans, ponds). Quiet: it
+## starts out at rest, so nothing is simulated until something disturbs it.
+func import_generated() -> void:
+	var fresh := world.data.fresh_water
+	if fresh.is_empty():
+		return
+	world.data.fresh_water = []
+	var code := code_of(&"water")
+	if code == 0:
+		return
+	for chunk in fresh:
+		if _imported.has(chunk.coord):
+			continue
+		_imported[chunk.coord] = true
+		var ox := chunk.coord.x * ChunkData.SIZE
+		var oy := chunk.coord.y * ChunkData.SIZE
+		for i in ChunkData.AREA:
+			if chunk.water[i] == 0:
+				continue
+			var t := Vector2i(ox + i % ChunkData.SIZE, oy + i / ChunkData.SIZE)
+			if tiles.has(t) or chunk.blocks[i] != WorldData.AIR:
+				continue
+			var arr := PackedByteArray()
+			arr.resize(CELLS)
+			for k in CELLS:
+				arr[k] = code | ((randi() % 16) << 4)
+			tiles[t] = arr
+			_paint[t] = true
+
+
 func _physics_process(delta: float) -> void:
-	if world == null or not Game.is_authority():
+	if world == null:
+		return
+	import_generated()
+	if not Game.is_authority():
 		return
 	_acc = minf(_acc + delta * ticks_per_second, 3.0)
 	while _acc >= 1.0:
@@ -836,13 +874,23 @@ func _shade_at(index: int, px: Vector2i) -> int:
 ## Repaints the changed tiles into their regions' pictures.
 func _flush_paint() -> void:
 	var touched: Dictionary[Vector2i, bool] = {}
+	# Rock beside water gets a fringe of water painted over its edge: repaint those too.
+	var beside: Array[Vector2i] = []
+	for t: Vector2i in _paint:
+		if tiles.has(t):
+			for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				var n := Vector2i(world.data.wrap_x(t.x + d.x), t.y + d.y)
+				if not tiles.has(n) and not _paint.has(n):
+					beside.append(n)
+	for n in beside:
+		_paint[n] = true
 	for t: Vector2i in _paint:
 		if t.y < 0 or t.y >= world.data.height:
 			continue
 		var r := Vector2i(t.x / REGION, t.y / REGION)
 		var entry: Array = _regions.get(r, [])
 		if entry.is_empty():
-			if not tiles.has(t):
+			if not tiles.has(t) and not _has_fringe(t):
 				continue
 			var img := Image.create_empty(REGION * TILE * 2, REGION * TILE * 2, false, Image.FORMAT_RGBA8)
 			entry = [img, null]
@@ -862,13 +910,80 @@ func _flush_paint() -> void:
 			(entry[1] as ImageTexture).update(img)
 
 
+## True when a tile without cells is rock with water beside it (a fringe to paint).
+func _has_fringe(t: Vector2i) -> bool:
+	return not tiles.has(t) and not _fringe_rects(t).is_empty()
+
+
+## The fringe of water to paint over a rock tile's edges: [rect in the tile's art
+## pixels, color] for each edge cell of a water neighbor that touches its rock.
+func _fringe_rects(t: Vector2i) -> Array:
+	var out: Array = []
+	if water_fringe <= 0 or world.data.get_block(t.x, t.y) <= 0:
+		return out
+	var cp := CELL_PX * 2
+	var size := TILE * 2
+	var f := water_fringe
+	for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		var n := Vector2i(world.data.wrap_x(t.x + d.x), t.y + d.y)
+		var arr: PackedByteArray = tiles.get(n, PackedByteArray())
+		if arr.is_empty():
+			continue
+		for k in N:
+			# The neighbor's cell on the shared edge, and ours next to it.
+			var their: int
+			var ours: Vector2i
+			var r: Rect2i
+			match d:
+				Vector2i.LEFT:
+					their = k * N + (N - 1)
+					ours = Vector2i(t.x * N, t.y * N + k)
+					r = Rect2i(0, k * cp, f, cp)
+				Vector2i.RIGHT:
+					their = k * N
+					ours = Vector2i(t.x * N + N - 1, t.y * N + k)
+					r = Rect2i(size - f, k * cp, f, cp)
+				Vector2i.UP:
+					their = (N - 1) * N + k
+					ours = Vector2i(t.x * N + k, t.y * N)
+					r = Rect2i(k * cp, 0, cp, f)
+				_:
+					their = k
+					ours = Vector2i(t.x * N + k, t.y * N + N - 1)
+					r = Rect2i(k * cp, size - f, cp, f)
+			var b := arr[their]
+			if b == 0 or _behavior[b & 15] != VoxelMaterial.Behavior.LIQUID or not _terrain_blocks(ours):
+				continue
+			var col := _palettes[(b & 15) - 1][8]
+			col.a = water_alpha
+			out.append([r, col])
+	return out
+
+
 func _paint_tile(img: Image, t: Vector2i, at: Vector2i) -> void:
 	var size := TILE * 2
 	img.fill_rect(Rect2i(at, Vector2i(size, size)), Color(0, 0, 0, 0))
 	var arr: PackedByteArray = tiles.get(t, PackedByteArray())
 	if arr.is_empty():
+		for f: Array in _fringe_rects(t):
+			var r: Rect2i = f[0]
+			img.fill_rect(Rect2i(at + r.position, r.size), f[1])
 		return
 	var cp := CELL_PX * 2  # a cell's art pixels
+	# Deep water (a full tile of it under more water): one fill, no surface to draw.
+	if arr.count(0) == 0 and _behavior[arr[0] & 15] == VoxelMaterial.Behavior.LIQUID:
+		var above: PackedByteArray = tiles.get(Vector2i(t.x, t.y - 1), PackedByteArray())
+		if above.size() == CELLS and above[12] != 0 and _behavior[above[12] & 15] == VoxelMaterial.Behavior.LIQUID:
+			var uniform := true
+			for b in arr:
+				if (b & 15) != (arr[0] & 15):
+					uniform = false
+					break
+			if uniform:
+				var col := _palettes[(arr[0] & 15) - 1][8]
+				col.a = water_alpha
+				img.fill_rect(Rect2i(at, Vector2i(size, size)), col)
+				return
 	for i in CELLS:
 		var b := arr[i]
 		if b == 0:
@@ -981,15 +1096,27 @@ func _check_collision_copies() -> void:
 # --- saving ------------------------------------------------------------------------------
 
 func to_dict() -> Dictionary:
-	if tiles.is_empty():
+	if tiles.is_empty() and _imported.is_empty():
 		return {}
 	var names: Array[String] = []
 	for m in materials:
 		names.append(String(m.id))
 	var out := {}
 	for t: Vector2i in tiles:
-		out["%d,%d" % [t.x, t.y]] = tiles[t]
-	return {"materials": names, "tiles": out}
+		var arr: PackedByteArray = tiles[t]
+		# A tile all of one material is saved as just its code (the shades are random).
+		var code := arr[0] & 15
+		var same := arr.count(0) == 0
+		if same:
+			for b in arr:
+				if (b & 15) != code:
+					same = false
+					break
+		out["%d,%d" % [t.x, t.y]] = code if same else arr
+	var done: Array[String] = []
+	for c: Vector2i in _imported:
+		done.append("%d,%d" % [c.x, c.y])
+	return {"materials": names, "tiles": out, "imported": done}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -1005,6 +1132,12 @@ func from_dict(d: Dictionary) -> void:
 	for key: String in saved:
 		var parts := key.split(",")
 		var bytes: Variant = saved[key]
+		if bytes is int:
+			var whole := PackedByteArray()
+			whole.resize(CELLS)
+			for k in CELLS:
+				whole[k] = int(bytes) | ((randi() % 16) << 4)
+			bytes = whole
 		if parts.size() != 2 or not bytes is PackedByteArray or (bytes as PackedByteArray).size() != CELLS:
 			continue
 		var arr := (bytes as PackedByteArray).duplicate()
@@ -1015,4 +1148,11 @@ func from_dict(d: Dictionary) -> void:
 		if arr.count(0) < CELLS:
 			var t := Vector2i(int(parts[0]), int(parts[1]))
 			tiles[t] = arr
-			_touched(t)
+			# Quiet: it was at rest when saved (what was still moving starts again
+			# when anything near it changes).
+			_paint[t] = true
+			_col_dirty[t] = true
+	for key: String in d.get("imported", []):
+		var parts := key.split(",")
+		if parts.size() == 2:
+			_imported[Vector2i(int(parts[0]), int(parts[1]))] = true

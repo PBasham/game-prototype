@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 55, ocean and ponds
+
+- **Patrick:** in addition to some ponds, an ocean biome: sand, hard sand and water,
+  lots of it; make a first version.
+- **Claude:** one ocean on the far side from spawn (12% of the width, 80 tiles deep,
+  shelves near the shores), 45 tile beaches that never dip below sea level, sand 6 deep
+  then Hard Sand 14 (a static block and wall), a rock crust before caves; ponds on flat
+  ground with sand beds. Generated water fills the voxel layer at rest, once per chunk.
+  No ocean enemies or plants yet.
+
 ## 2026-11-27: Phase 54, water: swimming, breath, thirst, bottles, Siphon, barrels
 
 - **Patrick:** go with the brief's defaults; the player can swim in the water.

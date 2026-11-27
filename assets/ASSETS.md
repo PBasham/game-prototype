@@ -277,6 +277,7 @@ or .ogg); the generator never overwrites without `--force`.
 | ui/empower/<node id>.png | 16x16 Empower node icons (pick head, axe head, expanding arrows, reaching hand, drop, flame, zigzag, swoosh, hourglass, slime, two orbs and a plus). `tools/make_empower_icons.py` |
 | terrain/sand_bricks.png, terrain/sand_bricks_wall.png, items/{icons,held}/sand_bricks.png | Placeholder Sand Bricks from the sand texture's colors (`tools/make_brick_art.py`, Phase 52) |
 | items/{icons,held}/water_{clay_flask,clay_bottle,clay_jug,glass_vial,glass_bottle,glass_flask}.png, ui/icon_thirst.png, ui/icon_breath.png | Placeholder water bottles (the flask drawer with blue water), a drop and a bubble (`tools/make_water_art.py`, Phase 54) |
+| terrain/hard_sand.png, terrain/hard_sand_wall.png, items/{icons,held}/hard_sand.png | Placeholder Hard Sand: the sand pictures darker and redder with flat layers (`tools/make_voxel_art.py`, Phase 55) |
 | items/{icons,held}/bomb.png | 16x16 placeholder Bomb: a dark round bomb with a lit fuse (`tools/make_voxel_art.py`, Phase 52) |
 | sounds/bomb.wav | Placeholder explosion (`tools/make_sounds.gd`, Phase 52) |
 | items/icons/shaping_spell.png (+ scroll_, page_ icons) | 16x16 Shaping Spell: a small mallet over a slope. Placeholder (`make_item_art.gd --new-spells`, Phase 51) |

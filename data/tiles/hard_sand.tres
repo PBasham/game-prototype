@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TileDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/tile_def.gd" id="1_tiledef"]
+
+[resource]
+script = ExtResource("1_tiledef")
+atlas_row = 22
+collision = 1
+climbable = false
+kind = &"stone"
+biome = &"ocean"
+health = 55.0
+terrain = "hard_sand"
+id = &"hard_sand"
+display_name = "Hard Sand"

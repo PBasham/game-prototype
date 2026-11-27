@@ -17,6 +17,9 @@ var objects := PackedInt32Array()
 ## a log turned the other way; bits 4-5 the wall's: 0 full, 1 bottom half, 2 top half).
 ## Reset when the block or wall changes.
 var shapes := PackedByteArray()
+## Tiles the generator filled with water (1), empty when none. Read once by the voxel
+## layer when the chunk is first made (VoxelLayer.import_generated).
+var water := PackedByteArray()
 ## Set when anything changes after generation (for saving in Phase 5).
 var modified := false
 ## Bumped by every edit, so background work can tell its copy of the tiles is stale.

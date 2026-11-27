@@ -354,6 +354,45 @@ tree is mirrored or not and leans up to `Plants.tree_lean_degrees` (4) either wa
 as bright). The world map preview draws dark trees as taller purple ticks. Changes
 only affect chunks not generated yet.
 
+### Ocean (Phase 55)
+
+One ocean on the far side of the world (`ocean_distance` 0.5 of the width from spawn):
+deep water over a sand floor, with a sandy beach rising to the land on both sides. Off
+with `ocean = false`; worlds too narrow for it (ocean plus beaches over 60% of the width)
+get none.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `ocean_share`, `ocean_min_width` | 0.12, 140 | Width of the water at sea level |
+| `ocean_depth` | 80 | Deepest point below sea level, in the middle |
+| `ocean_shelf`, `ocean_shelf_depth` | 0.3, 6 | A shallow shelf near each shore (share of the half width, depth) before the drop |
+| `ocean_floor_bumps` | 3 | Bumps on the sea floor (deeper parts only) |
+| `beach_width` | 45 | Each beach, from the water's edge to the land. It never dips below sea level, so the water can't spill over it |
+| `sea_level_below` | 3 | Sea level, tiles below the baseline surface (`surface_level`) |
+| `ocean_sand_depth`, `ocean_hard_sand_depth` | 6, 14 | Sand on top, then Hard Sand, then stone (and its ores) |
+| `ocean_cave_crust` | 8 | Rock under the Hard Sand before caves may start, so the sea can't drain into one |
+
+The beach's land end mixes sand and grass in clumps. No trees, flowers or Dark Forest on
+the ocean or its beaches. Walls: Sand Wall, then Hard Sand Wall. The ocean is its own
+biome (`biome_at` = `ocean`; Sand and Hard Sand carry `biome = ocean`); there's no spawn
+table for it yet, so nothing spawns there.
+
+### Ponds (Phase 55)
+
+Small ponds on fairly flat ground: a spot every `pond_spacing` (140) columns, with
+`pond_chance` (0.6), `pond_width_min`/`max` (8, 18) wide and `pond_depth_min`/`max` (3, 6)
+deep, where the ground rises or falls at most `pond_max_slope` (5) over the width, not
+within `pond_spawn_clear` (40) of spawn, the ocean or the Dark Forest. The bed is sand,
+the water's top is one row below the lower bank, and there are no caves within 12 tiles
+under a pond or trees right beside it.
+
+### Water
+
+`water_at(x, y)` says where the world starts full of water. Generating a chunk records
+it in `ChunkData.water`; the voxel layer fills those tiles with water cells
+(`VoxelLayer.import_generated`), at rest, once per chunk (the imported chunks are saved,
+so reloading never adds it twice). The world map preview draws water blue and sand tan.
+
 ## Code tour
 
 `ForestGenerator` (`forest_generator.gd`), in reading order:

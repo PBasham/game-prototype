@@ -358,6 +358,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 55: ocean and ponds (branch phase-55-ocean)**
+- [ ] New world: walk away from spawn (or `tp` about half the world over) to the ocean:
+      a sandy beach down to deep water, sand then Hard Sand underneath, caves only deeper.
+- [ ] Swim out and dive: it's 80 tiles deep in the middle. Breath runs out.
+- [ ] Ponds here and there on flat ground: shallow water on a sand bed.
+- [ ] Dig a beach or pond edge: water flows out, then settles. Sand you dig under falls.
+- [ ] Leave and reload: the sea stays as you left it (nothing refills).
+- [ ] World map preview (tools/preview_world.gd) shows the ocean and ponds in blue.
+
 **Phase 54: water: swimming, breath, thirst, bottles, Siphon, barrels (branch phase-54-water)**
 - [ ] Dig a deep pit, `water 6 10` into it, jump in: you swim (W or Space up, S down,
       slow sinking). Jump with your head out to climb out. Falling into water doesn't hurt.

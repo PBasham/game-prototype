@@ -592,6 +592,17 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 55: ocean and ponds
+
+| Change | Where |
+| --- | --- |
+| Ocean, beaches, ponds | `ForestGenerator` (`_place_ocean`, `_sea_floor`, `ocean_at`, `_place_ponds`, `water_at`, `_sandy`, `_land_surface`), "Ocean" and "Ponds" in `ForestGenSettings` |
+| Generated water into the voxel layer | `ChunkData.water`, `WorldData.fresh_water`, `VoxelLayer.import_generated`, `_imported` (saved) |
+| Water over rock edges | `VoxelLayer._fringe_rects`, `water_fringe` |
+| Hard Sand | `data/tiles/hard_sand.tres`, `data/walls/hard_sand_wall.tres`, art `tools/make_voxel_art.py` (blocks.png row 22) |
+| Ocean biome | `WorldGenerator.biome_at`, `ocean_at`; `TileDef.biome` on Sand and Hard Sand |
+| Map preview | `tools/preview_world.gd` (water, sand) |
+
 ## Phase 54: water
 
 | Change | Where |

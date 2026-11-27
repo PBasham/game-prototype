@@ -23,7 +23,7 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Never use en dashes in docs, comments or messages.
 - Patrick supplies real art and audio; use placeholders and record them in assets/ASSETS.md.
 - No dark outlines on terrain, trees or decorations; transitions use texture.
-- Don't invent biomes, ores or content. Current scope: surface forest, copper only
+- Don't invent biomes, ores or content. Current scope: surface forest and one ocean, copper only
   (plus the Phase 5 sticks and rocks (pickups that give wood and stone); Phase 7: green
   and blue slime, slime, wooden and copper swords, copper armor, bed, paper, blank and spell
   scrolls, the Spell Weaving Table, and the spells in data/spells; placeholder sounds;
@@ -34,7 +34,7 @@ tunables change: Patrick tweaks things by hand from these docs.
   Bottle, Clay Jug, Glass Vial, Glass Bottle, Glass Flask, Large Potion Cabinet, Potion Shelf;
   Phase 37: Healing and Mana in each bottle, Pantry Rack, Food Pantry, Bookshelf, Barrel,
   Crate, three Hanging Nets, Liquid Barrel, Iron Liquid Barrel; later: Long Hanging Net,
-  Siphon Liquid, Bookshelf (tall), Glow Potion, Shaping Spell; Phase 52: Sand Bricks, the Bomb, voxel sand and water; Phase 54: thirst, swimming, bottles of water).
+  Siphon Liquid, Bookshelf (tall), Glow Potion, Shaping Spell; Phase 52: Sand Bricks, the Bomb, voxel sand and water; Phase 54: thirst, swimming, bottles of water; Phase 55: the ocean (beaches, Hard Sand) and ponds).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

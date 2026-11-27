@@ -33,9 +33,10 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	height = world_height
 	seed = world_seed
 	for id: StringName in [&"dirt", &"grass", &"stone", &"copper_ore", &"iron_ore", &"clay", &"wood_planks", &"wood_platform", &"rope",
-			&"dark_forest_dirt", &"dark_forest_grass", &"dark_forest_stone"]:
+			&"dark_forest_dirt", &"dark_forest_grass", &"dark_forest_stone", &"sand", &"hard_sand"]:
 		_b[id] = tiles.index_of(id)
-	for id: StringName in [&"dirt_wall", &"stone_wall", &"wood_wall", &"dark_forest_dirt_wall", &"dark_forest_stone_wall"]:
+	for id: StringName in [&"dirt_wall", &"stone_wall", &"wood_wall", &"dark_forest_dirt_wall", &"dark_forest_stone_wall",
+			&"sand_wall", &"hard_sand_wall"]:
 		_w[id] = walls.index_of(id)
 
 
@@ -59,6 +60,11 @@ func tree_at(_x: int) -> int:
 	return -1
 
 
+## 0 away from the ocean, more than 0 on its beaches and water (x wrapped).
+func ocean_at(_x: int) -> float:
+	return 0.0
+
+
 ## 0 outside the Dark Forest, 1 deep inside it, in between at its edges (x wrapped).
 func dark_forest_at(_x: int) -> float:
 	return 0.0
@@ -66,7 +72,15 @@ func dark_forest_at(_x: int) -> float:
 
 ## The biome at column x (spawn tables, music later).
 func biome_at(x: int) -> StringName:
+	if ocean_at(posmod(x, maxi(width, 1))) > 0.0:
+		return &"ocean"
 	return &"dark_forest" if dark_forest_at(posmod(x, maxi(width, 1))) >= 0.5 else &"forest"
+
+
+## True where the world starts out full of water (an ocean, a pond): the voxel layer
+## fills these tiles with water when their chunk is first made.
+func water_at(_x: int, _y: int) -> bool:
+	return false
 
 
 ## Flower art variant for column x, or -1.

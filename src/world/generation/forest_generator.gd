@@ -59,6 +59,14 @@ var _entrance_cells: int
 var _entrance_cell_w: float
 ## Dark Forest patches: [center x, half width] each.
 var _dark: Array[Vector2] = []
+# Ocean and ponds (Phase 55).
+var _sea := 0  ## sea level row: water fills rows at or below it
+var _ocean_c := -1  ## middle column, -1 = no ocean
+var _ocean_half := 0.0  ## half the water's width at sea level
+var _ocean_floor: FastNoiseLite
+var _beach_mix: FastNoiseLite
+## Ponds: [center x, half width, depth, water row] each.
+var _ponds: Array[Vector4] = []
 
 
 func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: int,
@@ -108,6 +116,8 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	_entrance_cell_w = float(width) / _entrance_cells
 	_spawn_raw = _raw_surface(s.spawn_x)
 	_place_dark_forests()
+	_place_ocean()
+	_place_ponds()
 
 
 ## Spreads the Dark Forest patches evenly around the world (from the far side of spawn
@@ -140,6 +150,8 @@ func _place_dark_forests() -> void:
 
 
 func dark_forest_at(x: int) -> float:
+	if ocean_at(x) > 0.0:
+		return 0.0
 	var best := 0.0
 	var edge := maxf(settings.dark_forest_edge_tiles, 1.0)
 	for p in _dark:
@@ -169,6 +181,28 @@ func spawn_tile() -> Vector2i:
 # --- surface ------------------------------------------------------------------
 
 func surface_at(x: int) -> int:
+	x = posmod(x, width)
+	var land := _land_surface(x)
+	if _ocean_c >= 0:
+		var d := absf(float(wrap_delta(x, _ocean_c)))
+		if d < _ocean_half:
+			return _sea_floor(x, d)
+		if d < _ocean_half + settings.beach_width:
+			# The beach: from the water's edge (sea level) up to the land.
+			var u := (d - _ocean_half) / float(settings.beach_width)
+			# Never below sea level, so water can't spill out over a low beach.
+			return mini(roundi(lerpf(float(_sea), float(land), smoothstep(0.0, 1.0, u))), _sea)
+	var pond := _pond_index(x)
+	if pond >= 0:
+		var p := _ponds[pond]
+		var t := absf(float(wrap_delta(x, roundi(p.x)))) / maxf(p.y, 1.0)
+		var bottom := roundi(p.w + p.z * (1.0 - t * t))
+		return maxi(land, bottom)
+	return land
+
+
+## The surface before the ocean and ponds are dug: hills, cliffs, the flat spawn.
+func _land_surface(x: int) -> int:
 	var s := settings
 	var raw := _raw_surface(x)
 	var d := absi(wrap_delta(x, s.spawn_x))
@@ -176,6 +210,122 @@ func surface_at(x: int) -> int:
 		var t := smoothstep(float(s.spawn_flat_radius), float(s.spawn_flat_radius + s.spawn_blend), float(d))
 		raw = lerpf(_spawn_raw, raw, t)
 	return roundi(raw)
+
+
+# --- ocean and ponds ----------------------------------------------------------
+
+func _place_ocean() -> void:
+	var s := settings
+	_sea = roundi(height * s.surface_level) + s.sea_level_below
+	_ocean_floor = _noise(31, 1.0 / 24.0, 2)
+	_beach_mix = _noise(32, 1.0 / 3.0)
+	_ocean_c = -1
+	if not s.ocean:
+		return
+	var w := maxf(s.ocean_share * width, float(s.ocean_min_width))
+	# The ocean and both beaches must leave most of the world as land.
+	if w + 2.0 * s.beach_width > width * 0.6:
+		return
+	_ocean_half = w * 0.5
+	_ocean_c = posmod(s.spawn_x + roundi(s.ocean_distance * width), width)
+
+
+## The sea floor row at distance d from the ocean's middle: a shallow shelf near each
+## shore, then down to ocean_depth in the middle, with bumps.
+func _sea_floor(x: int, d: float) -> int:
+	var s := settings
+	var t := d / maxf(_ocean_half, 1.0)  # 0 middle, 1 shore
+	var shelf_start := 1.0 - s.ocean_shelf
+	var depth: float
+	if t > shelf_start:
+		depth = s.ocean_shelf_depth * smoothstep(1.0, shelf_start + (1.0 - shelf_start) * 0.3, t)
+	else:
+		depth = lerpf(s.ocean_shelf_depth, s.ocean_depth, smoothstep(shelf_start, 0.0, t))
+	var p := _cyl(x)
+	depth += s.ocean_floor_bumps * _ocean_floor.get_noise_2d(p.x, p.y) / 0.6 * clampf((1.0 - t) * 4.0, 0.0, 1.0)
+	return mini(roundi(_sea + maxf(depth, 1.0)), height - settings.floor_rows - 2)
+
+
+## 0 away from the ocean, 1 over its water, fading to 0 across the beaches.
+func ocean_at(x: int) -> float:
+	if _ocean_c < 0:
+		return 0.0
+	var d := absf(float(wrap_delta(x, _ocean_c)))
+	if d < _ocean_half:
+		return 1.0
+	var b := float(settings.beach_width)
+	return clampf(1.0 - (d - _ocean_half) / maxf(b, 1.0), 0.0, 1.0) if d < _ocean_half + b else 0.0
+
+
+func _place_ponds() -> void:
+	var s := settings
+	_ponds.clear()
+	if s.pond_spacing < 20 or s.pond_chance <= 0.0:
+		return
+	var cells := floori(float(width) / s.pond_spacing)
+	for i in cells:
+		if GenUtil.hash01(i, 41, seed) >= s.pond_chance:
+			continue
+		var half := lerpf(s.pond_width_min, s.pond_width_max, GenUtil.hash01(i, 42, seed)) * 0.5
+		var c := roundi(i * s.pond_spacing + half + 2 + GenUtil.hash01(i, 43, seed) * maxf(s.pond_spacing - half * 2.0 - 4.0, 0.0))
+		c = posmod(c, width)
+		if absi(wrap_delta(c, s.spawn_x)) < s.pond_spawn_clear + half:
+			continue
+		if _ocean_c >= 0 and absf(float(wrap_delta(c, _ocean_c))) < _ocean_half + s.beach_width + half + 10.0:
+			continue
+		if dark_forest_at(c) > 0.0:
+			continue  # not under the dark trees
+		var lo := 1000000
+		var hi := -1000000
+		for k in range(-ceili(half) - 1, ceili(half) + 2):
+			var y := _land_surface(posmod(c + k, width))
+			lo = mini(lo, y)
+			hi = maxi(hi, y)
+		if hi - lo > s.pond_max_slope:
+			continue
+		var depth := lerpf(s.pond_depth_min, s.pond_depth_max, GenUtil.hash01(i, 44, seed))
+		# The water's top row: one below the lower bank, so it can't spill over.
+		var left := _land_surface(posmod(c - ceili(half) - 1, width))
+		var right := _land_surface(posmod(c + ceili(half) + 1, width))
+		var water := maxi(left, right) + 1
+		_ponds.append(Vector4(c, half, depth, water))
+
+
+func _pond_index(x: int) -> int:
+	for i in _ponds.size():
+		if absf(float(wrap_delta(x, roundi(_ponds[i].x)))) < _ponds[i].y:
+			return i
+	return -1
+
+
+## The ponds (center x, half width, depth, water row), for the world map preview.
+func ponds() -> Array[Vector4]:
+	return _ponds.duplicate()
+
+
+## Middle and half width of the ocean's water (x = -1: none), for the world map preview.
+func ocean() -> Vector2:
+	return Vector2(_ocean_c, _ocean_half)
+
+
+func water_at(x: int, y: int) -> bool:
+	x = posmod(x, width)
+	if y >= surface_at(x):
+		return false
+	if _ocean_c >= 0 and absf(float(wrap_delta(x, _ocean_c))) < _ocean_half + settings.beach_width:
+		return y >= _sea
+	var pond := _pond_index(x)
+	return pond >= 0 and y >= int(_ponds[pond].w)
+
+
+## Sandy columns: the ocean's floor and beaches (the beach's land end mixes in clumps).
+func _sandy(x: int, y: int) -> bool:
+	var o := ocean_at(x)
+	if o <= 0.0:
+		return false
+	if o >= 0.25:
+		return true
+	return _beach_mix.get_noise_2d(float(x), float(y)) * 0.5 + 0.5 < o / 0.25
 
 
 ## Surface height before the spawn area is flattened (float rows; smaller = higher).
@@ -207,6 +357,10 @@ func generate_chunk(chunk: ChunkData) -> void:
 			var i := ChunkData.local_index(lx, ly)
 			chunk.blocks[i] = _block(x, y, col, entrances)
 			chunk.walls[i] = _wall(x, y, col)
+			if chunk.blocks[i] == WorldData.AIR and y >= _sea - 1 and water_at(x, y):
+				if chunk.water.is_empty():
+					chunk.water.resize(ChunkData.AREA)
+				chunk.water[i] = 1
 
 
 ## Block at one tile, for tests and tools. Slower than generate_chunk (no caching).
@@ -232,7 +386,15 @@ func _column(x: int) -> PackedFloat32Array:
 
 
 func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloat32Array]) -> int:
+	if _ocean_c >= 0 and y >= int(col[0]) and y < height - settings.floor_rows and _sandy(x, y):
+		var depth := y - int(col[0])
+		if depth < settings.ocean_sand_depth:
+			return _b[&"sand"]
+		if depth < settings.ocean_sand_depth + settings.ocean_hard_sand_depth:
+			return _b[&"hard_sand"]
 	var b := _plain_block(x, y, col, entrances)
+	if not _ponds.is_empty() and y >= int(col[0]) and y <= int(col[0]) + 1 and _pond_index(x) >= 0:
+		return _b[&"sand"]  # a sandy pond bed (no grass under water)
 	if (_dark_blocks.has(b) or b == _b.get(&"clay", -1)) and dark_forest_blocks_at(x, y, col):
 		if b == _b.get(&"clay", -1):
 			return _dark_blocks.get(_b[&"dirt"], b)  # no clay under the Dark Forest
@@ -307,6 +469,11 @@ func _wall(x: int, y: int, col: PackedFloat32Array) -> int:
 	var depth := y - int(col[0])
 	if depth < 4 or y >= height:
 		return WorldData.AIR
+	if _ocean_c >= 0 and _sandy(x, y):
+		if depth < settings.ocean_sand_depth + 2:
+			return _w[&"sand_wall"]
+		if depth < settings.ocean_sand_depth + settings.ocean_hard_sand_depth + 2:
+			return _w[&"hard_sand_wall"]
 	var w: int = _w[&"dirt_wall"] if depth < int(col[1]) + 2 else _w[&"stone_wall"]
 	if _dark_walls.has(w) and dark_forest_blocks_at(x, y, col):
 		return _dark_walls[w]
@@ -319,6 +486,9 @@ func _carved(x: int, y: int, depth: int, col: PackedFloat32Array, entrances: Arr
 	var s := settings
 	if y >= height - s.floor_rows - 1:
 		return false
+	if (ocean_at(x) > 0.0 and depth < settings.ocean_sand_depth + settings.ocean_hard_sand_depth + settings.ocean_cave_crust) \
+			or (_pond_index(x) >= 0 and depth < 12):
+		return false  # a solid crust under the sea and ponds (the water would pour in)
 	for e in entrances:
 		if _in_entrance(x, depth, e):
 			return true
@@ -441,6 +611,8 @@ func tree_at(x: int) -> int:
 	x = posmod(x, width)
 	if absi(wrap_delta(x, s.spawn_x)) < 3:
 		return -1  # keep the spawn point itself clear
+	if ocean_at(x) > 0.0 or _pond_index(x) >= 0 or _pond_index(x - 2) >= 0 or _pond_index(x + 2) >= 0:
+		return -1
 	if dark_forest_at(x) >= 0.5:
 		return _dark_tree_at(x)
 	var cell := floori(x / float(s.tree_spacing))
@@ -484,7 +656,7 @@ func _dark_tree_at(x: int) -> int:
 func flower_at(x: int) -> int:
 	var s := settings
 	x = posmod(x, width)
-	if tree_at(x) >= 0:
+	if tree_at(x) >= 0 or ocean_at(x) > 0.0 or _pond_index(x) >= 0:
 		return -1
 	var chance := lerpf(s.clearing_flower_chance, s.grove_flower_chance, groveness(x))
 	if dark_forest_at(x) >= 0.5:

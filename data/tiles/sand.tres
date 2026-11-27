@@ -10,6 +10,7 @@ climbable = false
 health = 35.0
 drop_count = 16
 voxel = &"sand"
+biome = &"ocean"
 terrain = "sand"
 id = &"sand"
 display_name = "Sand"

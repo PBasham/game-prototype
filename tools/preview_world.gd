@@ -33,7 +33,10 @@ const COLORS := {
 	&"wood_planks": Color("8a6a3a"),
 	&"wood_platform": Color("8a6a3a"),
 	&"rope": Color("c8b080"),
+	&"sand": Color("e0c888"),
+	&"hard_sand": Color("b8955a"),
 }
+const WATER := Color("3a78c8")
 const SKY := Color("9cc8e8")
 const CAVE_DIRT := Color("2e2118")
 const CAVE_STONE := Color("26262b")
@@ -138,7 +141,9 @@ func _row(r: int) -> void:
 			id = course.block_at(x, y)
 			wall = course.wall_at(x, y)
 		var col := SKY
-		if id > 0:
+		if id <= 0 and _gen.water_at(x, y):
+			col = WATER
+		elif id > 0:
 			col = _block_colors[id]
 		elif wall > 0:
 			col = CAVE_DIRT if wall == _dirt_wall else CAVE_STONE
