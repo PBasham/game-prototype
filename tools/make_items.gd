@@ -424,7 +424,7 @@ func _spells() -> Array[ItemData]:
 	var mining := SpellData.new()
 	mining.id = &"mining_spell"
 	mining.display_name = "Mining Spell"
-	mining.description = "Hold to mine: a phantom pickaxe digs where you aim (right click: the back layer). Ctrl + mouse wheel changes the area. Empower it with bars to dig harder blocks, bigger and farther."
+	mining.description = "Hold to mine where you aim (right click: the back layer). Ctrl + mouse wheel: area."
 	mining.icon = load("res://assets/items/icons/mining_spell.png") as Texture2D
 	mining.kind = ItemData.Kind.SPELL
 	mining.max_stack = 1
@@ -441,7 +441,7 @@ func _spells() -> Array[ItemData]:
 	mining.phantom_tints.assign(PHANTOM_TINTS)
 	out.append(mining)
 
-	var chop := _spell(&"chopping_spell", "Chopping Spell", "Hold to chop: a phantom axe chops the tree you aim at. Empower it with bars to chop faster and farther.")
+	var chop := _spell(&"chopping_spell", "Chopping Spell", "Hold to chop the tree you aim at.")
 	chop.beam = true
 	chop.axe_damage = 60.0  # per second, landing once per swing
 	chop.reach_tiles = 8.0

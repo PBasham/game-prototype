@@ -358,6 +358,10 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 39: freecraft empowers, stat tooltips (branch phase-39-empower-free)**
+- [ ] With `freecraft` on, Empower ranks cost nothing.
+- [ ] Mining and Chopping tooltips: a short line, then stats one per line (power, speed, area, reach) and "Key: R".
+
 **Phase 38: shelf fit (branch phase-38-shelf-fit)**
 - [ ] Big bottles no longer poke through the shelf above. The Pantry Rack has a solid back.
 

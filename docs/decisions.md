@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 39, freecraft empowers, stat tooltips
+
+- **Patrick:** `freecraft` should cover Empower too. Done (`CharacterData.empower_problem`
+  and `buy_empower` take `free`).
+- **Patrick:** tooltips should just show stats. Mining and Chopping: a short description,
+  then one stat per line; "Has its own key (R): ..." is now "Key: R"; the "Empower it with
+  bars" sentences are gone.
+
 ## 2026-11-26: Phase 38, shelf fit
 
 - **Patrick:** bottle caps went through the shelf above; the Pantry Rack's back was see-through.

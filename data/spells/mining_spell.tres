@@ -24,4 +24,4 @@ phantom_texture = ExtResource("9_phan")
 phantom_tints = Array[Color]([Color(0.7, 0.9, 1, 1), Color(1, 0.68, 0.42, 1), Color(0.82, 0.86, 0.95, 1)])
 id = &"mining_spell"
 display_name = "Mining Spell"
-description = "Hold to mine: a phantom pickaxe digs where you aim (right click: the back layer). Ctrl + mouse wheel changes the area. Empower it with bars to dig harder blocks, bigger and farther."
+description = "Hold to mine where you aim (right click: the back layer). Ctrl + mouse wheel: area."

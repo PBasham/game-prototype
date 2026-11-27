@@ -127,3 +127,17 @@ func test_tall_bottles_fit_under_the_shelf_above() -> void:
 	assert_eq(room, 13.0, "16 px apart, less the plank and 1 px of air")
 	var jug := ObjectLayer.shelf_texture(ItemData.find(&"healing_clay_jug"), int(room))
 	assert_lte(jug.get_height(), 13)
+
+
+func test_freecraft_empowers_for_nothing() -> void:
+	var c := w.character
+	var spell := ItemData.find(ItemData.spell_key(&"mining_spell")) as SpellData
+	var node := Registry.get_def(&"empower", &"mining_power") as EmpowerNode
+	c.empower.erase(&"mining_spell")
+	for id: StringName in [&"copper_bar", &"iron_bar"]:
+		c.inventory.remove(id, c.inventory.count_of(id))
+	assert_ne(c.empower_problem(spell, node), "", "no bars: can't")
+	assert_eq(c.empower_problem(spell, node, true), "", "freecraft: can")
+	var before := c.empower_rank(&"mining_spell", &"mining_power")
+	assert_true(c.buy_empower(spell, node, true))
+	assert_eq(c.empower_rank(&"mining_spell", &"mining_power"), before + 1)

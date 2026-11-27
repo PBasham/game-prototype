@@ -115,7 +115,7 @@ what's in chests within `World.craft_chest_tiles` (12) of you. Your inventory is
 first, then the closest chest, then the next. The "have / need" counts include them.
 Crafted items go to your inventory (`CraftStock`, src/items/craft_stock.gd).
 Dev console **`freecraft`** toggles free crafting: no materials or max mana needed and
-nothing is used up. **`infinite`** toggles infinite items: placing, eating, throwing and
+nothing is used up (Empower ranks too). **`infinite`** toggles infinite items: placing, eating, throwing and
 scrolls use nothing up.
 
 **Chests:** Shift + click moves a stack between your inventory and the chest. Buttons:

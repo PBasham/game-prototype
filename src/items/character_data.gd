@@ -101,8 +101,9 @@ func mana_mult(spell_id: StringName) -> float:
 	return maxf(m, 0.1)
 
 
-## Why the next rank of `node` on `spell` can't be bought ("" = it can).
-func empower_problem(spell: SpellData, node: EmpowerNode) -> String:
+## Why the next rank of `node` on `spell` can't be bought ("" = it can). `free`: the
+## cost doesn't count (the dev console's `freecraft`).
+func empower_problem(spell: SpellData, node: EmpowerNode, free := false) -> String:
 	if not knows(spell.id):
 		return "You don't know this spell"
 	var rank := empower_rank(spell.id, node.id)
@@ -110,7 +111,7 @@ func empower_problem(spell: SpellData, node: EmpowerNode) -> String:
 		return "Fully empowered"
 	if node.requires != &"" and empower_rank(spell.id, node.requires) <= 0:
 		return "Needs the node before it"
-	var cost := node.cost_for(rank)
+	var cost := {} if free else node.cost_for(rank)
 	for id in cost:
 		if inventory.count_of(id) < cost[id]:
 			var it := ItemData.find(id)
@@ -147,12 +148,12 @@ func apply_empower() -> void:
 	ItemData.set_empowered(out)
 
 
-## Buys the next rank (paying from the inventory). False if it can't.
-func buy_empower(spell: SpellData, node: EmpowerNode) -> bool:
-	if empower_problem(spell, node) != "":
+## Buys the next rank (paying from the inventory, unless `free`). False if it can't.
+func buy_empower(spell: SpellData, node: EmpowerNode, free := false) -> bool:
+	if empower_problem(spell, node, free) != "":
 		return false
 	var rank := empower_rank(spell.id, node.id)
-	var cost := node.cost_for(rank)
+	var cost := {} if free else node.cost_for(rank)
 	for id in cost:
 		inventory.remove(id, cost[id])
 	if not empower.has(spell.id):

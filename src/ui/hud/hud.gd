@@ -2038,11 +2038,11 @@ func empower(r: RecipeData) -> int:
 	var node := Registry.get_def(&"empower", r.empower_node) as EmpowerNode
 	if spell == null or node == null:
 		return 0
-	var problem := c.empower_problem(spell, node)
+	var problem := c.empower_problem(spell, node, world.free_crafting)
 	if problem != "":
 		EventBus.debug_message.emit(problem)
 		return 0
-	c.buy_empower(spell, node)
+	c.buy_empower(spell, node, world.free_crafting)
 	_stock = null
 	_recipe_key = ""
 	EventBus.debug_message.emit("%s: %s rank %d" % [spell.display_name, node.display_name, c.empower_rank(spell.id, node.id)])
@@ -2736,10 +2736,13 @@ static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
 	if spell.mining_damage > 0.0:
 		var area: String = str(spell.mining_area) if spell.mining_area_max <= spell.mining_area \
 			else "%d to %d" % [spell.mining_area, spell.mining_area_max]
-		lines.append("Mining power %d, %s per second, area %s, reach %s tiles" % [spell.mining_power,
-			_num(spell.mining_damage), area, _num(spell.reach_tiles)])
+		lines.append("Mining power %d" % spell.mining_power)
+		lines.append("Speed %s" % _num(spell.mining_damage))
+		lines.append("Area %s" % area)
+		lines.append("Reach %s tiles" % _num(spell.reach_tiles))
 	elif spell.axe_damage > 0.0:
-		lines.append("Chopping %s per second, reach %s tiles" % [_num(spell.axe_damage), _num(spell.reach_tiles)])
+		lines.append("Chopping speed %s" % _num(spell.axe_damage))
+		lines.append("Reach %s tiles" % _num(spell.reach_tiles))
 	if c and c.empower.has(spell.id):
 		var ranks := PackedStringArray()
 		for node in EmpowerNode.for_spell(spell):
@@ -2764,7 +2767,7 @@ static func spell_tooltip(spell: SpellData, c: CharacterData = null) -> String:
 		lines.append("Can't cast now: %s" % c.cast_problem(spell))
 	var key := dedicated_key(spell, c)
 	if key != "":
-		lines.append("Has its own key (%s): no need to put it on a wheel, unless you want to." % key)
+		lines.append("Key: %s" % key)
 	return "\n".join(lines)
 
 

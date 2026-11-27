@@ -842,10 +842,10 @@ func test_dev_books_for_each_tier() -> void:
 
 
 func test_tooltips_say_which_spells_have_their_own_key() -> void:
-	assert_string_contains(Hud.spell_tooltip(_spell(&"mining_spell")), "own key (R)")
-	assert_string_contains(Hud.spell_tooltip(_spell(&"chopping_spell")), "own key (Ctrl + R)")
+	assert_string_contains(Hud.spell_tooltip(_spell(&"mining_spell")), "Key: R")
+	assert_string_contains(Hud.spell_tooltip(_spell(&"chopping_spell")), "Key: Ctrl + R")
 	assert_string_contains(Hud.spell_tooltip(_spell(&"fly")), "Movement slot")
-	assert_false(Hud.spell_tooltip(_spell(&"spark")).contains("own key"))
+	assert_false(Hud.spell_tooltip(_spell(&"spark")).contains("Key:"))
 
 
 func test_readied_jump_spells_trigger_once_in_the_air_and_land_safe() -> void:
