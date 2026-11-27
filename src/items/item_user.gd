@@ -19,7 +19,7 @@ extends Node2D
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT,
-	CHARGE, SCROLL, THROW, PAGE, GRAB }
+	CHARGE, SCROLL, THROW, PAGE, GRAB, SHAPE }
 
 const TILE := World.TILE
 
@@ -193,10 +193,12 @@ func reach() -> float:
 		return 100000.0
 	var c := world.player.character
 	if _places(_item):
-		# Building reach comes from the spellbook (the book is the building tool).
+		# Building reaches as far as your Mining Spell digs (its Empower Reach too).
 		if _item.place_reach_tiles > 0.0 or c == null:
 			return maxf(_item.place_reach_tiles, 1.0) * TILE
-		return (c.book().build_reach_tiles + c.spell_reach_bonus()) * TILE
+		var mining := ItemData.find(ItemData.spell_key(&"mining_spell")) as SpellData
+		var base := mining.reach_tiles if mining else c.book().build_reach_tiles
+		return (base + c.spell_reach_bonus()) * TILE
 	var bonus := c.spell_reach_bonus() if _item.is_spell() and c else 0.0
 	return (_item.reach_tiles + bonus) * TILE
 
@@ -266,6 +268,11 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 					valid.append(t)
 			if too_hard and valid.is_empty():
 				problem = "Too hard: needs a stronger pickaxe"
+		Mode.SHAPE:
+			rect = Rect2i(Vector2i(floori(c.x), floori(c.y)), Vector2i.ONE)
+			var t := rect.position
+			if problem == "" and _in_reach(t) and (shape_cycle(t, back).size() > 1):
+				valid.append(t)
 		Mode.CHOP:
 			var g := world.plants.tree_at_point(at)
 			if g != PlantLayer.NONE:
@@ -677,6 +684,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 				return Mode.GRAB
 	if item.mining_damage > 0.0:
 		return Mode.MINE
+	if item is SpellData and (item as SpellData).shapes_blocks:
+		return Mode.SHAPE
 	if item.kind == ItemData.Kind.FOOD:
 		return Mode.EAT if not on_back else Mode.NONE  # left click
 	if item.throw_speed > 0.0:
@@ -815,6 +824,9 @@ func _on_impact(item: ItemData) -> void:
 						world.request_damage_wall(t, damage())
 					else:
 						world.request_damage_block(t, damage())
+		Mode.SHAPE:
+			for t in valid:
+				shape_step(t, back, -1 if Input.is_key_pressed(KEY_SHIFT) else 1)
 		Mode.CHOP:
 			if tree != PlantLayer.NONE and not item.beam:
 				world.plants.request_hit_tree(tree, chop_damage(), p.global_position.x)
@@ -1313,3 +1325,51 @@ func _instant_use(p: Player) -> void:
 				done = world.request_place_object(t, world.objects.index_of(_item.places_object), p.facing < 0)
 		if done:
 			p.take_held()
+
+
+## The Shaping Spell's shapes for a tile, in click order, as shape bytes for its block
+## (`back` false) or wall: a placeable block goes full, bottom half, top half, then the
+## four slopes, and a log adds one more step, turned the other way; a back wall goes
+## full, bottom half, top half. Empty (or one) = nothing to shape there.
+func shape_cycle(t: Vector2i, on_back: bool) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	if on_back:
+		var w := world.data.get_wall(t.x, t.y)
+		if w > 0:
+			out.append_array([0, 1, 2])
+		return out
+	var b := world.data.get_block(t.x, t.y)
+	if b <= 0 or world.blocks.collision(b) != TileDef.Collision.SOLID or not _placeable_block(world.blocks.def(b).id):
+		return out
+	out.append_array([0, 1, 2, 3, 4, 5, 6])
+	var def := world.blocks.def(b)
+	if def.built and def.overhang_px > 0:
+		out.append(8)  # a log, turned
+	return out
+
+
+## One click of the Shaping Spell on `t`: the next (or, `dir` -1, previous) shape.
+func shape_step(t: Vector2i, on_back: bool, dir: int) -> void:
+	var cycle := shape_cycle(t, on_back)
+	if cycle.size() < 2:
+		return
+	var byte := world.data.get_shape(t.x, t.y)
+	var mine := (byte >> 4) & 3 if on_back else byte & 15
+	var i := cycle.find(mine)
+	var next := cycle[posmod((i if i >= 0 else 0) + dir, cycle.size())]
+	var out := (byte & 15) | (next << 4) if on_back else (byte & 0xF0) | next
+	if world.request_set_shape(t, out):
+		EventBus.sound_requested.emit(&"block_place", world.tile_to_world(t))
+
+
+static var _placeable_cache: Dictionary[StringName, bool] = {}
+
+
+## Whether some item places this block (only those can be shaped).
+static func _placeable_block(block_id: StringName) -> bool:
+	if _placeable_cache.is_empty():
+		for d in Registry.get_all(&"items"):
+			var it := d as ItemData
+			if it and it.places_block != &"":
+				_placeable_cache[it.places_block] = true
+	return _placeable_cache.get(block_id, false)

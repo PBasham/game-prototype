@@ -277,6 +277,7 @@ func _make_job(c: Vector2i, generate: bool) -> ChunkBuildJob:
 			job.revisions.append(chunk.revision if chunk else 0)
 			job.blocks.append(chunk.blocks if chunk else PackedInt32Array())
 			job.walls.append(chunk.walls if chunk else PackedInt32Array())
+			job.shapes.append(chunk.shapes if chunk else PackedByteArray())
 	return job
 
 
@@ -335,8 +336,8 @@ func _apply(job: ChunkBuildJob) -> void:
 	view.node.add_child(view.props)
 	view.node.add_child(view.collision)
 	var cells := job.collision_cells
-	for i in range(0, cells.size(), 3):
-		view.collision.set_cell(Vector2i(cells[i], cells[i + 1]), 0, Vector2i(0, cells[i + 2]))
+	for i in range(0, cells.size(), 4):
+		view.collision.set_cell(Vector2i(cells[i], cells[i + 1]), 0, Vector2i(0, cells[i + 2]), _shape_alt(cells[i + 3], cells[i + 2]))
 	var props := job.prop_cells
 	for i in range(0, props.size(), 4):
 		view.props.set_cell(Vector2i(props[i], props[i + 1]), 0, Vector2i(props[i + 2], props[i + 3]))
@@ -359,7 +360,7 @@ func _tile_color(tile: Vector2i) -> Color:
 	var slot := _stone_slot if b == WorldData.OUT_OF_BOUNDS else (_block_slot[b] if b > 0 else 0)
 	var w := _data.get_wall(tile.x, tile.y)
 	var wslot := _wall_slot[w] if w > 0 else 0
-	return Color(slot / 255.0, wslot / 255.0, 0.0, 1.0)
+	return Color(slot / 255.0, wslot / 255.0, _data.get_shape(tile.x, tile.y) / 255.0, 1.0)
 
 
 ## Collision cell and, for platforms and ropes, the visible tile.
@@ -369,7 +370,8 @@ func _paint_cells(view: ChunkView, local: Vector2i, tile: Vector2i) -> void:
 	if collision == TileDef.Collision.NONE:
 		view.collision.erase_cell(local)
 	else:
-		view.collision.set_cell(local, 0, Vector2i(0, _world.blocks.atlas_row(id)))
+		var row := _world.blocks.atlas_row(id)
+		view.collision.set_cell(local, 0, Vector2i(0, row), _shape_alt(_data.get_shape(tile.x, tile.y) & 7, row))
 	if id <= 0 or _block_slot[id] > 0:
 		view.props.erase_cell(local)
 		return
@@ -476,6 +478,27 @@ func _strip(keys: Array[String], prefix: String) -> ImageTexture:
 
 ## Collision set: one tile per atlas row with its shape. Props set: every platform and
 ## rope variant, no physics.
+## Collision outlines of the shapes (ChunkData.shapes bits 0-2), in tile units (0 to 1,
+## y down): full, bottom half, top half, slopes solid toward the bottom left, bottom
+## right, top left, top right.
+const SHAPE_POLYGONS: Array = [
+	[Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)],
+	[Vector2(0, 0.5), Vector2(1, 0.5), Vector2(1, 1), Vector2(0, 1)],
+	[Vector2(0, 0), Vector2(1, 0), Vector2(1, 0.5), Vector2(0, 0.5)],
+	[Vector2(0, 0), Vector2(1, 1), Vector2(0, 1)],
+	[Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)],
+	[Vector2(0, 0), Vector2(1, 0), Vector2(0, 1)],
+	[Vector2(0, 0), Vector2(1, 0), Vector2(1, 1)],
+]
+
+
+## The collision tile's alternative for a shape: only solid blocks have them.
+func _shape_alt(shape: int, row: int) -> int:
+	if shape <= 0 or shape >= SHAPE_POLYGONS.size():
+		return 0
+	return shape if _world.blocks.collision_for_row(row) == TileDef.Collision.SOLID else 0
+
+
 func _build_tileset(physics: bool) -> TileSet:
 	var ts := TileSet.new()
 	ts.tile_size = Vector2i(TILE, TILE)
@@ -503,6 +526,15 @@ func _build_tileset(physics: bool) -> TileSet:
 			if collision == TileDef.Collision.SOLID:
 				td.add_collision_polygon(0)
 				td.set_collision_polygon_points(0, 0, square)
+				# Alternatives 1 to 6: the Shaping Spell's halves and slopes.
+				for k in range(1, SHAPE_POLYGONS.size()):
+					var alt := src.create_alternative_tile(coords, k)
+					var ad := src.get_tile_data(coords, alt)
+					ad.add_collision_polygon(0)
+					var pts := PackedVector2Array()
+					for v: Vector2 in SHAPE_POLYGONS[k]:
+						pts.append(v * TILE - Vector2(half, half))
+					ad.set_collision_polygon_points(0, 0, pts)
 			elif collision == TileDef.Collision.PLATFORM:
 				td.add_collision_polygon(1)
 				td.set_collision_polygon_points(1, 0, platform)

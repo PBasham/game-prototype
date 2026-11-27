@@ -92,7 +92,7 @@ func test_build_job_collision_matches_tile_types() -> void:
 			var id := data.get_block(c.x * ChunkData.SIZE + lx, c.y * ChunkData.SIZE + ly)
 			if id > 0 and blocks.collision(id) != TileDef.Collision.NONE:
 				expected += 1
-	assert_eq(job.collision_cells.size(), expected * 3)
+	assert_eq(job.collision_cells.size(), expected * 4)  # x, y, atlas row, shape
 	assert_eq(job.tile_bytes.size(), ChunkBuildJob.TEX * ChunkBuildJob.TEX * 4)
 
 

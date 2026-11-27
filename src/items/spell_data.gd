@@ -158,6 +158,9 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 @export var summon_enemy_ranks: Array[StringName] = []
 ## Summons: how many more of them can be out at once (Empower's Limit).
 @export var summon_bonus_slots := 0
+## The Shaping Spell: clicking a block cycles its shape (halves, slopes, logs turned),
+## right click a back wall's (halves).
+@export var shapes_blocks := false
 
 ## Where the spellbook is while you cast it (Phase 30):
 ## HAND: in the off hand, the main hand aims (most spells; a quick cast with a weapon

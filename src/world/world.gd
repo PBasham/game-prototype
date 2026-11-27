@@ -174,6 +174,13 @@ func _ready() -> void:
 	data.generator = generator.generate_chunk
 	if not info.temporary and not info.path.is_empty():
 		data.saved = WorldSave.load_chunks(info.path, blocks, walls, objects)
+		var saved_shapes := WorldSave.read_extra(info.path, WorldSave.META_SHAPES)
+		for key: String in saved_shapes:
+			var sp := key.split(",")
+			var sc := Vector2i(int(sp[0]), int(sp[1]))
+			var bytes: Variant = saved_shapes[key]
+			if data.saved.has(sc) and bytes is PackedByteArray and (bytes as PackedByteArray).size() == ChunkData.AREA:
+				data.saved[sc].shapes = bytes
 
 	clock = WorldClock.new()
 	clock.name = "Clock"
@@ -445,7 +452,7 @@ func save() -> Error:
 			WorldSave.META_FLIPPED: _flipped_to_dict(), WorldSave.META_CHEST_NAMES: _names_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict(),
-			WorldSave.META_POSITIONS: _spots_to_dict(),
+			WorldSave.META_POSITIONS: _spots_to_dict(), WorldSave.META_SHAPES: _shapes_to_dict(modified),
 			WorldSave.META_MAP: world_map.to_dict() if world_map else {}}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
@@ -1223,6 +1230,25 @@ func _names_to_dict() -> Dictionary:
 	for t: Vector2i in chest_names:
 		out["%d,%d" % [t.x, t.y]] = chest_names[t]
 	return out
+
+
+func _shapes_to_dict(chunks: Array[ChunkData]) -> Dictionary:
+	var out := {}
+	for c in chunks:
+		if c.shapes.size() == ChunkData.AREA and c.shapes.count(0) < ChunkData.AREA:
+			out["%d,%d" % [c.coord.x, c.coord.y]] = c.shapes
+	return out
+
+
+## The Shaping Spell: sets a tile's shape byte (ChunkData.shapes) and redraws it.
+func request_set_shape(tile: Vector2i, shape: int) -> bool:
+	if not Game.is_authority():
+		return false
+	if not data.set_shape(tile.x, tile.y, shape):
+		return false
+	renderer.refresh_tile(tile)
+	lights.mark_dirty()
+	return true
 
 
 func _flipped_to_dict() -> Dictionary:

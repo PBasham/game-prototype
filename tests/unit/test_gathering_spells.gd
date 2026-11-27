@@ -33,7 +33,8 @@ func test_no_pickaxes_or_axes_and_gathering_is_free() -> void:
 		var s := Registry.get_def(&"spells", id) as SpellData
 		assert_eq(s.mana_per_second, 0.0, "%s is free" % id)
 		assert_eq(s.mana_cost, 0.0)
-		assert_not_null(s.phantom_texture, "%s conjures a phantom tool" % id)
+		if s.beam:
+			assert_not_null(s.phantom_texture, "%s conjures a phantom tool" % id)
 		assert_string_contains(Hud.spell_tooltip(s), "Mana: Free")
 	assert_not_null(Registry.get_def(&"recipes", &"copper_dagger"), "the dagger is craftable")
 

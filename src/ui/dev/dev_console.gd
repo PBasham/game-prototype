@@ -592,6 +592,7 @@ func _register() -> void:
 	_add("freeplace", "freeplace", "Toggle placing blocks and walls anywhere, with nothing next to or behind them.", func(_a: PackedStringArray) -> void:
 		world.item_user.free_place = not world.item_user.free_place
 		_print("Free placing %s." % ("on" if world.item_user.free_place else "off")))
+	_add("shapes", "shapes", "Build every Shaping Spell shape (planks, stone bricks, logs, walls) to your right.", _shapes)
 	_add("fly", "fly", "Toggle flying (same as casting Fly).", func(_a: PackedStringArray) -> void:
 		var spell := ItemData.find(&"spell:fly") as SpellData
 		world.player.toggle_concentration(spell)
@@ -599,6 +600,26 @@ func _register() -> void:
 	_add("cls", "cls", "Clear this log.", func(_a: PackedStringArray) -> void:
 		_lines.clear()
 		_log.text = "")
+
+
+## A showcase of the Shaping Spell's shapes: rows of planks, stone bricks and logs in
+## every shape, with walls behind (full, bottom half, top half).
+func _shapes(_a: PackedStringArray) -> void:
+	var feet := world.world_to_tile(world.player.global_position)
+	var rows: Array[StringName] = [&"wood_planks", &"stone_bricks", &"log"]
+	var cycle := [0, 1, 2, 3, 4, 5, 6, 8]
+	for r in rows.size():
+		var id := world.blocks.index_of(rows[r])
+		if id <= 0:
+			continue
+		for i in cycle.size():
+			var t := Vector2i(feet.x + 4 + i * 2, feet.y - 2 - r * 2)
+			world.request_set_wall(t, world.walls.index_of(&"log_wall"))
+			world.request_set_block(t, id)
+			if cycle[i] == 8 and rows[r] != &"log":
+				continue
+			world.request_set_shape(t, cycle[i] | ((i % 3) << 4))
+	_print("Built the shapes.")
 
 
 func _give(a: PackedStringArray) -> void:

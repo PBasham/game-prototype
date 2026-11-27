@@ -28,6 +28,8 @@ var world_height: int
 ## 3x3 neighborhood (row-major, center at 4). Rows outside the world are empty arrays.
 var blocks: Array[PackedInt32Array] = []
 var walls: Array[PackedInt32Array] = []
+## The 3x3 neighborhood's shapes (ChunkData.shapes), like blocks.
+var shapes: Array[PackedByteArray] = []
 var block_slot: PackedInt32Array
 var wall_slot: PackedInt32Array
 var stone_slot: int
@@ -43,7 +45,7 @@ var generator: WorldGenerator
 # --- outputs ---
 ## TEX x TEX RGBA8: R = block terrain slot, G = wall slot.
 var tile_bytes := PackedByteArray()
-## Flat triples: local x, local y, atlas row.
+## Flat quads: local x, local y, atlas row, block shape (the collision tile's alternative).
 var collision_cells := PackedInt32Array()
 ## Flat quads: local x, local y, atlas x, atlas y.
 var prop_cells := PackedInt32Array()
@@ -90,6 +92,15 @@ func wall(lx: int, ly: int) -> int:
 	return arr[posmod(ly, SIZE) * SIZE + posmod(lx, SIZE)]
 
 
+func shape(lx: int, ly: int) -> int:
+	if shapes.is_empty():
+		return 0
+	var arr := shapes[((ly + SIZE) / SIZE) * 3 + (lx + SIZE) / SIZE]
+	if arr.size() != SIZE * SIZE:
+		return 0
+	return arr[posmod(ly, SIZE) * SIZE + posmod(lx, SIZE)]
+
+
 func _terrain() -> void:
 	tile_bytes.resize(TEX * TEX * 4)
 	var i := 0
@@ -99,7 +110,7 @@ func _terrain() -> void:
 			var w := wall(tx - BORDER, ty - BORDER)
 			tile_bytes[i] = stone_slot if b == WorldData.OUT_OF_BOUNDS else (block_slot[b] if b > 0 else 0)
 			tile_bytes[i + 1] = wall_slot[w] if w > 0 else 0
-			tile_bytes[i + 2] = 0
+			tile_bytes[i + 2] = shape(tx - BORDER, ty - BORDER)
 			tile_bytes[i + 3] = 255
 			i += 4
 
@@ -113,7 +124,7 @@ func _cells() -> void:
 			if id <= 0:
 				continue
 			if collision[id] != NONE:
-				collision_cells.append_array([lx, ly, atlas_row[id]])
+				collision_cells.append_array([lx, ly, atlas_row[id], shape(lx, ly) & 7])
 			if block_slot[id] > 0:
 				continue
 			# Thin tile (platform, rope): pick the piece that joins same-kind neighbors.

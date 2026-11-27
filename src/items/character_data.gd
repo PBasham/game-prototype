@@ -238,7 +238,7 @@ static func create(char_name: String) -> CharacterData:
 
 ## Spells everyone knows from the start: the gathering spells (tools are spells; R and
 ## Ctrl + R take them in hand). Empower makes them stronger.
-const STARTING_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell"]
+const STARTING_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"shaping_spell"]
 ## Items a new character starts with (first hotbar slots).
 const STARTING_ITEMS: Array = [[&"copper_dagger", 1]]
 

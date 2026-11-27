@@ -303,6 +303,13 @@ func _spell_icon(kind: String, c: Color) -> Image:
 			_line(img, Vector2i(5, 12), Vector2i(10, 5), Color("c8a070"))
 			for p: Vector2i in [Vector2i(9, 4), Vector2i(10, 4), Vector2i(11, 4), Vector2i(11, 5), Vector2i(11, 6), Vector2i(10, 6), Vector2i(12, 5)]:
 				img.set_pixelv(p, g)
+		"shaping_spell":  # a little mallet tapping a slope
+			_line(img, Vector2i(5, 12), Vector2i(9, 6), Color("c8a070"))
+			for y in range(3, 7):
+				for x in range(8, 13):
+					img.set_pixel(x, y, g if y > 3 else g.lightened(0.3))
+			for i in 4:
+				_line(img, Vector2i(9 + i, 13), Vector2i(9 + i, 13 - i), c)
 		"fly":  # a wing
 			for i in 7:
 				_line(img, Vector2i(4 + i, 11 - i / 2), Vector2i(4 + i, 11), g)
@@ -432,7 +439,7 @@ func _new_spell_icons() -> void:
 		"gel_cushion": Color("8cf06e"), "arcane_bolt": Color("c080ff"), "healing_circle": Color("80ff99"),
 		"spark_ward": Color("ffd966"), "familiar": Color("99d9ff"), "conjure_platform": Color("b399ff"),
 		"arcane_edge": Color("cc80ff"), "barrier": Color("99d9ff"), "chain_spark": Color("b3e6ff"),
-		"recall": Color("f2cc80"), "seek_ore": Color("ff9a4d")}
+		"recall": Color("f2cc80"), "seek_ore": Color("ff9a4d"), "shaping_spell": Color("e0b070")}
 	for id: String in colors:
 		var path := ProjectSettings.globalize_path("%s/%s.png" % [ICONS, id])
 		if FileAccess.file_exists(path):
@@ -1016,7 +1023,7 @@ func _bed() -> Image:
 
 const SCROLL_SPELLS: Array[String] = ["mining_spell", "chopping_spell", "fly", "spark", "levitate", "hyper_drill",
 	"air_push", "blink", "light_orb", "wisp", "mend", "gel_cushion", "arcane_bolt", "healing_circle", "spark_ward",
-	"familiar", "conjure_platform", "arcane_edge", "barrier", "chain_spark", "recall", "seek_ore", "tele_grab", "call_spirit", "air_step", "bound", "siphon_liquid"]
+	"familiar", "conjure_platform", "arcane_edge", "barrier", "chain_spark", "recall", "seek_ore", "tele_grab", "call_spirit", "air_step", "bound", "siphon_liquid", "shaping_spell"]
 
 
 ## Paper, the Blank Scroll, a scroll per spell (the spell's icon on parchment) and the

@@ -1546,7 +1546,10 @@ func _update_use(delta: float) -> void:
 		toggle_movement_spell()
 	if character and not input_blocked:
 		if _just("spellbook"):
-			toggle_tool_spell(&"chopping_spell" if Input.is_key_pressed(KEY_CTRL) else &"mining_spell")
+			if Input.is_key_pressed(KEY_ALT):
+				toggle_tool_spell(&"shaping_spell")
+			else:
+				toggle_tool_spell(&"chopping_spell" if Input.is_key_pressed(KEY_CTRL) else &"mining_spell")
 		for k: StringName in CharacterData.QUICK_KEYS:
 			if _just(StringName("quick_" + String(k))):
 				use_quick(k)

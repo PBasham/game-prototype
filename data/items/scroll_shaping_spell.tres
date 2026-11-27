@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_qf8m5"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_b4lyb"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_shaping_spell.png" id="3_30s6e"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_shaping_spell.png" id="4_5swsa"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_kpp2s"]
+
+[sub_resource type="Resource" id="Resource_il3jh"]
+script = ExtResource("2_b4lyb")
+id = &"scroll_shaping_spell"
+texture = ExtResource("3_30s6e")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_kpp2s")
+kind = 14
+icon = ExtResource("4_5swsa")
+max_stack = 20
+held = SubResource("Resource_il3jh")
+impact_at = 0.2
+teaches_spell = &"shaping_spell"
+id = &"scroll_shaping_spell"
+display_name = "Scroll: Shaping Spell"
+description = "One use. Left click: cast Shaping Spell once for free, at base power."

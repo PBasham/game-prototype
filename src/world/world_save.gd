@@ -42,6 +42,9 @@ const META_SPAWNS := "spawns"
 const META_POSITIONS := "positions"
 ## Enemies slain in this world, by enemy id (spawn conditions read these).
 const META_KILLS := "kills"
+## The Shaping Spell's shapes of saved chunks: {"x,y": PackedByteArray (ChunkData.shapes)},
+## only chunks with any shape.
+const META_SHAPES := "shapes"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

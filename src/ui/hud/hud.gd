@@ -3015,6 +3015,8 @@ static func dedicated_key(spell: SpellData, c: CharacterData = null) -> String:
 			return "R"
 		&"chopping_spell":
 			return "Ctrl + R"
+		&"shaping_spell":
+			return "Alt + R"
 	if c and c.movement_spell == spell.id:
 		return "F"
 	if spell.cast == SpellData.Cast.TOGGLE and spell.effect in [&"fly", &"levitate"]:

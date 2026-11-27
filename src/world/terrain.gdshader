@@ -88,6 +88,26 @@ int wal(ivec2 t) {
 
 bool is_built(int m) { return m > 0 && built_slots[m] > 0.5; }
 
+// The Shaping Spell's shape of a tile (the B channel): bits 0-2 the block's shape
+// (0 full, 1 bottom half, 2 top half, 3 to 6 slopes solid toward the bottom left,
+// bottom right, top left, top right), bit 3 a log turned the other way, bits 4-5 the
+// back wall's shape (0 full, 1 bottom half, 2 top half).
+int shape_of(ivec2 t) {
+	return int(round(texelFetch(tiles, clamp(t, ivec2(0), ivec2(SIZE - 1)), 0).b * 255.0));
+}
+
+// Whether a pixel (lp: 0 to 8 inside its tile) is part of a block of this shape.
+bool in_shape(int s, vec2 lp) {
+	vec2 c = lp + 0.5;
+	if (s == 1) return c.y >= 4.0;
+	if (s == 2) return c.y < 4.0;
+	if (s == 3) return c.y >= c.x;
+	if (s == 4) return c.x + c.y >= 8.0;
+	if (s == 5) return c.x + c.y < 8.0;
+	if (s == 6) return c.y < c.x;
+	return true;
+}
+
 // Natural material at a tile (built blocks count as none).
 int nat(ivec2 t) {
 	int m = blk(t);
@@ -205,11 +225,14 @@ bool upright_wall(ivec2 t) {
 		&& (wal(t + ivec2(0, -1)) == w || wal(t + ivec2(0, 1)) == w);
 }
 
-// A log (turn_slots) standing in a single column: drawn upright.
+// A log (turn_slots) standing in a single column: drawn upright. The Shaping Spell's
+// turn (shape bit 3) flips it the other way.
 bool upright(ivec2 t) {
 	int b = blk(t);
-	return b > 0 && turn_slots[b] > 0.5 && blk(t + ivec2(-1, 0)) != b && blk(t + ivec2(1, 0)) != b
+	if (b <= 0 || turn_slots[b] < 0.5) return false;
+	bool column = blk(t + ivec2(-1, 0)) != b && blk(t + ivec2(1, 0)) != b
 		&& (blk(t + ivec2(0, -1)) == b || blk(t + ivec2(0, 1)) == b);
+	return column != ((shape_of(t) & 8) != 0);
 }
 
 // Crisp square tile with a dark edge line where it meets open space. `cut` rounds an
@@ -250,9 +273,22 @@ void fragment() {
 	vec4 col = vec4(0.0);
 	ivec2 here_t = tile_of(p);
 	int here = blk(here_t);
+	int shp = shape_of(here_t);
+	vec2 tile_lp = p - floor(p / T) * T;
+	bool shape_cut = false;
+	bool shape_rim = false;
+	if (here != 0 && (shp & 7) != 0) {
+		if (!in_shape(shp & 7, tile_lp)) {
+			here = 0;  // hammered away: what's behind shows
+			shape_cut = true;
+		} else if (!in_shape(shp & 7, tile_lp + vec2(1.0, 0.0)) || !in_shape(shp & 7, tile_lp - vec2(1.0, 0.0))
+				|| !in_shape(shp & 7, tile_lp + vec2(0.0, 1.0)) || !in_shape(shp & 7, tile_lp - vec2(0.0, 1.0))) {
+			shape_rim = true;  // the cut edge gets the edge line
+		}
+	}
 	int m = 0;
 	// In an open tile, only natural blocks round out into it (see field_n).
-	if (!is_built(here) && solid(p) && (here != 0 || solid_nat(p))) {
+	if (!shape_cut && !is_built(here) && solid(p) && (here != 0 || solid_nat(p))) {
 		m = mat_at(p);
 	}
 	bool drew = false;
@@ -263,6 +299,7 @@ void fragment() {
 		col = built_px(materials, here, p, blk(here_t + ivec2(0, -1)) == 0, blk(here_t + ivec2(0, 1)) == 0,
 			blk(here_t + ivec2(-1, 0)) == 0, blk(here_t + ivec2(1, 0)) == 0, 0.38, true, diag, clear_slots[here] > 0.5, overhang_slots[here], upright(here_t));
 		col.rgb = min(col.rgb * built_block_shade, vec3(1.0));
+		if (shape_rim) col.rgb *= 0.38;
 		drew = col.a > 0.99;
 		if (!drew && col.a > 0.0) {
 			pane = col;  // see-through (glass): drawn over what's behind it below
@@ -312,7 +349,7 @@ void fragment() {
 		col = vec4(c, 1.0);
 	}
 	// A built block's end sticking out into this open tile (log cabin corners).
-	if (!drew && here == 0) {
+	if (!drew && here == 0 && !shape_cut) {
 		vec2 lp = p - floor(p / T) * T;
 		int lm = blk(here_t + ivec2(-1, 0));
 		int rm = blk(here_t + ivec2(1, 0));
@@ -352,6 +389,11 @@ void fragment() {
 			}
 		}
 		int wh = wal(here_t);
+		int wsh = (shp >> 4) & 3;
+		if (wh > 0 && wsh != 0 && !in_shape(wsh, tile_lp)) {
+			wh = 0;
+			done = true;  // a half wall: nothing behind this half
+		}
 		if (!done && wh > 0 && built_walls[wh] > 0.5) {
 			col = built_px(wall_tex, wh, p, wall_open(here_t + ivec2(0, -1)), wall_open(here_t + ivec2(0, 1)),
 				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false), clear_walls[wh] > 0.5,

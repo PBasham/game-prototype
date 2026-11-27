@@ -463,6 +463,14 @@ func _spells() -> Array[ItemData]:
 	chop.phantom_tints.assign(PHANTOM_TINTS)
 	out.append(chop)
 
+	# Shaping Spell (Phase 51): click a placed block to step it through its shapes
+	# (halves, the four slopes, logs turned). Shift + click steps back. Empower: Reach.
+	var shaping := _spell(&"shaping_spell", "Shaping Spell", "Click a placed block to shape it: halves, slopes, and logs turned on their side. Right click: walls (halves). Shift + click steps back.")
+	shaping.shapes_blocks = true
+	shaping.reach_tiles = 8.0
+	shaping.learnable_at_table = false
+	out.append(shaping)
+
 	# Siphon Liquid (Phase 45): ready for liquids. Empower: Reach and Area.
 	var siphon := _spell(&"siphon_liquid", "Siphon Liquid", "Hold to draw up liquid where you aim; right click pours it back out. (No liquids yet.)")
 	siphon.reach_tiles = 8.0
@@ -766,6 +774,7 @@ func _spells() -> Array[ItemData]:
 		&"mining_spell": SpellData.Group.TOOLS,
 		&"chopping_spell": SpellData.Group.TOOLS,
 		&"siphon_liquid": SpellData.Group.TOOLS,
+		&"shaping_spell": SpellData.Group.TOOLS,
 		&"hyper_drill": SpellData.Group.TOOLS,
 		&"seek_ore": SpellData.Group.TOOLS,
 		&"fly": SpellData.Group.MOVEMENT,

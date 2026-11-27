@@ -275,6 +275,7 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/potion_cabinet.png, potion_bookcase.png | Now 2 frames: the cabinet, then its glass doors (`front_frame`). `tools/make_potion_storage_art.py` |
 | terrain/sand.png, terrain/sand_wall.png | 128x128 detailed sand grains with soft ripples (the wall darker). `tools/make_glass_clay_art.py` |
 | ui/empower/<node id>.png | 16x16 Empower node icons (pick head, axe head, expanding arrows, reaching hand, drop, flame, zigzag, swoosh, hourglass, slime, two orbs and a plus). `tools/make_empower_icons.py` |
+| items/icons/shaping_spell.png (+ scroll_, page_ icons) | 16x16 Shaping Spell: a small mallet over a slope. Placeholder (`make_item_art.gd --new-spells`, Phase 51) |
 | items/{icons,held}/siphon_liquid.png (+ scroll_, page_ icons) | 16x16 Siphon Liquid: a blue drop under a curling arrow. Placeholder (PIL, Phase 45) |
 | items/{icons,held}/glow_potion.png, items/badges/glow.png | Glow Potion: a thin clay flask with teal glaze (`make_flasks.draw`), and an 8x8 sparkle badge. Placeholders |
 | tiles/blocks.png row 20 | Sand's collision row (a copy of clay's). Same script |

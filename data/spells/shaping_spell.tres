@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/shaping_spell.png" id="1_iwrc7"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_mt6cr"]
+
+[resource]
+script = ExtResource("2_mt6cr")
+group = 0
+learnable_at_table = false
+shapes_blocks = true
+learn_cost = Dictionary[StringName, int]({
+&"copper_bar": 4
+})
+kind = 4
+icon = ExtResource("1_iwrc7")
+max_stack = 1
+reach_tiles = 8.0
+id = &"shaping_spell"
+display_name = "Shaping Spell"
+description = "Click a placed block to shape it: halves, slopes, and logs turned on their side. Right click: walls (halves). Shift + click steps back."

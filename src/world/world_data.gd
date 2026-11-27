@@ -192,7 +192,10 @@ func set_block(x: int, y: int, id: int) -> bool:
 		return false
 	var wx := wrap_x(x)
 	var chunk := get_chunk(Vector2i(wx / CHUNK, y / CHUNK))
-	chunk.blocks[ChunkData.local_index(wx % CHUNK, y % CHUNK)] = id
+	var li := ChunkData.local_index(wx % CHUNK, y % CHUNK)
+	if chunk.blocks[li] != id and chunk.shapes.size() == ChunkData.AREA:
+		chunk.shapes[li] = chunk.shapes[li] & 0xF0  # a new block starts full (the wall keeps its shape)
+	chunk.blocks[li] = id
 	chunk.modified = true
 	chunk.revision += 1
 	return true
@@ -210,7 +213,10 @@ func set_wall(x: int, y: int, id: int) -> bool:
 		return false
 	var wx := wrap_x(x)
 	var chunk := get_chunk(Vector2i(wx / CHUNK, y / CHUNK))
-	chunk.walls[ChunkData.local_index(wx % CHUNK, y % CHUNK)] = id
+	var li := ChunkData.local_index(wx % CHUNK, y % CHUNK)
+	if chunk.walls[li] != id and chunk.shapes.size() == ChunkData.AREA:
+		chunk.shapes[li] = chunk.shapes[li] & 0x0F
+	chunk.walls[li] = id
 	chunk.modified = true
 	chunk.revision += 1
 	return true
@@ -229,6 +235,28 @@ func set_object(x: int, y: int, id: int) -> bool:
 	var wx := wrap_x(x)
 	var chunk := get_chunk(Vector2i(wx / CHUNK, y / CHUNK))
 	chunk.objects[ChunkData.local_index(wx % CHUNK, y % CHUNK)] = id
+	chunk.modified = true
+	chunk.revision += 1
+	return true
+
+
+## The Shaping Spell's shape byte of a tile (ChunkData.shapes), 0 = full.
+func get_shape(x: int, y: int) -> int:
+	if not in_bounds_y(y):
+		return 0
+	var wx := wrap_x(x)
+	var chunk := get_chunk(Vector2i(wx / CHUNK, y / CHUNK))
+	return chunk.shapes[ChunkData.local_index(wx % CHUNK, y % CHUNK)] if chunk.shapes.size() == ChunkData.AREA else 0
+
+
+func set_shape(x: int, y: int, shape: int) -> bool:
+	if not in_bounds_y(y):
+		return false
+	var wx := wrap_x(x)
+	var chunk := get_chunk(Vector2i(wx / CHUNK, y / CHUNK))
+	if chunk.shapes.size() != ChunkData.AREA:
+		chunk.shapes.resize(ChunkData.AREA)
+	chunk.shapes[ChunkData.local_index(wx % CHUNK, y % CHUNK)] = shape
 	chunk.modified = true
 	chunk.revision += 1
 	return true

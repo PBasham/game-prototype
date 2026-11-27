@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 51, Shaping Spell, placing reach
+
+- **Patrick:** a hammer-like tool that shapes blocks into slopes, halves and rotations,
+  and turns logs on an extra click; as a Shaping Spell you spawn with, maybe Alt + R;
+  keep the automatic upright snapping for a single line; any placeable block; Empower:
+  range. Placing reach should follow the Mining Spell.
+- **Claude:** one shape byte per tile (block 3 bits, log turn 1 bit, wall 2 bits),
+  stepped by click (Shift steps back); walls only get halves; collision via TileSet
+  alternatives. Placing reach dropped from the book's 12 to the Mining Spell's 8 (plus
+  Empower and conduit), as asked.
+
 ## 2026-11-26: Phase 50, break dust, Glow Potion
 
 - **Patrick:** a small dust cloud in the block's colors when it breaks; a Glow Potion

@@ -358,6 +358,16 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 51: Shaping Spell, placing reach (branch phase-51-shaping)**
+- [ ] Alt + R takes the Shaping Spell (everyone has it, old characters too). Click a
+      placed block: bottom half, top half, then four slopes, back to full. Shift + click
+      steps back. Right click: the wall goes full, bottom half, top half.
+- [ ] Logs get one more step, "turned": a single log column lies sideways, a row stands up.
+- [ ] You walk up slopes and can stand in the open half of a half block.
+- [ ] Shapes are still there after leaving and loading the world.
+- [ ] Placing blocks reaches as far as the Mining Spell (8, more with Empower Reach), not 12.
+- [ ] Empower: Reach now lists the Shaping Spell. Dev console `shapes` builds a showcase.
+
 **Phase 50: break dust, Glow Potion (branch phase-50-dust-glow)**
 - [ ] Breaking a block or wall puffs a small dust cloud in its colors.
 - [ ] Alchemy Table: Glow Potion (Clay Flask + 1 Glowcap): you glow for 4 minutes, hands free.

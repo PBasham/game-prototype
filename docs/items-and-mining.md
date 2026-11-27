@@ -24,6 +24,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **B** | The buff set: casts every spell in it at once |
 | **R** | Mining Spell in hand (again: put it away, back to your hotbar slot) |
 | **Ctrl + R** | Chopping Spell in hand (same) |
+| **Alt + R** | Shaping Spell in hand (same) |
 | **F** | Movement spell on or off. Levitate: up raises you to its hover height, down lowers you, and you stay at the height you leave it (the one in the Equipment window's Movement slot; empty = Fly, else Levitate) |
 | **Caps Lock** | Walk / run toggle |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
@@ -158,7 +159,7 @@ Each item is an `ItemData` (`src/items/item_data.gd`). Open one in the Inspector
 | `plants` | `tree` (a sapling on grass) or `grass` (turns dirt into grass) |
 | `free_place` | Can go anywhere in reach; otherwise it must touch a block or wall |
 | `place_area_max` | 0 = up to the spellbook's `build_area_max`; 1 = always one at a time (tree seeds, platforms, rope); other = a cap |
-| `place_reach_tiles` | 0 = the spellbook's `build_reach_tiles`; set it to give an item its own placing reach |
+| `place_reach_tiles` | 0 = the Mining Spell's reach (with Empower and conduit); set it to give an item its own placing reach |
 | **Magic** | |
 | `spell_slots` | Books: how many spells the book holds |
 | `build_reach_tiles` | Books: how far you place blocks, walls and seeds (12) |
@@ -228,6 +229,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Spell | Cast | Notes |
 | --- | --- | --- |
 | Mining Spell | TOOL beam, phantom pickaxe | Known from the start, free. 45 mining per second per tile, landing once per swing (`phantom_swing_time` 0.3 s); power 30 (stone, dirt, copper), area 2 (toggle 1 to 2), reach 8. Empower: Power (copper then iron bars: power 40 then 50, 30% faster per rank), Area (max 3x3, 4x4, 5x5), Reach (+2 tiles, 3 ranks). Placing blocks and walls goes as big as its max area. |
+| Shaping Spell | TOOL (`shapes_blocks`) | Known from the start, free. Click a placed block to step it to its next shape: full, bottom half, top half, then the four slopes (solid toward bottom-left, bottom-right, top-left, top-right). Logs (blocks with `overhang_px`) also get "turned", which flips the automatic upright/sideways look. Right click shapes the wall: full, bottom half, top half. **Shift + click** steps back. Only blocks some item places can be shaped (not grass or natural-only tiles). Collision follows the shape. Reach 8. Empower: Reach. |
 | Siphon Liquid | TOOL | Learned at the Spell Weaving Table. Ready for liquids (there are none yet): hold to draw up liquid, right click to pour it. Reach 8, area 1. Empower: Reach, Area. |
 | Chopping Spell | TOOL beam, phantom axe | Known from the start, free. 60 chopping per second, once per swing, reach 8. Empower: Sharpness (copper then iron bars, 40% faster per rank), Reach |
 | Fly | TOGGLE | Click to fly, click again to stop. WASD in every direction, Space goes up. No gravity or fall damage while flying. 34 tiles/s (`move_speed`; the Player's `fly_speed` is the fallback), `fly_accel_time` (0.15). **Hold Shift while moving to boost:** speed x2 (`boost_speed_mult`), mana x4 (`boost_mana_mult`: 40/s, a full bar in about 2.5 s). The boost is meant to become an empowerment later. Stays on when you switch items. 10 mana/s. |
@@ -333,9 +335,10 @@ Damageable things are nodes in the `damageable` group with `hit_rect()` and
 - **Tomes:** a hotbar item that casts one spell (`tome_spell`) without needing to know
   it (a conduit requirement still applies). Strength uses the tome's
   `spell_power` instead of the book's.
-- **The book is your building tool too:** placing blocks, walls and seeds uses the
-  book's `build_reach_tiles` (12, plus the conduit's reach bonus) and the shared area
-  setting, so building feels the same as the mining spell.
+- **Building reaches as far as you mine:** placing blocks, walls and seeds uses the
+  Mining Spell's reach (8, plus its Empower Reach ranks and the conduit's reach bonus)
+  and the shared area setting. An item's own `place_reach_tiles` still wins when set;
+  the book's `build_reach_tiles` is only the fallback if the Mining Spell is missing.
 - **Strength:** damage = spell's `mining_damage` x book (or tome) `spell_power` x
   conduit `spell_power`. Reach = spell's `reach_tiles` + conduit `spell_reach_bonus`.
 - **Mana:** 100, refills after a short pause. See [crafting.md](crafting.md).
@@ -351,8 +354,8 @@ Focus, cast it. The dev kit fills both wheels, Z X C and the buff set to try thi
 A character is saved separately from worlds: `user://characters/<name>.gpchar` (name,
 look, inventory, equipment, spells). You pick or make one on the main menu's character
 page (see [guide.md](guide.md#starting-the-game-menu-worlds-saves)); any character can
-play any world. A new character starts with the **Mining Spell** and **Chopping Spell**
-(tools are spells: R and Ctrl + R take them in hand) and a **Copper Dagger**, nothing
+play any world. A new character starts with the **Mining Spell**, **Chopping Spell** and **Shaping Spell**
+(tools are spells: R, Ctrl + R and Alt + R take them in hand) and a **Copper Dagger**, nothing
 else (`CharacterData.STARTING_SPELLS`, `STARTING_ITEMS`). Characters from before Phase
 24 learn both spells when loaded; their old pickaxes and axes are gone.
 
@@ -576,3 +579,18 @@ Armor (head, chest, legs), three accessory slots and melee weapons are covered i
 with `melee_damage > 0`.
 
 
+
+## Block shapes (Shaping Spell)
+
+Every tile has a shape byte (`ChunkData.shapes`, saved with the world under "shapes"):
+
+| Bits | Meaning |
+| --- | --- |
+| 0 to 2 | Block shape: 0 full, 1 bottom half, 2 top half, 3 to 6 slopes solid toward bottom-left, bottom-right, top-left, top-right |
+| 3 | Log turned (flips the automatic upright look of a single column) |
+| 4 to 5 | Wall shape: 0 full, 1 bottom half, 2 top half |
+
+Breaking or replacing a block keeps the wall's shape and clears the block's, and the
+other way around. The terrain shader cuts the shape out (the wall shows through) and draws
+a dark rim along the cut on built blocks. Collision uses TileSet alternatives 1 to 6
+(`ChunkRenderer.SHAPE_POLYGONS`). Dev console: `shapes` builds every shape to your right.

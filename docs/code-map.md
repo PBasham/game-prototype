@@ -592,6 +592,18 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 51: Shaping Spell, placing reach
+
+| Change | Where |
+| --- | --- |
+| Shape byte per tile | `ChunkData.shapes`; `WorldData.get_shape`, `set_shape` (`set_block` / `set_wall` keep the other layer's bits) |
+| Shapes drawn | `terrain.gdshader` `shape_of`, `in_shape` (B channel of the tile texture); `ChunkBuildJob.shape`; `ChunkRenderer._tile_color` |
+| Shaped collision | `ChunkRenderer.SHAPE_POLYGONS`, `_shape_alt` (TileSet alternatives 1 to 6 on SOLID rows) |
+| Saving | `WorldSave.META_SHAPES`; `World._shapes_to_dict`, load in `World` after `load_chunks` |
+| Shaping Spell | `SpellData.shapes_blocks`; `ItemUser.Mode.SHAPE`, `shape_cycle`, `shape_step`; `World.request_set_shape`; Alt + R in `Player`; `Hud.dedicated_key`; `data/empower/gather_reach.tres` |
+| Placing reach | `ItemUser.reach` (the Mining Spell's reach) |
+| `shapes` console command | `DevConsole._shapes` |
+
 ## Phase 50: break dust, Glow Potion
 
 | Change | Where |
