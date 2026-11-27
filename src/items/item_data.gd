@@ -149,6 +149,9 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 @export var bottle_shape := BottleShape.NONE
 ## What's inside, for its shelf look (alpha 0 = an empty bottle).
 @export var bottle_contents := Color(0, 0, 0, 0)
+## Its picture standing on a potion shelf, in art px of the furniture (detail 2). Empty:
+## the icon at half size (ObjectLayer.shelf_texture).
+@export var shelf_sprite: Texture2D
 @export_group("Spell page")
 ## A Spell Page (found, not crafted): left click learns this spell for good, and the
 ## page is used up. The only way to learn spells that aren't `learnable_at_table`.

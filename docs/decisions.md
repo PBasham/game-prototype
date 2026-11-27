@@ -2,6 +2,21 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 36, fixes
+
+- **Patrick:** a few placed Dark Forest Stone shouldn't flip the biome. Biome share is now
+  counted against at least 60% of the box (`biome_min_ground`).
+- **Patrick:** background too dark, even with torches. Walls get 40% of daylight above
+  ground (`walled_sky`), `wall_shade` 1.0 and built walls x1.35, torch falloff curved
+  (`source_curve` 0.6).
+- **Patrick:** Clay places as a wall; Glass is a block and a wall too (see-through,
+  lets light through). Clay patches making clay walls in generation: undecided, not done.
+- **Patrick:** shelf bottles too small, large ones square, glass offset, poison flask
+  shape. Claude: shelves draw each item's icon at half size instead of procedural bottles.
+- **Patrick:** "Potion Bookcase" renamed Large Potion Cabinet (id kept: `potion_bookcase`).
+- **Patrick:** no way to take one from a stack. Right click now takes one (hold repeats,
+  speeding up), Shift + right click takes half, like Terraria.
+
 ## 2026-11-26: Phase 35, bottles, glass, potion furniture
 
 - **Patrick:** the Potion Cabinet's bottles should be clay, not glass; add 2 more clay

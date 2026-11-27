@@ -480,5 +480,15 @@ saves still load.
 | Bottle shape and contents per item | `ItemData.BottleShape`, `bottle_shape`, `bottle_contents`; set in `tools/make_items.gd` (`BOTTLES`, `BOTTLE_CONTENTS`) |
 | Bottles on shelves, spots | `ObjectLayer._draw_bottles`, `bottle_spots`, `draw_bottle`; shelves on `ObjectDef` (`bottle_shelves`, `bottles_per_shelf`, `bottle_x0`, `bottle_step`) |
 | Stacking furniture | `ObjectDef.flat_top`; `World.is_flat_top`, `_resting_on`, `_can_place_furniture`, `request_remove_object` |
-| Potion Bookcase, Potion Shelf, sand, glass, bottles | `data/items`, `data/objects`, `data/recipes` (from `tools/make_items.gd`); art `tools/make_potion_storage_art.py` |
+| Large Potion Cabinet, Potion Shelf, sand, glass, bottles | `data/items`, `data/objects`, `data/recipes` (from `tools/make_items.gd`); art `tools/make_potion_storage_art.py` |
 | Console `freeplace` | `ItemUser.free_place` (checked in `_anchored`) |
+
+## Phase 36: fixes
+
+| Change | Where |
+| --- | --- |
+| Biome needs real ground | `World.biome_min_ground`, `biome_amount` |
+| Brighter walls and torches | `LightMap.walled_sky`, `source_curve` (LightJob); `ChunkRenderer.wall_shade`, `built_wall_shade` (terrain.gdshader) |
+| See-through Glass, Glass Wall, Clay Wall | `TileDef.see_through`; terrain.gdshader (`pane`), `LightMap` (`job.solid`, `clear_walls`); `data/tiles/glass.tres`, `data/walls/{glass,clay}_wall.tres`; art `tools/make_glass_clay_art.py` (also adds blocks.png row 19) |
+| Shelf bottles from icons | `ObjectLayer._draw_bottles`, `shelf_texture`; `ItemData.shelf_sprite` |
+| Right click takes one, hold repeats | `Hud.right_click_slot(slot, inv, half)`, `_start_take_repeat`, `_update_take_repeat`, `take_repeat_delay`, `take_repeat_fastest` |

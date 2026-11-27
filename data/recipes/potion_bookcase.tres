@@ -12,4 +12,4 @@ inputs = Dictionary[StringName, int]({
 })
 output = &"potion_bookcase"
 id = &"potion_bookcase"
-display_name = "Potion Bookcase"
+display_name = "Large Potion Cabinet"

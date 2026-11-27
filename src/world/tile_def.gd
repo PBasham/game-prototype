@@ -68,6 +68,9 @@ enum Collision {
 ## sticks out this many pixels into the open tile, with rounded tips (log cabin
 ## corners). Only drawn; it doesn't change collision. 0 = none.
 @export_range(0, 4) var overhang_px := 0
+## See-through (Glass): light passes as through air, and the texture's alpha shows the
+## background wall (or sky) behind it.
+@export var see_through: bool = false
 
 
 func validate() -> PackedStringArray:

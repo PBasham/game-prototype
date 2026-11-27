@@ -9,7 +9,8 @@ extends CanvasLayer
 ## is the hotbar. Items only; to the right are the Craft (K), Equip (P), Spells (L) and Catalog (J)
 ## buttons.
 ##   Left click: pick up a stack / put it down / swap / merge.
-##   Right click: pick up half, or put one down from the stack on the mouse.
+##   Right click: take one onto the mouse (hold to keep taking, faster and faster), or
+##   put one down in an empty slot from the stack on the mouse. Shift + right click: half.
 ##   Shift + left click: move a stack between the hotbar and the rest (or into the open
 ##   chest).
 ##   Ctrl + right click: equip armor, an accessory, a book or a conduit (swapping with the
@@ -429,6 +430,7 @@ func toggle_map() -> void:
 
 func _process(delta: float) -> void:
 	_update_notes(delta)
+	_update_take_repeat(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
 		or _creative.searching or renaming \
 		or weave_searching or chat.open
@@ -1755,7 +1757,8 @@ func _inventory_input(pane: Pane, event: InputEvent) -> void:
 			elif left:
 				click_slot(slot)
 			elif right:
-				right_click_slot(slot)
+				right_click_slot(slot, null, mb.shift_pressed)
+				_start_take_repeat(slot, null, mb.position)
 		Area.CRAFT_BUTTON:
 			if left:
 				toggle_crafting()
@@ -1793,7 +1796,8 @@ func _chest_input(pane: Pane, event: InputEvent) -> void:
 				elif left:
 					click_slot(h[1], store)
 				elif mb.button_index == MOUSE_BUTTON_RIGHT:
-					right_click_slot(h[1], store)
+					right_click_slot(h[1], store, mb.shift_pressed)
+					_start_take_repeat(h[1], store, mb.position)
 		Area.CHEST_TAKE:
 			if left and store:
 				for i in store.size:
@@ -2130,9 +2134,48 @@ func click_slot(slot: int, inv: Inventory = null) -> void:
 		cursor_meta = meta
 
 
-## Right click: take half (empty mouse) or put one down. With a coating on the mouse
-## and a weapon in the slot: coats the weapon (uses one coating).
-func right_click_slot(slot: int, inv: Inventory = null) -> void:
+## Holding right click on a slot keeps taking one, starting after `take_repeat_delay`
+## and speeding up to `take_repeat_fastest` seconds apart.
+@export var take_repeat_delay := 0.35
+@export var take_repeat_fastest := 0.03
+var _take_slot := -1
+var _take_inv: Inventory
+var _take_at := Vector2.ZERO
+var _take_timer := 0.0
+var _take_step := 0.0
+
+
+func _start_take_repeat(slot: int, inv: Inventory, at: Vector2) -> void:
+	_take_slot = slot
+	_take_inv = inv
+	_take_at = at
+	_take_timer = take_repeat_delay
+	_take_step = 0.12
+
+
+func _update_take_repeat(delta: float) -> void:
+	if _take_slot < 0:
+		return
+	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) or Input.is_key_pressed(KEY_SHIFT) \
+			or get_viewport().get_mouse_position().distance_to(_take_at) > 6.0:
+		_take_slot = -1
+		return
+	_take_timer -= delta
+	while _take_timer <= 0.0 and _take_slot >= 0:
+		var inv := _take_inv if _take_inv else world.character.inventory
+		if inv.is_empty(_take_slot) or (cursor_count > 0 and cursor_id != inv.ids[_take_slot]):
+			_take_slot = -1
+			return
+		right_click_slot(_take_slot, _take_inv)
+		_take_step = maxf(take_repeat_fastest, _take_step * 0.8)
+		_take_timer += _take_step
+		_redraw()
+
+
+## Right click: take one onto the mouse (empty mouse, or the same item on it), or put
+## one down in an empty slot. `half`: take half instead (Shift). With a coating on the
+## mouse and a weapon in the slot: coats the weapon (uses one coating).
+func right_click_slot(slot: int, inv: Inventory = null, half := false) -> void:
 	if inv == null:
 		inv = world.character.inventory
 	if _cursor_is_spell():
@@ -2148,16 +2191,22 @@ func right_click_slot(slot: int, inv: Inventory = null) -> void:
 			EventBus.debug_message.emit("%s coated: next %d hits poison" % [there.display_name, on_mouse.buff_poison_hits])
 			EventBus.sound_requested.emit(&"craft", Vector2.INF)
 		return
-	if cursor_count == 0:
-		if inv.is_empty(slot):
+	if cursor_count == 0 and not inv.is_empty(slot) and (half or inv.counts[slot] == 1):
+		if not half:
+			click_slot(slot, inv)  # the last one, with its coating or charges
 			return
-		var half := ceili(inv.counts[slot] / 2.0)
 		cursor_id = inv.ids[slot]
-		cursor_count = inv.take(slot, half)
+		cursor_count = inv.take(slot, ceili(inv.counts[slot] / 2.0))
 		return
-	if not inv.accepts(cursor_id):
+	if not inv.is_empty(slot) and (cursor_count == 0 or cursor_id == inv.ids[slot]):
+		if cursor_count > 0 and cursor_count >= Inventory.max_stack(cursor_id):
+			return  # the mouse holds a full stack
+		cursor_id = inv.ids[slot]
+		cursor_count += inv.take(slot, 1)
 		return
-	if inv.is_empty(slot) or (inv.ids[slot] == cursor_id and inv.counts[slot] < inv.cap_for(cursor_id)):
+	if cursor_count == 0 or not inv.accepts(cursor_id):
+		return
+	if inv.is_empty(slot):
 		inv.set_slot(slot, cursor_id, (0 if inv.is_empty(slot) else inv.counts[slot]) + 1)
 		cursor_count -= 1
 		if cursor_count <= 0:

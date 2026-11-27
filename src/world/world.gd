@@ -46,6 +46,9 @@ const PLAYER_SCENE := preload("res://src/player/player.tscn")
 ## TileDef.biome), you're in it. Too little ground (in the open sky): the surface
 ## biome under you counts instead.
 @export_range(0.0, 1.0) var biome_share := 0.3
+## The share is counted against at least this much of the box, so a few placed blocks
+## in mostly open air can't turn the area (Terraria counts blocks, not shares).
+@export_range(0.0, 1.0) var biome_min_ground := 0.6
 @export_group("")
 var _biome_cache: Dictionary = {}
 ## Chunks kept loaded around the camera, each direction.
@@ -1899,7 +1902,7 @@ func biome_amount(tile: Vector2i, biome: StringName) -> float:
 			if types.biome_of(id) == biome:
 				mine += 1
 	var total := float(biome_box.x * biome_box.y) / float(step * step)
-	var amount := float(mine) / maxf(ground, 1.0)
+	var amount := float(mine) / maxf(ground, maxf(total * biome_min_ground, 1.0))
 	if ground < total * 0.15 and generator:
 		# Mostly open sky: the surface below decides (a tree top, a high jump).
 		var col := generator.dark_forest_at(data.wrap_x(tile.x)) if biome == &"dark_forest" else 0.0

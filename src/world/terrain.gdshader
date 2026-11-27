@@ -30,7 +30,8 @@ uniform float built_walls[32];
 uniform float overhang_slots[32];
 // Background walls are drawn this much darker than blocks (and a little greyer), so
 // the front layer stands out. 1 = same as the art.
-uniform float wall_shade = 0.75;
+uniform float wall_shade = 1.0;
+uniform float built_wall_shade = 1.35;
 uniform float wall_desat = 0.2;
 uniform vec3 grass_0 : source_color;
 uniform vec3 grass_1 : source_color;
@@ -198,7 +199,7 @@ vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bo
 		if (left && lp.x < 2.0) c *= 1.06;
 		if (right && lp.x >= 6.0) c *= 0.88;
 	}
-	return vec4(c, 1.0);
+	return vec4(c, edge ? 1.0 : strip(tex, slot, p).a);
 }
 
 // A wall edge only counts as open where there is neither a wall nor a block.
@@ -218,12 +219,17 @@ void fragment() {
 		m = mat_at(p);
 	}
 	bool drew = false;
+	vec4 pane = vec4(0.0);
 	if (is_built(here)) {
 		bvec4 diag = bvec4(blk(here_t + ivec2(-1, -1)) == 0, blk(here_t + ivec2(1, -1)) == 0,
 			blk(here_t + ivec2(-1, 1)) == 0, blk(here_t + ivec2(1, 1)) == 0);
 		col = built_px(materials, here, p, blk(here_t + ivec2(0, -1)) == 0, blk(here_t + ivec2(0, 1)) == 0,
 			blk(here_t + ivec2(-1, 0)) == 0, blk(here_t + ivec2(1, 0)) == 0, 0.38, true, diag);
-		drew = col.a > 0.5;
+		drew = col.a > 0.99;
+		if (!drew && col.a > 0.0) {
+			pane = col;  // see-through (glass): drawn over what's behind it below
+			col = vec4(0.0);
+		}
 	} else if (m > 0) {
 		drew = true;
 		vec3 c = strip(materials, m, p).rgb;
@@ -308,13 +314,16 @@ void fragment() {
 		if (!done && wh > 0 && built_walls[wh] > 0.5) {
 			col = built_px(wall_tex, wh, p, wall_open(here_t + ivec2(0, -1)), wall_open(here_t + ivec2(0, 1)),
 				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false));
-			col.rgb = shade_wall(col.rgb);
+			col.rgb = min(shade_wall(col.rgb) * built_wall_shade, vec3(1.0));
 		} else if (!done && field_w(p) + nz(p) * 0.6 > 0.5) {
 			int w = wall_at(p);
 			if (w > 0 && built_walls[w] < 0.5) {
 				col = vec4(shade_wall(strip(wall_tex, w, p).rgb), 1.0);
 			}
 		}
+	}
+	if (pane.a > 0.0) {
+		col = vec4(mix(col.rgb, pane.rgb, col.a > 0.0 ? pane.a : 1.0), max(col.a, pane.a));
 	}
 	COLOR = col;
 }

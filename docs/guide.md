@@ -218,6 +218,8 @@ player (3 tall vs our 8), so ours are those to the power 3/8.
 | `indoors_factor` | 0 | Share kept coming out of a block into a walled space (a room, a cave): 0 = the sun doesn't shine through a roof. Rooms get light through open doors, gaps and torches. |
 | `min_interval` | 0.12 | Minimum seconds between recomputes. |
 | `sky_depth_tiles` | 0 | Open air counts as sky only down to this many tiles below the natural ground (the generator's surface). Deeper dug-out air gets only the light that spreads in from above. |
+| `walled_sky` | 0.4 | Share of the sky's light a background wall above the natural ground gets on its own, so walls (a room with no roof, a back wall) aren't dark in daylight. 0 = Terraria. |
+| `source_curve` | 0.6 | Torches and other lights: brightness raised to this power, so they stay bright further out before fading (1 = plain falloff). |
 | `source_solid_factor` | 6 | Light sources fade this many times faster through blocks than through air (Terraria's torch: about 42 tiles of air vs 7 of blocks). Closed doors block light like blocks. |
 
 Open sky (no block and no wall, above the natural ground) is the light source. Air you
@@ -314,9 +316,14 @@ every asset, its size and layout.
 - **Item icons and held sprites, sapling, crack overlay:** placeholders from
   `tools/make_item_art.gd`. Replace the PNGs with yours (same names).
 
-**Background walls** are drawn darker and a little greyer than blocks so the front layer
-stands out: `wall_shade` (0.75) and `wall_desat` (0.2) on the `Chunks` node
-(ChunkRenderer).
+**Background walls** are drawn a little greyer than blocks so the front layer stands
+out: `wall_shade` (1.0, the wall art is already darker) and `wall_desat` (0.2) on the
+`Chunks` node (ChunkRenderer). Built walls (planks, bricks, glass: room walls) are
+brightened again by `built_wall_shade` (1.35).
+
+**Glass** (`TileDef.see_through`) is a solid block light passes through as through air;
+its texture's alpha shows the wall or sky behind it. A Glass Wall doesn't count as a
+wall for sunlight.
 
 ## UI look
 

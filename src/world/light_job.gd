@@ -30,10 +30,14 @@ var objects: Array[PackedInt32Array] = []
 var emitters := PackedFloat32Array()
 ## Fraction of a source's reach used up per tile through solid blocks, relative to air.
 var source_solid_factor := 6.0
+var walled_sky := 0.0
+var source_curve := 1.0
 ## Moving lights: [position in tiles from the rect's corner (Vector2), radius, color].
 var extra: Array[Array] = []
 ## 1 where a block id is solid (index = block id).
 var solid := PackedByteArray()
+## Wall ids that don't count as walls for sunlight (Glass Wall).
+var clear_walls := PackedByteArray()
 var ambient := 0.0
 ## Sky light color and brightness (WorldClock.sun_light()): multiplies sunlight.
 var sky := Color.WHITE
@@ -98,8 +102,14 @@ func run() -> void:
 							var ty := (k / cols) * SIZE + ly - dy
 							if tx < w and ty >= 0:
 								blocked_by_object[ty * w + tx] = 1
-				if cw[src + lx] != 0:
+				var wid := cw[src + lx]
+				if wid != 0 and (wid >= clear_walls.size() or clear_walls[wid] == 0):
 					walled[row + lx] = 1
+					if not is_solid and walled_sky > 0.0:
+						var wx := (k % cols) * SIZE + lx
+						var wy := (k / cols) * SIZE + ly
+						if sky_floor.is_empty() or wy < sky_floor[wx]:
+							light[row + lx] = walled_sky * (1.0 if sky_scale.is_empty() else sky_scale[wx])
 				elif not is_solid:
 					var tx := (k % cols) * SIZE + lx
 					var ty := (k / cols) * SIZE + ly
@@ -223,6 +233,7 @@ func _sources(w: int, h: int, cols: int, solid_at: PackedByteArray) -> Array:
 			var bright := v[i]
 			if bright <= 0.01:
 				continue
+			bright = pow(bright, source_curve)
 			r[i] += bright * key.x
 			g[i] += bright * key.y
 			b2[i] += bright * key.z

@@ -50,7 +50,10 @@ class ChunkView:
 
 ## Background walls are drawn this much darker than blocks (1 = as drawn) and this
 ## much greyer, so blocks stand out from walls.
-@export_range(0.2, 1.0) var wall_shade := 0.75
+@export_range(0.2, 1.6) var wall_shade := 1.0
+## Built back walls (planks, bricks, glass: the walls of rooms) are drawn this much
+## brighter again, since their art is already darker than the block's.
+@export_range(0.5, 2.0) var built_wall_shade := 1.35
 @export_range(0.0, 1.0) var wall_desat := 0.2
 ## Chunks loaded around the camera, in each direction.
 var load_radius := Vector2i(2, 2)
@@ -415,6 +418,7 @@ func _build_terrain_material() -> void:
 	_material.set_shader_parameter("built_walls", built_walls)
 	_material.set_shader_parameter("overhang_slots", overhang)
 	_material.set_shader_parameter("wall_shade", wall_shade)
+	_material.set_shader_parameter("built_wall_shade", built_wall_shade)
 	_material.set_shader_parameter("wall_desat", wall_desat)
 	for i in GRASS_COLORS.size():
 		_material.set_shader_parameter("grass_%d" % i, Color(GRASS_COLORS[i]))

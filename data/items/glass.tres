@@ -11,13 +11,17 @@ script = ExtResource("2_qdc0r")
 id = &"glass"
 texture = ExtResource("3_6vvy3")
 type = &"block"
-grip = Vector2(4, 6)
+grip = Vector2(3, 5)
 
 [resource]
 script = ExtResource("5_5hvdf")
+kind = 1
 icon = ExtResource("4_asxnd")
+max_stack = 9999
 held = SubResource("Resource_8sf6r")
 impact_at = 0.2
+places_block = &"glass"
+places_wall = &"glass_wall"
 id = &"glass"
 display_name = "Glass"
-description = "Clear glass, melted from sand. For glass bottles and glass fronted cabinets."
+description = "Clear glass, melted from sand. A see-through block and back wall, and the stuff of glass bottles and cabinets."

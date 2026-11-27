@@ -24,6 +24,12 @@ extends Sprite2D
 ## Light sources fade this many times faster through blocks than through air
 ## (Terraria's torch: about 42 tiles of air vs 7 of blocks).
 @export var source_solid_factor := 6.0
+## Share of the sky's light a background wall above the natural ground gets on its own
+## (a built room, a wall with no roof), so walls aren't dark in daylight. 0 = Terraria.
+@export_range(0.0, 1.0) var walled_sky := 0.4
+## Torches and other lights: their brightness is raised to this power, so they stay
+## bright further out before fading (1 = plain falloff, lower = brighter rooms).
+@export_range(0.2, 1.0) var source_curve := 0.6
 ## Recompute when the sky light (day and night) changes by more than this.
 @export var sky_change := 0.012
 ## Open air (no block, no wall) is sky only down to this many tiles below the natural
@@ -178,6 +184,8 @@ func _make_job() -> LightJob:
 			job.object_solid[id] = od.width_tiles
 			job.object_h[id] = od.height_tiles
 	job.source_solid_factor = source_solid_factor
+	job.walled_sky = walled_sky
+	job.source_curve = source_curve
 	for l in world.dynamic_lights():
 		job.extra.append([Vector2(l[0]) - Vector2(rect.position), l[1], l[2]])
 	job.emitters.resize(world.objects.size() * 4)
@@ -191,7 +199,10 @@ func _make_job() -> LightJob:
 	var table := world.blocks.collision_table()
 	job.solid.resize(table.size())
 	for i in table.size():
-		job.solid[i] = 1 if table[i] == TileDef.Collision.SOLID else 0
+		job.solid[i] = 1 if table[i] == TileDef.Collision.SOLID and not world.blocks.def(i).see_through else 0
+	job.clear_walls.resize(world.walls.size())
+	for i in range(1, world.walls.size()):
+		job.clear_walls[i] = 1 if world.walls.def(i).see_through else 0
 	var first := rect.position / ChunkData.SIZE
 	var count := rect.size / ChunkData.SIZE
 	for cy in count.y:

@@ -89,7 +89,8 @@ enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 enum FillLook { NONE, FRAMES, BOTTLES, PILE }
 @export var fill_look := FillLook.NONE
 ## BOTTLES: where the bottles stand, in art pixels of its picture: the shelf planks' tops
-## (bottom shelf first), how many per shelf, the first one's x and the step between.
+## (bottom shelf first) and where a shelf starts (bottle_x0). A shelf is
+## bottles_per_shelf x bottle_step art px wide; bottles stand 1 px apart.
 @export var bottle_shelves: Array[int] = [54, 38, 22]
 @export var bottles_per_shelf := 7
 @export var bottle_x0 := 8.0

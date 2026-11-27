@@ -37,10 +37,12 @@ func test_bottle_shapes_and_spots() -> void:
 		var it := ItemData.find(id)
 		assert_not_null(it, String(id))
 		assert_eq(it.bottle_shape, shapes[id], String(id))
-	assert_eq(ObjectLayer.bottle_spots(ItemData.find(&"clay_jug")), 2)
-	assert_eq(ObjectLayer.bottle_spots(ItemData.find(&"glass_flask")), 2)
-	assert_eq(ObjectLayer.bottle_spots(ItemData.find(&"glass_vial")), 1)
-	assert_eq(ObjectLayer.bottle_spots(ItemData.find(&"clay_bottle")), 1)
+	var wide := func(id: StringName) -> int:
+		return ObjectLayer.shelf_texture(ItemData.find(id)).get_width()
+	assert_gt(wide.call(&"clay_jug"), wide.call(&"clay_bottle"), "a jug takes more shelf than a bottle")
+	assert_gt(wide.call(&"glass_flask"), wide.call(&"glass_vial"))
+	for id: StringName in [&"clay_jug", &"glass_flask", &"poison_flask", &"healing_potion"]:
+		assert_lte(ObjectLayer.shelf_texture(ItemData.find(id)).get_height(), 15, "fits between shelves")
 	assert_ne(ItemData.find(&"healing_potion").bottle_contents.a, 0.0, "potions have a color")
 
 

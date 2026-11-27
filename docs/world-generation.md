@@ -335,7 +335,8 @@ grass colors are `ChunkRenderer.dark_grass_colors`.
 **Which biome you're in** is counted from the ground around you, like Terraria
 (`World.biome_at(tile)`, `biome_amount`): in a `biome_box` (48 x 32 tiles, sampled
 every `biome_sample_step` 2), if `biome_share` (30%) of the blocks and walls belong to a
-biome (`TileDef.biome`), you're in it. So digging, or building with Dark Forest blocks,
+biome (`TileDef.biome`), you're in it. The share is counted against at least
+`biome_min_ground` (60%) of the box, so a few blocks in open air don't turn it. So digging, or building with Dark Forest blocks,
 changes it. High in the open sky (little ground around) the column's surface biome
 counts instead. It drives the spawn tables and the dark backdrop; the canopy's shade
 on the light is still by column (`dark_forest_at`).

@@ -358,6 +358,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 36: fixes (branch phase-36-fixes)**
+- [ ] A few Dark Forest blocks up in the air no longer turn the biome dark; a big build or the real Dark Forest still does.
+- [ ] Back walls are brighter, room walls especially; torches light a room well at night.
+- [ ] Clay: right click places a Clay Wall. Glass: left click a see-through block (walls and sky show through, light passes), right click a Glass Wall.
+- [ ] Shelf bottles are about twice as big, round where the icon is round, the Poison Flask its own shape, glass not offset.
+- [ ] Potion Bookcase is now called Large Potion Cabinet.
+- [ ] Right click a stack: one onto the mouse; hold it to keep taking, faster. Shift + right click: half.
+
 **Phase 35: bottles, glass, potion furniture (branch phase-35-bottles-glass)**
 - [ ] Creative window: Sand, Glass, Clay Bottle, Clay Jug, Glass Vial, Glass Bottle, Glass Flask, Potion Bookcase, Potion Shelf.
 - [ ] Furnace: 1 Sand makes 1 Glass; the bottles from Glass and Clay.

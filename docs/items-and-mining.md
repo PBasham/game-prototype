@@ -35,7 +35,7 @@ so a smaller starting inventory or bags that add rows later only change that num
 the panel lays itself out from it.
 
 - Left click: pick up a stack, put it down, merge or swap.
-- Right click: take half, or put one down from the stack on the mouse.
+- Right click: take one onto the mouse (hold it to keep taking, faster and faster: `Hud.take_repeat_delay` 0.35 s, down to `take_repeat_fastest` 0.03 s), or put one down in an empty slot from the stack on the mouse. Shift + right click: take half.
 - Shift + left click: move a stack between the hotbar and the rest.
 - Ctrl + left click: **trash** it. The trash slot (bottom right, a bin) also takes the
   stack on the mouse; it keeps the last thing thrown away (click it to take it back)

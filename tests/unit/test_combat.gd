@@ -228,9 +228,10 @@ func test_butcher_kills_with_loot() -> void:
 	w.request_spawn_enemy(_slime(), p.global_position + Vector2(60, -20))
 	await wait_physics_frames(2)
 	var before := w.drop_count()
+	var count := w.enemy_count()
 	w.enemies()[0].kill()
 	await wait_physics_frames(2)
-	assert_eq(w.enemy_count(), 0)
+	assert_lt(w.enemy_count(), count, "it's gone (a natural spawn may have come meanwhile)")
 	assert_gt(w.drop_count(), before, "dropped its loot")
 
 

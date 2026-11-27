@@ -267,6 +267,9 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/potion_bookcase.png, objects/potion_shelf.png (+ icons, held) | Potion Bookcase (4x6, 64x96, 5 shelves) and Potion Shelf (3x2, 48x32, one plank). Same script |
 | items/{icons,held}/{clay_bottle,clay_jug,glass_vial,glass_bottle,glass_flask}.png | Copies of the empty flask concepts (`art/concepts/flasks/*_empty.png`). Same script |
 | items/{icons,held}/{sand,glass}.png | Sand pile and glass pane placeholders. Same script |
+| terrain/glass.png, terrain/glass_wall.png | 64x64 Glass block and wall: pale frame per block, see-through pane (alpha ~0.25), a shine. Placeholders from `tools/make_glass_clay_art.py` |
+| terrain/clay_wall.png | The clay block art darkened. Same script |
+| tiles/blocks.png row 19 | Glass's collision row (a copy of row 17). Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |
 | items/icons/tele_grab.png (+ scroll_ and page_ icons) | 16x16 Tele Grab spell icon: a violet swirl pulling in an ore chunk. Placeholder from `art/concepts/spells/make_tele_grab.py` |
 | trees/darkwood_{0,1,2}.png | Darkwood trees, 104 wide, 180 / 230 / 280 tall: purple-brown trunk, round dark crown. Placeholders from `art/concepts/dark_forest/make_dark_forest.py` |

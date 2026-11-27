@@ -185,7 +185,7 @@ func _items() -> Array[ItemData]:
 	out.append(_small(&"duskcap", "Duskcap", "A purple cave mushroom. Toxic: brewed into Poison Coatings and Poison Flasks."))
 	out.append(_small(&"glowcap", "Glowcap", "Glows in dark caves. Brewed into Mana Potions."))
 	# Food & Alchemy.
-	out.append(_block(&"clay", "Clay", "Found in patches in the dirt. Fire it in a Furnace into Clay Flasks."))
+	out.append(_block(&"clay", "Clay", "Found in patches in the dirt. Fire it in a Furnace into flasks, bottles and jugs.", &"clay_wall"))
 	var flask_empty := _small(&"clay_flask", "Clay Flask", "An empty flask of fired clay. Potions, coatings and thrown flasks start with one.")
 	_detailed(flask_empty, &"")
 	out.append(flask_empty)
@@ -200,7 +200,7 @@ func _items() -> Array[ItemData]:
 		_detailed(bottle, &"")
 		out.append(bottle)
 	out.append(_small(&"sand", "Sand", "Fine sand. Melt it in a Furnace into Glass. (No sand in the world yet: the Creative window has it.)"))
-	out.append(_small(&"glass", "Glass", "Clear glass, melted from sand. For glass bottles and glass fronted cabinets."))
+	out.append(_block(&"glass", "Glass", "Clear glass, melted from sand. A see-through block and back wall, and the stuff of glass bottles and cabinets.", &"glass_wall"))
 	out.append(_small(&"wooden_bowl", "Wooden Bowl", "For stew."))
 	for row: Array in [
 			[&"roasted_berries", "Roasted Berries", "Warm and sweet. +25 hunger, +5 health.", 25.0, 5.0],
@@ -279,7 +279,7 @@ func _items() -> Array[ItemData]:
 			[&"scribes_desk", "Scribe's Desk", "A crafting station: scribe scrolls of the spells you know onto blank scrolls."],
 			[&"lumber_rack", "Lumber Rack", "Storage for logs and wood: 1,000 of them. It fills up as you stock it."],
 			[&"potion_cabinet", "Potion Cabinet", "Glass fronted storage for potions and bottles: 10 stacks, shown on its shelves. Furniture can stand on top."],
-			[&"potion_bookcase", "Potion Bookcase", "A tall glass fronted case for potions and bottles: 16 stacks on 5 shelves. Furniture can stand on top."],
+			[&"potion_bookcase", "Large Potion Cabinet", "A tall glass fronted case for potions and bottles: 16 stacks on 5 shelves. Furniture can stand on top."],
 			[&"potion_shelf", "Potion Shelf", "Hangs on a back wall: 4 stacks of potions and bottles on display."],
 			[&"chair", "Wooden Chair", "Right click (or E) to sit on it. Move to stand up."],
 			[&"darkwood_workbench", "Darkwood Workbench", "A tier 2 Workbench (upgrade one with 20 Darkwood and 3 Iron Bars): everything a Workbench makes, plus reinforced wood."],
@@ -765,7 +765,7 @@ func _objects() -> Array[ObjectDef]:
 			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 5, &""],
 			[&"darkwood_workbench", "Darkwood Workbench", 5, 4, &"workbench"],
 			[&"chair", "Wooden Chair", 2, 3, &""],
-			[&"potion_bookcase", "Potion Bookcase", 4, 6, &""], [&"potion_shelf", "Potion Shelf", 3, 2, &""]]:
+			[&"potion_bookcase", "Large Potion Cabinet", 4, 6, &""], [&"potion_shelf", "Potion Shelf", 3, 2, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -806,14 +806,16 @@ func _objects() -> Array[ObjectDef]:
 		out[i].fill_look = ObjectDef.FillLook.BOTTLES
 	out[13].container_slots = 10
 	out[13].bottle_shelves.assign([72, 56, 40, 24])
+	out[13].bottles_per_shelf = 8
+	out[13].bottle_x0 = 4.0
 	out[16].container_slots = 16
 	out[16].bottle_shelves.assign([88, 72, 56, 40, 24])
 	out[16].bottles_per_shelf = 11
-	out[16].bottle_x0 = 7.0
+	out[16].bottle_x0 = 4.0
 	out[17].container_slots = 4
 	out[17].bottle_shelves.assign([26])
 	out[17].bottles_per_shelf = 8
-	out[17].bottle_x0 = 6.5
+	out[17].bottle_x0 = 4.0
 	out[17].needs_floor = false
 	out[17].needs_wall = true  # hangs on a back wall
 	# Flat tops: other furniture can stand on these.
