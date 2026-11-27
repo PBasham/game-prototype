@@ -358,8 +358,18 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 65: Abyssal Stone and the endless sea (branch phase-65-abyssal-stone)**
+- [ ] Dig down through a beach: a dark Abyssal Stone layer under the sand and Hard Sand,
+      following the beach's curve and rising near its end to just above sea level; from
+      the sea's edge a wall of it goes straight down to the bottom of the world.
+- [ ] The ocean is a fifth of the world's width.
+- [ ] Nothing breaks it: mining, a Bomb, the Shaping Spell.
+- [ ] Drain or bottle a patch of sea: it fills back up over a few seconds while you're near.
+- [ ] Swim far out and back, save and reload: the sea is all there, and saving a big
+      explored ocean doesn't make the save huge.
+
 **Phase 64: the deep ocean (branch phase-64-the-deep)**
-- [ ] The ocean is about twice as wide, its floor sloping to about 220 tiles deep.
+- [ ] The ocean is much wider, its floor sloping to about 220 tiles deep.
 - [ ] In the middle, a chasm of open water drops to near the bottom of the world, into a
       big empty arena chamber. It winds side to side, with jagged stretches of wall.
 - [ ] Under the sea floor, the Deep: flooded caverns and tunnels, a few bigger empty

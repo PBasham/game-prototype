@@ -1286,6 +1286,10 @@ func _shapes_to_dict(chunks: Array[ChunkData]) -> Dictionary:
 func request_set_shape(tile: Vector2i, shape: int) -> bool:
 	if not Game.is_authority():
 		return false
+	var b := data.get_block(tile.x, tile.y)
+	var bdef := blocks.def(b) if b > 0 else null
+	if bdef and bdef.unbreakable and (shape & 7) != (data.get_shape(tile.x, tile.y) & 7):
+		return false  # Abyssal Stone keeps its whole shape (no gap for the sea to leak through)
 	if not data.set_shape(tile.x, tile.y, shape):
 		return false
 	renderer.refresh_tile(tile)

@@ -35,6 +35,7 @@ const COLORS := {
 	&"rope": Color("c8b080"),
 	&"sand": Color("e0c888"),
 	&"hard_sand": Color("b8955a"),
+	&"abyssal_stone": Color("1c2230"),
 }
 const WATER := Color("3a78c8")
 const SKY := Color("9cc8e8")

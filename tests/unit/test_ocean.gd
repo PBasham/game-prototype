@@ -210,3 +210,66 @@ func test_the_whole_ocean_is_contained() -> void:
 					leaks += 1
 	assert_gt(count, 10000)
 	assert_eq(leaks, 0)
+
+
+## Phase 65: the Abyssal Stone shell: nothing below sea level inside it connects to the
+## land outside without going through it (a flood fill through every other tile).
+func test_abyssal_stone_shuts_the_sea_in() -> void:
+	var g := _gen(1024, 512, 7)
+	var o := g.ocean()
+	var s := g.settings
+	var abyss := tiles.index_of(&"abyssal_stone")
+	var sea := g.surface_at(roundi(o.x - o.y) + 2)
+	var reach := roundi(o.y) + s.beach_width
+	var c := roundi(o.x)
+	var start := Vector2i(c, sea + 2)
+	assert_true(g.water_at(start.x, start.y))
+	var seen := {start: true}
+	var todo: Array[Vector2i] = [start]
+	var escaped := 0
+	while not todo.is_empty():
+		var t: Vector2i = todo.pop_back()
+		if absi(t.x - c) > reach:
+			escaped += 1
+			continue
+		for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var n := t + d
+			if n.y < sea or n.y >= g.height or seen.has(n) or g.block_at(n.x, n.y) == abyss:
+				continue
+			seen[n] = true
+			todo.append(n)
+	assert_gt(seen.size(), 20000, "the whole sea and the Deep")
+	assert_eq(escaped, 0, "nothing gets past the Abyssal Stone")
+
+
+## Its layer follows the beach under the sand, ends above sea level under the surface,
+## and the walls down the Deep's sides reach the world's floor.
+func test_abyssal_stone_follows_the_beach() -> void:
+	var g := _gen()
+	var o := g.ocean()
+	var s := g.settings
+	var abyss := tiles.index_of(&"abyssal_stone")
+	var sea := g.surface_at(roundi(o.x - o.y) + 2)
+	for side in [-1, 1]:
+		# Mid beach: under the sand and Hard Sand.
+		var x := roundi(o.x + side * (o.y + s.beach_width * 0.3))
+		var under := g.surface_at(x) + s.ocean_sand_depth + s.ocean_hard_sand_depth
+		assert_eq(g.block_at(x, under + 1), abyss, "under the beach's sand")
+		assert_eq(g.block_at(x, under - 2), tiles.index_of(&"hard_sand"))
+		# The beach's end: just above sea level, still covered.
+		var e := roundi(o.x + side * (o.y + s.beach_width - 1))
+		var top := g.surface_at(e)
+		while g.block_at(e, top) != abyss and top < g.height:
+			top += 1
+		assert_lt(top, sea, "its top is above sea level")
+		assert_gte(top - g.surface_at(e), s.abyss_cover, "under the surface")
+		# The Deep's side: down to the floor.
+		var wx := roundi(o.x + side * (o.y - s.deep_margin + 1))
+		var wy := g.surface_at(wx) + s.ocean_sand_depth + s.ocean_hard_sand_depth + 2
+		for y in range(wy, g.height):
+			if g.block_at(wx, y) != abyss:
+				fail_test("a gap in the wall at row %d" % y)
+				return
+		assert_true(g.sea_at(roundi(o.x), sea + 5), "inside is sea")
+		assert_false(g.sea_at(x, under + 10), "under the layer isn't")
+	pass_test("ok")

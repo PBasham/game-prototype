@@ -201,7 +201,8 @@ func surface_at(x: int) -> int:
 			# The beach: from the water's edge (sea level) up to the land.
 			var u := (d - _ocean_half) / float(settings.beach_width)
 			# Never below sea level, so water can't spill out over a low beach.
-			return mini(roundi(lerpf(float(_sea), float(land), smoothstep(0.0, 1.0, u))), _sea)
+			var beach := mini(roundi(lerpf(float(_sea), float(land), smoothstep(0.0, 1.0, u))), _sea)
+			return mini(beach, _beach_cap(u, land))
 	var pond := _pond_index(x)
 	if pond >= 0:
 		var p := _ponds[pond]
@@ -209,6 +210,80 @@ func surface_at(x: int) -> int:
 		var bottom := roundi(p.w + p.z * (1.0 - t * t))
 		return maxi(land, bottom)
 	return land
+
+
+## The beach's highest allowed row at u (0 the water's edge, 1 the land): it rises over
+## the outer part of the beach to keep abyss_cover tiles of sand over the Abyssal Stone's
+## top, which is abyss_rise rows above sea level.
+func _beach_cap(u: float, _land: int) -> int:
+	var s := settings
+	var top := float(_sea - s.abyss_rise - s.abyss_cover)
+	var start := 1.0 - s.abyss_taper
+	return roundi(lerpf(float(_sea), top, smoothstep(0.0, start, u)))
+
+
+## Half width of the Deep's zone: the Abyssal Stone walls go down from here.
+func _deep_zone() -> float:
+	return _ocean_half - settings.deep_margin
+
+
+## The top row of the Abyssal Stone layer at distance d from the ocean's middle (from
+## the Deep's edge out to the end of the beach): under the sand and Hard Sand, rising to
+## abyss_cover under the surface at the beach's end.
+func _abyss_top(x: int, d: float) -> int:
+	var s := settings
+	var sediment := float(s.ocean_sand_depth + s.ocean_hard_sand_depth)
+	var u := (d - _ocean_half) / float(maxi(s.beach_width, 1))
+	var depth := lerpf(sediment, float(s.abyss_cover), smoothstep(1.0 - s.abyss_taper, 1.0, u))
+	return surface_at(x) + roundi(depth)
+
+
+## Sand only inside the shell: under the layer is the land's own ground.
+func _inside_shell(x: int, y: int) -> bool:
+	var d := absf(float(wrap_delta(posmod(x, width), _ocean_c)))
+	return d < _deep_zone() or y < _abyss_top(x, d)
+
+
+## True in the Abyssal Stone shell: the layer under each side's sand, and the walls down
+## from the Deep's edges to the world's floor.
+func abyssal_at(x: int, y: int) -> bool:
+	if _ocean_c < 0:
+		return false
+	var s := settings
+	x = posmod(x, width)
+	var dx := wrap_delta(x, _ocean_c)
+	var d := absf(float(dx))
+	var zone := _deep_zone()
+	if d < zone or d >= _ocean_half + s.beach_width:
+		return false
+	var top := _abyss_top(x, d)
+	if y < top:
+		return false
+	if d < zone + s.abyss_thickness:
+		return true  # the wall down the Deep's side
+	# The layer: thick enough to overlap its neighbors, so it has no diagonal gaps.
+	var bottom := top + s.abyss_thickness
+	if y < bottom:
+		return true
+	if y > top + 60:
+		return false
+	for n in [x - 1, x + 1]:
+		var nd := absf(float(wrap_delta(n, _ocean_c)))
+		if nd >= zone and nd < _ocean_half + s.beach_width:
+			bottom = maxi(bottom, _abyss_top(n, nd) + 1)
+	return y < bottom
+
+
+## True inside the sea at or below sea level (within the Abyssal Stone): open space here
+## refills with water.
+func sea_at(x: int, y: int) -> bool:
+	if _ocean_c < 0 or y < _sea:
+		return false
+	x = posmod(x, width)
+	var d := absf(float(wrap_delta(x, _ocean_c)))
+	if d < _deep_zone():
+		return true
+	return d < _ocean_half + settings.beach_width and y < _abyss_top(x, d)
 
 
 ## The surface before the ocean and ponds are dug: hills, cliffs, the flat spawn.
@@ -547,9 +622,11 @@ func _column(x: int) -> PackedFloat32Array:
 
 
 func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloat32Array]) -> int:
+	if _ocean_c >= 0 and abyssal_at(x, y):
+		return _b[&"abyssal_stone"]
 	if _ocean_c >= 0 and y > int(col[0]) and deep_open(x, y):
 		return WorldData.AIR  # the Deep (water fills it)
-	if _ocean_c >= 0 and y >= int(col[0]) and y < height - settings.floor_rows and _sandy(x, y):
+	if _ocean_c >= 0 and y >= int(col[0]) and y < height - settings.floor_rows and _sandy(x, y) and _inside_shell(x, y):
 		var depth := y - int(col[0])
 		if depth < settings.ocean_sand_depth:
 			return _b[&"sand"]

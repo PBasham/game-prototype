@@ -88,7 +88,7 @@ func test_only_forest_and_ocean_blocks() -> void:
 	var g := _gen(3)
 	var allowed := [WorldData.AIR]
 	for id: StringName in [&"dirt", &"grass", &"stone", &"copper_ore", &"iron_ore", &"clay",
-			&"dark_forest_dirt", &"dark_forest_grass", &"dark_forest_stone", &"sand", &"hard_sand"]:
+			&"dark_forest_dirt", &"dark_forest_grass", &"dark_forest_stone", &"sand", &"hard_sand", &"abyssal_stone"]:
 		allowed.append(blocks.index_of(id))
 	for x in range(0, W, 37):
 		for y in range(0, H, 11):
@@ -113,8 +113,8 @@ func test_bottom_rows_are_solid() -> void:
 	var g := _gen(6)
 	for x in range(0, W, 13):
 		for y in range(H - settings.floor_rows, H):
-			assert_true(g.block_at(x, y) in [blocks.index_of(&"stone"), blocks.index_of(&"dark_forest_stone")],
-				"stone (Dark Forest Stone under the Dark Forest)")
+			assert_true(g.block_at(x, y) in [blocks.index_of(&"stone"), blocks.index_of(&"dark_forest_stone"), blocks.index_of(&"abyssal_stone")],
+				"stone (Dark Forest Stone under the Dark Forest, Abyssal Stone under the sea's walls)")
 
 
 func test_caves_exist() -> void:

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TileDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/tile_def.gd" id="1_tiledef"]
+
+[resource]
+script = ExtResource("1_tiledef")
+atlas_row = 23
+collision = 1
+climbable = false
+biome = &"ocean"
+health = 0.0
+unbreakable = true
+terrain = "abyssal_stone"
+id = &"abyssal_stone"
+display_name = "Abyssal Stone"

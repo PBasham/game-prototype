@@ -42,6 +42,19 @@ const Z := 3
 @export var water_fringe := 3
 ## Water cells' opacity.
 @export_range(0.0, 1.0) var water_alpha := 0.72
+## The sea refills itself: open space in the sea (inside its Abyssal Stone shell, below
+## sea level) that touches water fills back up, this many tiles a second, within
+## refill_radius tiles of the player.
+@export var ocean_refill := true
+@export var refill_tiles_per_second := 8.0
+@export var refill_radius := 48
+## Tiles tried per refill pass (4 passes a second).
+@export var refill_samples := 48
+## Generated water nothing has touched (a pristine chunk) is dropped from memory this far
+## from the player (tiles, either axis) and put back from the generator within
+## water_load_tiles. It isn't saved either: the generator makes it again.
+@export var water_unload_tiles := 192
+@export var water_load_tiles := 144
 
 var world: World
 ## Index + 1 = a cell's material code.
@@ -78,6 +91,13 @@ var _regions: Dictionary[Vector2i, Array] = {}  # region -> [Image, ImageTexture
 var _width_cells := 0
 ## Chunks whose generated water is already in `tiles` (saved, so it isn't added twice).
 var _imported: Dictionary[Vector2i, bool] = {}
+## Imported chunks whose cells changed since (saved; never dropped).
+var _dirty: Dictionary[Vector2i, bool] = {}
+## Pristine chunks dropped while far away, put back when the player comes near.
+var _unloaded: Dictionary[Vector2i, bool] = {}
+var _refill_left := 0.0
+var _refill_budget := 0.0
+var _stream_left := 0.0
 
 
 func setup(w: World) -> void:
@@ -153,6 +173,7 @@ func _set_cell(c: Vector2i, byte: int) -> void:
 		tiles.erase(t)
 	else:
 		tiles[t] = arr
+	_dirty[_chunk_of(t)] = true
 	if _in_step:
 		_changed[t] = true
 	else:
@@ -400,27 +421,107 @@ func import_generated() -> void:
 	if fresh.is_empty():
 		return
 	world.data.fresh_water = []
-	var code := code_of(&"water")
-	if code == 0:
-		return
 	for chunk in fresh:
-		if _imported.has(chunk.coord):
+		if not _imported.has(chunk.coord):
+			_unloaded.erase(chunk.coord)
+			_import_chunk(chunk)
+
+
+func _import_chunk(chunk: ChunkData) -> void:
+	var code := code_of(&"water")
+	if code == 0 or chunk.water.is_empty():
+		return
+	_imported[chunk.coord] = true
+	var ox := chunk.coord.x * ChunkData.SIZE
+	var oy := chunk.coord.y * ChunkData.SIZE
+	for i in ChunkData.AREA:
+		if chunk.water[i] == 0:
 			continue
-		_imported[chunk.coord] = true
-		var ox := chunk.coord.x * ChunkData.SIZE
-		var oy := chunk.coord.y * ChunkData.SIZE
-		for i in ChunkData.AREA:
-			if chunk.water[i] == 0:
-				continue
-			var t := Vector2i(ox + i % ChunkData.SIZE, oy + i / ChunkData.SIZE)
-			if tiles.has(t) or chunk.blocks[i] != WorldData.AIR:
-				continue
-			var arr := PackedByteArray()
-			arr.resize(CELLS)
-			for k in CELLS:
-				arr[k] = code | ((randi() % 16) << 4)
-			tiles[t] = arr
-			_paint[t] = true
+		var t := Vector2i(ox + i % ChunkData.SIZE, oy + i / ChunkData.SIZE)
+		if tiles.has(t) or chunk.blocks[i] != WorldData.AIR:
+			continue
+		var arr := PackedByteArray()
+		arr.resize(CELLS)
+		for k in CELLS:
+			arr[k] = code | ((randi() % 16) << 4)
+		tiles[t] = arr
+		_paint[t] = true
+
+
+static func _chunk_of(t: Vector2i) -> Vector2i:
+	return Vector2i(t.x >> 5, t.y >> 5)
+
+
+## True when an imported chunk is just as the generator made it: its water untouched
+## and its blocks never edited. Such water isn't saved and can be dropped.
+func is_pristine(c: Vector2i) -> bool:
+	if not _imported.has(c) or _dirty.has(c):
+		return false
+	var chunk := world.data.peek_chunk(c)
+	return chunk != null and not chunk.modified
+
+
+# --- streaming and the sea's refill --------------------------------------------------------
+
+## Drops pristine water far from the player and puts it back near them.
+func stream_water(center: Vector2i) -> void:
+	var w := world.data.width
+	var far := func(c: Vector2i, reach: int) -> bool:
+		var dx := absi(posmod(c.x * ChunkData.SIZE + 16 - center.x + w / 2, w) - w / 2) - 16
+		var dy := absi(c.y * ChunkData.SIZE + 16 - center.y) - 16
+		return maxi(dx, dy) > reach
+	for c: Vector2i in _unloaded.keys():
+		if not far.call(c, water_load_tiles):
+			_unloaded.erase(c)
+			var chunk := world.data.peek_chunk(c)
+			if chunk:
+				_import_chunk(chunk)
+	for c: Vector2i in _imported.keys():
+		if far.call(c, water_unload_tiles) and is_pristine(c):
+			_drop_chunk(c)
+
+
+func _drop_chunk(c: Vector2i) -> void:
+	_imported.erase(c)
+	_unloaded[c] = true
+	var o := c * ChunkData.SIZE
+	for ty in ChunkData.SIZE:
+		for tx in ChunkData.SIZE:
+			var t := o + Vector2i(tx, ty)
+			tiles.erase(t)
+			_active.erase(t)
+			_paint.erase(t)
+			if _col_x.has(t):
+				_col_dirty[t] = true
+	var per := ChunkData.SIZE / REGION
+	for ry in per:
+		for rx in per:
+			_regions.erase(Vector2i(c.x * per + rx, c.y * per + ry))
+
+
+## Fills open sea tiles near `center` that touch water, up to the budget.
+func refill_sea(center: Vector2i, budget: int) -> int:
+	var gen := world.generator
+	var air := WorldData.AIR
+	var n := 0
+	for i in refill_samples:
+		if n >= budget:
+			break
+		var t := Vector2i(world.data.wrap_x(center.x + randi_range(-refill_radius, refill_radius)),
+				center.y + randi_range(-refill_radius, refill_radius))
+		if t.y < 0 or t.y >= world.data.height - 1 or not gen.sea_at(t.x, t.y):
+			continue
+		if world.data.get_block(t.x, t.y) != air or count_in(t, &"water") == CELLS:
+			continue
+		var wet := count_in(t, &"water") > 0
+		if not wet:
+			for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				if count_in(Vector2i(world.data.wrap_x(t.x + d.x), t.y + d.y), &"water") > 0:
+					wet = true
+					break
+		if wet and request_fill(t, &"water") > 0:
+			n += 1
+	return n
 
 
 func _physics_process(delta: float) -> void:
@@ -433,6 +534,18 @@ func _physics_process(delta: float) -> void:
 	while _acc >= 1.0:
 		_acc -= 1.0
 		step()
+	if world.player:
+		var at := world.wrap_tile(world.world_to_tile(world.player.global_position))
+		_stream_left -= delta
+		if _stream_left <= 0.0:
+			_stream_left = 2.0
+			stream_water(at)
+		if ocean_refill:
+			_refill_budget = minf(_refill_budget + delta * refill_tiles_per_second, refill_tiles_per_second)
+			_refill_left -= delta
+			if _refill_left <= 0.0:
+				_refill_left = 0.25
+				_refill_budget -= refill_sea(at, floori(_refill_budget))
 	_col_check_left -= delta
 	if _col_check_left <= 0.0:
 		_col_check_left = 1.0
@@ -1105,7 +1218,13 @@ func to_dict() -> Dictionary:
 	for m in materials:
 		names.append(String(m.id))
 	var out := {}
+	var skip: Dictionary[Vector2i, bool] = {}
+	for c: Vector2i in _imported:
+		if is_pristine(c):
+			skip[c] = true  # the generator makes it again
 	for t: Vector2i in tiles:
+		if skip.has(_chunk_of(t)):
+			continue
 		var arr: PackedByteArray = tiles[t]
 		# A tile all of one material is saved as just its code (the shades are random).
 		var code := arr[0] & 15
@@ -1118,7 +1237,8 @@ func to_dict() -> Dictionary:
 		out["%d,%d" % [t.x, t.y]] = code if same else arr
 	var done: Array[String] = []
 	for c: Vector2i in _imported:
-		done.append("%d,%d" % [c.x, c.y])
+		if not skip.has(c):
+			done.append("%d,%d" % [c.x, c.y])
 	return {"materials": names, "tiles": out, "imported": done}
 
 
@@ -1158,4 +1278,6 @@ func from_dict(d: Dictionary) -> void:
 	for key: String in d.get("imported", []):
 		var parts := key.split(",")
 		if parts.size() == 2:
-			_imported[Vector2i(int(parts[0]), int(parts[1]))] = true
+			var c := Vector2i(int(parts[0]), int(parts[1]))
+			_imported[c] = true
+			_dirty[c] = true  # it was saved because it changed: keep saving it

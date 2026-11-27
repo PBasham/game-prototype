@@ -2,12 +2,24 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 65, Abyssal Stone and the endless sea
+
+- **Patrick:** the ocean's water never runs out; a very hard stone nobody can ever break
+  keeps players from opening the ocean to the rest of the world, its top at sea level.
+- **Claude (agreed brief):** an Abyssal Stone shell under both beaches down to the world
+  floor, its top 2 rows above sea level under 3 tiles of sand; open sea touching water
+  refills near the player; untouched generated water isn't saved and is dropped far away.
+- **Patrick (follow-up):** the Abyssal Stone outside the sand with the same curve, the
+  outside layer of the ocean biome on the sides; the ocean a fifth of the world, not a
+  quarter. Now a layer under the beach sand, rising at the beach's end, and a wall down
+  each side of the Deep.
+
 ## 2026-11-27: Phase 64, the deep ocean
 
 - **Patrick:** the ocean a lot larger and significantly deeper; the middle opens into a
   drop-off far down to an underwater cave system, with room for a large Leviathan-type
   boss, scenes and enemies later; the ocean bottom goes all the way to the bottom of the map.
-- **Claude (agreed brief):** 25% of the world wide, upper floor to 150 deep, a 50 to 80
+- **Claude (agreed brief):** 25% of the world wide (later 20%), upper floor to 150 deep, a 50 to 80
   wide chasm to an empty 140 x 70 arena at the bottom, flooded caves under the whole
   ocean, 4 empty scene caverns, sunlight 24 tiles down.
 - **Patrick (follow-up):** the upper ocean a bit deeper; the chasm not straight down but

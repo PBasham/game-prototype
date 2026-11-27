@@ -592,6 +592,15 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 65: Abyssal Stone and the endless sea
+
+| Change | Where |
+| --- | --- |
+| Abyssal Stone tile and item | `data/tiles/abyssal_stone.tres` (`unbreakable`, atlas row 23), `data/items/abyssal_stone.tres`, art `tools/make_abyss_art.py` |
+| The shell, the beach rising over it, the sea | `ForestGenerator.abyssal_at`, `_abyss_top`, `_beach_cap`, `_inside_shell`, `sea_at` (`WorldGenerator.sea_at` none); "Abyssal Stone" in `ForestGenSettings` |
+| No reshaping unbreakable blocks | `World.request_set_shape` |
+| Pristine water, streaming, refill | `VoxelLayer.is_pristine`, `_dirty`, `_unloaded`, `stream_water`, `_drop_chunk`, `_import_chunk`, `refill_sea`, `to_dict` |
+
 ## Phase 64: the deep ocean
 
 | Change | Where |

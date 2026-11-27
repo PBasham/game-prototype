@@ -33,7 +33,7 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	height = world_height
 	seed = world_seed
 	for id: StringName in [&"dirt", &"grass", &"stone", &"copper_ore", &"iron_ore", &"clay", &"wood_planks", &"wood_platform", &"rope",
-			&"dark_forest_dirt", &"dark_forest_grass", &"dark_forest_stone", &"sand", &"hard_sand"]:
+			&"dark_forest_dirt", &"dark_forest_grass", &"dark_forest_stone", &"sand", &"hard_sand", &"abyssal_stone"]:
 		_b[id] = tiles.index_of(id)
 	for id: StringName in [&"dirt_wall", &"stone_wall", &"wood_wall", &"dark_forest_dirt_wall", &"dark_forest_stone_wall",
 			&"sand_wall", &"hard_sand_wall"]:
@@ -90,6 +90,12 @@ func light_floor_at(x: int) -> int:
 
 ## True where the Deep's flooded caves are (under the ocean). None by default.
 func deep_open(_x: int, _y: int) -> bool:
+	return false
+
+
+## True inside the sea (within its Abyssal Stone shell, at or below sea level): open
+## space here refills with water (VoxelLayer's ocean refill). None by default.
+func sea_at(_x: int, _y: int) -> bool:
 	return false
 
 

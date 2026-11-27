@@ -363,7 +363,7 @@ get none.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `ocean_share`, `ocean_min_width` | 0.25, 140 | Width of the water at sea level |
+| `ocean_share`, `ocean_min_width` | 0.2, 140 | Width of the water at sea level |
 | `ocean_depth` | 220 | The upper sea floor's deepest point below sea level, around the chasm's mouth (at most half the world below sea level) |
 | `ocean_shelf`, `ocean_shelf_depth` | 0.3, 8 | A shallow shelf near each shore (share of the half width, depth) before the drop |
 | `ocean_floor_bumps` | 3 | Bumps on the sea floor (deeper parts only) |
@@ -427,12 +427,41 @@ within `pond_spawn_clear` (40) of spawn, the ocean or the Dark Forest. The bed i
 the water's top is one row below the lower bank, and there are no caves within 12 tiles
 under a pond or trees right beside it.
 
+### Abyssal Stone (Phase 65)
+
+**Abyssal Stone** is the ocean's outer layer on both sides, `abyss_thickness` (4) tiles
+thick:
+
+- a wall straight down each side of the Deep (at `deep_margin` in from the water's
+  edge) to the world's floor
+- from there, a layer under the sand and Hard Sand following their curve out across the
+  beach; over the last `abyss_taper` (0.35) of the beach it rises to `abyss_cover` (3)
+  tiles under the surface, ending at least `abyss_rise` (2) rows above sea level (the
+  beach rises a little to keep it covered: `_beach_cap`). Under the layer is the land's
+  own ground.
+
+Nothing breaks it (`TileDef.unbreakable`: not mining, not the Bomb, and the Shaping Spell
+can't reshape it), so the sea can't drain into the land and the Deep is only reached
+through the sea. `ForestGenerator.abyssal_at(x, y)`, `_abyss_top`; `sea_at(x, y)` is the
+sea inside it (at or below sea level), where the sea refills itself (below).
+
 ### Water
 
 `water_at(x, y)` says where the world starts full of water. Generating a chunk records
 it in `ChunkData.water`; the voxel layer fills those tiles with water cells
-(`VoxelLayer.import_generated`), at rest, once per chunk (the imported chunks are saved,
-so reloading never adds it twice). The world map preview draws water blue and sand tan.
+(`VoxelLayer.import_generated`), at rest, once per chunk. The world map preview draws
+water blue and sand tan.
+
+- **Pristine water** (Phase 65): a chunk whose water nothing has touched and whose blocks
+  were never edited (`VoxelLayer.is_pristine`) isn't saved: the generator makes it again
+  on load. Touched chunks are saved whole and marked imported, so reloading never adds
+  water twice. Pristine chunks farther than `water_unload_tiles` (192) from you are
+  dropped from memory and put back within `water_load_tiles` (144) (`stream_water`).
+- **The sea refills itself** (Phase 65): open space in the sea (`sea_at`) next to water
+  fills back up, `refill_tiles_per_second` (8) tiles a second within `refill_radius` (48)
+  of you (`ocean_refill`, `refill_samples` 48 tries a pass, 4 passes a second;
+  `VoxelLayer.refill_sea`). A sealed dry room under the sea stays dry (only tiles touching
+  water refill).
 
 ## Code tour
 

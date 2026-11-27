@@ -233,6 +233,7 @@ func _items() -> Array[ItemData]:
 	sand.place_units = 16  # one grain per voxel cell (Phase 52)
 	out.append(sand)
 	out.append(_block(&"hard_sand", "Hard Sand", "Packed sand from under the beaches and the sea floor. It doesn't fall.", &"hard_sand_wall"))
+	out.append(_block(&"abyssal_stone", "Abyssal Stone", "The shell around the sea. Nothing can break it, not even a bomb."))
 	var sand_bricks := _block(&"sand_bricks", "Sand Bricks", "Sand pressed into bricks, counted like sand: a block or wall takes 16. Doesn't fall. Explosions bite pieces out of it; mining a bitten tile gives what's left, refilling it takes what's missing.", &"sand_bricks_wall")
 	sand_bricks.place_units = 16  # one brick per voxel cell (Phase 53)
 	out.append(sand_bricks)

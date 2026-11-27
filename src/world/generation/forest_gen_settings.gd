@@ -221,7 +221,7 @@ extends GameData
 ## Where its middle is: this share of the world width away from spawn (0.5 = the far side).
 @export_range(0.1, 0.9) var ocean_distance := 0.5
 ## Width of the water at sea level: this share of the world width, at least ocean_min_width.
-@export_range(0.0, 0.5) var ocean_share := 0.25
+@export_range(0.0, 0.5) var ocean_share := 0.2
 @export var ocean_min_width := 140
 ## The upper sea floor's deepest point below sea level (beside the center chasm). Kept
 ## to at most half the world below sea level on small worlds.
@@ -242,6 +242,19 @@ extends GameData
 ## Sunlight reaches this many tiles down into the sea; deeper water gets darker
 ## (LightMap's cave air fade).
 @export var sunlit_water_tiles := 24
+
+@export_group("Abyssal Stone (the sea's shell)")
+## Unbreakable Abyssal Stone is the ocean's outer layer, so the sea can't drain into the
+## land and the Deep is only reached through the sea. On each side: a layer
+## abyss_thickness tiles thick under the sand and Hard Sand, following their curve from
+## the Deep's edge out across the beach. Over the last abyss_taper of the beach it rises
+## to abyss_cover tiles under the surface, ending abyss_rise rows above sea level (the
+## beach rises a little to keep it covered). From the Deep's edge it goes straight down
+## to the world's floor.
+@export_range(0.05, 0.9) var abyss_taper := 0.35
+@export var abyss_thickness := 4
+@export var abyss_rise := 2
+@export var abyss_cover := 3
 
 @export_group("The Deep (under the ocean)")
 ## The center chasm: an open shaft of water from the sea floor down to the arena.
