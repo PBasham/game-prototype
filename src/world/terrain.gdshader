@@ -28,6 +28,12 @@ uniform float grass_slots[32];
 uniform float built_slots[32];
 uniform float built_walls[32];
 uniform float overhang_slots[32];
+// Back walls whose runs end sticking out with rounded tips (log walls), and blocks that
+// stand upright when stacked in a single column (logs).
+uniform float overhang_walls[32];
+uniform float turn_slots[32];
+// Per wall slot: brightness so every wall is the same step darker than its block.
+uniform float wall_mult[32];
 // See-through (glass) blocks and walls: a light rim instead of the dark edge line.
 uniform float clear_slots[32];
 uniform float clear_walls[32];
@@ -185,11 +191,25 @@ vec4 strip(sampler2D s, int slot, vec2 p) {
 	return texelFetch(s, ivec2((slot - 1) * CELL + q.x, q.y), 0);
 }
 
+// The same, turned a quarter (an upright log).
+vec4 strip_t(sampler2D s, int slot, vec2 p, bool turn) {
+	ivec2 q = ivec2(mod(floor(p * DET), float(CELL)));
+	if (turn) q = q.yx;
+	return texelFetch(s, ivec2((slot - 1) * CELL + q.x, q.y), 0);
+}
+
+// A log (turn_slots) standing in a single column: drawn upright.
+bool upright(ivec2 t) {
+	int b = blk(t);
+	return b > 0 && turn_slots[b] > 0.5 && blk(t + ivec2(-1, 0)) != b && blk(t + ivec2(1, 0)) != b
+		&& (blk(t + ivec2(0, -1)) == b || blk(t + ivec2(0, 1)) == b);
+}
+
 // Crisp square tile with a dark edge line where it meets open space. `cut` rounds an
 // outer corner by one pixel, only where the diagonal neighbor is open too.
-vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bool right, float edge_dark, bool cut, bvec4 diag, bool clear) {
+vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bool right, float edge_dark, bool cut, bvec4 diag, bool clear, float ovh, bool turn) {
 	vec2 lp = p - floor(p / T) * T;
-	if (overhang_slots[slot] > 0.5 && edge_dark < 0.5) {
+	if (ovh > 0.5 && !turn) {
 		left = false;  // the run's end sticks out instead (overhang_px)
 		right = false;
 	}
@@ -197,7 +217,7 @@ vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bo
 			|| (down && left && diag.z && lp.x < 1.0 && lp.y >= 7.0) || (down && right && diag.w && lp.x >= 7.0 && lp.y >= 7.0))) {
 		return vec4(0.0);
 	}
-	vec3 c = strip(tex, slot, p).rgb;
+	vec3 c = strip_t(tex, slot, p, turn).rgb;
 	bool edge = (up && lp.y < 1.0) || (down && lp.y >= 7.0) || (left && lp.x < 1.0) || (right && lp.x >= 7.0);
 	if (edge && clear) {
 		c = mix(c, vec3(0.86, 0.94, 0.97), 0.7);  // glass: a light rim, no dark line
@@ -209,7 +229,7 @@ vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bo
 		if (left && lp.x < 2.0) c *= 1.06;
 		if (right && lp.x >= 6.0) c *= 0.88;
 	}
-	return vec4(c, edge ? 1.0 : strip(tex, slot, p).a);
+	return vec4(c, edge ? 1.0 : strip_t(tex, slot, p, turn).a);
 }
 
 // A wall edge only counts as open where there is neither a wall nor a block.
@@ -234,7 +254,7 @@ void fragment() {
 		bvec4 diag = bvec4(blk(here_t + ivec2(-1, -1)) == 0, blk(here_t + ivec2(1, -1)) == 0,
 			blk(here_t + ivec2(-1, 1)) == 0, blk(here_t + ivec2(1, 1)) == 0);
 		col = built_px(materials, here, p, blk(here_t + ivec2(0, -1)) == 0, blk(here_t + ivec2(0, 1)) == 0,
-			blk(here_t + ivec2(-1, 0)) == 0, blk(here_t + ivec2(1, 0)) == 0, 0.38, true, diag, clear_slots[here] > 0.5);
+			blk(here_t + ivec2(-1, 0)) == 0, blk(here_t + ivec2(1, 0)) == 0, 0.38, true, diag, clear_slots[here] > 0.5, overhang_slots[here], upright(here_t));
 		col.rgb = min(col.rgb * built_block_shade, vec3(1.0));
 		drew = col.a > 0.99;
 		if (!drew && col.a > 0.0) {
@@ -289,8 +309,8 @@ void fragment() {
 		vec2 lp = p - floor(p / T) * T;
 		int lm = blk(here_t + ivec2(-1, 0));
 		int rm = blk(here_t + ivec2(1, 0));
-		float ln = is_built(lm) ? overhang_slots[lm] : 0.0;
-		float rn = is_built(rm) ? overhang_slots[rm] : 0.0;
+		float ln = is_built(lm) && !upright(here_t + ivec2(-1, 0)) ? overhang_slots[lm] : 0.0;
+		float rn = is_built(rm) && !upright(here_t + ivec2(1, 0)) ? overhang_slots[rm] : 0.0;
 		int sm = 0;
 		bool tip = false;
 		if (lp.x < ln) { sm = lm; tip = lp.x >= ln - 1.0; }
@@ -324,12 +344,29 @@ void fragment() {
 		int wh = wal(here_t);
 		if (!done && wh > 0 && built_walls[wh] > 0.5) {
 			col = built_px(wall_tex, wh, p, wall_open(here_t + ivec2(0, -1)), wall_open(here_t + ivec2(0, 1)),
-				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false), clear_walls[wh] > 0.5);
-			col.rgb = min(shade_wall(col.rgb) * built_wall_shade, vec3(1.0));
+				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false), clear_walls[wh] > 0.5,
+				overhang_walls[wh], false);
+			col.rgb = min(shade_wall(col.rgb) * built_wall_shade * wall_mult[wh], vec3(1.0));
 		} else if (!done && field_w(p) + nz(p) * 0.6 > 0.5) {
 			int w = wall_at(p);
 			if (w > 0 && built_walls[w] < 0.5) {
-				col = vec4(shade_wall(strip(wall_tex, w, p).rgb), 1.0);
+				col = vec4(min(shade_wall(strip(wall_tex, w, p).rgb) * wall_mult[w], vec3(1.0)), 1.0);
+			}
+		}
+		if (!done && wh == 0 && here == 0 && col.a == 0.0) {
+			// A log wall's end sticking out into this open tile, rounded like the blocks'.
+			vec2 lp = p - floor(p / T) * T;
+			int lw = wal(here_t + ivec2(-1, 0));
+			int rw = wal(here_t + ivec2(1, 0));
+			float ln = lw > 0 && built_walls[lw] > 0.5 ? overhang_walls[lw] : 0.0;
+			float rn = rw > 0 && built_walls[rw] > 0.5 ? overhang_walls[rw] : 0.0;
+			int sw = 0;
+			bool tip = false;
+			if (lp.x < ln) { sw = lw; tip = lp.x >= ln - 1.0; }
+			else if (lp.x >= 8.0 - rn) { sw = rw; tip = lp.x < 9.0 - rn; }
+			if (sw > 0 && lp.y >= 1.0 && lp.y < 7.0 && !(tip && (lp.y < 2.0 || lp.y >= 6.0))) {
+				vec3 c = strip(wall_tex, sw, p).rgb;
+				col = vec4(min(shade_wall(tip ? c * 0.85 : c) * built_wall_shade * wall_mult[sw], vec3(1.0)), 1.0);
 			}
 		}
 	}

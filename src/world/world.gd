@@ -64,6 +64,12 @@ var _biome_cache: Dictionary = {}
 @export var craft_chest_tiles := 12.0
 ## Dev console `freecraft`: crafting needs no materials (and nothing is used up).
 var free_crafting := false
+## Dev console `instant_placement`: holding the button places every frame, no wait.
+var instant_place := false
+## Dev console `instant_break`: blocks, walls and trees break at once, every frame.
+var instant_break := false
+## Dev console `no_drop`: nothing drops (mined blocks, trees, loot).
+var no_drop := false
 ## Dev console `infinite`: blocks, furniture, food and throwables aren't used up.
 var infinite_items := false
 ## Loose items on the ground at most; past this the oldest disappear. 0 = no limit.
@@ -1620,6 +1626,8 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 		return false
 	if not wall and is_protected(tile):
 		return false
+	if instant_break:
+		amount = INF
 	var key := Vector3i(tile.x, tile.y, 1 if wall else 0)
 	var entry: Array = _damage.get(key, [0.0, 0.0])
 	entry[0] = float(entry[0]) + amount
@@ -1830,6 +1838,8 @@ func tele_grab(portal: Vector2, radius: float, speed: float) -> int:
 
 func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vector2 = Vector2.ZERO,
 		thrown: bool = false) -> ItemDrop:
+	if no_drop and not thrown:
+		return null  # dev `no_drop` (throwing still works)
 	if not Game.is_authority() or count <= 0 or ItemData.find(item_id) == null:
 		return null
 	if String(item_id).begins_with(ItemData.SPELL_PREFIX):

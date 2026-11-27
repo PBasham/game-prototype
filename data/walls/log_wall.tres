@@ -10,5 +10,6 @@ atlas_row = 3
 collision = 0
 terrain = "logs_wall"
 built = true
+overhang_px = 2
 id = &"log_wall"
 display_name = "Log Wall"

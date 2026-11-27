@@ -112,6 +112,7 @@ func _process(delta: float) -> void:
 		if not p.spend_mana(p.mana_cost_of(_item as SpellData, true) * delta):
 			p.stop_using()
 			EventBus.debug_message.emit("Out of mana")
+	_instant_use(p)
 	if mode == Mode.GRAB and p.is_using() and not p.input_blocked and problem == "":
 		var sp := _item as SpellData
 		world.tele_grab(grab_point(), sp.grab_tiles * TILE, sp.grab_pull_speed * TILE)
@@ -1264,3 +1265,44 @@ func _update_held_light() -> void:
 		_held_light.name = "HeldLight"
 		add_child(_held_light)
 	_held_light.set_light(world, p.doll_item_position(), r, it.held_light_color if it else Color.WHITE)
+
+
+## Dev `instant_placement` / `instant_break`: while the button is held, place or break
+## what's targeted every frame instead of once per swing.
+func _instant_use(p: Player) -> void:
+	if _item == null or p.input_blocked or p.typing or p.dead:
+		return
+	var front := Input.is_action_pressed("use_primary")
+	var behind := Input.is_action_pressed("use_secondary")
+	if not (front or behind):
+		return
+	var placing := world.instant_place and _places(_item) and mode in [Mode.PLACE_BLOCK, Mode.PLACE_WALL, Mode.PLACE_OBJECT]
+	var breaking := world.instant_break and mode in [Mode.MINE, Mode.CHOP]
+	if not (placing or breaking):
+		return
+	update_target(cursor(), behind and not front)
+	if mode == Mode.CHOP:
+		if tree != PlantLayer.NONE:
+			world.plants.request_hit_tree(tree, INF, p.global_position.x)
+		return
+	if mode == Mode.MINE:
+		for t in valid:
+			if back:
+				world.request_damage_wall(t, INF)
+			else:
+				world.request_damage_block(t, INF)
+		return
+	var inv_ok := func() -> bool: return p.held_count() > 0
+	for t in valid:
+		if not inv_ok.call():
+			break
+		var done := false
+		match mode:
+			Mode.PLACE_BLOCK:
+				done = world.request_set_block(t, world.blocks.index_of(_item.places_block))
+			Mode.PLACE_WALL:
+				done = world.request_set_wall(t, world.walls.index_of(_item.places_wall))
+			Mode.PLACE_OBJECT:
+				done = world.request_place_object(t, world.objects.index_of(_item.places_object), p.facing < 0)
+		if done:
+			p.take_held()

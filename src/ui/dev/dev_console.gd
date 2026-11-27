@@ -560,6 +560,15 @@ func _register() -> void:
 	_add("reach", "reach", "Toggle unlimited reach for mining, chopping and placing.", func(_a: PackedStringArray) -> void:
 		world.item_user.infinite_reach = not world.item_user.infinite_reach
 		_print("Unlimited reach %s." % ("on" if world.item_user.infinite_reach else "off")))
+	_add("instant_placement", "instant_placement", "Toggle placing every frame while the button is held (no wait between placements).", func(_a: PackedStringArray) -> void:
+		world.instant_place = not world.instant_place
+		_print("Instant placement %s." % ("on" if world.instant_place else "off")))
+	_add("instant_break", "instant_break", "Toggle breaking blocks, walls and trees at once, every frame while the button is held.", func(_a: PackedStringArray) -> void:
+		world.instant_break = not world.instant_break
+		_print("Instant break %s." % ("on" if world.instant_break else "off")))
+	_add("no_drop", "no_drop", "Toggle drops: nothing drops from mining, trees or enemies (throwing still works).", func(_a: PackedStringArray) -> void:
+		world.no_drop = not world.no_drop
+		_print("No drops %s." % ("on" if world.no_drop else "off")))
 	_add("crafttab", "crafttab <tab> [row|name]", "In the open crafting window: switch to a tab (0 = the first) and select a row (for screenshots).", func(a: PackedStringArray) -> void:
 		if a.is_empty() or not a[0].is_valid_int():
 			_print("Usage: crafttab <tab> [row]")

@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 42: dev commands, logs, wall brightness (branch phase-42-dev-logs)**
+- [ ] Console `instant_placement`, `instant_break`, `no_drop` toggle as named.
+- [ ] A single column of logs stands upright; a run of log walls ends in rounded tips.
+- [ ] Back walls are one clear step darker than their blocks for every material (dirt and stone caves are a bit brighter than before, clay and sand walls darker).
+
 **Phase 41: the Empower tree (branch phase-41-empower-tree)**
 - [ ] Spell Weaving Table > Empower: each spell once. Click one: a tree of round nodes with icons; locked ones dim with a padlock until the node above has a rank.
 - [ ] Click a node: name, rank, what it does, "Max area 2 -> 3", cost, Empower. No "copper bars, then iron" text.

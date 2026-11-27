@@ -221,6 +221,8 @@ func sapling_spot(tile: Vector2i) -> Vector2i:
 func request_hit_tree(ground: Vector2i, damage: float, from_x: float) -> bool:
 	if not Game.is_authority():
 		return false
+	if world.instant_break:
+		damage = INF
 	ground = world.wrap_tile(ground)
 	var plant: Plant = _plants.get(ground)
 	if plant == null or plant.kind != Kind.TREE:

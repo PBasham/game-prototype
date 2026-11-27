@@ -168,3 +168,27 @@ func test_empower_tree_area_limit_and_placing_area() -> void:
 	assert_eq(copy.summon_bonus_slots, 2)
 	assert_has(limit.next_rank_lines(slime, 0), "Summons at a time 0 -> 1")
 	ItemData.set_empowered([])
+
+
+func test_dev_instant_break_and_no_drop() -> void:
+	var t := _floor_spot(4) + Vector2i(0, 1)  # the ground under it
+	var drops := w.drop_count()
+	w.no_drop = true
+	w.instant_break = true
+	assert_true(w.request_damage_block(t, 0.001), "one tiny hit breaks it")
+	await wait_physics_frames(1)
+	assert_eq(w.drop_count(), drops, "no drop")
+	w.no_drop = false
+	w.instant_break = false
+	var below := t + Vector2i(0, 1)
+	assert_false(w.request_damage_block(below, 0.001), "back to normal")
+
+
+func test_wall_brightness_follows_its_block() -> void:
+	var r := w.renderer if "renderer" in w else null
+	var mults: PackedFloat32Array = r._wall_mults(w.blocks, w.walls)
+	var slot: int = r._wall_slot[w.walls.index_of(&"log_wall")]
+	assert_ne(mults[slot], 1.0, "measured, not left as the art")
+	var lw := ChunkRenderer._luminance("logs_wall") * r.wall_shade * r.built_wall_shade * mults[slot]
+	var lb := ChunkRenderer._luminance("logs") * r.built_block_shade
+	assert_almost_eq(lw / lb, r.wall_block_ratio, 0.02)

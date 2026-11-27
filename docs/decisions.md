@@ -2,6 +2,15 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 42, dev commands, logs, wall brightness
+
+- **Patrick:** dev commands `instant_placement`, `instant_break`, `no_drop`. Done.
+- **Patrick:** a log placed in a single column should stand upright; log walls should
+  have rounded ends like the blocks. Done in the terrain shader.
+- **Patrick:** blocks and their walls were hard to tell apart. Measured: walls came out
+  0.38 (dirt, stone) to 0.86 (clay) as bright as their blocks. Every wall is now evened
+  out to 0.6 of its block (`ChunkRenderer.wall_block_ratio`).
+
 ## 2026-11-26: Phase 41, the Empower tree
 
 - **Patrick:** each spell once; a node tree on the right, nodes as pixel circles with

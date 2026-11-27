@@ -56,6 +56,10 @@ class ChunkView:
 @export_range(0.5, 2.0) var built_wall_shade := 1.35
 ## Built blocks drawn this much brighter (they stand out from a wall of the same stuff).
 @export_range(0.5, 2.0) var built_block_shade := 1.12
+## Every back wall is drawn as bright as this share of its block (measured from the
+## two pictures as drawn, so dirt, logs, bricks and glass all read the same step
+## darker than the block in front: Patrick, Phase 42). 0 = off (each wall as its art).
+@export_range(0.0, 1.0) var wall_block_ratio := 0.6
 ## Back walls darken toward a block right above or beside them (a soft shadow):
 ## this much at the block's edge, fading over block_shadow_px world px.
 @export_range(0.0, 1.0) var block_shadow := 0.72
@@ -393,6 +397,10 @@ func _build_terrain_material() -> void:
 	overhang.resize(MAX_SLOTS)
 	var clear := PackedFloat32Array()
 	clear.resize(MAX_SLOTS)
+	var turn := PackedFloat32Array()
+	turn.resize(MAX_SLOTS)
+	var overhang_walls := PackedFloat32Array()
+	overhang_walls.resize(MAX_SLOTS)
 	var clear_walls := PackedFloat32Array()
 	clear_walls.resize(MAX_SLOTS)
 	_block_slot.resize(blocks.size())
@@ -407,6 +415,7 @@ func _build_terrain_material() -> void:
 		built[keys.size()] = 1.0 if def.built else 0.0
 		overhang[keys.size()] = float(def.overhang_px) if def.built else 0.0
 		clear[keys.size()] = 1.0 if def.see_through else 0.0
+		turn[keys.size()] = 1.0 if def.built and def.overhang_px > 0 else 0.0  # logs stand up in a column
 		if def.id == &"stone":
 			_stone_slot = keys.size()
 	var wall_keys: Array[String] = []
@@ -419,8 +428,11 @@ func _build_terrain_material() -> void:
 		_wall_slot[i] = wall_keys.size()
 		built_walls[wall_keys.size()] = 1.0 if def.built else 0.0
 		clear_walls[wall_keys.size()] = 1.0 if def.see_through else 0.0
+		overhang_walls[wall_keys.size()] = float(def.overhang_px) if def.built else 0.0
+	var wall_mult := _wall_mults(blocks, walls)
 	_material = ShaderMaterial.new()
 	_material.shader = SHADER
+	_material.set_shader_parameter("wall_mult", wall_mult)
 	_material.set_shader_parameter("materials", _strip(keys, ""))
 	_material.set_shader_parameter("overlays", _strip(overlays, "ore_"))
 	_material.set_shader_parameter("wall_tex", _strip(wall_keys, ""))
@@ -431,6 +443,8 @@ func _build_terrain_material() -> void:
 	_material.set_shader_parameter("overhang_slots", overhang)
 	_material.set_shader_parameter("clear_slots", clear)
 	_material.set_shader_parameter("clear_walls", clear_walls)
+	_material.set_shader_parameter("turn_slots", turn)
+	_material.set_shader_parameter("overhang_walls", overhang_walls)
 	_material.set_shader_parameter("wall_shade", wall_shade)
 	_material.set_shader_parameter("built_wall_shade", built_wall_shade)
 	_material.set_shader_parameter("built_block_shade", built_block_shade)
@@ -497,3 +511,51 @@ func _build_tileset(physics: bool) -> TileSet:
 			for col in 16 * PIECES:
 				src.create_tile(Vector2i(col, row))
 	return ts
+
+
+## Per wall slot: how much brighter or darker to draw it so it comes out
+## `wall_block_ratio` as bright as the block that places it (the item with both). Walls
+## with no such block, or see-through ones, stay 1.
+func _wall_mults(blocks: TileTypes, walls: TileTypes) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(MAX_SLOTS)
+	out.fill(1.0)
+	if wall_block_ratio <= 0.0:
+		return out
+	var block_of := {}
+	for d in Registry.get_all(&"items"):
+		var it := d as ItemData
+		if it and it.places_wall != &"" and it.places_block != &"":
+			block_of[it.places_wall] = it.places_block
+	for i in range(1, walls.size()):
+		var w := walls.def(i)
+		if w.terrain.is_empty() or w.see_through or not block_of.has(w.id) or _wall_slot[i] <= 0:
+			continue
+		var bi := blocks.index_of(block_of[w.id])
+		if bi <= 0:
+			continue
+		var b := blocks.def(bi)
+		var lb := _luminance(b.terrain) * (built_block_shade if b.built else 1.0)
+		var lw := _luminance(w.terrain) * wall_shade * (built_wall_shade if w.built else 1.0)
+		if lb > 0.0 and lw > 0.0:
+			out[_wall_slot[i]] = clampf(wall_block_ratio * lb / lw, 0.4, 2.0)
+	return out
+
+
+## Mean brightness of a terrain picture's solid pixels (0 to 1).
+static func _luminance(terrain: String) -> float:
+	var tex := load(TERRAIN_DIR.path_join(terrain + ".png")) as Texture2D
+	if tex == null:
+		return 0.0
+	var img := tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	var sum := 0.0
+	var n := 0
+	for y in range(0, img.get_height(), 2):
+		for x in range(0, img.get_width(), 2):
+			var c := img.get_pixel(x, y)
+			if c.a > 0.8:
+				sum += c.get_luminance()
+				n += 1
+	return sum / n if n > 0 else 0.0
