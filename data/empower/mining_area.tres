@@ -19,7 +19,7 @@ rank_costs = Array[Dictionary]([{
 adds = Dictionary[StringName, float]({
 &"mining_area_max": 1.0
 })
-spells = Array[StringName]([&"mining_spell"])
+spells = Array[StringName]([&"mining_spell", &"siphon_liquid"])
 requires = &"mining_power"
 order = 1
 id = &"mining_area"

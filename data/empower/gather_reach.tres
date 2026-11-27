@@ -20,7 +20,7 @@ rank_costs = Array[Dictionary]([{
 adds = Dictionary[StringName, float]({
 &"reach_tiles": 2.0
 })
-spells = Array[StringName]([&"mining_spell", &"chopping_spell"])
+spells = Array[StringName]([&"mining_spell", &"chopping_spell", &"siphon_liquid"])
 order = 1
 id = &"gather_reach"
 display_name = "Reach"

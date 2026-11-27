@@ -281,12 +281,14 @@ can't mine the floor under furniture.
   stacks, 10 Wood + 1 Copper Bar), **Crate** (2x2, 12 stacks, 12 Wood), and three
   **Hanging Nets** that hang by rope from a block above (`ObjectDef.hang_points`: the
   columns that need a solid block right above the top row) and show what's inside heaped
-  in the net (`FillLook.NET`, `net_bag`): Small (3x2, 6 stacks, 8 Rope + 2 Wood), Hanging
-  Net (2x3, 8 stacks, 12 Rope + 2 Wood), Large (6x4, 16 stacks, two ropes, 24 Rope + 4
-  Wood). Barrels, crates, pantries and the bookshelf have flat tops.
+  in the net (`FillLook.NET`, `net_bag`): Small (4x2, 6 stacks, 8 Rope + 2 Wood), Hanging
+  Net (2x3, 8 stacks, 12 Rope + 2 Wood), Long (2x5, 12 stacks, 16 Rope + 2 Wood), Large
+  (6x4, 16 stacks, two ropes, 24 Rope + 4 Wood). Their ropes are as thick as placed rope. Barrels, crates, pantries and the bookshelf have flat tops.
 - **Liquid Barrels** (2x3): Liquid Barrel (iron banded wood, 1,000 buckets, 16 Wood + 2
   Iron Bars) and Iron Liquid Barrel (2,500 buckets, 8 Iron Bars + 4 Wood).
-  `ObjectDef.liquid_capacity` only records the size: there are no liquids yet.
+  `ObjectDef.liquid_capacity` only records the size: there are no liquids yet. Right
+  click or E opens a small window with its gauge ("Empty, 0 / 1,000 buckets",
+  `LiquidWindow`). Both have a brass tap.
 - Storage tags worked out from the item (`ItemData.has_storage_tag`): `food` is any food
   that isn't a potion or coating; `book` is books, tomes, scrolls, pages, Paper and Blank
   Scrolls. Other tags are listed in `storage_tags`.

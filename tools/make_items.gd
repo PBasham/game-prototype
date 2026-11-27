@@ -312,6 +312,7 @@ func _items() -> Array[ItemData]:
 			[&"crate", "Crate", "Storage for anything: 12 stacks. Furniture can stand on top."],
 			[&"hanging_net_small", "Small Hanging Net", "Hangs by a rope from a block above: 6 stacks of anything, heaped in the net."],
 			[&"hanging_net_medium", "Hanging Net", "Hangs by a rope from a block above: 8 stacks of anything, heaped in the net."],
+			[&"hanging_net_long", "Long Hanging Net", "Hangs by a rope from a block above: 12 stacks of anything, heaped in the net."],
 			[&"hanging_net_large", "Large Hanging Net", "Hangs by two ropes from blocks above: 16 stacks of anything, heaped in the net."],
 			[&"liquid_barrel", "Liquid Barrel", "Iron banded: holds 1,000 buckets of a liquid. (No liquids yet.)"],
 			[&"iron_liquid_barrel", "Iron Liquid Barrel", "Holds 2,500 buckets of a liquid. (No liquids yet.)"],
@@ -450,6 +451,13 @@ func _spells() -> Array[ItemData]:
 	chop.phantom_tip = Vector2(0.9, 0.22)  # the axe's edge
 	chop.phantom_tints.assign(PHANTOM_TINTS)
 	out.append(chop)
+
+	# Siphon Liquid (Phase 45): ready for liquids. Empower: Reach and Area.
+	var siphon := _spell(&"siphon_liquid", "Siphon Liquid", "Hold to draw up liquid where you aim; right click pours it back out. (No liquids yet.)")
+	siphon.reach_tiles = 8.0
+	siphon.mining_area = 1
+	siphon.mining_area_max = 1
+	out.append(siphon)
 
 	var fly := _spell(&"fly", "Fly", "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up. Hold Shift to fly much faster, for a lot more mana.")
 	fly.cast = SpellData.Cast.TOGGLE
@@ -746,6 +754,7 @@ func _spells() -> Array[ItemData]:
 	var groups := {
 		&"mining_spell": SpellData.Group.TOOLS,
 		&"chopping_spell": SpellData.Group.TOOLS,
+		&"siphon_liquid": SpellData.Group.TOOLS,
 		&"hyper_drill": SpellData.Group.TOOLS,
 		&"seek_ore": SpellData.Group.TOOLS,
 		&"fly": SpellData.Group.MOVEMENT,
@@ -803,9 +812,10 @@ func _objects() -> Array[ObjectDef]:
 			# Phase 37 (18 to 27).
 			[&"pantry_rack", "Pantry Rack", 3, 3, &""], [&"food_pantry", "Food Pantry", 3, 4, &""],
 			[&"bookshelf", "Bookshelf", 3, 4, &""], [&"barrel", "Barrel", 2, 2, &""], [&"crate", "Crate", 2, 2, &""],
-			[&"hanging_net_small", "Small Hanging Net", 3, 2, &""], [&"hanging_net_medium", "Hanging Net", 2, 3, &""],
+			[&"hanging_net_small", "Small Hanging Net", 4, 2, &""], [&"hanging_net_medium", "Hanging Net", 2, 3, &""],
 			[&"hanging_net_large", "Large Hanging Net", 6, 4, &""], [&"liquid_barrel", "Liquid Barrel", 2, 3, &""],
-			[&"iron_liquid_barrel", "Iron Liquid Barrel", 2, 3, &""]]:
+			[&"iron_liquid_barrel", "Iron Liquid Barrel", 2, 3, &""],
+			[&"hanging_net_long", "Long Hanging Net", 2, 5, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -862,7 +872,7 @@ func _objects() -> Array[ObjectDef]:
 	out[17].needs_wall = true  # hangs on a back wall
 	# Phase 37 storage: pantries (food on shelves), bookshelf, barrel, crate, nets, liquid
 	# barrels.
-	for i in range(18, 28):
+	for i in range(18, 29):
 		out[i].detail = 2
 	out[18].container_slots = 8
 	out[18].bottle_shelves.assign([44, 24])
@@ -882,8 +892,8 @@ func _objects() -> Array[ObjectDef]:
 	out[21].container_slots = 10
 	out[22].container_slots = 12
 	# Hanging nets: [slots, rope columns, the bag's inside in art px].
-	for n: Array in [[23, 6, [1], Rect2i(9, 12, 30, 18)], [24, 8, [0], Rect2i(6, 16, 20, 30)],
-			[25, 16, [1, 4], Rect2i(10, 18, 76, 44)]]:
+	for n: Array in [[23, 6, [1, 2], Rect2i(9, 12, 46, 18)], [24, 8, [0, 1], Rect2i(6, 16, 20, 30)],
+			[25, 16, [1, 4], Rect2i(10, 18, 76, 44)], [28, 12, [0, 1], Rect2i(6, 18, 20, 60)]]:
 		var net: ObjectDef = out[n[0]]
 		net.container_slots = n[1]
 		net.hang_points.assign(n[2])
@@ -1178,6 +1188,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"crate", &"workbench", {&"wood": 12}, &"crate", 1, []],
 		[&"hanging_net_small", &"workbench", {&"rope": 8, &"wood": 2}, &"hanging_net_small", 1, []],
 		[&"hanging_net_medium", &"workbench", {&"rope": 12, &"wood": 2}, &"hanging_net_medium", 1, []],
+		[&"hanging_net_long", &"workbench", {&"rope": 16, &"wood": 2}, &"hanging_net_long", 1, []],
 		[&"hanging_net_large", &"workbench", {&"rope": 24, &"wood": 4}, &"hanging_net_large", 1, []],
 		[&"liquid_barrel", &"workbench", {&"wood": 16, &"iron_bar": 2}, &"liquid_barrel", 1, []],
 		[&"iron_liquid_barrel", &"workbench", {&"iron_bar": 8, &"wood": 4}, &"iron_liquid_barrel", 1, []],

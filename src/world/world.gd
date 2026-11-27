@@ -14,6 +14,8 @@ signal wall_changed(tile: Vector2i, old_id: int, new_id: int)
 signal object_changed(tile: Vector2i, old_id: int, new_id: int)
 ## The player used a crafting station (anchor tile, wrapped).
 signal station_opened(anchor: Vector2i)
+## A Liquid Barrel was opened (right click or E).
+signal liquid_opened(anchor: Vector2i)
 ## The player opened a container (a chest; anchor tile, wrapped).
 signal container_opened(anchor: Vector2i)
 ## Right click or E on a magic bag (ItemBag).
@@ -1785,7 +1787,7 @@ func try_interact_near(who: Player) -> bool:
 
 static func _usable(def: ObjectDef) -> bool:
 	return def.toggles_to != &"" or def.container_slots > 0 or def.station != &"" or def.bed or def.display \
-		or def.right_click_takes or def.seat
+		or def.right_click_takes or def.seat or def.liquid_capacity > 0
 
 
 func _interact_object(anchor: Vector2i) -> bool:
@@ -1805,6 +1807,8 @@ func _interact_object(anchor: Vector2i) -> bool:
 			EventBus.debug_message.emit("Something's in the way" if def.blocks_movement else "Can't close: you're in the doorway")
 	elif def.container_slots > 0:
 		container_opened.emit(wrap_tile(anchor))
+	elif def.liquid_capacity > 0:
+		liquid_opened.emit(wrap_tile(anchor))
 	else:
 		station_opened.emit(wrap_tile(anchor))
 	return true

@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 45, liquid barrels, Siphon Liquid, nets, shelf spacing
+
+- **Patrick:** Liquid Barrels should open (a gauge window, empty until liquids); add a
+  Siphon Liquid spell now (does nothing yet, Empower Reach and Area); a tap on the wooden
+  barrel; the small net a little wider (4x2), a Long net (2x5), thicker net ropes; a full
+  cabinet should fill its shelves, spaced evenly.
+
 ## 2026-11-26: Phase 44, log ends, upright log walls, no_los
 
 - **Patrick:** log ends need a defining line and rounding on both sides; log walls in a

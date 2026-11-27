@@ -59,7 +59,7 @@ func test_food_and_book_storage_take_only_their_kind() -> void:
 
 func test_storage_furniture_sizes_and_slots() -> void:
 	var want := {&"pantry_rack": [3, 3, 8], &"food_pantry": [3, 4, 14], &"bookshelf": [3, 4, 12],
-		&"barrel": [2, 2, 10], &"crate": [2, 2, 12], &"hanging_net_small": [3, 2, 6],
+		&"barrel": [2, 2, 10], &"crate": [2, 2, 12], &"hanging_net_small": [4, 2, 6],
 		&"hanging_net_medium": [2, 3, 8], &"hanging_net_large": [6, 4, 16]}
 	for id: StringName in want:
 		var d := w.objects.def(w.objects.index_of(id)) as ObjectDef
@@ -80,8 +80,9 @@ func test_nets_hang_from_a_block_above() -> void:
 	var def := w.objects.def(id) as ObjectDef
 	var a := _floor_spot(3) + Vector2i(0, -6)
 	assert_false(w.can_place_object(a, def), "nothing to hang from")
-	var above := a + Vector2i(def.hang_points[0], -def.height_tiles)
-	w.data.set_block(above.x, above.y, w.blocks.index_of(&"stone"))
+	for col in def.hang_points:
+		var above := a + Vector2i(col, -def.height_tiles)
+		w.data.set_block(above.x, above.y, w.blocks.index_of(&"stone"))
 	assert_true(w.can_place_object(a, def), "hangs from the block")
 	assert_true(w.request_place_object(a, id))
 	assert_not_null(w.container_at(a), "it's storage")
@@ -215,3 +216,19 @@ func test_no_los_lets_your_actions_through_blocks() -> void:
 	assert_true(w.player_sight(a, b))
 	assert_false(w.line_clear(a, b), "enemies still need sight")
 	w.no_los = false
+
+
+func test_liquid_barrels_open_and_siphon_liquid() -> void:
+	var a := _floor_spot(4)
+	assert_true(w.request_place_object(a, w.objects.index_of(&"liquid_barrel")))
+	assert_true(w.try_interact_at(w.tile_to_world(a + Vector2i(0, -1)) + Vector2(4, 4), w.player))
+	assert_eq(w.hud._liquid.anchor, w.wrap_tile(a), "its window opens")
+	w.hud.close_window()
+	var siphon := Registry.get_def(&"spells", &"siphon_liquid") as SpellData
+	assert_not_null(siphon)
+	var ids := EmpowerNode.for_spell(siphon).map(func(n: EmpowerNode) -> StringName: return n.id)
+	assert_has(ids, &"gather_reach")
+	assert_has(ids, &"mining_area")
+	var long := w.objects.def(w.objects.index_of(&"hanging_net_long")) as ObjectDef
+	assert_eq([long.width_tiles, long.height_tiles], [2, 5])
+	assert_eq((w.objects.def(w.objects.index_of(&"hanging_net_small")) as ObjectDef).width_tiles, 4)

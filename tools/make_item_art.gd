@@ -1016,7 +1016,7 @@ func _bed() -> Image:
 
 const SCROLL_SPELLS: Array[String] = ["mining_spell", "chopping_spell", "fly", "spark", "levitate", "hyper_drill",
 	"air_push", "blink", "light_orb", "wisp", "mend", "gel_cushion", "arcane_bolt", "healing_circle", "spark_ward",
-	"familiar", "conjure_platform", "arcane_edge", "barrier", "chain_spark", "recall", "seek_ore", "tele_grab", "call_spirit", "air_step", "bound"]
+	"familiar", "conjure_platform", "arcane_edge", "barrier", "chain_spark", "recall", "seek_ore", "tele_grab", "call_spirit", "air_step", "bound", "siphon_liquid"]
 
 
 ## Paper, the Blank Scroll, a scroll per spell (the spell's icon on parchment) and the

@@ -165,7 +165,11 @@ for (x, y) in ((2, 2), (28, 2), (2, 28), (28, 28)):
     d.point((x, y), fill=IRON_L)
 furniture("crate", crate)
 
-furniture("liquid_barrel", barrel(32, 48, WOOD_L, IRON_D, IRON_L, [6, 22, 38]))
+wooden = barrel(32, 48, WOOD_L, IRON_D, IRON_L, [6, 22, 38])
+d = ImageDraw.Draw(wooden)
+d.rectangle((24, 30, 30, 32), fill=BRASS)  # tap, like the iron one's
+d.rectangle((28, 32, 29, 35), fill=BRASS)
+furniture("liquid_barrel", wooden)
 iron = barrel(32, 48, IRON, IRON_D, IRON_L, [5, 21, 37], rivets=True)
 d = ImageDraw.Draw(iron)
 d.rectangle((24, 30, 30, 32), fill=BRASS)  # tap
@@ -203,16 +207,19 @@ def net(w: int, h: int, ropes: list, top: int, side: int) -> Image.Image:
     gd = ImageDraw.Draw(mesh)
     gd.rectangle((int(cx - half * 0.5), top, int(cx + half * 0.5), top + 1), fill=ROPE)
     for rx in ropes:
+        # As thick as the rope you place (2 world px = 4 art px), twisted.
         for y in range(0, top + 1):
-            back.putpixel((rx, y), ROPE)
-            back.putpixel((rx + 1, y), ROPE_D)
-        gd.line((rx, top, int(cx), top + 1), fill=ROPE)
+            for k in range(4):
+                c = ROPE if (k + y) % 3 else ROPE_D
+                back.putpixel((rx + k, y), c if k in (1, 2) else ROPE_D)
+        gd.line((rx + 1, top, int(cx), top + 1), fill=ROPE, width=2)
     out = Image.new("RGBA", (w * 2, h))
     out.alpha_composite(back, (0, 0))
     out.alpha_composite(mesh, (w, 0))
     return out
 
 
-furniture("hanging_net_small", net(48, 32, [23], 7, 3), 48)
-furniture("hanging_net_medium", net(32, 48, [15], 9, 2), 32)
-furniture("hanging_net_large", net(96, 64, [23, 71], 9, 3), 96)
+furniture("hanging_net_small", net(64, 32, [30], 7, 3), 64)
+furniture("hanging_net_medium", net(32, 48, [14], 9, 2), 32)
+furniture("hanging_net_long", net(32, 80, [14], 9, 2), 32)
+furniture("hanging_net_large", net(96, 64, [22, 70], 9, 3), 96)

@@ -177,48 +177,64 @@ func redraw_all() -> void:
 ## art pixels of its picture.
 func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
 	# Each bottle is its item's shelf sprite (ItemData.shelf_sprite, else its icon at half
-	# size), standing on the shelves left to right, bottom shelf first, 1 art px apart; a
-	# bottle that doesn't fit goes to the next shelf. Each item shows as many bottles as
-	# its share of the storage takes of the shelf width.
+	# size, shrunk to fit under the shelf above), standing on the shelves bottom shelf
+	# first. Each item shows as many bottles as its share of the storage takes of all the
+	# shelf width, so a full storage fills every shelf. A full shelf spreads its bottles
+	# evenly across; the last, part-filled one stands them 1 art px apart from the left.
 	var shelf_w := float(def.bottles_per_shelf) * def.bottle_step
 	var total := shelf_w * def.bottle_shelves.size()
-	var kinds: Array[ItemData] = []
+	var low_room := 9999.0
+	for k in def.bottle_shelves.size():
+		low_room = minf(low_room, shelf_room(def, k))
+	var kinds: Array[Texture2D] = []
+	var used := 0.0
 	for i in inv.size:
 		if inv.is_empty(i):
 			continue
-		var it := ItemData.find(inv.ids[i])
-		var tex := shelf_texture(it)
+		var tex := shelf_texture(ItemData.find(inv.ids[i]), int(low_room))
 		if tex == null:
 			continue
-		var room := float(inv.cap_for(inv.ids[i]))
-		var share := inv.counts[i] / (maxf(room, 1.0) * inv.size)
-		var n := maxi(1, roundi(share * total / (tex.get_width() + 1.0)))
+		var each := tex.get_width() + 1.0
+		var share := inv.counts[i] / (maxf(float(inv.cap_for(inv.ids[i])), 1.0) * inv.size)
+		var n := maxi(1, roundi(share * total / each))
 		for _k in n:
-			kinds.append(it)
+			kinds.append(tex)
+		used += n * each
+	# Fill the shelves in order.
+	var rows: Array[Array] = []
+	var row: Array[Texture2D] = []
+	var x := 0.0
+	for tex in kinds:
+		if x > 0.0 and x + tex.get_width() > shelf_w:
+			rows.append(row)
+			row = []
+			x = 0.0
+			if rows.size() >= def.bottle_shelves.size():
+				break
+		row.append(tex)
+		x += tex.get_width() + 1.0
+	if not row.is_empty() and rows.size() < def.bottle_shelves.size():
+		rows.append(row)
 	var art_w := dest.size.x * def.detail
 	var s := dest.size.x / art_w  # art pixel to world pixel
-	var shelf := 0
-	var x := 0.0
-	for it in kinds:
-		var tex := shelf_texture(it)
-		var size := Vector2(tex.get_size())
-		if x > 0.0 and x + size.x > shelf_w:
-			shelf += 1
-			x = 0.0
-		if shelf >= def.bottle_shelves.size():
-			break
-		# Too tall for the room up to the shelf above (its plank, 2 px, and 1 px air):
-		# shrunk to fit, so caps don't poke through.
-		var room := shelf_room(def, shelf)
-		if size.y > room:
-			tex = shelf_texture(it, int(room))
-			size = Vector2(tex.get_size())
-		var left := def.bottle_x0 + x
-		if flip:
-			left = art_w - left - size.x
-		var at := Vector2(left, def.bottle_shelves[shelf] - size.y)
-		view.draw_texture_rect(tex, Rect2(dest.position + at * s, size * s), false)
-		x += size.x + 1.0
+	for shelf in rows.size():
+		var items: Array = rows[shelf]
+		var widths := 0.0
+		for tex: Texture2D in items:
+			widths += tex.get_width()
+		var full := shelf < rows.size() - 1 or widths + items.size() > shelf_w * 0.85
+		var gap := 1.0
+		if full and items.size() > 1:
+			gap = maxf(1.0, (shelf_w - widths) / (items.size() - 1))
+		var at_x := 0.0 if items.size() > 1 or not full else (shelf_w - widths) * 0.5
+		for tex: Texture2D in items:
+			var size := Vector2(tex.get_size())
+			var left := def.bottle_x0 + roundf(at_x)
+			if flip:
+				left = art_w - left - size.x
+			var at := Vector2(left, def.bottle_shelves[shelf] - size.y)
+			view.draw_texture_rect(tex, Rect2(dest.position + at * s, size * s), false)
+			at_x += size.x + gap
 
 
 static var _shelf_cache: Dictionary[StringName, Texture2D] = {}

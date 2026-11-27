@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_oyh0i"]
+
+[resource]
+script = ExtResource("1_oyh0i")
+station = &"workbench"
+inputs = Dictionary[StringName, int]({
+&"rope": 16,
+&"wood": 2
+})
+output = &"hanging_net_long"
+id = &"hanging_net_long"
+display_name = "Hanging Net Long"

@@ -550,3 +550,12 @@ saves still load.
 | --- | --- |
 | Outlined rounded log ends, upright log walls | terrain.gdshader (the overhang branches, `upright_wall`) |
 | Console `no_los` | `World.no_los`, `player_sight` (used by `ItemUser` in place of `line_clear`) |
+
+## Phase 45: liquid barrels, Siphon Liquid, nets, shelf spacing
+
+| Change | Where |
+| --- | --- |
+| Liquid Barrel window | `LiquidWindow` (src/ui/hud/liquid_window.gd); `World.liquid_opened`; `Hud._on_liquid_opened` |
+| Siphon Liquid | `tools/make_items.gd`; `data/spells/siphon_liquid.tres`; Reach and Area nodes list it |
+| Nets, tap | `tools/make_phase37_art.py`; object index 28 (Long net) in `tools/make_items.gd` |
+| Even shelves | `ObjectLayer._draw_bottles` |

@@ -358,6 +358,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 45: liquid barrels, Siphon Liquid, nets, shelf spacing (branch phase-45-liquid-nets)**
+- [ ] Right click a Liquid Barrel: a window with its gauge (empty, 0 / 1,000 or 2,500). The wooden one has a tap too.
+- [ ] Spell Weaving Table: learn Siphon Liquid (does nothing yet); its Empower tree has Reach and Area.
+- [ ] Small Hanging Net is 4 wide; new Long Hanging Net (2x5); net ropes as thick as placed rope.
+- [ ] A full potion cabinet fills every shelf, bottles spread evenly.
+
 **Phase 44: log ends, upright log walls, no_los (branch phase-44-log-ends)**
 - [ ] Log rows end in rounded tips with a dark edge line on both sides (blocks and log walls).
 - [ ] A single column of log walls stands upright like the blocks.

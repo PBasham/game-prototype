@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/siphon_liquid.png" id="1_jkgof"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_dvo2a"]
+
+[resource]
+script = ExtResource("2_dvo2a")
+group = 0
+learn_cost = Dictionary[StringName, int]({
+&"copper_bar": 4
+})
+kind = 4
+icon = ExtResource("1_jkgof")
+max_stack = 1
+mining_area_max = 1
+reach_tiles = 8.0
+id = &"siphon_liquid"
+display_name = "Siphon Liquid"
+description = "Hold to draw up liquid where you aim; right click pours it back out. (No liquids yet.)"

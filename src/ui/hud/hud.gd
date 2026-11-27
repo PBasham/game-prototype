@@ -130,6 +130,7 @@ var _chest: Pane
 var _equip: EquipmentWindow
 var _spells: SpellWindow
 var _creative: CreativeWindow
+var _liquid: LiquidWindow
 var _catalog: CatalogWindow
 var catalog_open := false
 var _status: Pane
@@ -214,6 +215,9 @@ func _ready() -> void:
 	_spells = SpellWindow.new(self)
 	_spells.close_pressed.connect(toggle_spells)
 	add_child(_spells)
+	_liquid = LiquidWindow.new(self)
+	_liquid.close_pressed.connect(close_window)
+	add_child(_liquid)
 	_creative = CreativeWindow.new(self)
 	_creative.close_pressed.connect(toggle_creative)
 	add_child(_creative)
@@ -307,6 +311,7 @@ func _ready() -> void:
 	add_child(_notes)
 	EventBus.item_picked_up.connect(_on_picked_up)
 	world.station_opened.connect(_on_station_opened)
+	world.liquid_opened.connect(_on_liquid_opened)
 	world.container_opened.connect(_on_container_opened)
 	world.bag_opened.connect(_on_bag_opened)
 	world.slept.connect(_on_slept)
@@ -477,6 +482,8 @@ func _process(delta: float) -> void:
 		(_quick if _quick_key_at_mouse() != &"" else null)))
 	if virtual_station == null and (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
 		close_window()  # walked away from the station or chest
+	if _liquid.anchor != World.NO_TILE and (not _in_reach_of(_liquid.anchor) or world.object_at(_liquid.anchor) == null):
+		close_window()
 	if bag != null and (not is_instance_valid(bag) or bag.is_queued_for_deletion()
 			or bag.global_position.distance_to(p.chest()) > (world.interact_tiles + 4.0) * World.TILE):
 		close_window()  # emptied (it vanished) or walked away
@@ -512,7 +519,7 @@ func _process(delta: float) -> void:
 
 ## The window under the mouse, or null.
 func _over_pane() -> Control:
-	for pane: Control in [_catalog, _creative, _spells, _equip, _craft, _chest, _inv]:
+	for pane: Control in [_liquid, _catalog, _creative, _spells, _equip, _craft, _chest, _inv]:
 		if pane.visible and pane.get_global_rect().has_point(pane.get_global_mouse_position()):
 			return pane
 	return null
@@ -633,6 +640,14 @@ func close_window() -> void:
 	virtual_station = null
 	chest = World.NO_TILE
 	bag = null
+	_liquid.anchor = World.NO_TILE
+	_layout()
+
+
+func _on_liquid_opened(anchor: Vector2i) -> void:
+	close_window()
+	open = true
+	_liquid.anchor = anchor
 	_layout()
 
 
@@ -768,6 +783,11 @@ func _layout() -> void:
 		_creative.visible = false
 		if _creative.searching:
 			_creative.set_searching(false)
+	if open and _liquid.anchor != World.NO_TILE:
+		_liquid.show_at(Vector2(view.x - _liquid.size.x - window_right, window_top))
+		_liquid.queue_redraw()
+	else:
+		_liquid.visible = false
 	if open and catalog_open:
 		_catalog.show_at(_catalog.centered())
 	else:

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_lbmun"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_2cocp"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_siphon_liquid.png" id="3_2kyli"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_siphon_liquid.png" id="4_gq7xu"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_8i2nw"]
+
+[sub_resource type="Resource" id="Resource_2cnwj"]
+script = ExtResource("2_2cocp")
+id = &"scroll_siphon_liquid"
+texture = ExtResource("3_2kyli")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_8i2nw")
+kind = 14
+icon = ExtResource("4_gq7xu")
+max_stack = 20
+held = SubResource("Resource_2cnwj")
+impact_at = 0.2
+teaches_spell = &"siphon_liquid"
+id = &"scroll_siphon_liquid"
+display_name = "Scroll: Siphon Liquid"
+description = "One use. Left click: cast Siphon Liquid once for free, at base power."
