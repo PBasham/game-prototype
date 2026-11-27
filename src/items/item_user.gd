@@ -304,7 +304,7 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 		Mode.GRAB:
 			rect = Rect2i(Vector2i(floori(c.x), floori(c.y)), Vector2i.ONE)
 			if problem == "" and (_item as SpellData).needs_sight \
-					and not world.line_clear(p.chest(), grab_point().move_toward(p.chest(), World.TILE)):
+					and not world.player_sight(p.chest(), grab_point().move_toward(p.chest(), World.TILE)):
 				problem = "Out of sight"
 		Mode.PLANT_TREE:
 			var g := world.plants.sapling_spot(Vector2i(floori(c.x), floori(c.y)))
@@ -421,7 +421,7 @@ func slam(item: ItemData, at: Vector2) -> int:
 		var c := r.get_center()
 		if c.distance_to(at + Vector2(0, -TILE)) > radius + r.size.length() * 0.5:
 			continue
-		if not world.line_clear(at + Vector2(0, -TILE), c):
+		if not world.player_sight(at + Vector2(0, -TILE), c):
 			continue
 		node.call(&"take_damage", amount, p)
 		if node.has_method(&"knock_back"):
@@ -470,7 +470,7 @@ func _reachable(from: Vector2, r: Rect2) -> bool:
 	r = r.grow(-minf(2.0, minf(r.size.x, r.size.y) * 0.25))  # its edges touch the ground
 	var near := Vector2(clampf(from.x, r.position.x, r.end.x), clampf(from.y, r.position.y, r.end.y))
 	for to: Vector2 in [r.get_center(), near, Vector2(near.x, r.get_center().y)]:
-		if world.line_clear(from, to):
+		if world.player_sight(from, to):
 			return true
 	return false
 
@@ -916,7 +916,7 @@ func cast(spell: SpellData) -> bool:
 			# Made at the cursor: it has to be in sight (no casting through walls), unless
 			# the spell says otherwise (`needs_sight`, for a later upgrade).
 			if spell.needs_sight and spell.cast != SpellData.Cast.SENSE \
-					and not world.line_clear(p.chest(), cursor().move_toward(p.chest(), World.TILE)):
+					and not world.player_sight(p.chest(), cursor().move_toward(p.chest(), World.TILE)):
 				EventBus.debug_message.emit("Out of sight")
 				return false
 			if world.request_spell_effect(spell, cursor(), _spell_power(spell)) == null:
@@ -1029,7 +1029,7 @@ func chain(spell: SpellData, from: Vector2) -> int:
 				continue
 			var c := (n.call(&"hit_rect") as Rect2).get_center()
 			var d := c.distance_to(at)
-			if d <= nd and world.line_clear(at, c):  # it doesn't jump through walls
+			if d <= nd and world.player_sight(at, c):  # it doesn't jump through walls
 				nd = d
 				next = n
 		current = next
@@ -1054,7 +1054,7 @@ func gust(spell: SpellData, from: Vector2, dir: Vector2) -> int:
 			continue
 		if d > 1.0 and rad_to_deg(absf(dir.angle_to(to))) > spell.gust_angle:
 			continue
-		if not world.line_clear(from, r.get_center()):
+		if not world.player_sight(from, r.get_center()):
 			continue  # walls and closed doors stop the gust
 		if spell.damage > 0.0:
 			node.call(&"take_damage", spell.damage * _spell_power(spell) * Schools.payoff(node, spell), p)

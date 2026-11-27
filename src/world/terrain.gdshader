@@ -198,6 +198,13 @@ vec4 strip_t(sampler2D s, int slot, vec2 p, bool turn) {
 	return texelFetch(s, ivec2((slot - 1) * CELL + q.x, q.y), 0);
 }
 
+// A log wall (overhang_walls) in a single column: drawn upright too.
+bool upright_wall(ivec2 t) {
+	int w = wal(t);
+	return w > 0 && overhang_walls[w] > 0.5 && wal(t + ivec2(-1, 0)) != w && wal(t + ivec2(1, 0)) != w
+		&& (wal(t + ivec2(0, -1)) == w || wal(t + ivec2(0, 1)) == w);
+}
+
 // A log (turn_slots) standing in a single column: drawn upright.
 bool upright(ivec2 t) {
 	int b = blk(t);
@@ -316,8 +323,11 @@ void fragment() {
 		if (lp.x < ln) { sm = lm; tip = lp.x >= ln - 1.0; }
 		else if (lp.x >= 8.0 - rn) { sm = rm; tip = lp.x < 9.0 - rn; }
 		if (sm > 0 && lp.y >= 1.0 && lp.y < 7.0 && !(tip && (lp.y < 2.0 || lp.y >= 6.0))) {
-			vec3 c = strip(materials, sm, p).rgb;
-			col = vec4(tip ? c * 0.85 : c, 1.0);
+			vec3 c = strip(materials, sm, p).rgb * built_block_shade;
+			// The same dark edge line as the block, around the rounded end.
+			bool rim = tip || lp.y < 2.0 || lp.y >= 6.0
+				|| (sm == lm ? lp.x >= ln - 2.0 : lp.x < 10.0 - rn) && (lp.y < 3.0 || lp.y >= 5.0);
+			col = vec4(min(rim ? c * 0.38 : c, vec3(1.0)), 1.0);
 			drew = true;
 		}
 	}
@@ -345,7 +355,7 @@ void fragment() {
 		if (!done && wh > 0 && built_walls[wh] > 0.5) {
 			col = built_px(wall_tex, wh, p, wall_open(here_t + ivec2(0, -1)), wall_open(here_t + ivec2(0, 1)),
 				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false), clear_walls[wh] > 0.5,
-				overhang_walls[wh], false);
+				overhang_walls[wh], upright_wall(here_t));
 			col.rgb = min(shade_wall(col.rgb) * built_wall_shade * wall_mult[wh], vec3(1.0));
 		} else if (!done && field_w(p) + nz(p) * 0.6 > 0.5) {
 			int w = wall_at(p);
@@ -358,15 +368,17 @@ void fragment() {
 			vec2 lp = p - floor(p / T) * T;
 			int lw = wal(here_t + ivec2(-1, 0));
 			int rw = wal(here_t + ivec2(1, 0));
-			float ln = lw > 0 && built_walls[lw] > 0.5 ? overhang_walls[lw] : 0.0;
-			float rn = rw > 0 && built_walls[rw] > 0.5 ? overhang_walls[rw] : 0.0;
+			float ln = lw > 0 && built_walls[lw] > 0.5 && !upright_wall(here_t + ivec2(-1, 0)) ? overhang_walls[lw] : 0.0;
+			float rn = rw > 0 && built_walls[rw] > 0.5 && !upright_wall(here_t + ivec2(1, 0)) ? overhang_walls[rw] : 0.0;
 			int sw = 0;
 			bool tip = false;
 			if (lp.x < ln) { sw = lw; tip = lp.x >= ln - 1.0; }
 			else if (lp.x >= 8.0 - rn) { sw = rw; tip = lp.x < 9.0 - rn; }
 			if (sw > 0 && lp.y >= 1.0 && lp.y < 7.0 && !(tip && (lp.y < 2.0 || lp.y >= 6.0))) {
 				vec3 c = strip(wall_tex, sw, p).rgb;
-				col = vec4(min(shade_wall(tip ? c * 0.85 : c) * built_wall_shade * wall_mult[sw], vec3(1.0)), 1.0);
+				bool rim = tip || lp.y < 2.0 || lp.y >= 6.0
+					|| (sw == lw ? lp.x >= ln - 2.0 : lp.x < 10.0 - rn) && (lp.y < 3.0 || lp.y >= 5.0);
+				col = vec4(min(shade_wall(rim ? c * 0.6 : c) * built_wall_shade * wall_mult[sw], vec3(1.0)), 1.0);
 			}
 		}
 	}

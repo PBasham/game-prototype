@@ -570,6 +570,9 @@ func _register() -> void:
 		world.no_drop = not world.no_drop
 		_print("No drops %s." % ("on" if world.no_drop else "off")))
 	_add("station", "station <name> [tier] | station off", "Open a crafting station's window without the station (workbench, furnace, anvil, alchemy, spell weaving, scribing, cooking...). Tier 2 workbench = Darkwood.", _station)
+	_add("no_los", "no_los", "Toggle line of sight: your spells, melee and slams reach through blocks (enemies still need sight).", func(_a: PackedStringArray) -> void:
+		world.no_los = not world.no_los
+		_print("Line of sight %s." % ("off" if world.no_los else "on")))
 	_add("crafttab", "crafttab <tab> [row|name]", "In the open crafting window: switch to a tab (0 = the first) and select a row (for screenshots).", func(a: PackedStringArray) -> void:
 		if a.is_empty() or not a[0].is_valid_int():
 			_print("Usage: crafttab <tab> [row]")

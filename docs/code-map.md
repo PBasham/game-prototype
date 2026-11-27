@@ -543,3 +543,10 @@ saves still load.
 | Change | Where |
 | --- | --- |
 | Console `station <name> [tier]` | `DevConsole._station`; `Hud.virtual_station`, `open_virtual_station`, `_station_def` |
+
+## Phase 44: log ends, upright log walls, no_los
+
+| Change | Where |
+| --- | --- |
+| Outlined rounded log ends, upright log walls | terrain.gdshader (the overhang branches, `upright_wall`) |
+| Console `no_los` | `World.no_los`, `player_sight` (used by `ItemUser` in place of `line_clear`) |

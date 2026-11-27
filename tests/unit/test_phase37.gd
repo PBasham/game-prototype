@@ -204,3 +204,14 @@ func test_station_command_opens_a_station_without_one() -> void:
 	assert_false(w.hud._upgrade_shown(), "no upgrading a station that isn't there")
 	w.console.run("station off")
 	assert_false(w.hud.crafting)
+
+
+func test_no_los_lets_your_actions_through_blocks() -> void:
+	var feet := w.world_to_tile(w.player.global_position)
+	var a := w.tile_to_world(feet + Vector2i(0, 3))
+	var b := w.tile_to_world(feet + Vector2i(0, 12))
+	assert_false(w.player_sight(a, b), "through the ground: blocked")
+	w.no_los = true
+	assert_true(w.player_sight(a, b))
+	assert_false(w.line_clear(a, b), "enemies still need sight")
+	w.no_los = false

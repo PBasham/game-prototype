@@ -70,6 +70,9 @@ var instant_place := false
 var instant_break := false
 ## Dev console `no_drop`: nothing drops (mined blocks, trees, loot).
 var no_drop := false
+## Dev console `no_los`: your spells, melee and slams don't need a clear line (they
+## reach through blocks). Enemies still need one.
+var no_los := false
 ## Dev console `infinite`: blocks, furniture, food and throwables aren't used up.
 var infinite_items := false
 ## Loose items on the ground at most; past this the oldest disappear. 0 = no limit.
@@ -1057,6 +1060,11 @@ func blocks_hits(tile: Vector2i) -> bool:
 
 ## True when nothing blocks the straight line between two points (tiles stepped along
 ## it every half tile, the end included; the start doesn't count).
+## `line_clear` for the player's own actions: always clear with the dev `no_los` on.
+func player_sight(from: Vector2, to: Vector2) -> bool:
+	return no_los or line_clear(from, to)
+
+
 func line_clear(from: Vector2, to: Vector2) -> bool:
 	var steps := ceili(from.distance_to(to) / (TILE * 0.5))
 	for i in range(1, steps + 1):

@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 44, log ends, upright log walls, no_los
+
+- **Patrick:** log ends need a defining line and rounding on both sides; log walls in a
+  single column should stand upright too; a dev command to turn off line of sight
+  (`no_los`, for your own actions only).
+
 ## 2026-11-26: Phase 43, station command
 
 - **Patrick:** a dev command `station [name] [tier]`. It opens that station's crafting

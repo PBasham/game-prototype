@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 44: log ends, upright log walls, no_los (branch phase-44-log-ends)**
+- [ ] Log rows end in rounded tips with a dark edge line on both sides (blocks and log walls).
+- [ ] A single column of log walls stands upright like the blocks.
+- [ ] Console `no_los`: spells and melee reach through blocks.
+
 **Phase 43: station command (branch phase-43-station-cmd)**
 - [ ] Console `station` lists stations; `station furnace` opens the Furnace window anywhere; `station workbench 2` the Darkwood Workbench; `station off` closes it.
 
