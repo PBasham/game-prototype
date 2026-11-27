@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TileDef" format=3]
+
+[ext_resource type="Script" path="res://src/world/tile_def.gd" id="1_tiledef"]
+
+[resource]
+script = ExtResource("1_tiledef")
+atlas_row = 21
+collision = 1
+climbable = false
+health = 60.0
+voxel = &"sand_bricks"
+terrain = "sand_bricks"
+built = true
+id = &"sand_bricks"
+display_name = "Sand Bricks"

@@ -336,10 +336,12 @@ can't mine the floor under furniture.
   a Potion Cabinet. The bottom one can't be picked up while something stands on it ("Take
   the ... off the top first"); things displayed on a table just fall off as before.
 - **Sand and glass:** Sand is in the Creative window only for now (no world sand yet).
-  It's a block (left click) and a Sand Wall (right click).
+  It's counted in grains (Phase 52): a block (left click) or a Sand Wall (right click)
+  takes 16, and mining one gives 16 back. Sand blocks fall (see items-and-mining.md,
+  "Voxels"). Workbench: 16 Sand = 1 Sand Bricks (a block and wall that don't fall).
   Glass is also a see-through block (left click) and Glass Wall (right click); Clay places
   a Clay Wall.
-  Furnace: 1 Sand = 1 Glass; Glass Vial = 1 Glass, Glass Bottle = 2, Glass Flask = 3;
+  Furnace: 16 Sand = 1 Glass; Glass Vial = 1 Glass, Glass Bottle = 2, Glass Flask = 3;
   Clay Bottle = 3 Clay, Clay Jug = 4 Clay (the Clay Flask is unchanged). The window shows
   "used / total" and a fill bar. Art from `art/concepts/storage/make_storage.py`.
 - Console `stock <item> [count]` fills the chest you have open (testing storage).

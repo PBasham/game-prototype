@@ -592,6 +592,13 @@ func _register() -> void:
 	_add("freeplace", "freeplace", "Toggle placing blocks and walls anywhere, with nothing next to or behind them.", func(_a: PackedStringArray) -> void:
 		world.item_user.free_place = not world.item_user.free_place
 		_print("Free placing %s." % ("on" if world.item_user.free_place else "off")))
+	_add("water", "water <w> <h>", "Fill the empty tiles in a box at the cursor with water (voxel cells).", _water)
+	_add("boom", "boom [radius]", "An explosion at the cursor (the Bomb's, radius in tiles, default 3).", func(a: PackedStringArray) -> void:
+		var r := float(a[0]) if a.size() > 0 and a[0].is_valid_float() else 3.0
+		world.request_explode(world.item_user.cursor(), r, 0.0, 40)
+		_print("Boom (%s tiles)." % r))
+	_add("voxels", "voxels", "Voxel layer stats: tiles holding cells, tiles being simulated.", func(_a: PackedStringArray) -> void:
+		_print("%d voxel tiles, %d active." % [world.voxels.tiles.size(), world.voxels._active.size()]))
 	_add("shapes", "shapes", "Build every Shaping Spell shape (planks, stone bricks, logs, walls) to your right.", _shapes)
 	_add("fly", "fly", "Toggle flying (same as casting Fly).", func(_a: PackedStringArray) -> void:
 		var spell := ItemData.find(&"spell:fly") as SpellData
@@ -760,6 +767,19 @@ func _fill(a: PackedStringArray, wall: bool) -> void:
 			else:
 				world.request_set_block(start + Vector2i(x, y), id)
 	_print("Filled %dx%d with %s." % [size.x, size.y, a[0]])
+
+
+func _water(a: PackedStringArray) -> void:
+	if a.size() != 2 or not a[0].is_valid_int() or not a[1].is_valid_int():
+		_print("Usage: water <w> <h>")
+		return
+	var size := Vector2i(clampi(int(a[0]), 1, 64), clampi(int(a[1]), 1, 64))
+	var start := world.world_to_tile(world.item_user.cursor()) - size / 2
+	var n := 0
+	for y in size.y:
+		for x in size.x:
+			n += world.voxels.request_fill(start + Vector2i(x, y), &"water")
+	_print("Poured %d cells of water." % n)
 
 
 func _cursor(a: PackedStringArray) -> void:

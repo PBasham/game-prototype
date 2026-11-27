@@ -2,6 +2,19 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 52, voxels: falling sand, water, Sand Bricks, Bomb
+
+- **Patrick:** start the voxel style with sand and water, plus a Sand Brick that doesn't
+  fall to test voxels on a static block (placed and broken whole, a bomb to test partial
+  breaking, replacing a broken tile replaces the whole tile, sand counted in much higher
+  numbers so placing a block takes several). Voxels on static blocks only for Sand Bricks.
+- **Claude (defaults, said go ahead):** 4x4 cells a tile; cells only in air tiles; a
+  sand block falls apart only when nothing whole holds it up; 16 grains a block (Glass
+  16 Sand, Sand Bricks 16 Sand at the Workbench); a bitten brick tile is fixed with one
+  brick and mines into a brick if half is left; the Bomb is a test item with no recipe;
+  water has no effects or carrying yet (Siphon Liquid and thirst come next); piles stay
+  loose (`solidify_piles` off) so they look even.
+
 ## 2026-11-27: Phase 51, Shaping Spell, placing reach
 
 - **Patrick:** a hammer-like tool that shapes blocks into slopes, halves and rotations,

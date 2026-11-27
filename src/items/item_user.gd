@@ -263,6 +263,9 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 					too_hard = true
 					continue
 				var obj := not back and world.data.get_object(t.x, t.y) > 0 and not world.is_solid(t)
+				if not back and id == WorldData.AIR and world.voxels.has_minable(t) and _in_reach(t):
+					valid.append(t)  # sand cells, a broken Sand Bricks tile
+					continue
 				if (obj or (def and not def.unbreakable and def.health > 0.0 and t.y < world.data.height - 1
 						and (back or not world.is_protected(t)))) and _in_reach(t):
 					valid.append(t)
@@ -805,6 +808,12 @@ func _furniture_at(t: Vector2i) -> bool:
 func _limit_to_stack() -> void:
 	var p := world.player
 	var have := p.held_count()
+	if have > 0 and (world.infinite_items or p.held_meta().get("infinite", false)):
+		return
+	if mode in [Mode.PLACE_BLOCK, Mode.PLACE_WALL] and _item:
+		have /= maxi(_item.place_units, 1)
+		if have == 0 and mode == Mode.PLACE_BLOCK:
+			have = 1  # a part-full sand tile can need fewer grains (checked when placing)
 	if valid.size() > have:
 		valid.resize(have)
 
@@ -851,13 +860,15 @@ func _on_impact(item: ItemData) -> void:
 		Mode.PLACE_BLOCK:
 			var id := world.blocks.index_of(item.places_block)
 			for t in valid:
-				if p.held_count() > 0 and world.request_set_block(t, id):
-					p.take_held()
+				var cost := world.place_cost(t, item)
+				if p.can_take_held(cost) and world.request_place_block(t, id):
+					p.take_held(cost)
 		Mode.PLACE_WALL:
 			var id := world.walls.index_of(item.places_wall)
 			for t in valid:
-				if p.held_count() > 0 and world.request_set_wall(t, id):
-					p.take_held()
+				var cost := world.place_cost(t, item, true)
+				if p.can_take_held(cost) and world.request_set_wall(t, id):
+					p.take_held(cost)
 		Mode.PLANT_TREE:
 			for g in valid:
 				var kind := PlantLayer.SAPLING_DARKWOOD if item.plants == &"darkwood" else PlantLayer.SAPLING_PINE
@@ -1316,15 +1327,18 @@ func _instant_use(p: Player) -> void:
 		if not inv_ok.call():
 			break
 		var done := false
+		var cost := 1
 		match mode:
 			Mode.PLACE_BLOCK:
-				done = world.request_set_block(t, world.blocks.index_of(_item.places_block))
+				cost = world.place_cost(t, _item)
+				done = p.can_take_held(cost) and world.request_place_block(t, world.blocks.index_of(_item.places_block))
 			Mode.PLACE_WALL:
-				done = world.request_set_wall(t, world.walls.index_of(_item.places_wall))
+				cost = world.place_cost(t, _item, true)
+				done = p.can_take_held(cost) and world.request_set_wall(t, world.walls.index_of(_item.places_wall))
 			Mode.PLACE_OBJECT:
 				done = world.request_place_object(t, world.objects.index_of(_item.places_object), p.facing < 0)
 		if done:
-			p.take_held()
+			p.take_held(cost)
 
 
 ## The Shaping Spell's shapes for a tile, in click order, as shape bytes for its block

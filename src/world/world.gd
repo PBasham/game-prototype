@@ -99,6 +99,7 @@ var walls: TileTypes
 var objects: TileTypes
 var generator: WorldGenerator
 var renderer: ChunkRenderer
+var voxels: VoxelLayer
 var lights: LightMap
 var backdrop: Backdrop
 ## Time of day (day and night, growth timers in days).
@@ -197,6 +198,10 @@ func _ready() -> void:
 	renderer.chunks_per_frame = chunks_per_frame
 	add_child(renderer)
 	renderer.setup(self)
+	voxels = VoxelLayer.new()
+	voxels.name = "Voxels"
+	add_child(voxels)
+	voxels.setup(self)
 	object_layer = ObjectLayer.new()
 	object_layer.name = "Objects"
 	add_child(object_layer)
@@ -222,6 +227,7 @@ func _ready() -> void:
 			var np := key.split(",")
 			chest_names[Vector2i(int(np[0]), int(np[1]))] = String(names[key])
 		_saved_map = WorldSave.read_extra(info.path, WorldSave.META_MAP)
+		voxels.from_dict(WorldSave.read_extra(info.path, WorldSave.META_VOXELS))
 		for key: String in WorldSave.read_extra(info.path, WorldSave.META_FLIPPED):
 			var parts := key.split(",")
 			flipped[Vector2i(int(parts[0]), int(parts[1]))] = true
@@ -452,7 +458,7 @@ func save() -> Error:
 			WorldSave.META_FLIPPED: _flipped_to_dict(), WorldSave.META_CHEST_NAMES: _names_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict(),
-			WorldSave.META_POSITIONS: _spots_to_dict(), WorldSave.META_SHAPES: _shapes_to_dict(modified),
+			WorldSave.META_POSITIONS: _spots_to_dict(), WorldSave.META_SHAPES: _shapes_to_dict(modified), WorldSave.META_VOXELS: voxels.to_dict(),
 			WorldSave.META_MAP: world_map.to_dict() if world_map else {}}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
@@ -1620,7 +1626,8 @@ func request_set_object(tile: Vector2i, id: int) -> bool:
 # --- requests (host-authoritative) -------------------------------------------
 
 ## Sets a foreground block. Returns true if it changed.
-func request_set_block(tile: Vector2i, id: int) -> bool:
+## `quiet`: no place or break sound (sand falling apart and settling).
+func request_set_block(tile: Vector2i, id: int, quiet := false) -> bool:
 	if not Game.is_authority():
 		return false  # Clients will send this to the host (multiplayer phase).
 	if not data.in_bounds_y(tile.y) or id < 0 or id >= blocks.size():
@@ -1633,6 +1640,8 @@ func request_set_block(tile: Vector2i, id: int) -> bool:
 	data.set_block(tile.x, tile.y, id)
 	renderer.refresh_tile(tile)
 	block_changed.emit(wrap_tile(tile), old, id)
+	if quiet:
+		return true
 	if old != WorldData.AIR and id == WorldData.AIR:
 		EventBus.sound_requested.emit(&"block_break", tile_to_world(tile))
 	elif old == WorldData.AIR and id != WorldData.AIR:
@@ -1664,6 +1673,8 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	# (rope on a platform, a torch). Objects break in one hit.
 	if not wall and data.get_object(tile.x, tile.y) > 0 and not is_solid(tile):
 		return request_remove_object(tile)
+	if not wall and id == WorldData.AIR and voxels.has_minable(tile):
+		return voxels.request_damage(tile, INF if instant_break else amount)
 	if id <= 0 or tile.y >= data.height - 1:
 		return false
 	var def := (walls if wall else blocks).def(id)
@@ -1687,6 +1698,66 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	_break_dust(def, tile, wall)
 	_drop_for(def, tile)
 	return true
+
+
+## Places a block where a tile of voxel cells may be (sand grains of its own kind become
+## part of it; other cells make room). Like request_set_block otherwise.
+func request_place_block(tile: Vector2i, id: int) -> bool:
+	if not Game.is_authority() or data.get_block(wrap_tile(tile).x, tile.y) != WorldData.AIR:
+		return false
+	voxels.clear_for_block(tile)
+	return request_set_block(tile, id)
+
+
+## How many of `item` placing it at `tile` takes (see VoxelLayer.place_cost).
+func place_cost(tile: Vector2i, item: ItemData, wall := false) -> int:
+	return maxi(item.place_units, 1) if wall else voxels.place_cost(tile, item)
+
+
+## An explosion at `center` (the Bomb): sand and Sand Bricks lose a round bite (voxel
+## cells), other blocks within the radius break whole (with drops) if `power` is
+## enough, and everything damageable nearby is hurt, you included. Walls are left.
+func request_explode(center: Vector2, radius_tiles: float, damage: float, power: int, from: Node = null) -> void:
+	if not Game.is_authority():
+		return
+	var radius := radius_tiles * TILE
+	voxels.explode(center, radius)
+	var lo := Vector2i(floori((center.x - radius) / TILE), floori((center.y - radius) / TILE))
+	var hi := Vector2i(floori((center.x + radius) / TILE), floori((center.y + radius) / TILE))
+	for ty in range(lo.y, hi.y + 1):
+		for tx in range(lo.x, hi.x + 1):
+			var t := Vector2i(tx, ty)
+			if Vector2((tx + 0.5) * TILE, (ty + 0.5) * TILE).distance_to(center) > radius:
+				continue
+			var b := data.get_block(wrap_tile(t).x, ty)
+			if b <= 0:
+				continue
+			var def := blocks.def(b)
+			if def == null or def.min_mining_power > power or def.unbreakable:
+				continue
+			_damage_tile(t, INF, false)
+	var reach := radius * 1.25
+	var falloff := func(r: Rect2) -> float:
+		var dist := r.get_center().distance_to(center) - r.size.length() * 0.25
+		return -1.0 if dist > reach else damage * clampf(1.0 - dist / reach, 0.25, 1.0)
+	if player and damage > 0.0:
+		var hurt: float = falloff.call(player.body_rect())
+		if hurt > 0.0:
+			player.take_damage(hurt, &"explosion", center, 6.0)
+	for node in get_tree().get_nodes_in_group(&"damageable"):
+		if node == player or not is_instance_valid(node) or not node.has_method(&"hit_rect") or damage <= 0.0:
+			continue
+		var amount: float = falloff.call(node.call(&"hit_rect"))
+		if amount < 0.0:
+			continue
+		node.call(&"take_damage", amount, from if from else player)
+		if node.has_method(&"knock_back"):
+			node.call(&"knock_back", center, 6.0, true)
+	var ring := SpellEffect.spawn(effects, SpellEffect.Kind.BURST, center, Vector2.ZERO, Color(1, 0.75, 0.4))
+	if ring:
+		ring.scale = Vector2.ONE * maxf(radius_tiles / 2.0, 1.0)
+	BreakDust.spawn(effects, center, Color(0.45, 0.42, 0.4))
+	EventBus.sound_requested.emit(&"bomb", center)
 
 
 ## A puff of dust in the broken tile's colors (darker for a back wall).

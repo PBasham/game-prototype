@@ -358,6 +358,20 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 52: voxels: falling sand, water, Sand Bricks, Bomb (branch phase-52-voxels)**
+- [ ] Place sand in the air (or dig out under a sand block): it falls apart into grains
+      and piles at 45 degrees. `fill sand 6 4` high up drops a big pile.
+- [ ] Walk on a pile: you step up its slope. Mine it: one Sand per grain.
+- [ ] Sand counts in grains: a block takes 16. Topping up a part-full pile tile only
+      takes what's missing.
+- [ ] `water 3 3` in a dug-out pit: it falls and levels out. Sand dropped in sinks.
+- [ ] Workbench: 16 Sand = 1 Sand Bricks. They don't fall. Throw a Bomb (`give bomb`) at
+      a Sand Bricks wall: a round bite, the rest stays. Place a brick on a bitten tile:
+      whole again. Mine a bitten tile: a brick back if half or more was left.
+- [ ] Bombs break other blocks in the blast whole (with drops) and hurt you up close.
+- [ ] Leave and reload: piles, water and bitten bricks are still there.
+- [ ] Glass now takes 16 Sand.
+
 **Phase 51: Shaping Spell, placing reach (branch phase-51-shaping)**
 - [ ] Alt + R takes the Shaping Spell (everyone has it, old characters too). Click a
       placed block: bottom half, top half, then four slopes, back to full. Shift + click

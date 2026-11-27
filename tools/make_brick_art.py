@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Placeholder brick art: Stone Bricks and Dark Forest Stone Bricks (blocks and walls),
+"""Placeholder brick art: Stone Bricks, Dark Forest Stone Bricks and Sand Bricks (blocks and walls),
 built from each stone texture's own colors so they match. Also their item icons and
 held sprites, and the Forest Spirit Pendant icon. Kept unless --force (Patrick
 repaints them later).
@@ -88,7 +88,8 @@ def pendant() -> Image.Image:
 
 def main() -> None:
     force = "--force" in sys.argv
-    for stone, name in [("stone", "stone_bricks"), ("dark_forest_stone", "dark_forest_stone_bricks")]:
+    for stone, name in [("stone", "stone_bricks"), ("dark_forest_stone", "dark_forest_stone_bricks"),
+                        ("sand", "sand_bricks")]:
         block = bricks(stone, False)
         save(block, os.path.join(ASSETS, "terrain", name + ".png"), force)
         save(bricks(stone, True), os.path.join(ASSETS, "terrain", name + "_wall.png"), force)

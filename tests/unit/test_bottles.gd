@@ -48,7 +48,7 @@ func test_bottle_shapes_and_spots() -> void:
 
 func test_sand_glass_and_bottle_recipes() -> void:
 	var want := {
-		&"glass": [&"furnace", &"sand", 1], &"glass_vial": [&"furnace", &"glass", 1],
+		&"glass": [&"furnace", &"sand", 16], &"glass_vial": [&"furnace", &"glass", 1],
 		&"glass_bottle": [&"furnace", &"glass", 2], &"glass_flask": [&"furnace", &"glass", 3],
 		&"clay_bottle": [&"furnace", &"clay", 3], &"clay_jug": [&"furnace", &"clay", 4],
 	}

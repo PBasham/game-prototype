@@ -342,6 +342,14 @@ Bed: furniture, 9x3 tiles, needs a floor. Workbench, 20 wood.
   every enemy inside for 2 per second over 3 s, again every half second.
   `src/combat/thrown_item.gd`, `src/combat/poison_cloud.gd`.
 
+- **Bomb** (Phase 52, the voxel test item: Creative or `give bomb`, no recipe yet):
+  thrown like the flask (`throw_speed` 20) and blows up on the first block, sand cell or
+  enemy it touches (`throw_effect` `explosion`). Radius `explosion_radius_tiles` 3,
+  `explosion_damage` 30 at the middle (down to a quarter at the edge of 1.25x the
+  radius), to enemies and to you. Blocks in the radius break whole with their drops if
+  `explosion_power` (40) is enough; sand and Sand Bricks lose exactly the round bite
+  instead (voxel cells, see items-and-mining.md). Walls are left. `World.request_explode`.
+
 ## Slime uses
 
 - Hand recipe: 1 Slime + 1 Wood = 5 Torches.

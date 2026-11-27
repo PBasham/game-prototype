@@ -592,6 +592,19 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 52: voxels
+
+| Change | Where |
+| --- | --- |
+| Voxel cells, simulation, drawing, collision, saving | `VoxelLayer` (src/world/voxel_layer.gd), `World.voxels`; `WorldSave.META_VOXELS` |
+| Materials | `VoxelMaterial` (src/world/voxel_material.gd), `data/voxels/` |
+| Blocks that become cells | `TileDef.voxel` (sand, sand_bricks) |
+| Mining and placing cells | `World._damage_tile` (cells first), `World.request_place_block`, `World.place_cost`; `ItemUser` MINE targets, PLACE_BLOCK/WALL costs, `_limit_to_stack`; `ItemData.place_units`; `Player.take_held(count)`, `can_take_held` |
+| Bomb | `ItemData.explosion_*`; `ThrownItem._shatter`; `World.request_explode` |
+| Quiet block changes | `World.request_set_block(tile, id, quiet)` |
+| Dev console | `water`, `boom`, `voxels` in `DevConsole` |
+| Art | `tools/make_brick_art.py` (Sand Bricks), `tools/make_voxel_art.py` (Bomb, blocks.png row 21) |
+
 ## Phase 51: Shaping Spell, placing reach
 
 | Change | Where |

@@ -820,15 +820,27 @@ func held_count() -> int:
 
 
 ## Uses up one of the held item (placing): from the mouse stack, else the hotbar slot.
-func take_held() -> bool:
+## Whether `count` of the held item can be used up (dev infinite stacks always can).
+func can_take_held(count: int) -> bool:
+	if held_count() <= 0:
+		return false
+	if (world and world.infinite_items) or held_meta().get("infinite", false):
+		return true
+	return held_count() >= count
+
+
+func take_held(count := 1) -> bool:
 	if world and world.infinite_items and held_count() > 0:
 		return true  # dev: nothing is used up
 	if held_count() > 0 and held_meta().get("infinite", false):
 		return true  # a dev window infinite stack (right click there)
 	if mouse_stack:
-		return mouse_take.is_valid() and bool(mouse_take.call())
+		for i in count:
+			if not (mouse_take.is_valid() and bool(mouse_take.call())):
+				return i > 0
+		return true
 	var slot := held_slot()
-	if slot < 0 or character.inventory.take(slot, 1) <= 0:
+	if slot < 0 or held_count() < count or character.inventory.take(slot, count) <= 0:
 		return false
 	if selected < 0:
 		refresh_held()  # the last of a Z X C item: the hand empties

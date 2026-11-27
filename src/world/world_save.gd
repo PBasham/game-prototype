@@ -45,6 +45,7 @@ const META_KILLS := "kills"
 ## The Shaping Spell's shapes of saved chunks: {"x,y": PackedByteArray (ChunkData.shapes)},
 ## only chunks with any shape.
 const META_SHAPES := "shapes"
+const META_VOXELS := "voxels"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

@@ -201,7 +201,10 @@ func _items() -> Array[ItemData]:
 		var bottle := _small(row[0], row[1], row[2])
 		_detailed(bottle, &"")
 		out.append(bottle)
-	out.append(_block(&"sand", "Sand", "Fine sand: a block and a back wall. Melt it in a Furnace into Glass. (No sand in the world yet: the Creative window has it.)", &"sand_wall"))
+	var sand := _block(&"sand", "Sand", "Fine sand, counted in grains: a block or back wall takes 16. It falls and piles up. Melt 16 in a Furnace into Glass, or press them into Sand Bricks at a Workbench. (No sand in the world yet: the Creative window has it.)", &"sand_wall")
+	sand.place_units = 16  # one grain per voxel cell (Phase 52)
+	out.append(sand)
+	out.append(_block(&"sand_bricks", "Sand Bricks", "Sand pressed into bricks. Doesn't fall. Explosions bite pieces out of it; placing a brick on a broken tile makes it whole.", &"sand_bricks_wall"))
 	out.append(_block(&"glass", "Glass", "Clear glass, melted from sand. A see-through block and back wall, and the stuff of glass bottles and cabinets.", &"glass_wall"))
 	out.append(_small(&"wooden_bowl", "Wooden Bowl", "For stew."))
 	for row: Array in [
@@ -293,6 +296,15 @@ func _items() -> Array[ItemData]:
 	coat.poison_seconds = 4.0
 	coat.max_stack = 30
 	out.append(coat)
+	# Phase 52: the voxel test bomb (no recipe yet: Creative or `give bomb`).
+	var bomb := _small(&"bomb", "Bomb", "Left click to throw. Blows up where it hits: sand and Sand Bricks lose a round bite, other blocks in the blast break, and it hurts everything nearby, you too.")
+	bomb.throw_speed = 20.0
+	bomb.throw_effect = &"explosion"
+	bomb.explosion_radius_tiles = 3.0
+	bomb.explosion_damage = 30.0
+	bomb.explosion_power = 40
+	bomb.max_stack = 30
+	out.append(bomb)
 	var flask := _small(&"poison_flask", "Poison Flask", "Left click to throw. Shatters into a cloud that poisons enemies inside (2 damage a second).")
 	flask.throw_speed = 22.0
 	flask.throw_effect = &"poison_cloud"
@@ -1164,7 +1176,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"clay_flask", &"furnace", {&"clay": 2}, &"clay_flask", 1, []],
 		[&"clay_bottle", &"furnace", {&"clay": 3}, &"clay_bottle", 1, []],
 		[&"clay_jug", &"furnace", {&"clay": 4}, &"clay_jug", 1, []],
-		[&"glass", &"furnace", {&"sand": 1}, &"glass", 1, []],
+		[&"glass", &"furnace", {&"sand": 16}, &"glass", 1, []],
+		[&"sand_bricks", &"workbench", {&"sand": 16}, &"sand_bricks", 1, []],
 		[&"glass_vial", &"furnace", {&"glass": 1}, &"glass_vial", 1, []],
 		[&"glass_bottle", &"furnace", {&"glass": 2}, &"glass_bottle", 1, []],
 		[&"glass_flask", &"furnace", {&"glass": 3}, &"glass_flask", 1, []],

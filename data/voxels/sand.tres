@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="VoxelMaterial" format=3]
+
+[ext_resource type="Script" path="res://src/world/voxel_material.gd" id="1_vox"]
+
+[resource]
+script = ExtResource("1_vox")
+behavior = 0
+terrain = "sand"
+color = Color(0.81, 0.68, 0.42, 1)
+block = &"sand"
+item = &"sand"
+cells_per_item = 1
+id = &"sand"
+display_name = "Sand"
+description = "Falls and piles up. One grain per cell."

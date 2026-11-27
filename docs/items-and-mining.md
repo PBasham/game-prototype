@@ -594,3 +594,43 @@ Breaking or replacing a block keeps the wall's shape and clears the block's, and
 other way around. The terrain shader cuts the shape out (the wall shows through) and draws
 a dark rim along the cut on built blocks. Collision uses TileSet alternatives 1 to 6
 (`ChunkRenderer.SHAPE_POLYGONS`). Dev console: `shapes` builds every shape to your right.
+
+## Voxels (Phase 52, the experiment)
+
+A finer grid on top of the tiles: **4x4 cells a tile** (each 2x2 world pixels), only in
+tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are data
+(`data/voxels/*.tres`, `VoxelMaterial`):
+
+| Material | Behavior | Notes |
+| --- | --- | --- |
+| Sand | POWDER | Falls, piles at 45 degrees, sinks through water. One Sand item a cell. |
+| Water | LIQUID | Falls, slides sideways (`water_spread` 3 cells a step) to level out. No collision, no effect on you yet, no way to carry it (dev console `water <w> <h>`). |
+| Sand Bricks | STATIC | Never moves. Only explosions turn a Sand Bricks block into cells. |
+
+- **Sand falls:** a sand block (`TileDef.voxel`) with nothing whole under it (a solid
+  unshaped block, or a tile full of solid cells) turns into 16 sand cells. A block that
+  is held up stays a block (placed walls of sand on the ground don't slump).
+  `solidify_piles` (off) would turn resting full tiles back into blocks; off because the
+  terrain shader rounds their edges inside a loose pile.
+- **Mining** a tile of cells takes all its solid cells at once (water stays). Sand gives
+  one Sand per cell; a broken Sand Bricks tile gives a brick if at least half of it
+  (`cells_per_item` 8) is left.
+- **Placing:** Sand costs `place_units` 16 a tile, but a tile partly full of loose sand
+  only takes the missing grains (they become the block). A Sand Brick placed on a broken
+  Sand Bricks tile makes it whole for one brick. Other cells in the way: other solid
+  cells are lost, water is pushed into the tile above.
+- **Collision:** solid cells have 2x2 px collision (a hidden TileMapLayer), so you walk
+  on piles; water has none. Thrown items stop on solid cells.
+- **Explosions** (the Bomb, `boom`): sand and Sand Bricks tiles near the blast become
+  cells and every solid cell inside the radius is destroyed; tiles the blast only
+  grazed go back to whole blocks.
+- **Simulation:** host only, only around changes (`_active` tiles), `ticks_per_second` 30,
+  `fall_cells` 2 a step, `sand_sink_chance` 0.35, `sleep_steps` 30. Whole tiles of falling
+  cells shift at once and full resting tiles are skipped, so a 200 block sand drop costs
+  about 2 ms a step.
+- **Look:** cells are painted into 16x16 tile pictures at the terrain's detail. Grains
+  carry a patch of the sand texture (picked by their shade), bricks show the texture
+  where they are, water is see-through with a lighter surface. `cell_shade` (0.84)
+  matches loose cells to the blocks the shader draws.
+- **Saving:** world meta "voxels" (material ids plus 16 bytes a tile).
+- Dev console: `water <w> <h>`, `boom [radius]`, `voxels`, and `fill sand <w> <h>` to drop sand.

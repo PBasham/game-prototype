@@ -49,6 +49,9 @@ enum Collision {
 @export_range(0.0, 1.0) var bonus_drop_chance := 0.0
 ## Can't be broken at all (0 health also means unbreakable).
 @export var unbreakable: bool = false
+## Voxel material (data/voxels) this block turns into: sand falls apart into sand cells
+## when nothing whole is under it, Sand Bricks break into cells only in explosions.
+@export var voxel: StringName = &""
 @export_group("")
 
 @export_group("Terrain look")

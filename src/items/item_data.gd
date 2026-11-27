@@ -74,6 +74,9 @@ const SPELL_PREFIX := "spell:"
 ## Largest square the area toggle can place at once. 0 = as big as the Mining Spell
 ## digs (its max area, Empower's Area); 1 = always one at a time (tree seeds).
 @export var place_area_max := 0
+## How many of this item placing one block or wall takes (sand: 16 grains, one per
+## voxel cell). A tile partly full of its own sand only takes the missing grains.
+@export var place_units := 1
 ## Placing reach in tiles. 0 = the spellbook's build_reach_tiles.
 @export var place_reach_tiles := 0.0
 
@@ -193,11 +196,18 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 @export_group("Throwing")
 ## Left click throws one (it's used up): the Poison Flask. Speed in tiles per second.
 @export var throw_speed := 0.0
-## What happens where it lands: &"poison_cloud" (a cloud that poisons enemies inside).
+## What happens where it lands: &"poison_cloud" (a cloud that poisons enemies inside),
+## &"explosion" (the Bomb: see explosion_radius_tiles).
 @export var throw_effect: StringName = &""
 ## The cloud's size in tiles and how long it lasts.
 @export var cloud_tiles := Vector2(6, 4)
 @export var cloud_seconds := 5.0
+## Explosion (throw_effect &"explosion"): radius in tiles, damage at the middle (less
+## toward the edge, to you too) and the mining power it breaks blocks with. Sand and
+## Sand Bricks lose exactly the round bite; other blocks break whole.
+@export var explosion_radius_tiles := 0.0
+@export var explosion_damage := 0.0
+@export var explosion_power := 0
 @export_group("Magic")
 ## Unused (spells don't go in books any more); kept so older files still load.
 @export var spell_slots := 0

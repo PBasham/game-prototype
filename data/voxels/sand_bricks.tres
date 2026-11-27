@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="VoxelMaterial" format=3]
+
+[ext_resource type="Script" path="res://src/world/voxel_material.gd" id="1_vox"]
+
+[resource]
+script = ExtResource("1_vox")
+behavior = 2
+terrain = "sand_bricks"
+color = Color(0.78, 0.64, 0.4, 1)
+block = &"sand_bricks"
+item = &"sand_bricks"
+cells_per_item = 8
+id = &"sand_bricks"
+display_name = "Sand Bricks"
+description = "Doesn't move. Explosions bite pieces out of it; placing a brick makes the tile whole again."

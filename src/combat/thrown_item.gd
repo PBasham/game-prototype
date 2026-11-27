@@ -27,7 +27,7 @@ func _physics_process(delta: float) -> void:
 	var steps := maxi(1, ceili(velocity.length() * delta / 2.0))
 	for i in steps:
 		global_position += velocity * delta / steps
-		if world.blocks_hits(world.world_to_tile(global_position)) or _hits_enemy():
+		if world.blocks_hits(world.world_to_tile(global_position)) or world.voxels.solid_at(global_position) or _hits_enemy():
 			_shatter()
 			return
 	_spin += delta * 12.0
@@ -47,6 +47,10 @@ func _hits_enemy() -> bool:
 
 
 func _shatter() -> void:
+	if item.throw_effect == &"explosion":
+		world.request_explode(global_position, item.explosion_radius_tiles, item.explosion_damage, item.explosion_power)
+		queue_free()
+		return
 	EventBus.sound_requested.emit(&"block_break", global_position)
 	if item.throw_effect == &"poison_cloud":
 		var c := PoisonCloud.new()
