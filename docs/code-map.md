@@ -592,6 +592,12 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 60: dark caves
+
+| Change | Where |
+| --- | --- |
+| Daylight fades fast in caves | `LightMap.cave_air_decay`, `cave_air_below_tiles`; `LightJob` (sky pass `mult`) |
+
 ## Phase 59: turn log walls
 
 | Change | Where |

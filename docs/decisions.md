@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 60, dark caves
+
+- **Patrick:** caves are too bright this far down.
+- **Claude:** daylight crossing cave air (over 4 tiles under the natural ground) fades 14%
+  a tile instead of 3.5% (`LightMap.cave_air_decay` 0.86), so it no longer seeps through
+  whole cave systems from their entrances. Torch light unchanged.
+
 ## 2026-11-27: Phase 59, turn log walls
 
 - **Patrick:** can't make a log back wall vertical.

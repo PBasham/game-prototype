@@ -15,6 +15,12 @@ extends Sprite2D
 @export_range(0.0, 1.0) var ambient := 0.0
 ## Share of light kept per tile through air and walls (Terraria 0.91 per its tile).
 @export_range(0.5, 1.0) var air_decay := 0.965
+## Sunlight through air deep under the natural ground (caves, shafts): kept per tile.
+## Lower than air_decay so daylight from an entrance dies out a short way in instead of
+## faintly lighting whole cave systems. Torches and other lights aren't affected.
+@export_range(0.5, 1.0) var cave_air_decay := 0.86
+## How far below the natural ground (tiles) air counts as cave air.
+@export var cave_air_below_tiles := 4
 ## Share kept per tile through blocks (Terraria 0.56): sunlight lights about 3 blocks
 ## down well and is gone by about 10.
 @export_range(0.0, 1.0) var solid_decay := 0.8
@@ -174,6 +180,8 @@ func _make_job() -> LightJob:
 	_last_sky = _sky()
 	job.sky = _last_sky
 	job.air_decay = air_decay
+	job.cave_air_decay = cave_air_decay
+	job.cave_air_below = cave_air_below_tiles
 	job.solid_decay = solid_decay
 	job.indoors_factor = indoors_factor
 	job.object_solid.resize(world.objects.size())

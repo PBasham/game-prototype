@@ -174,6 +174,43 @@ func test_dug_out_air_underground_isnt_sky() -> void:
 	assert_lt(at.call(6, ChunkData.SIZE + 21), 30, "a dug pocket 20 tiles down is dark")
 
 
+func test_daylight_dies_out_down_a_shaft() -> void:
+	# Ground at row SIZE; a shaft 4 wide dug straight down from it, 3 chunks deep, with
+	# back walls (a cave). Daylight lights its top, but not far down.
+	var stone := blocks.index_of(&"stone")
+	var dirt_wall := TileTypes.new(&"walls").index_of(&"dirt_wall")
+	var sky := PackedInt32Array()
+	sky.resize(ChunkData.AREA)
+	var no_walls := PackedInt32Array()
+	no_walls.resize(ChunkData.AREA)
+	var rock := PackedInt32Array()
+	rock.resize(ChunkData.AREA)
+	rock.fill(stone)
+	var walled := PackedInt32Array()
+	walled.resize(ChunkData.AREA)
+	walled.fill(dirt_wall)
+	for y in ChunkData.SIZE:
+		for x in range(14, 18):
+			rock[y * ChunkData.SIZE + x] = WorldData.AIR
+	var job := LightJob.new()
+	job.rect = Rect2i(0, 0, ChunkData.SIZE, ChunkData.SIZE * 4)
+	job.blocks = [sky, rock, rock, rock]
+	job.walls = [no_walls, walled, walled, walled]
+	job.sky_floor.resize(ChunkData.SIZE)
+	job.sky_floor.fill(ChunkData.SIZE)
+	job.cave_air_decay = 0.86
+	var table := blocks.collision_table()
+	job.solid.resize(table.size())
+	for i in table.size():
+		job.solid[i] = 1 if table[i] == TileDef.Collision.SOLID else 0
+	job.run()
+	var w := ChunkData.SIZE
+	var at := func(x: int, y: int) -> int: return job.bytes[(y * w + x) * 3]
+	assert_gt(at.call(15, ChunkData.SIZE + 3), 150, "the top of the shaft is lit")
+	assert_lt(at.call(15, ChunkData.SIZE + 30), 20, "30 tiles down it's dark")
+	assert_lt(at.call(15, ChunkData.SIZE * 3 + 20), 3, "deep down: black")
+
+
 func test_torches_light_a_dark_cave_warm() -> void:
 	# A sealed 32x32 room in rock (no sky), with a torch in the middle.
 	var stone := blocks.index_of(&"stone")

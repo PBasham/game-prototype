@@ -214,6 +214,7 @@ player (3 tall vs our 8), so ours are those to the power 3/8.
 | --- | --- | --- |
 | `ambient` | 0 | Brightness everything gets with no light (0: unlit caves are black). |
 | `air_decay` | 0.965 | Share of light kept per tile through air and walls. |
+`cave_air_decay` (0.86): sunlight through air more than `cave_air_below_tiles` (4) under the natural ground (caves, shafts) fades this much per tile instead, so daylight from an entrance dies out about 20 tiles in and deep caves are black without a light. Torches are unaffected.
 | `solid_decay` | 0.8 | Share kept per tile through blocks: the surface is well lit about 3 blocks down and dark by about 10. |
 | `indoors_factor` | 0 | Share kept coming out of a block into a walled space (a room, a cave): 0 = the sun doesn't shine through a roof. Rooms get light through open doors, gaps and torches. |
 | `min_interval` | 0.12 | Minimum seconds between recomputes. |

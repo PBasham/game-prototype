@@ -42,6 +42,9 @@ var ambient := 0.0
 ## Sky light color and brightness (WorldClock.sun_light()): multiplies sunlight.
 var sky := Color.WHITE
 var air_decay := 0.965
+## Sunlight through air more than cave_air_below tiles under sky_floor.
+var cave_air_decay := 0.965
+var cave_air_below := 4
 var solid_decay := 0.8
 var indoors_factor := 0.0
 ## Per column (relative to rect): rows above this (relative to rect) can be open sky;
@@ -126,7 +129,12 @@ func run() -> void:
 	var mult := PackedFloat32Array()
 	mult.resize(w * h)
 	for i in w * h:
-		mult[i] = solid_decay if solid_at[i] == 1 else air_decay
+		if solid_at[i] == 1:
+			mult[i] = solid_decay
+		elif not sky_floor.is_empty() and i / w >= sky_floor[i % w] + cave_air_below:
+			mult[i] = cave_air_decay  # a cave: daylight dies out soon
+		else:
+			mult[i] = air_decay
 	for _round in 2:
 		for y in h:
 			var row := y * w

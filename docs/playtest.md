@@ -358,6 +358,10 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 60: dark caves (branch phase-60-dark-caves)**
+- [ ] Deep caves are black without a light; daylight down a shaft or cave mouth fades out
+      about 20 tiles in. Torches light caves as before.
+
 **Phase 59: turn log walls (branch phase-59-turn-log-walls)**
 - [ ] Shaping Spell, right click a log wall: full, bottom half, top half, then turned
       (upright). One more click: back to full. Other walls only get the halves.
