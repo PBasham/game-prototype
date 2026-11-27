@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 59: turn log walls (branch phase-59-turn-log-walls)**
+- [ ] Shaping Spell, right click a log wall: full, bottom half, top half, then turned
+      (upright). One more click: back to full. Other walls only get the halves.
+- [ ] Console `wallshape turned 6 4` turns a whole patch of log wall at the cursor.
+
 **Phase 58: drops in the ground (branch phase-58-drops-in-ground)**
 - [ ] Fell a tree so it falls into a hillside: the logs and seeds land on top, not inside.
 - [ ] Place a block on a lying item: it pops up onto the block.

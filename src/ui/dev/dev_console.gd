@@ -372,6 +372,21 @@ func _register() -> void:
 		world.regenerate())
 	_add("fill", "fill <block|air> <w> <h>", "Fill a box with a block (front layer) at the cursor.", func(a: PackedStringArray) -> void:
 		_fill(a, false))
+	_add("wallshape", "wallshape <0|1|2|turned> <w> <h>", "Shape the walls in a box at the cursor: full, bottom half, top half, or turned (log walls).", func(a: PackedStringArray) -> void:
+		if a.size() != 3 or not a[1].is_valid_int() or not a[2].is_valid_int():
+			_print("Usage: wallshape <0|1|2|turned> <w> <h>")
+			return
+		var shape := 4 if a[0] == "turned" else clampi(int(a[0]), 0, 2)
+		var size := Vector2i(clampi(int(a[1]), 1, 64), clampi(int(a[2]), 1, 64))
+		var start := world.world_to_tile(world.item_user.cursor()) - size / 2
+		var n := 0
+		for y in size.y:
+			for x in size.x:
+				var t := world.wrap_tile(start + Vector2i(x, y))
+				if world.data.get_wall(t.x, t.y) > 0:
+					world.request_set_shape(t, (world.data.get_shape(t.x, t.y) & 15) | (shape << 4))
+					n += 1
+		_print("Shaped %d walls." % n))
 	_add("fillwall", "fillwall <wall|air> <w> <h>", "Fill a box with a background wall at the cursor.", func(a: PackedStringArray) -> void:
 		_fill(a, true))
 	_add("cursor", "cursor <dx> <dy> | cursor off", "Pin the cursor to a tile offset from your feet (for scripted building), or let it follow the mouse again.", _cursor)

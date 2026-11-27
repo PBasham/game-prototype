@@ -65,7 +65,7 @@ func test_walls_take_halves_and_keep_the_block_shape() -> void:
 	w.request_set_block(t, w.blocks.index_of(&"wood_planks"))
 	w.request_set_wall(t, w.walls.index_of(&"log_wall"))
 	w.item_user.shape_step(t, false, 1)  # bottom half block
-	assert_eq(Array(w.item_user.shape_cycle(t, true)), [0, 1, 2])
+	assert_eq(Array(w.item_user.shape_cycle(t, true)), [0, 1, 2, 4], "a log wall can be turned too")
 	w.item_user.shape_step(t, true, 1)  # bottom half wall
 	assert_eq(w.data.get_shape(t.x, t.y), 1 | (1 << 4))
 	w.request_set_block(t, w.blocks.index_of(&"stone"))
@@ -106,3 +106,16 @@ func test_clicking_with_the_spell_shapes_the_block() -> void:
 	Input.action_release("use_primary")
 	await wait_seconds(0.6)
 	assert_eq(w.data.get_shape(t.x, t.y) & 7, 1, "one click, one step")
+
+
+func test_log_walls_turn() -> void:
+	var t := _spot()
+	w.request_set_wall(t, w.walls.index_of(&"log_wall"))
+	for i in 3:
+		w.item_user.shape_step(t, true, 1)
+	assert_eq(w.data.get_shape(t.x, t.y), 4 << 4, "turned: shape bit 6")
+	w.item_user.shape_step(t, true, 1)
+	assert_eq(w.data.get_shape(t.x, t.y), 0, "back to plain")
+	var plain := _spot() + Vector2i(2, 0)
+	w.request_set_wall(plain, w.walls.index_of(&"dirt_wall"))
+	assert_eq(Array(w.item_user.shape_cycle(plain, true)), [0, 1, 2], "other walls only take halves")

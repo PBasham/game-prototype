@@ -221,8 +221,11 @@ vec4 strip_t(sampler2D s, int slot, vec2 p, bool turn) {
 // A log wall (overhang_walls) in a single column: drawn upright too.
 bool upright_wall(ivec2 t) {
 	int w = wal(t);
-	return w > 0 && overhang_walls[w] > 0.5 && wal(t + ivec2(-1, 0)) != w && wal(t + ivec2(1, 0)) != w
+	if (w <= 0 || overhang_walls[w] < 0.5) return false;
+	bool column = wal(t + ivec2(-1, 0)) != w && wal(t + ivec2(1, 0)) != w
 		&& (wal(t + ivec2(0, -1)) == w || wal(t + ivec2(0, 1)) == w);
+	// The Shaping Spell's wall turn (shape bit 6) flips it the other way.
+	return column != ((shape_of(t) & 64) != 0);
 }
 
 // A log (turn_slots) standing in a single column: drawn upright. The Shaping Spell's

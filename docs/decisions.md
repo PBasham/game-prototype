@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 59, turn log walls
+
+- **Patrick:** can't make a log back wall vertical.
+- **Claude:** log walls get a "turned" step in the Shaping Spell's wall cycle (shape bit
+  6, flips the upright look like turned log blocks); dev console `wallshape`.
+
 ## 2026-11-27: Phase 58, drops in the ground
 
 - **Patrick:** a chopped tree dropped wood below ground; it should be stopped by the ground.

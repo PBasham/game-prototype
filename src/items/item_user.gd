@@ -1412,6 +1412,9 @@ func shape_cycle(t: Vector2i, on_back: bool) -> PackedInt32Array:
 		var w := world.data.get_wall(t.x, t.y)
 		if w > 0:
 			out.append_array([0, 1, 2])
+			var wdef := world.walls.def(w)
+			if wdef and wdef.built and wdef.overhang_px > 0:
+				out.append(4)  # a log wall, turned (shape bit 6)
 		return out
 	var b := world.data.get_block(t.x, t.y)
 	if b <= 0 or world.blocks.collision(b) != TileDef.Collision.SOLID or not _placeable_block(world.blocks.def(b).id):
@@ -1429,7 +1432,7 @@ func shape_step(t: Vector2i, on_back: bool, dir: int) -> void:
 	if cycle.size() < 2:
 		return
 	var byte := world.data.get_shape(t.x, t.y)
-	var mine := (byte >> 4) & 3 if on_back else byte & 15
+	var mine := (byte >> 4) & 15 if on_back else byte & 15
 	var i := cycle.find(mine)
 	var next := cycle[posmod((i if i >= 0 else 0) + dir, cycle.size())]
 	var out := (byte & 15) | (next << 4) if on_back else (byte & 0xF0) | next

@@ -592,6 +592,12 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 59: turn log walls
+
+| Change | Where |
+| --- | --- |
+| Wall turn (shape bit 6) | `ItemUser.shape_cycle` (value 4 in the wall nibble), `terrain.gdshader` `upright_wall`; console `wallshape` in `DevConsole` |
+
 ## Phase 58: drops in the ground
 
 | Change | Where |

@@ -229,7 +229,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 | Spell | Cast | Notes |
 | --- | --- | --- |
 | Mining Spell | TOOL beam, phantom pickaxe | Known from the start, free. 45 mining per second per tile, landing once per swing (`phantom_swing_time` 0.3 s); power 30 (stone, dirt, copper), area 2 (toggle 1 to 2), reach 8. Empower: Power (copper then iron bars: power 40 then 50, 30% faster per rank), Area (max 3x3, 4x4, 5x5), Reach (+2 tiles, 3 ranks). Placing blocks and walls goes as big as its max area. |
-| Shaping Spell | TOOL (`shapes_blocks`) | Known from the start, free. Click a placed block to step it to its next shape: full, bottom half, top half, then the four slopes (solid toward bottom-left, bottom-right, top-left, top-right). Logs (blocks with `overhang_px`) also get "turned", which flips the automatic upright/sideways look. Right click shapes the wall: full, bottom half, top half. **Shift + click** steps back. Only blocks some item places can be shaped (not grass or natural-only tiles). Collision follows the shape. Reach 8. Empower: Reach. |
+| Shaping Spell | TOOL (`shapes_blocks`) | Known from the start, free. Click a placed block to step it to its next shape: full, bottom half, top half, then the four slopes (solid toward bottom-left, bottom-right, top-left, top-right). Logs (blocks with `overhang_px`) also get "turned", which flips the automatic upright/sideways look. Right click shapes the wall: full, bottom half, top half, and for log walls a fourth step, turned (upright, or sideways in a single column). **Shift + click** steps back. Only blocks some item places can be shaped (not grass or natural-only tiles). Collision follows the shape. Reach 8. Empower: Reach. |
 | Siphon Liquid | TOOL | Learned at the Spell Weaving Table. Ready for liquids (there are none yet): hold to draw up liquid, right click to pour it. Reach 8, area 1. Empower: Reach, Area. |
 | Chopping Spell | TOOL beam, phantom axe | Known from the start, free. 60 chopping per second, once per swing, reach 8. Empower: Sharpness (copper then iron bars, 40% faster per rank), Reach |
 | Fly | TOGGLE | Click to fly, click again to stop. WASD in every direction, Space goes up. No gravity or fall damage while flying. 34 tiles/s (`move_speed`; the Player's `fly_speed` is the fallback), `fly_accel_time` (0.15). **Hold Shift while moving to boost:** speed x2 (`boost_speed_mult`), mana x4 (`boost_mana_mult`: 40/s, a full bar in about 2.5 s). The boost is meant to become an empowerment later. Stays on when you switch items. 10 mana/s. |
@@ -592,6 +592,7 @@ Every tile has a shape byte (`ChunkData.shapes`, saved with the world under "sha
 | 0 to 2 | Block shape: 0 full, 1 bottom half, 2 top half, 3 to 6 slopes solid toward bottom-left, bottom-right, top-left, top-right |
 | 3 | Log turned (flips the automatic upright look of a single column) |
 | 4 to 5 | Wall shape: 0 full, 1 bottom half, 2 top half |
+| 6 | Log wall turned (flips its upright/sideways look, like bit 3 for log blocks) |
 
 Breaking or replacing a block keeps the wall's shape and clears the block's, and the
 other way around. The terrain shader cuts the shape out (the wall shows through) and draws
