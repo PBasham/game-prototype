@@ -34,6 +34,11 @@ func test_edits_survive_save_and_load() -> void:
 	assert_false(w.request_set_block(Vector2i(0, w.data.height - 1), WorldData.AIR), "floor row is locked")
 	w.record_kill(&"green_slime")
 	w.record_kill(&"green_slime")
+	var pool := Vector2i(s.x - 4, s.y - 6)
+	assert_eq(w.voxels.request_fill(pool, &"water"), 16)
+	w.liquids[Vector2i(7, 9)] = 123
+	w.player.thirst = 42.0
+	w.character.water = 77
 	w.queue_free()
 	await wait_physics_frames(2)
 	assert_true(FileAccess.file_exists(PATH), "leaving the world saved it")
@@ -47,6 +52,11 @@ func test_edits_survive_save_and_load() -> void:
 	assert_eq(w2.data.get_shape(tile.x, tile.y), 4 | (2 << 4), "shape loaded back")
 	assert_eq(w2.data.get_object(torch_tile.x, torch_tile.y), w2.objects.index_of(&"torch"), "torch loaded back")
 	assert_eq(w2.kill_count(&"green_slime"), 2, "kills saved with the world")
+	var cells := 0
+	for y in range(pool.y - 2, pool.y + 30):
+		cells += w2.voxels.liquid_in(Rect2i(pool.x - 6, y, 13, 1))
+	assert_eq(cells, 16, "water saved (wherever it flowed)")
+	assert_eq(w2.liquids.get(Vector2i(7, 9), 0), 123, "barrel water saved")
 	w2.queue_free()
 	await wait_physics_frames(2)
 

@@ -119,8 +119,8 @@ enum FillLook { NONE, FRAMES, BOTTLES, PILE, BOOKS, NET }
 @export_range(0.0, 0.9) var pile_boards := 0.0
 ## NET: the bag's inside, in art px of its picture (items heap up from its bottom).
 @export var net_bag := Rect2i(4, 8, 40, 20)
-## Liquid storage (Liquid Barrels): how much liquid it holds, in buckets. Liquids
-## aren't in the game yet: this is only recorded.
+## Liquid storage (Liquid Barrels): how much water it holds, in voxel cells (16 a tile).
+## Fill and empty it with Siphon Liquid; crafting nearby can use its water.
 @export var liquid_capacity := 0
 ## A frame of its picture drawn over what's shown inside (glass doors, a net's mesh), so
 ## the contents sit behind it. -1 = none.

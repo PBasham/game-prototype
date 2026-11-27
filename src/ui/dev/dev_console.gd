@@ -302,7 +302,17 @@ func _register() -> void:
 	_add("heal", "heal", "Full health and hunger.", func(_a: PackedStringArray) -> void:
 		world.player.health = world.player.max_health
 		world.player.hunger = world.player.max_hunger
+		world.player.thirst = world.player.max_thirst
+		world.player.breath = world.player.max_breath
 		_print("Healed."))
+	_add("thirst", "thirst <0..100>", "Set thirst (0 = parched).", func(a: PackedStringArray) -> void:
+		if a.size() > 0 and a[0].is_valid_float():
+			world.player.thirst = clampf(float(a[0]), 0.0, world.player.max_thirst)
+		_print("Thirst %d." % roundi(world.player.thirst)))
+	_add("siphon", "siphon <cells>", "Set the water in your Siphon Liquid (16 cells a tile).", func(a: PackedStringArray) -> void:
+		if a.size() > 0 and a[0].is_valid_int():
+			world.character.water = maxi(int(a[0]), 0)
+		_print("Siphon holds %d water." % world.character.water))
 	_add("hunger", "hunger <0..100>", "Set hunger (0 = starving).", func(a: PackedStringArray) -> void:
 		if a.size() > 0 and a[0].is_valid_float():
 			world.player.hunger = clampf(float(a[0]), 0.0, world.player.max_hunger)

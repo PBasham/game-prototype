@@ -604,7 +604,7 @@ tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are
 | Material | Behavior | Notes |
 | --- | --- | --- |
 | Sand | POWDER | Falls, piles at 45 degrees, sinks through water. One Sand item a cell. |
-| Water | LIQUID | Falls, slides sideways (`water_spread` 3 cells a step) to level out. No collision, no effect on you yet, no way to carry it (dev console `water <w> <h>`). |
+| Water | LIQUID | Falls, and slides sideways toward any drop within `water_spread` (32) cells, so it levels out and then settles (a level pool costs nothing). No collision. You swim in it (survival.md). Siphon Liquid carries it. |
 | Sand Bricks | STATIC | Never moves. Only explosions turn a Sand Bricks block into cells. One Sand Bricks item a cell, like sand. |
 
 - **Sand falls:** a sand block (`TileDef.voxel`) with nothing whole under it (a solid
@@ -625,7 +625,7 @@ tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are
   grazed go back to whole blocks.
 - **Simulation:** host only, only around changes (`_active` tiles), `ticks_per_second` 30,
   `fall_cells` 2 a step, `sand_sink_chance` 0.35, `sleep_steps` 30. Whole tiles of falling
-  cells shift at once and full resting tiles are skipped, so a 200 block sand drop costs
+  cells shift at once and full tiles boxed in by full tiles or rock are skipped, so a 200 block sand drop costs
   about 2 ms a step.
 - **Look:** cells are painted into 16x16 tile pictures at the terrain's detail. Grains
   carry a patch of the sand texture (picked by their shade), bricks show the texture
@@ -633,3 +633,12 @@ tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are
   matches loose cells to the blocks the shader draws.
 - **Saving:** world meta "voxels" (material ids plus 16 bytes a tile).
 - Dev console: `water <w> <h>`, `boom [radius]`, `voxels`, and `fill sand <w> <h>` to drop sand.
+
+## Siphon Liquid (Phase 54)
+
+`SpellData.siphons`: hold left click to draw water from the targeted tiles (its area grows
+with Empower Area, its reach with Empower Reach) into the spell's reservoir
+(`CharacterData.water`, saved), `siphon_rate` 32 cells a second, up to `liquid_capacity`
+256 (16 tiles). Right click pours it into the empty cells there. Aimed at a Liquid
+Barrel, it draws from or pours into the barrel. A message shows "Water 120 / 256" while
+you siphon. Crafting uses its water for water bottles. `ItemUser.Mode.SIPHON`.

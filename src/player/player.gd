@@ -110,6 +110,37 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 @export var starve_interval := 3.0
 @export_group("")
 
+@export_group("Thirst")
+@export var max_thirst := 100.0
+## In-game days a full thirst bar lasts (1 = 24 real minutes with 24 minute days).
+@export var thirst_full_days := 1.0
+@export var thirst_run_multiplier := 1.5
+## Parched (thirst 0): no health regen, and this much damage every parched_interval.
+@export var parched_damage := 1.0
+@export var parched_interval := 3.0
+@export_group("")
+
+@export_group("Swimming")
+## How much of your body is under water before you swim (0 to 1).
+@export_range(0.1, 1.0) var swim_depth := 0.5
+## Your walking speed times this, in water.
+@export var swim_speed_mult := 0.6
+## Tiles per second swimming up (Space or W) and down (S).
+@export var swim_up_speed := 11.0
+@export var swim_down_speed := 9.0
+## Tiles per second you slowly sink when not swimming.
+@export var swim_sink_speed := 2.5
+## Seconds to reach swimming speed.
+@export var swim_accel_time := 0.25
+## Jumping out at the surface: this share of a normal jump.
+@export var swim_jump := 0.85
+## Seconds of breath with your head under water, then drown_damage every second.
+@export var max_breath := 10.0
+@export var drown_damage := 2.0
+## Breath comes back this many times as fast as it runs out.
+@export var breath_refill := 4.0
+@export_group("")
+
 @export_group("Flying (the Fly spell)")
 ## Tiles per second, when the spell doesn't set its own move_speed.
 @export var fly_speed := 34.0
@@ -211,6 +242,16 @@ var infinite_mana := false
 var _since_spell := 99.0
 var health := 100.0
 var hunger := 100.0
+var thirst := 100.0
+## Thirst drains (the world's option).
+var thirst_on := true
+var breath := 10.0
+## In water deep enough to swim, and your head under water (both updated each tick).
+var swimming := false
+var head_under := false
+var _parched_timer := 0.0
+var _drown_timer := 0.0
+var _breath_bar: Node2D
 ## Bonuses from equipment (CharacterData.equipment_stats()), and total defense.
 var stat_bonus: Dictionary[StringName, float] = {}
 var defense := 0
@@ -334,7 +375,13 @@ func _ready() -> void:
 	_base = {"max_health": max_health, "max_mana": max_mana, "mana_regen": mana_regen}
 	health = max_health
 	hunger = max_hunger
+	thirst = max_thirst
+	breath = max_breath
 	mana = max_mana
+	_breath_bar = BreathBar.new()
+	_breath_bar.player = self
+	_breath_bar.visible = false
+	add_child(_breath_bar)
 	_doll.setup(DollRig.load_from(SHEET), load(PALETTE) as CharacterPalette)
 	_doll.look = look if look else load(DEFAULT_LOOK) as CharacterLook
 	_doll_sheet = SHEET
@@ -940,11 +987,14 @@ func _physics_process(delta: float) -> void:
 			set_collision_mask_value(2, true)
 
 	_update_mana(delta)
+	_update_water()
 	_update_health(delta)
 	if is_flying():
 		_fly(input_x, input_y, delta)
 	elif is_levitating():
 		_levitate(input_x, input_y, delta)
+	elif swimming and not _climbing:
+		_swim(input_x, input_y, delta)
 	elif _climbing:
 		_climb(input_x, input_y)
 	elif input_y != 0.0 and world and world.is_climbable_at(_body_center()):
@@ -1039,6 +1089,63 @@ func _move(input_x: float, input_y: float, delta: float) -> void:
 		# sprite dipped a tile and came back (the jitter on stairs). Snap the body's
 		# drawn position instead; the offset does the smoothing.
 		reset_physics_interpolation()
+
+
+## How much of the body is in water (0 to 1), and whether the head is under.
+func _update_water() -> void:
+	if world == null or world.voxels == null or dead:
+		swimming = false
+		head_under = false
+		return
+	var r := body_rect()
+	var wet := 0
+	var total := 0
+	var y := r.position.y + 1.0
+	while y < r.end.y:
+		for x: float in [r.position.x + 3.0, r.get_center().x, r.end.x - 3.0]:
+			total += 1
+			if world.voxels.liquid_at(Vector2(x, y)):
+				wet += 1
+		y += 2.0
+	var share := float(wet) / maxf(total, 1.0)
+	swimming = share >= swim_depth and not is_flying()
+	head_under = world.voxels.liquid_at(Vector2(r.get_center().x, r.position.y + 6.0))
+	if share > 0.2:
+		_peak_y = global_position.y  # water breaks a fall
+
+
+func _update_breath(delta: float) -> void:
+	if head_under and not invincible:
+		breath = maxf(breath - delta, 0.0)
+		if breath <= 0.0:
+			_drown_timer += delta
+			if _drown_timer >= 1.0:
+				_drown_timer = 0.0
+				take_damage(drown_damage, &"drowning")
+	else:
+		breath = minf(breath + delta * breath_refill, max_breath)
+		_drown_timer = 0.0
+	if _breath_bar:
+		_breath_bar.visible = breath < max_breath - 0.01
+		_breath_bar.queue_redraw()
+
+
+## Swimming: slow sideways, Space or W swims up, S dives, otherwise you sink slowly.
+## Jump at the surface to climb out.
+func _swim(input_x: float, input_y: float, delta: float) -> void:
+	var up := _held("jump") or input_y < 0.0
+	var target_y := -swim_up_speed if up else (swim_down_speed if input_y > 0.0 else swim_sink_speed)
+	var accel := maxf(swim_up_speed, swim_down_speed) * TILE / maxf(swim_accel_time, 0.01)
+	velocity.y = move_toward(velocity.y, target_y * TILE, accel * delta)
+	# At the surface with the head out: a jump lifts you out onto the bank.
+	if _just("jump") and not head_under:
+		velocity.y = -jump_values(_jump_height(), time_to_apex).y * swim_jump
+	var top := _current_speed() * swim_speed_mult * TILE
+	velocity.x = move_toward(velocity.x, input_x * top, top / maxf(swim_accel_time, 0.01) * delta)
+	if input_x != 0.0 and is_on_floor() and max_step_tiles > 0:
+		_try_step_up(signf(input_x), delta)
+	_peak_y = global_position.y
+	move_and_slide()
 
 
 func _current_speed() -> float:
@@ -1168,7 +1275,7 @@ func _update_mana(delta: float) -> void:
 func take_damage(amount: float, cause: StringName = &"", knock_from: Variant = null, knock := 0.0) -> void:
 	if amount <= 0.0 or dead or invincible:
 		return
-	if cause != &"starving" and _since_hurt < hurt_cooldown:
+	if not cause in [&"starving", &"thirst", &"drowning"] and _since_hurt < hurt_cooldown:
 		return
 	if cause == &"enemy":
 		# Defense takes off half its value (at least 1 damage gets through).
@@ -1233,8 +1340,11 @@ func cant_consume(item: ItemData) -> String:
 		return "Coat a weapon with it: pick it up, then right click a weapon in your inventory"
 	var useful := item.buff_seconds > 0.0 \
 		or (item.food_value > 0.0 and hunger < max_hunger) \
+		or (item.thirst_value > 0.0 and thirst < max_thirst) \
 		or (item.heal_value > 0.0 and health < max_health) \
 		or (item.mana_value > 0.0 and mana < max_mana)
+	if not useful and item.thirst_value > 0.0:
+		return "You're not thirsty"
 	return "" if useful else ("You're full" if item.food_value > 0.0 else "No need right now")
 
 
@@ -1243,6 +1353,7 @@ func cant_consume(item: ItemData) -> String:
 func consume(item: ItemData) -> void:
 	eat(item.food_value, item.heal_value)
 	mana = minf(mana + item.mana_value, max_mana)
+	thirst = minf(thirst + item.thirst_value, max_thirst)
 	if item.sickness != &"" and item.sickness_seconds > 0.0:
 		_timed_buff(StringName("sick_" + String(item.sickness)), "%s Sickness" % String(item.sickness).capitalize(),
 			"Can't use another %s potion yet." % String(item.sickness), item.sickness_seconds, item.icon)
@@ -1358,9 +1469,13 @@ func revive() -> void:
 	dead = false
 	health = max_health
 	hunger = max_hunger
+	thirst = max_thirst
+	breath = max_breath
 	mana = max_mana
 	_since_hurt = 99.0
 	_starve_timer = 0.0
+	_parched_timer = 0.0
+	_drown_timer = 0.0
 	velocity = Vector2.ZERO
 	if concentration:
 		toggle_concentration(concentration)
@@ -1377,6 +1492,22 @@ func _update_health(delta: float) -> void:
 		hunger = maxf(hunger - rate * delta, 0.0)
 	else:
 		hunger = max_hunger
+	var running_now := _held("run") and absf(velocity.x) > 1.0 and is_on_floor()
+	if thirst_on:
+		var trate := max_thirst / maxf(_day_seconds() * thirst_full_days, 1.0) * (thirst_run_multiplier if running_now else 1.0)
+		thirst = maxf(thirst - trate * delta, 0.0)
+	else:
+		thirst = max_thirst
+	_update_breath(delta)
+	var suffering := false
+	if thirst <= 0.0:
+		suffering = true
+		_parched_timer += delta
+		if _parched_timer >= parched_interval:
+			_parched_timer = 0.0
+			take_damage(parched_damage, &"thirst")
+	else:
+		_parched_timer = 0.0
 	if hunger <= 0.0:
 		_starve_timer += delta
 		if _starve_timer >= starve_interval:
@@ -1384,6 +1515,8 @@ func _update_health(delta: float) -> void:
 			take_damage(starve_damage, &"starving")
 		return
 	_starve_timer = 0.0
+	if suffering:
+		return
 	if _since_hurt >= health_regen_delay:
 		heal((health_regen + aura_regen + _food_regen()) * delta)
 

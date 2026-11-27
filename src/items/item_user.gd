@@ -19,7 +19,7 @@ extends Node2D
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT,
-	CHARGE, SCROLL, THROW, PAGE, GRAB, SHAPE }
+	CHARGE, SCROLL, THROW, PAGE, GRAB, SHAPE, SIPHON }
 
 const TILE := World.TILE
 
@@ -113,6 +113,8 @@ func _process(delta: float) -> void:
 			p.stop_using()
 			EventBus.debug_message.emit("Out of mana")
 	_instant_use(p)
+	if mode == Mode.SIPHON and p.is_using() and not p.input_blocked and problem == "":
+		_siphon(delta, p.use_back)
 	if mode == Mode.GRAB and p.is_using() and not p.input_blocked and problem == "":
 		var sp := _item as SpellData
 		world.tele_grab(grab_point(), sp.grab_tiles * TILE, sp.grab_pull_speed * TILE)
@@ -271,6 +273,14 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 					valid.append(t)
 			if too_hard and valid.is_empty():
 				problem = "Too hard: needs a stronger pickaxe"
+		Mode.SIPHON:
+			if problem != "":
+				return
+			for t in _tiles():
+				if _in_reach(t):
+					valid.append(t)
+			if valid.is_empty():
+				problem = "Too far away"
 		Mode.SHAPE:
 			rect = Rect2i(Vector2i(floori(c.x), floori(c.y)), Vector2i.ONE)
 			var t := rect.position
@@ -572,6 +582,53 @@ func cast_scroll() -> bool:
 
 
 ## Eats or drinks one of the held food or potion (hunger, health, mana, a buff).
+## Siphon Liquid: left click draws water from where you aim (a Liquid Barrel there, or
+## the water in the targeted tiles) into the reservoir; right click pours it out.
+var _siphon_acc := 0.0
+var _siphon_note := 0.0
+
+
+func _siphon(delta: float, pour: bool) -> void:
+	var sp := _item as SpellData
+	var c := world.player.character
+	if sp == null or c == null or valid.is_empty():
+		return
+	_siphon_acc += sp.siphon_rate * delta
+	var n := int(_siphon_acc)
+	_siphon_acc -= n
+	_siphon_note -= delta
+	var at := world.world_to_tile(cursor())
+	var obj := world.object_at(at)
+	var barrel := obj != null and obj.liquid_capacity > 0
+	var box := Rect2i(rect.position, rect.size)
+	var moved := 0
+	if not pour:
+		n = mini(n, sp.liquid_capacity - c.water)
+		if n > 0:
+			moved = -world.request_barrel_water(at, -n) if barrel else world.voxels.take_liquid(box, n)
+			c.water += moved
+	else:
+		n = mini(n, c.water)
+		if n > 0:
+			moved = world.request_barrel_water(at, n) if barrel else world.voxels.pour_liquid(box, n)
+			c.water -= moved
+	if _siphon_note <= 0.0:
+		_siphon_note = 0.4
+		var where := (" (%s: %d / %d)" % [obj.display_name, world.barrel_water(at), obj.liquid_capacity]) if barrel else ""
+		var full := not pour and c.water >= sp.liquid_capacity
+		EventBus.debug_message.emit("%sWater %d / %d%s" % ["Full: " if full else "", c.water, sp.liquid_capacity, where])
+
+
+## An empty bottle back after drinking from it (to the inventory, or dropped).
+func _give_back(item: ItemData) -> void:
+	if item.leaves_item == &"" or world.infinite_items:
+		return
+	var p := world.player
+	var left := p.character.inventory.add(item.leaves_item, 1)
+	if left > 0:
+		world.request_spawn_drop(item.leaves_item, left, p.chest(), Vector2.ZERO)
+
+
 ## Returns true if it was used up.
 func eat_held() -> bool:
 	var p := world.player
@@ -586,6 +643,7 @@ func eat_held() -> bool:
 		if not p.take_held():
 			return false
 		p.consume(item)
+		_give_back(item)
 		EventBus.sound_requested.emit(&"eat", p.chest())
 		return true
 	return eat_from(p.held_slot())
@@ -606,7 +664,8 @@ func eat_from(slot: int) -> bool:
 		return false
 	p.refresh_held()
 	p.consume(item)
-	var drink := item.mana_value > 0.0 or item.sickness != &"" or item.food_value <= 0.0
+	_give_back(item)
+	var drink := item.thirst_value > 0.0 or item.mana_value > 0.0 or item.sickness != &"" or item.food_value <= 0.0
 	EventBus.debug_message.emit("%s %s" % ["Drank" if drink else "Ate", item.display_name])
 	EventBus.sound_requested.emit(&"eat", world.player.chest())
 	return true
@@ -638,7 +697,7 @@ func area_size(item: ItemData) -> int:
 	var lo := 1
 	var hi := 1
 	var start := 1
-	if item.mining_damage > 0.0:
+	if item.mining_damage > 0.0 or (item is SpellData and (item as SpellData).siphons):
 		# Starts at mining_area; the area toggle goes down to 1x1 and up to
 		# mining_area_max (if bigger).
 		hi = maxi(item.mining_area_max, item.mining_area)
@@ -689,6 +748,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.MINE
 	if item is SpellData and (item as SpellData).shapes_blocks:
 		return Mode.SHAPE
+	if item is SpellData and (item as SpellData).siphons:
+		return Mode.SIPHON
 	if item.kind == ItemData.Kind.FOOD:
 		return Mode.EAT if not on_back else Mode.NONE  # left click
 	if item.throw_speed > 0.0:

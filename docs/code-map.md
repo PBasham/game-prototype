@@ -592,6 +592,17 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 54: water
+
+| Change | Where |
+| --- | --- |
+| Swimming, breath, thirst | `Player` (`_update_water`, `_swim`, `_update_breath`, "Thirst" and "Swimming" exports), `BreathBar` (src/player/breath_bar.gd); `WorldInfo.thirst`, New World page; HUD status panel (4 bars) |
+| Water bottles | `ItemData.thirst_value`, `leaves_item`; `ItemUser._give_back`; `WATER_BOTTLES` in tools/make_items.gd; art `tools/make_water_art.py` |
+| Water in recipes | pseudo item `water`; `CraftStock.water_count`, `water_take`; `World.water_for_crafting`, `take_water_for_crafting`, `craft_water_tiles` |
+| Siphon Liquid | `SpellData.siphons`, `liquid_capacity`, `siphon_rate`; `ItemUser.Mode.SIPHON`, `_siphon`; `CharacterData.water` |
+| Liquid Barrels | `World.liquids`, `barrel_water`, `request_barrel_water`, `_spill_barrel`, `WorldSave.META_LIQUIDS`; `LiquidWindow` |
+| Voxel water helpers | `VoxelLayer.liquid_at`, `liquid_in`, `take_liquid`, `pour_liquid` |
+
 ## Phase 52: voxels
 
 | Change | Where |

@@ -358,6 +358,18 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 54: water: swimming, breath, thirst, bottles, Siphon, barrels (branch phase-54-water)**
+- [ ] Dig a deep pit, `water 6 10` into it, jump in: you swim (W or Space up, S down,
+      slow sinking). Jump with your head out to climb out. Falling into water doesn't hurt.
+- [ ] Head under water: bubbles over your head count down 10 s, then you drown slowly.
+- [ ] New world option Thirst. The blue bar drains in about a day; at 0 it hurts.
+- [ ] Standing in or next to water (or with water in the Siphon, or a barrel nearby):
+      craft an empty bottle into a bottle of water by hand. Drink it: thirst up, the
+      empty bottle back. Bigger bottles take and give more.
+- [ ] Siphon Liquid: hold left click on water to draw it up ("Water x / 256"), right
+      click to pour. Aim at a Liquid Barrel to fill or empty it; right click the barrel
+      to see how full. Break a full barrel: the water spills.
+
 **Phase 53: Sand Bricks counted like sand (branch phase-53-brick-grains)**
 - [ ] Workbench: 16 Sand = 16 Sand Bricks; a block or wall takes 16, mining one gives 16.
 - [ ] Bomb a Sand Bricks wall, mine a bitten tile: you get exactly the bricks left in it.

@@ -288,6 +288,25 @@ func _items() -> Array[ItemData]:
 	glow.max_stack = 30
 	_detailed(glow, &"glow")
 	out.append(glow)
+	# Water (Phase 54): any empty bottle + water (from the water around you, a Liquid
+	# Barrel nearby or your Siphon Liquid) at no station. Bigger holds more and quenches more.
+	for b: Array in WATER_BOTTLES:
+		var tiles: int = b[2]
+		var wat := _small(StringName("water_" + String(b[0])), "%s of Water" % b[1],
+			"Drink: +%d thirst. Gives the %s back." % [15 * tiles, String(b[1]).to_lower()])
+		wat.kind = ItemData.Kind.FOOD
+		wat.thirst_value = 15.0 * tiles
+		wat.leaves_item = b[0]
+		wat.max_stack = 30
+		wat.storage_tags.assign([&"potion"])
+		wat.bottle_shape = BOTTLES[StringName(b[0])]
+		wat.bottle_contents = Color(0.36, 0.62, 0.9)
+		_detailed(wat, &"")
+		out.append(wat)
+	var water := _base(&"water", "Water", "Recipes that need water use what's around you: water you stand in or next to, Liquid Barrels nearby, and your Siphon Liquid. 16 is one tile of it.")
+	water.icon = load("res://assets/ui/icon_thirst.png") as Texture2D
+	water.obsolete = true  # not an item you carry: kept out of Creative and the Catalog
+	out.append(water)
 	var coat := _small(&"poison_coating", "Poison Coating", "Rub it on your weapon: the next 10 melee hits poison (2 damage a second for 4 s).")
 	coat.kind = ItemData.Kind.FOOD
 	coat.buff_name = "Poison Coating"
@@ -486,10 +505,13 @@ func _spells() -> Array[ItemData]:
 	out.append(shaping)
 
 	# Siphon Liquid (Phase 45): ready for liquids. Empower: Reach and Area.
-	var siphon := _spell(&"siphon_liquid", "Siphon Liquid", "Hold to draw up liquid where you aim; right click pours it back out. (No liquids yet.)")
+	var siphon := _spell(&"siphon_liquid", "Siphon Liquid", "Hold left click to draw up water where you aim (or from a Liquid Barrel) into the spell; right click pours it out. Holds 16 tiles of water. Crafting can use the water it holds.")
 	siphon.reach_tiles = 8.0
 	siphon.mining_area = 1
 	siphon.mining_area_max = 1
+	siphon.siphons = true  # Phase 54
+	siphon.liquid_capacity = 256
+	siphon.siphon_rate = 32.0
 	out.append(siphon)
 
 	var fly := _spell(&"fly", "Fly", "Concentration. Click to start flying, click again to stop. Move with WASD, Space goes up. Hold Shift to fly much faster, for a lot more mana.")
@@ -956,8 +978,8 @@ func _objects() -> Array[ObjectDef]:
 		net.fill_look = ObjectDef.FillLook.NET
 		net.front_frame = 1  # the mesh over what's inside
 		net.flips = false
-	out[26].liquid_capacity = 1000
-	out[27].liquid_capacity = 2500
+	out[26].liquid_capacity = 400  # voxel cells: 25 tiles of water (Phase 54)
+	out[27].liquid_capacity = 960  # 60 tiles
 	# Flat tops: other furniture can stand on these.
 	for i in [4, 9, 11, 12, 13, 16, 18, 19, 20, 21, 22, 26, 27, 29]:
 		out[i].flat_top = true
@@ -1168,6 +1190,8 @@ func _recipes() -> Array[RecipeData]:
 	for b: Array in FILLED_BOTTLES:
 		table.append([StringName("healing_" + b[0]), &"alchemy", {StringName(b[0]): 1, &"red_cap": FILLED_HERBS[b[0]]}, StringName("healing_" + b[0]), 1, []])
 		table.append([StringName("mana_" + b[0]), &"alchemy", {StringName(b[0]): 1, &"glowcap": FILLED_HERBS[b[0]]}, StringName("mana_" + b[0]), 1, []])
+	for b: Array in WATER_BOTTLES:
+		table.append([StringName("water_" + String(b[0])), &"", {StringName(b[0]): 1, &"water": 16 * int(b[2])}, StringName("water_" + String(b[0])), 1, []])
 	table.append_array([
 		# By hand.
 		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
@@ -1388,6 +1412,10 @@ func _spell(spell_id: StringName, label: String, text: String) -> SpellData:
 const FILLED_BOTTLES := [[&"clay_bottle", "Clay Bottle", 1.5, 1.35], [&"clay_jug", "Clay Jug", 2.0, 1.7],
 	[&"glass_vial", "Glass Vial", 1.3, 1.0], [&"glass_bottle", "Glass Bottle", 1.95, 1.35],
 	[&"glass_flask", "Glass Flask", 2.6, 1.7]]
+## Water bottles: [bottle id, its name, tiles of water it holds].
+const WATER_BOTTLES := [[&"clay_flask", "Clay Flask", 1], [&"clay_bottle", "Clay Bottle", 2],
+	[&"clay_jug", "Clay Jug", 4], [&"glass_vial", "Glass Vial", 1], [&"glass_bottle", "Glass Bottle", 2],
+	[&"glass_flask", "Glass Flask", 3]]
 ## Red Caps or Glowcaps per filled bottle (the same for clay and glass).
 const FILLED_HERBS := {&"clay_bottle": 3, &"clay_jug": 4, &"glass_vial": 2, &"glass_bottle": 3, &"glass_flask": 4}
 

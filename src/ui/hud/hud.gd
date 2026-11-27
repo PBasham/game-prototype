@@ -136,9 +136,9 @@ var catalog_open := false
 var _status: Pane
 ## Buff icons with their time left, above the status panel.
 var _buffs: Pane
-const STATUS_SIZE := Vector2(140, 44)
+const STATUS_SIZE := Vector2(140, 55)
 const STATUS_BARS: Array[Array] = [
-	["icon_health", "d83a3a"], ["icon_mana", "3a7ae0"], ["icon_hunger", "d8942a"],
+	["icon_health", "d83a3a"], ["icon_mana", "3a7ae0"], ["icon_hunger", "d8942a"], ["icon_thirst", "3cc4bc"],
 ]
 var _status_icons: Array[Texture2D] = []
 var _death: Label
@@ -689,7 +689,7 @@ func _store_open() -> bool:
 	return chest != World.NO_TILE or (bag != null and is_instance_valid(bag))
 
 
-const DEATH_CAUSES := {&"fall": "You fell too far.", &"starving": "You starved.", &"enemy": "You were slain."}
+const DEATH_CAUSES := {&"fall": "You fell too far.", &"starving": "You starved.", &"thirst": "You died of thirst.", &"drowning": "You drowned.", &"explosion": "You were blown up.", &"enemy": "You were slain."}
 
 
 func _on_slept() -> void:
@@ -1251,7 +1251,7 @@ static func _clock(seconds: float) -> String:
 	return "%d:%02d" % [s / 60, s % 60]
 
 
-## Health, mana and hunger, bottom left: an icon, a bar and the numbers.
+## Health, mana, hunger and thirst, bottom left: an icon, a bar and the numbers.
 func _draw_status(g: Control) -> void:
 	var p := world.player
 	var font := ThemeDB.fallback_font
@@ -1265,6 +1265,7 @@ func _draw_status(g: Control) -> void:
 		g.draw_string(font, r.position + Vector2(5, 8), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.INK)
 	var values := [
 		[p.health, p.max_health, false], [p.mana, p.max_mana, p.infinite_mana], [p.hunger, p.max_hunger, false],
+		[p.thirst, p.max_thirst, false],
 	]
 	for i in STATUS_BARS.size():
 		var y := 6.0 + i * 11.0
@@ -1529,6 +1530,8 @@ func craft_stock() -> CraftStock:
 		var from: Array[Inventory] = [world.character.inventory]
 		from.append_array(world.chests_near(world.player.chest(), world.craft_chest_tiles))
 		_stock = CraftStock.new(from, world.free_crafting)
+		_stock.water_count = func() -> int: return world.water_for_crafting(world.player.chest())
+		_stock.water_take = func(n: int) -> int: return world.take_water_for_crafting(world.player.chest(), n)
 		_stock_frame = frame
 	return _stock
 

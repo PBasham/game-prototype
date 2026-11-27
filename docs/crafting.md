@@ -344,6 +344,13 @@ can't mine the floor under furniture.
   Furnace: 16 Sand = 1 Glass; Glass Vial = 1 Glass, Glass Bottle = 2, Glass Flask = 3;
   Clay Bottle = 3 Clay, Clay Jug = 4 Clay (the Clay Flask is unchanged). The window shows
   "used / total" and a fill bar. Art from `art/concepts/storage/make_storage.py`.
+- **Liquid Barrels hold water** (Phase 54): `liquid_capacity` in voxel cells (16 a tile):
+  Liquid Barrel 400 (25 tiles), Iron Liquid Barrel 960 (60 tiles). Fill and empty them
+  with Siphon Liquid; right click shows how full. Crafting within reach can use their
+  water. Breaking one spills its water around it. Saved in world meta "liquids".
+- **Water** in recipes is the pseudo item `water` (not carried, `obsolete` so it stays out
+  of Creative and the Catalog): `CraftStock.water_count` / `water_take`, set by the HUD
+  from `World.water_for_crafting`. Water bottle recipes: survival.md, "Thirst".
 - Console `stock <item> [count]` fills the chest you have open (testing storage).
 - Furniture is at most 8x8 tiles (`World.MAX_FURNITURE`). Furniture placed before a
   size change keeps its old filler tiles; mine it and place it again.

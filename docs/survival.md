@@ -56,6 +56,46 @@ climbing reset the fall. Falls are the only damage so far; enemies come later.
 Spells, Fly included, don't make you hungry. With the world's Hunger option off, the bar
 stays full.
 
+## Thirst (Phase 54)
+
+A fourth bar under hunger (`Player`, "Thirst" exports):
+
+| Export | Default | What it does |
+| --- | --- | --- |
+| `max_thirst` | 100 | |
+| `thirst_full_days` | 1 | In-game days a full bar lasts (24 real minutes) |
+| `thirst_run_multiplier` | 1.5 | Running makes you thirsty this much faster |
+| `parched_damage`, `parched_interval` | 1, 3 | At 0 thirst: no health regen, and 1 damage every 3 seconds |
+
+Sleeping uses thirst like hunger. With the world's Thirst option off, the bar stays full.
+
+**Water bottles:** any empty bottle plus water, crafted by hand (no station). The water
+comes from around you (`World.water_for_crafting`): water you stand in or next to
+(within `World.craft_water_tiles` 2), Liquid Barrels within the crafting reach, and your
+Siphon Liquid's reservoir, used in that order. Drinking gives the empty bottle back
+(`leaves_item`); `thirst_value` is 15 a tile of water:
+
+| Bottle | Water (cells) | Thirst |
+| --- | --- | --- |
+| Clay Flask, Glass Vial | 16 | +15 |
+| Clay Bottle, Glass Bottle | 32 | +30 |
+| Glass Flask | 48 | +45 |
+| Clay Jug | 64 | +60 |
+
+You can't drink water straight from a pond yet.
+
+## Swimming and breath (Phase 54)
+
+You swim when at least `swim_depth` (half) of your body is in water ("Swimming" exports
+on Player): `swim_speed_mult` 0.6 of your walking speed, Space or W swims up
+(`swim_up_speed` 11 tiles/s), S dives (`swim_down_speed` 9), otherwise you sink slowly
+(`swim_sink_speed` 2.5). Jump with your head out of the water to leap out
+(`swim_jump` 0.85 of a jump). Landing in water breaks a fall.
+
+With your head under water, bubbles over your head count down `max_breath` (10 s), then
+you take `drown_damage` (2) every second. Out of the water breath refills
+`breath_refill` (4) times as fast.
+
 ## Food and berry bushes
 
 - **Berries** (`data/items/berries.tres`, kind FOOD): left click while holding them to
@@ -176,17 +216,17 @@ A coated weapon keeps its coating in the bag.
 ## World options
 
 Chosen on the New World page and saved with the world (`WorldInfo.hunger`,
-`WorldInfo.death_drop`): **Hunger** on or off, **On death** bag or keep. Older worlds get
-hunger on and the bag.
+`WorldInfo.thirst`, `WorldInfo.death_drop`): **Hunger** and **Thirst** on or off, **On
+death** bag or keep. Older worlds get hunger and thirst on and the bag.
 
 ## Saving
 
-Health and hunger are saved with the character, so you come back as hungry as you
+Health, hunger, thirst and the Siphon Liquid's water are saved with the character, so you come back as hungry as you
 left. A character saved while dead comes back full.
 
 ## Dev console
 
-`god` (no damage), `hurt <n>`, `kill`, `heal` (full health and hunger), `hunger <n>`,
+`god` (no damage), `hurt <n>`, `kill`, `heal` (full health, hunger, thirst and breath), `hunger <n>`, `thirst <n>`, `siphon <cells>` (water in the Siphon),
 `mana` (infinite mana), `time` (show), `time <hour>` or `time day | noon | dusk | night | dawn`, `time speed <x>`,
 `bush [kind] [young]` (a ripe bush on the grass under the cursor; kind = `raspberry`,
 `blueberry`, or the plain berry bush when left out), `grow` (also

@@ -172,6 +172,10 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 @export var heal_value := 0.0
 ## ...and restores this much mana.
 @export var mana_value := 0.0
+## Drinking it quenches this much thirst (water in a bottle).
+@export var thirst_value := 0.0
+## What's left after drinking it (the empty bottle). Empty = nothing.
+@export var leaves_item: StringName = &""
 ## Potions: after drinking, no other item with the same sickness for this long
 ## (Terraria's Potion Sickness). Empty = none.
 @export var sickness: StringName = &""

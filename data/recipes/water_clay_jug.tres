@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_to8qm"]
+
+[resource]
+script = ExtResource("1_to8qm")
+inputs = Dictionary[StringName, int]({
+&"clay_jug": 1,
+&"water": 64
+})
+output = &"water_clay_jug"
+id = &"water_clay_jug"
+display_name = "Water Clay Jug"

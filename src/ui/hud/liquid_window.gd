@@ -32,17 +32,17 @@ func draw_body(font: Font) -> void:
 	if def == null:
 		return
 	title = def.display_name
-	var amount := 0  # no liquids yet
+	var amount := hud.world.barrel_water(anchor)
 	var r := Rect2(Hud.PAD, BODY_TOP + 4, size.x - Hud.PAD * 2, GAUGE_H)
 	UiSkin.slot(self, r, UiSkin.SlotLook.NORMAL)
 	var k := float(amount) / maxf(def.liquid_capacity, 1.0)
 	if k > 0.0:
 		draw_rect(Rect2(r.position + Vector2(2, 2), Vector2((r.size.x - 4) * k, r.size.y - 4)), Color(0.3, 0.55, 0.95))
-	var text := "%s / %s buckets" % [_group(amount), _group(def.liquid_capacity)]
+	var text := "%s / %s" % [_group(amount), _group(def.liquid_capacity)]
 	draw_string(font, Vector2(r.position.x, r.end.y + 11), "Empty" if amount == 0 else "Water", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 	var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 	draw_string(font, Vector2(r.end.x - tw, r.end.y + 11), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
-	draw_string(font, Vector2(r.position.x, r.end.y + 22), "No liquids yet.", HORIZONTAL_ALIGNMENT_LEFT, size.x - Hud.PAD * 2, 6, UiSkin.DIM)
+	draw_string(font, Vector2(r.position.x, r.end.y + 22), "Siphon Liquid: aim at it, left click draws, right click pours. Crafting nearby can use it.", HORIZONTAL_ALIGNMENT_LEFT, size.x - Hud.PAD * 2, 6, UiSkin.DIM)
 
 
 static func _group(n: int) -> String:

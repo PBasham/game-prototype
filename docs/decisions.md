@@ -2,6 +2,15 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 54, water: swimming, breath, thirst, bottles, Siphon, barrels
+
+- **Patrick:** go with the brief's defaults; the player can swim in the water.
+- **Claude (the brief's defaults):** swim at half submerged; 10 s of breath then 2
+  damage a second; thirst empties in a day, parched like starving, a world option;
+  bottles of water by hand from any empty bottle plus water around you, barrels or the
+  Siphon, 15 thirst a tile of water, the bottle comes back; Siphon 32 cells a second,
+  holds 16 tiles; barrels hold 25 and 60 tiles (capacity now in voxel cells).
+
 ## 2026-11-27: Phase 53, Sand Bricks counted like sand
 
 - **Patrick:** mining a bitten brick should give the quantity it actually has, not a

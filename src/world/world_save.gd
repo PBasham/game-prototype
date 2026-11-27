@@ -46,6 +46,7 @@ const META_KILLS := "kills"
 ## only chunks with any shape.
 const META_SHAPES := "shapes"
 const META_VOXELS := "voxels"
+const META_LIQUIDS := "liquids"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

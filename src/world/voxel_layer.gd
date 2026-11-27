@@ -19,8 +19,9 @@ const TILE := World.TILE
 @export var ticks_per_second := 30.0
 ## Cells a falling grain or drop moves per step when nothing is under it.
 @export_range(1, 4) var fall_cells := 2
-## How far a water cell can slide sideways in one step.
-@export var water_spread := 3
+## How far (cells) a water cell looks sideways for somewhere lower to flow to. Water
+## only slides toward a drop, so a level surface settles (and stops costing anything).
+@export var water_spread := 32
 ## Chance a sand cell sinks into the water under it each step (lower = slower sinking).
 @export_range(0.0, 1.0) var sand_sink_chance := 0.35
 ## Turn tiles full of resting sand back into sand blocks (cheaper for huge piles, but
@@ -217,6 +218,56 @@ static func in_shape(s: int, c: Vector2) -> bool:
 func solid_at(p: Vector2) -> bool:
 	var m := material_of(cell(Vector2i(floori(p.x / CELL_PX), floori(p.y / CELL_PX))))
 	return m != null and m.is_solid()
+
+
+## True when a liquid cell (water) is at this world point.
+func liquid_at(p: Vector2) -> bool:
+	return _behavior[cell(Vector2i(floori(p.x / CELL_PX), floori(p.y / CELL_PX))) & 15] == VoxelMaterial.Behavior.LIQUID
+
+
+## Liquid cells of a material in a box of tiles.
+func liquid_in(tiles_rect: Rect2i, material_id: StringName = &"water") -> int:
+	var n := 0
+	for y in range(tiles_rect.position.y, tiles_rect.end.y):
+		for x in range(tiles_rect.position.x, tiles_rect.end.x):
+			n += count_in(Vector2i(x, y), material_id)
+	return n
+
+
+## Takes up to `count` liquid cells from a box of tiles, top cells first (the surface
+## drops, the rest flows in). Returns how many it took.
+func take_liquid(tiles_rect: Rect2i, count: int, material_id: StringName = &"water") -> int:
+	if not Game.is_authority() or count <= 0:
+		return 0
+	var code := code_of(material_id)
+	var taken := 0
+	for cy in range(tiles_rect.position.y * N, tiles_rect.end.y * N):
+		for cx in range(tiles_rect.position.x * N, tiles_rect.end.x * N):
+			if taken >= count:
+				return taken
+			var c := Vector2i(cx, cy)
+			if (cell(c) & 15) == code:
+				_set_cell(c, 0)
+				taken += 1
+	return taken
+
+
+## Pours up to `count` liquid cells into the empty cells of a box of tiles, bottom
+## first. Returns how many it poured.
+func pour_liquid(tiles_rect: Rect2i, count: int, material_id: StringName = &"water") -> int:
+	if not Game.is_authority() or count <= 0:
+		return 0
+	var code := code_of(material_id)
+	var poured := 0
+	for cy in range(tiles_rect.end.y * N - 1, tiles_rect.position.y * N - 1, -1):
+		for cx in range(tiles_rect.position.x * N, tiles_rect.end.x * N):
+			if poured >= count:
+				return poured
+			var c := Vector2i(cx, cy)
+			if _free(c) and world.data.get_block(_tile_of(c).x, _tile_of(c).y) == WorldData.AIR:
+				_set_cell(c, code | ((randi() % 16) << 4))
+				poured += 1
+	return poured
 
 
 ## Cells of anything but liquid in a tile (what mining takes).
@@ -449,6 +500,13 @@ func _fast_tile(t: Vector2i) -> int:
 			all_static = false
 	if all_static:
 		return 2
+	# Full, and boxed in by full tiles or rock below and to the sides: nothing in it can
+	# move (the inside of a pool or a pile).
+	if empties == 0 and _full_or_rock(below) and _full_or_rock(Vector2i(world.data.wrap_x(t.x - 1), t.y)) \
+			and _full_or_rock(Vector2i(world.data.wrap_x(t.x + 1), t.y)) \
+			and _full_or_rock(Vector2i(world.data.wrap_x(t.x - 1), t.y + 1)) \
+			and _full_or_rock(Vector2i(world.data.wrap_x(t.x + 1), t.y + 1)):
+		return 2
 	if empties == 0 and all_solid and _holds_up(below) \
 			and _holds_up(Vector2i(world.data.wrap_x(t.x - 1), t.y + 1)) \
 			and _holds_up(Vector2i(world.data.wrap_x(t.x + 1), t.y + 1)):
@@ -487,6 +545,20 @@ func _fast_tile(t: Vector2i) -> int:
 	_changed[t] = true
 	_changed[below] = true
 	return 1
+
+
+## True when a tile is solid rock (a full solid block) or has no empty cells.
+func _full_or_rock(t: Vector2i) -> bool:
+	if t.y >= world.data.height:
+		return true
+	var kind: int = _terrain_cache.get(t, -1)
+	if kind < 0:
+		kind = _terrain_kind(t)
+		_terrain_cache[t] = kind
+	if kind == 1:
+		return true
+	var arr: PackedByteArray = tiles.get(t, PackedByteArray())
+	return arr.size() == CELLS and arr.count(0) == 0
 
 
 ## True when a tile is terrain-solid or full of solid cells (nothing can fall into it).
@@ -547,12 +619,13 @@ func _step_liquid(c: Vector2i, byte: int) -> bool:
 			_move(c, c + Vector2i(dd, 1), byte)
 			return true
 	for dd: int in [d, -d]:
-		var k := 0
-		while k < water_spread and _free(c + Vector2i(dd * (k + 1), 0)):
-			k += 1
-		if k > 0:
-			_move(c, c + Vector2i(dd * k, 0), byte)
-			return true
+		for k in range(1, water_spread + 1):
+			var to := c + Vector2i(dd * k, 0)
+			if not _free(to):
+				break
+			if _free(to + Vector2i.DOWN):
+				_move(c, to, byte)
+				return true
 	return false
 
 

@@ -230,6 +230,15 @@ enum BookPose { HAND, FLOAT, HIP }
 ## How close to the portal (tiles) loose items are pulled in, and how fast they fly to
 ## it (tiles per second).
 @export var grab_tiles := 3.0
+@export_group("Siphon (Siphon Liquid)")
+## Holding left click draws liquid (voxel water, a Liquid Barrel) where you aim into
+## the spell's reservoir; right click pours it out. Amounts are voxel cells (16 a tile).
+@export var siphons := false
+## Cells the reservoir holds (CharacterData.water).
+@export var liquid_capacity := 256
+## Cells a second drawn or poured.
+@export var siphon_rate := 32.0
+@export_group("")
 @export var grab_pull_speed := 18.0
 
 @export_group("Blink")

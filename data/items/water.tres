@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/icon_thirst.png" id="1_0n8gb"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="2_qrol8"]
+
+[resource]
+script = ExtResource("2_qrol8")
+icon = ExtResource("1_0n8gb")
+obsolete = true
+id = &"water"
+display_name = "Water"
+description = "Recipes that need water use what's around you: water you stand in or next to, Liquid Barrels nearby, and your Siphon Liquid. 16 is one tile of it."

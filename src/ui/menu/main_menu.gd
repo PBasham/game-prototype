@@ -394,6 +394,11 @@ func _show_new_world() -> void:
 	hunger.text = "on"
 	hunger.toggled.connect(func(on: bool) -> void: hunger.text = "on" if on else "off")
 	box.add_child(UiKit.row("Hunger", hunger))
+	var thirst := CheckButton.new()
+	thirst.button_pressed = true
+	thirst.text = "on"
+	thirst.toggled.connect(func(on: bool) -> void: thirst.text = "on" if on else "off")
+	box.add_child(UiKit.row("Thirst", thirst))
 	var death := OptionButton.new()
 	death.add_theme_font_size_override("font_size", 10)
 	death.add_item("Drop everything (armor too)", WorldInfo.DeathDrop.ALL)
@@ -416,6 +421,7 @@ func _show_new_world() -> void:
 		var size: WorldData.Size = size_pick.get_selected_id() as WorldData.Size
 		var info := WorldInfo.create(world_name, size, WorldInfo.seed_from_text(seed_edit.text))
 		info.hunger = hunger.button_pressed
+		info.thirst = thirst.button_pressed
 		info.death_drop = death.get_selected_id() as WorldInfo.DeathDrop
 		info.path = path
 		Game.start_world(info, _chosen)

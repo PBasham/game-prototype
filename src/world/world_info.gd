@@ -26,6 +26,8 @@ var path := ""
 enum DeathDrop { BAG, KEEP, BACKPACK, ALL, PERMADEATH }
 ## Hunger drains (off: the hunger bar stays full).
 var hunger := true
+## Thirst drains (off: the thirst bar stays full).
+var thirst := true
 var death_drop := DeathDrop.BAG
 
 
@@ -69,7 +71,7 @@ func to_dict() -> Dictionary:
 		"name": name, "kind": String(kind), "seed": seed,
 		"size": String(WorldData.Size.keys()[size]),
 		"created": created_unix, "last_played": last_played_unix,
-		"hunger": hunger, "death_drop": String(DeathDrop.keys()[death_drop]),
+		"hunger": hunger, "thirst": thirst, "death_drop": String(DeathDrop.keys()[death_drop]),
 	}
 
 
@@ -82,5 +84,6 @@ static func from_dict(d: Dictionary) -> WorldInfo:
 	info.created_unix = int(d.get("created", 0))
 	info.last_played_unix = int(d.get("last_played", 0))
 	info.hunger = bool(d.get("hunger", true))
+	info.thirst = bool(d.get("thirst", true))
 	info.death_drop = DeathDrop.get(str(d.get("death_drop", "BAG")), DeathDrop.BAG)
 	return info

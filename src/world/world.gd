@@ -100,6 +100,10 @@ var objects: TileTypes
 var generator: WorldGenerator
 var renderer: ChunkRenderer
 var voxels: VoxelLayer
+## Water in Liquid Barrels: wrapped anchor -> voxel cells.
+var liquids: Dictionary[Vector2i, int] = {}
+## How close (tiles) water has to be to count for crafting while you stand in or by it.
+@export var craft_water_tiles := 2
 var lights: LightMap
 var backdrop: Backdrop
 ## Time of day (day and night, growth timers in days).
@@ -228,6 +232,11 @@ func _ready() -> void:
 			chest_names[Vector2i(int(np[0]), int(np[1]))] = String(names[key])
 		_saved_map = WorldSave.read_extra(info.path, WorldSave.META_MAP)
 		voxels.from_dict(WorldSave.read_extra(info.path, WorldSave.META_VOXELS))
+		var saved_liquids: Dictionary = WorldSave.read_extra(info.path, WorldSave.META_LIQUIDS)
+		for key: String in saved_liquids:
+			var parts := key.split(",")
+			if parts.size() == 2:
+				liquids[Vector2i(int(parts[0]), int(parts[1]))] = int(saved_liquids[key])
 		for key: String in WorldSave.read_extra(info.path, WorldSave.META_FLIPPED):
 			var parts := key.split(",")
 			flipped[Vector2i(int(parts[0]), int(parts[1]))] = true
@@ -251,11 +260,14 @@ func _ready() -> void:
 	add_child(player)
 	teleport_player(player.position)
 	player.hunger_on = info.hunger
+	player.thirst_on = info.thirst
 	player.clock = clock
 	if character.health > 0.0:
 		player.health = minf(character.health, player.max_health)
 	if character.hunger >= 0.0:
 		player.hunger = minf(character.hunger, player.max_hunger)
+	if character.thirst >= 0.0:
+		player.thirst = minf(character.thirst, player.max_thirst)
 	player.died.connect(_on_player_died)
 	character.equipment_changed.connect(player.apply_stats)
 	player.apply_stats.call_deferred()
@@ -441,6 +453,7 @@ func save() -> Error:
 	if character:
 		character.health = player.health if player and not player.dead else -1.0
 		character.hunger = player.hunger if player and not player.dead else -1.0
+		character.thirst = player.thirst if player and not player.dead else -1.0
 		var cerr := character.save()
 		if cerr != OK:
 			push_error("World: saving the character failed: %s" % error_string(cerr))
@@ -458,7 +471,7 @@ func save() -> Error:
 			WorldSave.META_FLIPPED: _flipped_to_dict(), WorldSave.META_CHEST_NAMES: _names_to_dict(),
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict(),
-			WorldSave.META_POSITIONS: _spots_to_dict(), WorldSave.META_SHAPES: _shapes_to_dict(modified), WorldSave.META_VOXELS: voxels.to_dict(),
+			WorldSave.META_POSITIONS: _spots_to_dict(), WorldSave.META_SHAPES: _shapes_to_dict(modified), WorldSave.META_VOXELS: voxels.to_dict(), WorldSave.META_LIQUIDS: _liquids_to_dict(),
 			WorldSave.META_MAP: world_map.to_dict() if world_map else {}}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
@@ -641,6 +654,9 @@ func sleep_until_morning() -> void:
 	if player.hunger_on:
 		var per_second := player.max_hunger / maxf(clock.days(player.hunger_full_days), 1.0)
 		player.hunger = maxf(player.hunger - per_second * seconds, 1.0)
+	if player.thirst_on:
+		var tps := player.max_thirst / maxf(clock.days(player.thirst_full_days), 1.0)
+		player.thirst = maxf(player.thirst - tps * seconds, 1.0)
 	EventBus.debug_message.emit("You slept until morning. Spawn point set.")
 	slept.emit()
 
@@ -1314,6 +1330,7 @@ func request_remove_object(tile: Vector2i) -> bool:
 	else:
 		request_set_object(a, WorldData.AIR)
 	containers.erase(a)
+	_spill_barrel(a, def)
 	flipped.erase(wrap_tile(a))
 	chest_names.erase(wrap_tile(a))
 	_drop_for(def, a)
@@ -1540,6 +1557,103 @@ func chests_near(point: Vector2, tiles: float) -> Array[Inventory]:
 	for f: Array in found:
 		out.append(f[1])
 	return out
+
+
+# --- water ----------------------------------------------------------------------------
+
+## Water in the Liquid Barrel at a tile (its anchor), in voxel cells.
+func barrel_water(tile: Vector2i) -> int:
+	var a := object_anchor(tile)
+	return liquids.get(wrap_tile(a), 0) if a != NO_TILE else 0
+
+
+## Adds (or with a negative `delta` takes) water in a Liquid Barrel, within its
+## capacity. Returns how much it actually moved.
+func request_barrel_water(tile: Vector2i, delta: int) -> int:
+	if not Game.is_authority():
+		return 0
+	var a := object_anchor(tile)
+	var def := object_at(a) if a != NO_TILE else null
+	if def == null or def.liquid_capacity <= 0:
+		return 0
+	var key := wrap_tile(a)
+	var have: int = liquids.get(key, 0)
+	var after := clampi(have + delta, 0, def.liquid_capacity)
+	if after == 0:
+		liquids.erase(key)
+	else:
+		liquids[key] = after
+	return after - have
+
+
+## A broken barrel spills its water around where it stood.
+func _spill_barrel(a: Vector2i, def: ObjectDef) -> void:
+	var key := wrap_tile(a)
+	var have: int = liquids.get(key, 0)
+	liquids.erase(key)
+	if have > 0 and def:
+		var box := Rect2i(a.x - 1, a.y - def.height_tiles - 2, def.width_tiles + 2, def.height_tiles + 3)
+		voxels.pour_liquid(box, have)
+
+
+func _liquids_to_dict() -> Dictionary:
+	var out := {}
+	for a: Vector2i in liquids:
+		out["%d,%d" % [a.x, a.y]] = liquids[a]
+	return out
+
+
+## The tiles around you that count as "standing in or next to water" for crafting.
+func _water_box_near(point: Vector2) -> Rect2i:
+	var body := player.body_rect() if player else Rect2(point, Vector2.ZERO)
+	var lo := world_to_tile(body.position) - Vector2i.ONE * craft_water_tiles
+	var hi := world_to_tile(body.end) + Vector2i.ONE * craft_water_tiles
+	return Rect2i(lo, hi - lo + Vector2i.ONE)
+
+
+## Liquid Barrels within `tiles` of a point (closest first): their anchors.
+func barrels_near(point: Vector2, tiles: float) -> Array[Vector2i]:
+	var found: Array = []
+	for a: Vector2i in liquids:
+		var def := object_at(a)
+		if def == null:
+			continue
+		var mid := tile_to_world(a) + Vector2(def.width_tiles, -def.height_tiles + 1) * TILE * 0.5
+		mid.x += roundf((point.x - mid.x) / (data.width * TILE)) * data.width * TILE
+		var d := mid.distance_to(point)
+		if d <= tiles * TILE:
+			found.append([d, a])
+	found.sort_custom(func(x: Array, y: Array) -> bool: return x[0] < y[0])
+	var out: Array[Vector2i] = []
+	for f: Array in found:
+		out.append(f[1])
+	return out
+
+
+## Water crafting can use here: water you stand in or next to, Liquid Barrels within
+## crafting reach, and your Siphon Liquid reservoir.
+func water_for_crafting(point: Vector2) -> int:
+	var n := voxels.liquid_in(_water_box_near(point))
+	for a in barrels_near(point, craft_chest_tiles):
+		n += liquids.get(a, 0)
+	if character:
+		n += character.water
+	return n
+
+
+## Uses water for crafting, in that order (the water around you, barrels, then your
+## reservoir, which you carry). Returns how much it took.
+func take_water_for_crafting(point: Vector2, count: int) -> int:
+	var taken := voxels.take_liquid(_water_box_near(point), count)
+	for a in barrels_near(point, craft_chest_tiles):
+		if taken >= count:
+			break
+		taken -= request_barrel_water(a, -(count - taken))
+	if taken < count and character:
+		var k := mini(character.water, count - taken)
+		character.water -= k
+		taken += k
+	return taken
 
 
 ## The container (chest) at a tile, or null.

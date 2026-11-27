@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_vcd3y"]
+
+[resource]
+script = ExtResource("1_vcd3y")
+inputs = Dictionary[StringName, int]({
+&"glass_vial": 1,
+&"water": 16
+})
+output = &"water_glass_vial"
+id = &"water_glass_vial"
+display_name = "Water Glass Vial"
