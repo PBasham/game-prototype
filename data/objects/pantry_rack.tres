@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/pantry_rack.png" id="1_jt0yp"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_6rf1i"]
+
+[resource]
+script = ExtResource("2_6rf1i")
+frames = ExtResource("1_jt0yp")
+style = 2
+height_tiles = 3
+detail = 2
+width_tiles = 3
+needs_floor = true
+container_accepts = &"food"
+fill_look = 2
+bottle_shelves = Array[int]([44, 24])
+bottles_per_shelf = 8
+bottle_x0 = 4.0
+flat_top = true
+container_slots = 8
+health = 1.0
+drop_item = &"pantry_rack"
+id = &"pantry_rack"
+display_name = "Pantry Rack"

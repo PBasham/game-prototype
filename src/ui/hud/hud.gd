@@ -381,6 +381,9 @@ func _input(event: InputEvent) -> void:
 	if _creative.searching and _creative.search_key(key):
 		get_viewport().set_input_as_handled()
 		return
+	if _catalog.searching and _catalog.search_key(key):
+		get_viewport().set_input_as_handled()
+		return
 	if _amount_typing and _amount_key(event):
 		get_viewport().set_input_as_handled()  # digits don't pick hotbar slots
 		return
@@ -418,7 +421,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Something else has the keyboard (the console, a search box, renaming, the amount).
 func _typing_elsewhere() -> bool:
-	return (world.console != null and world.console.open) or _spells.searching or _creative.searching \
+	return (world.console != null and world.console.open) or _spells.searching or _creative.searching or _catalog.searching \
 		or renaming or weave_searching or _amount_typing or map_view.visible
 
 
@@ -432,7 +435,7 @@ func _process(delta: float) -> void:
 	_update_notes(delta)
 	_update_take_repeat(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
-		or _creative.searching or renaming \
+		or _creative.searching or _catalog.searching or renaming \
 		or weave_searching or chat.open
 	# Polled (not _input) so scripted runs can tap them too.
 	if Input.is_action_just_pressed("inventory") and not paused:
@@ -753,6 +756,8 @@ func _layout() -> void:
 	if open and catalog_open:
 		_catalog.show_at(_catalog.centered())
 	else:
+		if _catalog.searching:
+			_catalog.set_searching(false)
 		_catalog.visible = false
 	if open and spells_open:
 		_spells.show_at(_spell_window_spot())
@@ -1048,7 +1053,9 @@ func _draw_cursor_stack(g: Control) -> void:
 	var m := g.get_local_mouse_position()
 	if item and item.icon:
 		g.draw_texture_rect(item.icon, Rect2(m + Vector2(2, 2), Vector2(16, 16)), false)
-	if cursor_count > 1:
+	if cursor_meta.get("infinite", false):
+		_draw_infinity(g, Rect2(m, Vector2(SLOT, SLOT)))
+	elif cursor_count > 1:
 		_draw_count(g, ThemeDB.fallback_font, Rect2(m, Vector2(SLOT, SLOT)), cursor_count)
 
 
@@ -1074,6 +1081,8 @@ func _draw_item(g: Control, font: Font, r: Rect2, item: ItemData, count: int, al
 		# Red when it can't be cast right now.
 		if world.character.cast_problem(item as SpellData) != "":
 			g.draw_rect(r.grow(-2), BAD)
+	elif meta.get("infinite", false):
+		_draw_infinity(g, r)
 	elif count > 1:
 		_draw_count(g, font, r, count)
 
@@ -1211,6 +1220,15 @@ func _draw_status(g: Control) -> void:
 		# Current and total (108/120); hunger is a share, so just the number.
 		var text := "inf" if v[2] else ("%d/%d" % [roundi(float(v[0])), roundi(float(v[1]))] if i < 2 else "%d" % roundi(float(v[0])))
 		g.draw_string(font, Vector2(104, y + 7), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
+
+
+## An infinite (dev) stack: an infinity sign where the count goes.
+func _draw_infinity(g: Control, r: Rect2) -> void:
+	var c := r.position + Vector2(SLOT - 6.5, SLOT - 5.0)
+	for k in 2:
+		var at := c + Vector2(-2.0 + 4.0 * k, 0.0)
+		g.draw_arc(at + Vector2(0.5, 0.5), 1.8, 0.0, TAU, 12, Color(0, 0, 0, 0.8), 1.2)
+		g.draw_arc(at, 1.8, 0.0, TAU, 12, UiSkin.TEXT, 1.0)
 
 
 func _draw_count(g: Control, font: Font, r: Rect2, n: int) -> void:

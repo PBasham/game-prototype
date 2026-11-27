@@ -29,7 +29,7 @@ const SWAP_SHADER := preload("res://src/player/doll/palette_swap.gdshader")
 @export var stow_hip_angle := 105.0
 ## The spellbook on the hip when it isn't in hand (Phase 30): where (from the front
 ## shoulder) and at what angle, and where it floats for FLOAT spells.
-@export var book_hip_offset := Vector2(-3, 19)
+@export var book_hip_offset := Vector2(0, 20)
 @export var book_hip_angle := -20.0
 @export var book_float_distance := 10.0
 @export var book_float_bob := 1.0
@@ -282,6 +282,10 @@ func setup(doll_rig: DollRig, doll_palette: CharacterPalette = null) -> void:
 		_stow_hip = _item_node("StowHip")
 		_item_sprite = _item_node("Item")
 		_offhand_front = _item_node("OffhandFront")
+	# The hip book sits behind the arms (the hand hangs in front of it), on the body.
+	var back_arm := get_node_or_null(^"BackArmLower")
+	if _book_hip and back_arm:
+		move_child(_book_hip, back_arm.get_index())
 	_apply_look()
 	_apply_item()
 	_apply_offhand()

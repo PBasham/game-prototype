@@ -31,7 +31,9 @@ tunables change: Patrick tweaks things by hand from these docs.
   Bricks, the Forest Spirit Pendant; Phase 22: Slime Core, Summon Slime; Phase 23: the Catalog; Phase 24: no pickaxes or axes,
   the gathering spells from the start, the Copper Dagger, Empower tiers; Phase 25: spell
   schools, marks, the Dual Storm Axes and the Storm Charm; Phase 35: Sand, Glass, Clay
-  Bottle, Clay Jug, Glass Vial, Glass Bottle, Glass Flask, Large Potion Cabinet, Potion Shelf).
+  Bottle, Clay Jug, Glass Vial, Glass Bottle, Glass Flask, Large Potion Cabinet, Potion Shelf;
+  Phase 37: Healing and Mana in each bottle, Pantry Rack, Food Pantry, Bookshelf, Barrel,
+  Crate, three Hanging Nets, Liquid Barrel, Iron Liquid Barrel).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

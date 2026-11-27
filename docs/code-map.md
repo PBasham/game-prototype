@@ -492,3 +492,22 @@ saves still load.
 | See-through Glass, Glass Wall, Clay Wall | `TileDef.see_through`; terrain.gdshader (`pane`), `LightMap` (`job.solid`, `clear_walls`); `data/tiles/glass.tres`, `data/walls/{glass,clay}_wall.tres`; art `tools/make_glass_clay_art.py` (also adds blocks.png row 19) |
 | Shelf bottles from icons | `ObjectLayer._draw_bottles`, `shelf_texture`; `ItemData.shelf_sprite` |
 | Right click takes one, hold repeats | `Hud.right_click_slot(slot, inv, half)`, `_start_take_repeat`, `_update_take_repeat`, `take_repeat_delay`, `take_repeat_fastest` |
+
+## Phase 37: storage, filled bottles, torch, ropes, Catalog search
+
+| Change | Where |
+| --- | --- |
+| Filled bottles | `tools/make_items.gd` (`FILLED_BOTTLES`, `FILLED_HERBS`, `_filled_name`); art `tools/make_phase37_art.py` |
+| Food and book storage tags | `ItemData.has_storage_tag`; `Inventory.accepts` |
+| Pantries, Bookshelf, Barrel, Crate, Nets, Liquid Barrels | `data/objects`, `data/items`, `data/recipes` (from `tools/make_items.gd`, object indexes 18 to 27); art `tools/make_phase37_art.py` |
+| Book spines, net heaps, food on shelves | `ObjectLayer._draw_books`, `_draw_net`, `_shown`, `icon_color`, `shelf_texture`; `ObjectDef.FillLook` BOOKS, NET, `net_bag` |
+| Contents behind glass / mesh | `ObjectDef.front_frame`, drawn in `ObjectLayer.draw_chunk`; cabinet art 2 frames (`tools/make_potion_storage_art.py`) |
+| Hanging from a block | `ObjectDef.hang_points`; `World._can_place_furniture` |
+| Liquid capacity (recorded only) | `ObjectDef.liquid_capacity` |
+| Torch in hand | `ItemData.held_light_radius`, `held_light_color`; `HeldLight` (src/items/held_light.gd); `ItemUser._update_held_light`; item type `torch` (`tools/make_item_types.gd`) |
+| Ropes join, rope on the bottom | `ObjectLayer.draw_chunk` (`ROPE_JOIN`); `ItemUser.rope_end` |
+| Catalog search | `CatalogWindow.search`, `searching`, `search_key`, `_items`, `_enemies`; Hud key routing |
+| Infinity sign | `Hud._draw_infinity` |
+| Hold to place keeps going | `Player` (`placing_held`) |
+| Blocks vs walls, continuous glass | terrain.gdshader (`built_block_shade`, `block_shadow`, `clear_slots`, `clear_walls`); `ChunkRenderer` |
+| Hip book behind the arms | `PaperDoll` (`book_hip_offset`, BookHip moved before BackArmLower) |

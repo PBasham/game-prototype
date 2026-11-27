@@ -3,6 +3,7 @@
 Furniture (detail 2: 2 art px per world px; bottles are drawn on the shelves in code):
   objects/potion_cabinet.png   48x80  (3x5 tiles) glass doors, 4 shelves
   objects/potion_bookcase.png  64x96  (4x6 tiles) glass doors, 5 shelves
+  (both: 2 frames side by side, the cabinet then its glass doors, drawn over the bottles)
   objects/potion_shelf.png     48x32  (3x2 tiles) a wall shelf with brackets
   items/{icons,held}/<that>.png 16x16, the same picture shrunk
 Bottles: the flask concepts (art/concepts/flasks, 32x32) copied as icons and held art.
@@ -24,6 +25,8 @@ BRASS = (220, 180, 90, 255)
 
 
 def cabinet(w: int, h: int, shelves: list, doors: bool) -> Image.Image:
+    """Two frames side by side: the cabinet (frame 0), and its glass doors (frame 1),
+    drawn over the bottles so they stand behind the glass."""
     im = Image.new("RGBA", (w, h))
     d = ImageDraw.Draw(im)
     d.rectangle((0, 2, w - 1, h - 1), fill=WOOD)  # body
@@ -32,20 +35,25 @@ def cabinet(w: int, h: int, shelves: list, doors: bool) -> Image.Image:
     d.rectangle((3, 5, w - 4, h - 5), fill=BACK)  # inside
     for y in shelves:  # shelf planks: bottles stand on these (y = the plank's top)
         d.rectangle((3, y, w - 4, y + 1), fill=SHELF)
+    front = Image.new("RGBA", (w, h))
     if doors:
+        fd = ImageDraw.Draw(front)
         mid = w // 2
-        d.line((mid, 5, mid, h - 5), fill=WOOD_D)
         for x0, x1 in ((3, mid - 1), (mid + 1, w - 4)):
             pane = Image.new("RGBA", (x1 - x0 + 1, h - 9), GLASS)
-            im.alpha_composite(pane, (x0, 5))
+            front.alpha_composite(pane, (x0, 5))
             # A glint across each pane.
             for k in range(6):
                 px, py = x0 + 2 + k, 8 + k * 2
                 if px <= x1 and py < h - 6:
-                    im.putpixel((px, py), GLASS_EDGE)
-        d.rectangle((mid - 3, h // 2 - 2, mid - 2, h // 2 + 2), fill=BRASS)
-        d.rectangle((mid + 2, h // 2 - 2, mid + 3, h // 2 + 2), fill=BRASS)
-    return im
+                    front.putpixel((px, py), GLASS_EDGE)
+        fd.line((mid, 5, mid, h - 5), fill=WOOD_D)
+        fd.rectangle((mid - 3, h // 2 - 2, mid - 2, h // 2 + 2), fill=BRASS)
+        fd.rectangle((mid + 2, h // 2 - 2, mid + 3, h // 2 + 2), fill=BRASS)
+    out = Image.new("RGBA", (w * 2, h))
+    out.alpha_composite(im, (0, 0))
+    out.alpha_composite(front, (w, 0))
+    return out
 
 
 def wall_shelf(w: int, h: int) -> Image.Image:
@@ -94,6 +102,11 @@ furniture = {
 }
 for name, im in furniture.items():
     im.save(f"assets/objects/{name}.png")
+    if name != "potion_shelf":  # two frames: the icon is both together
+        w = im.width // 2
+        whole = im.crop((0, 0, w, im.height))
+        whole.alpha_composite(im.crop((w, 0, w * 2, im.height)))
+        im = whole
     shrink(im).save(f"assets/items/icons/{name}.png")
     shrink(im).save(f"assets/items/held/{name}.png")
 for name, src in [("clay_bottle", "clay_regular_empty"), ("clay_jug", "clay_large_empty"),

@@ -28,10 +28,18 @@ uniform float grass_slots[32];
 uniform float built_slots[32];
 uniform float built_walls[32];
 uniform float overhang_slots[32];
+// See-through (glass) blocks and walls: a light rim instead of the dark edge line.
+uniform float clear_slots[32];
+uniform float clear_walls[32];
 // Background walls are drawn this much darker than blocks (and a little greyer), so
 // the front layer stands out. 1 = same as the art.
 uniform float wall_shade = 1.0;
 uniform float built_wall_shade = 1.35;
+// Built blocks (bricks, planks) drawn this much brighter, so they stand out from a back
+// wall of the same stuff; and a soft shadow on walls next to and under built blocks.
+uniform float built_block_shade = 1.12;
+uniform float block_shadow = 0.72;
+uniform float block_shadow_px = 2.0;
 uniform float wall_desat = 0.2;
 uniform vec3 grass_0 : source_color;
 uniform vec3 grass_1 : source_color;
@@ -179,7 +187,7 @@ vec4 strip(sampler2D s, int slot, vec2 p) {
 
 // Crisp square tile with a dark edge line where it meets open space. `cut` rounds an
 // outer corner by one pixel, only where the diagonal neighbor is open too.
-vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bool right, float edge_dark, bool cut, bvec4 diag) {
+vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bool right, float edge_dark, bool cut, bvec4 diag, bool clear) {
 	vec2 lp = p - floor(p / T) * T;
 	if (overhang_slots[slot] > 0.5 && edge_dark < 0.5) {
 		left = false;  // the run's end sticks out instead (overhang_px)
@@ -191,7 +199,9 @@ vec4 built_px(sampler2D tex, int slot, vec2 p, bool up, bool down, bool left, bo
 	}
 	vec3 c = strip(tex, slot, p).rgb;
 	bool edge = (up && lp.y < 1.0) || (down && lp.y >= 7.0) || (left && lp.x < 1.0) || (right && lp.x >= 7.0);
-	if (edge) {
+	if (edge && clear) {
+		c = mix(c, vec3(0.86, 0.94, 0.97), 0.7);  // glass: a light rim, no dark line
+	} else if (edge) {
 		c *= edge_dark;
 	} else {
 		if (up && lp.y < 2.0) c = mix(c, min(c * 1.3, vec3(1.0)), 0.5);
@@ -224,7 +234,8 @@ void fragment() {
 		bvec4 diag = bvec4(blk(here_t + ivec2(-1, -1)) == 0, blk(here_t + ivec2(1, -1)) == 0,
 			blk(here_t + ivec2(-1, 1)) == 0, blk(here_t + ivec2(1, 1)) == 0);
 		col = built_px(materials, here, p, blk(here_t + ivec2(0, -1)) == 0, blk(here_t + ivec2(0, 1)) == 0,
-			blk(here_t + ivec2(-1, 0)) == 0, blk(here_t + ivec2(1, 0)) == 0, 0.38, true, diag);
+			blk(here_t + ivec2(-1, 0)) == 0, blk(here_t + ivec2(1, 0)) == 0, 0.38, true, diag, clear_slots[here] > 0.5);
+		col.rgb = min(col.rgb * built_block_shade, vec3(1.0));
 		drew = col.a > 0.99;
 		if (!drew && col.a > 0.0) {
 			pane = col;  // see-through (glass): drawn over what's behind it below
@@ -313,13 +324,24 @@ void fragment() {
 		int wh = wal(here_t);
 		if (!done && wh > 0 && built_walls[wh] > 0.5) {
 			col = built_px(wall_tex, wh, p, wall_open(here_t + ivec2(0, -1)), wall_open(here_t + ivec2(0, 1)),
-				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false));
+				wall_open(here_t + ivec2(-1, 0)), wall_open(here_t + ivec2(1, 0)), 0.6, false, bvec4(false), clear_walls[wh] > 0.5);
 			col.rgb = min(shade_wall(col.rgb) * built_wall_shade, vec3(1.0));
 		} else if (!done && field_w(p) + nz(p) * 0.6 > 0.5) {
 			int w = wall_at(p);
 			if (w > 0 && built_walls[w] < 0.5) {
 				col = vec4(shade_wall(strip(wall_tex, w, p).rgb), 1.0);
 			}
+		}
+	}
+	if (!drew && here == 0 && col.a > 0.0) {
+		// A back wall: shaded where a block stands right above or to either side.
+		vec2 lp = p - floor(p / T) * T;
+		float near = 99.0;
+		if (is_built(blk(here_t + ivec2(0, -1)))) near = min(near, lp.y);
+		if (is_built(blk(here_t + ivec2(-1, 0)))) near = min(near, lp.x);
+		if (is_built(blk(here_t + ivec2(1, 0)))) near = min(near, 7.999 - lp.x);
+		if (near < block_shadow_px) {
+			col.rgb *= mix(block_shadow, 1.0, near / block_shadow_px);
 		}
 	}
 	if (pane.a > 0.0) {

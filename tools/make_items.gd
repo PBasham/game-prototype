@@ -148,7 +148,9 @@ func _items() -> Array[ItemData]:
 	rope.places_object = &"rope"
 	rope.place_area_max = 1
 	out.append(rope)
-	var torch := _small(&"torch", "Torch", "Light. Goes on a block (below or beside) or a back wall.")
+	var torch := _small(&"torch", "Torch", "Light. Goes on a block (below or beside) or a back wall. Lights your way while you hold it.")
+	torch.held_light_radius = 24.0
+	torch.held.type = &"torch"  # held out in front (data/item_types/torch.tres)
 	torch.kind = ItemData.Kind.BLOCK
 	torch.places_object = &"torch"
 	torch.place_area_max = 1
@@ -250,6 +252,28 @@ func _items() -> Array[ItemData]:
 	manap.max_stack = 30
 	_detailed(manap, &"mana")
 	out.append(manap)
+	# Filled bottles (Phase 37): bigger bottles are stronger, glass 30% stronger than clay
+	# of the same size; bigger ones leave you sick longer.
+	for b: Array in FILLED_BOTTLES:
+		for effect: StringName in [&"healing", &"mana"]:
+			var amount := roundf((30.0 if effect == &"healing" else 40.0) * b[2] / 5.0) * 5.0
+			var sick: float = (30.0 if effect == &"healing" else 10.0) * b[3]
+			var what := "health" if effect == &"healing" else "mana"
+			var pot := _small(StringName("%s_%s" % [effect, b[0]]), _filled_name(effect, b[1]),
+				"Drink: +%d %s. Then %d s before another." % [int(amount), what, int(sick)])
+			pot.kind = ItemData.Kind.FOOD
+			if effect == &"healing":
+				pot.heal_value = amount
+			else:
+				pot.mana_value = amount
+			pot.sickness = effect
+			pot.sickness_seconds = sick
+			pot.max_stack = 30
+			pot.storage_tags.assign([&"potion"])
+			pot.bottle_shape = BOTTLES[StringName(b[0])]
+			pot.bottle_contents = BOTTLE_CONTENTS[&"healing_potion" if effect == &"healing" else &"mana_potion"]
+			_detailed(pot, &"heal" if effect == &"healing" else &"mana")
+			out.append(pot)
 	var coat := _small(&"poison_coating", "Poison Coating", "Rub it on your weapon: the next 10 melee hits poison (2 damage a second for 4 s).")
 	coat.kind = ItemData.Kind.FOOD
 	coat.buff_name = "Poison Coating"
@@ -281,6 +305,16 @@ func _items() -> Array[ItemData]:
 			[&"potion_cabinet", "Potion Cabinet", "Glass fronted storage for potions and bottles: 10 stacks, shown on its shelves. Furniture can stand on top."],
 			[&"potion_bookcase", "Large Potion Cabinet", "A tall glass fronted case for potions and bottles: 16 stacks on 5 shelves. Furniture can stand on top."],
 			[&"potion_shelf", "Potion Shelf", "Hangs on a back wall: 4 stacks of potions and bottles on display."],
+			[&"pantry_rack", "Pantry Rack", "Open shelves for food: 8 stacks, shown on its shelves. Furniture can stand on top."],
+			[&"food_pantry", "Food Pantry", "A cupboard for food: 14 stacks, shown on its open shelves. Furniture can stand on top."],
+			[&"bookshelf", "Bookshelf", "Books, spellbooks, scrolls, pages and paper: 12 stacks. Books stand on its shelves, the rest in the drawer."],
+			[&"barrel", "Barrel", "Storage for anything: 10 stacks. Furniture can stand on top."],
+			[&"crate", "Crate", "Storage for anything: 12 stacks. Furniture can stand on top."],
+			[&"hanging_net_small", "Small Hanging Net", "Hangs by a rope from a block above: 6 stacks of anything, heaped in the net."],
+			[&"hanging_net_medium", "Hanging Net", "Hangs by a rope from a block above: 8 stacks of anything, heaped in the net."],
+			[&"hanging_net_large", "Large Hanging Net", "Hangs by two ropes from blocks above: 16 stacks of anything, heaped in the net."],
+			[&"liquid_barrel", "Liquid Barrel", "Iron banded: holds 1,000 buckets of a liquid. (No liquids yet.)"],
+			[&"iron_liquid_barrel", "Iron Liquid Barrel", "Holds 2,500 buckets of a liquid. (No liquids yet.)"],
 			[&"chair", "Wooden Chair", "Right click (or E) to sit on it. Move to stand up."],
 			[&"darkwood_workbench", "Darkwood Workbench", "A tier 2 Workbench (upgrade one with 20 Darkwood and 3 Iron Bars): everything a Workbench makes, plus reinforced wood."],
 			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
@@ -765,7 +799,13 @@ func _objects() -> Array[ObjectDef]:
 			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 5, &""],
 			[&"darkwood_workbench", "Darkwood Workbench", 5, 4, &"workbench"],
 			[&"chair", "Wooden Chair", 2, 3, &""],
-			[&"potion_bookcase", "Large Potion Cabinet", 4, 6, &""], [&"potion_shelf", "Potion Shelf", 3, 2, &""]]:
+			[&"potion_bookcase", "Large Potion Cabinet", 4, 6, &""], [&"potion_shelf", "Potion Shelf", 3, 2, &""],
+			# Phase 37 (18 to 27).
+			[&"pantry_rack", "Pantry Rack", 3, 3, &""], [&"food_pantry", "Food Pantry", 3, 4, &""],
+			[&"bookshelf", "Bookshelf", 3, 4, &""], [&"barrel", "Barrel", 2, 2, &""], [&"crate", "Crate", 2, 2, &""],
+			[&"hanging_net_small", "Small Hanging Net", 3, 2, &""], [&"hanging_net_medium", "Hanging Net", 2, 3, &""],
+			[&"hanging_net_large", "Large Hanging Net", 6, 4, &""], [&"liquid_barrel", "Liquid Barrel", 2, 3, &""],
+			[&"iron_liquid_barrel", "Iron Liquid Barrel", 2, 3, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -804,6 +844,8 @@ func _objects() -> Array[ObjectDef]:
 		out[i].detail = 2
 		out[i].container_accepts = &"potion"
 		out[i].fill_look = ObjectDef.FillLook.BOTTLES
+	out[13].front_frame = 1  # glass doors over the bottles
+	out[16].front_frame = 1
 	out[13].container_slots = 10
 	out[13].bottle_shelves.assign([72, 56, 40, 24])
 	out[13].bottles_per_shelf = 8
@@ -818,8 +860,42 @@ func _objects() -> Array[ObjectDef]:
 	out[17].bottle_x0 = 4.0
 	out[17].needs_floor = false
 	out[17].needs_wall = true  # hangs on a back wall
+	# Phase 37 storage: pantries (food on shelves), bookshelf, barrel, crate, nets, liquid
+	# barrels.
+	for i in range(18, 28):
+		out[i].detail = 2
+	out[18].container_slots = 8
+	out[18].bottle_shelves.assign([44, 24])
+	out[19].container_slots = 14
+	out[19].bottle_shelves.assign([40, 22])
+	for i in [18, 19]:
+		out[i].container_accepts = &"food"
+		out[i].fill_look = ObjectDef.FillLook.BOTTLES
+		out[i].bottles_per_shelf = 8
+		out[i].bottle_x0 = 4.0
+	out[20].container_slots = 12
+	out[20].container_accepts = &"book"
+	out[20].fill_look = ObjectDef.FillLook.BOOKS
+	out[20].bottle_shelves.assign([57, 38, 20])
+	out[20].bottles_per_shelf = 8
+	out[20].bottle_x0 = 4.0
+	out[21].container_slots = 10
+	out[22].container_slots = 12
+	# Hanging nets: [slots, rope columns, the bag's inside in art px].
+	for n: Array in [[23, 6, [1], Rect2i(9, 12, 30, 18)], [24, 8, [0], Rect2i(6, 16, 20, 30)],
+			[25, 16, [1, 4], Rect2i(10, 18, 76, 44)]]:
+		var net: ObjectDef = out[n[0]]
+		net.container_slots = n[1]
+		net.hang_points.assign(n[2])
+		net.net_bag = n[3]
+		net.needs_floor = false
+		net.fill_look = ObjectDef.FillLook.NET
+		net.front_frame = 1  # the mesh over what's inside
+		net.flips = false
+	out[26].liquid_capacity = 1000
+	out[27].liquid_capacity = 2500
 	# Flat tops: other furniture can stand on these.
-	for i in [4, 9, 11, 12, 13, 16]:
+	for i in [4, 9, 11, 12, 13, 16, 18, 19, 20, 21, 22, 26, 27]:
 		out[i].flat_top = true
 	# The Workbench upgrades in place to the Darkwood Workbench (tier 2: reinforced wood).
 	out[1].upgrade_to = &"darkwood_workbench"
@@ -1024,7 +1100,11 @@ func _bushes() -> Array[BushData]:
 ## Recipes: [id, station, {inputs}, output, count, requires]. Station &"" = by hand.
 func _recipes() -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
-	var table: Array = [
+	var table: Array = []
+	for b: Array in FILLED_BOTTLES:
+		table.append([StringName("healing_" + b[0]), &"alchemy", {StringName(b[0]): 1, &"red_cap": FILLED_HERBS[b[0]]}, StringName("healing_" + b[0]), 1, []])
+		table.append([StringName("mana_" + b[0]), &"alchemy", {StringName(b[0]): 1, &"glowcap": FILLED_HERBS[b[0]]}, StringName("mana_" + b[0]), 1, []])
+	table.append_array([
 		# By hand.
 		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
 		[&"darkwood", &"", {&"dark_log": 1}, &"darkwood", 4, []],
@@ -1090,9 +1170,20 @@ func _recipes() -> Array[RecipeData]:
 		[&"potion_cabinet", &"workbench", {&"wood": 20, &"copper_bar": 2, &"glass": 4}, &"potion_cabinet", 1, []],
 		[&"potion_bookcase", &"workbench", {&"wood": 30, &"copper_bar": 4, &"glass": 6}, &"potion_bookcase", 1, []],
 		[&"potion_shelf", &"workbench", {&"wood": 6}, &"potion_shelf", 1, []],
+		# Phase 37: storage.
+		[&"pantry_rack", &"workbench", {&"wood": 12}, &"pantry_rack", 1, []],
+		[&"food_pantry", &"workbench", {&"wood": 20, &"copper_bar": 2}, &"food_pantry", 1, []],
+		[&"bookshelf", &"workbench", {&"wood": 20}, &"bookshelf", 1, []],
+		[&"barrel", &"workbench", {&"wood": 10, &"copper_bar": 1}, &"barrel", 1, []],
+		[&"crate", &"workbench", {&"wood": 12}, &"crate", 1, []],
+		[&"hanging_net_small", &"workbench", {&"rope": 8, &"wood": 2}, &"hanging_net_small", 1, []],
+		[&"hanging_net_medium", &"workbench", {&"rope": 12, &"wood": 2}, &"hanging_net_medium", 1, []],
+		[&"hanging_net_large", &"workbench", {&"rope": 24, &"wood": 4}, &"hanging_net_large", 1, []],
+		[&"liquid_barrel", &"workbench", {&"wood": 16, &"iron_bar": 2}, &"liquid_barrel", 1, []],
+		[&"iron_liquid_barrel", &"workbench", {&"iron_bar": 8, &"wood": 4}, &"iron_liquid_barrel", 1, []],
 		[&"reinforced_wood", &"workbench", {&"wood": 4, &"iron_bar": 1}, &"reinforced_wood", 4, []],
 		[&"reinforced_darkwood", &"workbench", {&"darkwood": 4, &"iron_bar": 1}, &"reinforced_darkwood", 4, []],
-	]
+	])
 	# One scroll per spell at the Spell Weaving Table: a Blank Scroll plus copper bars by
 	# tier (placeholder until each spell gets its own materials). Only spells you know can
 	# be scribed (Crafting.scroll_recipes).
@@ -1223,6 +1314,20 @@ func _spell(spell_id: StringName, label: String, text: String) -> SpellData:
 	s.kind = ItemData.Kind.SPELL
 	s.max_stack = 1
 	return s
+
+
+## Filled bottles: [bottle id, its name, strength x, sickness x]. Thin clay is the
+## plain Healing / Mana Potion.
+const FILLED_BOTTLES := [[&"clay_bottle", "Clay Bottle", 1.5, 1.35], [&"clay_jug", "Clay Jug", 2.0, 1.7],
+	[&"glass_vial", "Glass Vial", 1.3, 1.0], [&"glass_bottle", "Glass Bottle", 1.95, 1.35],
+	[&"glass_flask", "Glass Flask", 2.6, 1.7]]
+## Red Caps or Glowcaps per filled bottle (the same for clay and glass).
+const FILLED_HERBS := {&"clay_bottle": 3, &"clay_jug": 4, &"glass_vial": 2, &"glass_bottle": 3, &"glass_flask": 4}
+
+
+static func _filled_name(effect: StringName, bottle: String) -> String:
+	# "Clay Bottle of Healing", "Glass Vial of Mana".
+	return "%s of %s" % [bottle, "Healing" if effect == &"healing" else "Mana"]
 
 
 ## Which special storage takes an item (Lumber Rack, Potion Cabinet).

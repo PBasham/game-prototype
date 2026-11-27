@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_cts2w"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_038i2"]
+[ext_resource type="Texture2D" path="res://assets/items/held/food_pantry.png" id="3_uqbp3"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/food_pantry.png" id="4_4gmmd"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_wa1m3"]
+
+[sub_resource type="Resource" id="Resource_tgj3t"]
+script = ExtResource("2_038i2")
+id = &"food_pantry"
+texture = ExtResource("3_uqbp3")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_wa1m3")
+kind = 10
+icon = ExtResource("4_4gmmd")
+max_stack = 99
+held = SubResource("Resource_tgj3t")
+impact_at = 0.2
+places_object = &"food_pantry"
+place_area_max = 1
+id = &"food_pantry"
+display_name = "Food Pantry"
+description = "A cupboard for food: 14 stacks, shown on its open shelves. Furniture can stand on top."

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_6fgui"]
+
+[resource]
+script = ExtResource("1_6fgui")
+station = &"alchemy"
+tab = "Potions"
+inputs = Dictionary[StringName, int]({
+&"glass_flask": 1,
+&"red_cap": 4
+})
+output = &"healing_glass_flask"
+id = &"healing_glass_flask"
+display_name = "Healing Glass Flask"

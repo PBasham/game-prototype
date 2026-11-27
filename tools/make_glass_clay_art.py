@@ -20,21 +20,18 @@ def save(img, rel):
 
 
 def glass(wall: bool) -> Image.Image:
-    # 64x64 = 8x8 blocks of 8x8 px. Thin pale frame, see-through pane, a shine.
+    # 64x64 = 8x8 blocks of 8x8 px, one continuous pane (no frame per block: the terrain
+    # shader draws a light rim where the glass meets open space). Long diagonal shines.
     img = Image.new("RGBA", (64, 64))
-    frame = (176, 206, 214, 255) if not wall else (140, 168, 178, 255)
-    pane = (170, 220, 236, 70) if not wall else (150, 196, 214, 55)
-    shine = (235, 250, 255, 170) if not wall else (210, 232, 240, 120)
-    for by in range(8):
-        for bx in range(8):
-            for y in range(8):
-                for x in range(8):
-                    c = pane
-                    if x == 0 or y == 0 or x == 7 or y == 7:
-                        c = frame
-                    elif x + y in (5, 6) and 1 < x < 6:
-                        c = shine
-                    img.putpixel((bx * 8 + x, by * 8 + y), c)
+    pane = (170, 220, 236, 60) if not wall else (150, 196, 214, 50)
+    shine = (235, 250, 255, 150) if not wall else (210, 232, 240, 110)
+    for y in range(64):
+        for x in range(64):
+            c = pane
+            k = (x + y) % 23
+            if k in (0, 1) or k == 4:
+                c = shine
+            img.putpixel((x, y), c)
     return img
 
 

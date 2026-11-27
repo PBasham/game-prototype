@@ -66,7 +66,10 @@ func test_alchemy_table_tabs() -> void:
 	_open_station(&"alchemy_table")
 	assert_eq(w.hud._tabs(), ["Potions", "Coatings", "Flasks"])
 	w.hud.craft_tab = 0
-	assert_eq(_names(), [&"healing_potion", &"mana_potion"] as Array[StringName])
+	var potions := _names()
+	for id: StringName in [&"healing_potion", &"mana_potion", &"healing_glass_flask", &"mana_clay_jug"]:
+		assert_has(potions, id)
+	assert_eq(potions.size(), 12, "2 in clay flasks + 10 in the other bottles")
 	w.hud.craft_tab = 1
 	assert_eq(_names(), [&"poison_coating"] as Array[StringName])
 	w.hud.craft_tab = 2

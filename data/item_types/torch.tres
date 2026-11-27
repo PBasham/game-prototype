@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="ItemTypeData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_b4ffb"]
+[ext_resource type="Script" path="res://src/player/doll/arm_track.gd" id="2_gf4n7"]
+[ext_resource type="Script" path="res://src/player/doll/item_type_data.gd" id="3_liy8a"]
+
+[sub_resource type="Resource" id="Resource_fdc1n"]
+script = ExtResource("2_gf4n7")
+
+[sub_resource type="Curve" id="Curve_nywt7"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -25), 0.0, 50.0, 1, 1, Vector2(0.5, 0), 50.0, 9.999999, 1, 1, Vector2(1, 5), 9.999999, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_hjw46"]
+_data = [Vector2(0, 0.7), 0.0, 0.6, 1, 1, Vector2(0.5, 1), 0.6, -0.29999995, 1, 1, Vector2(1, 0.85), -0.29999995, 0.0, 1, 1]
+point_count = 3
+
+[sub_resource type="Resource" id="Resource_we1ur"]
+script = ExtResource("2_gf4n7")
+mode = 1
+angle = SubResource("Curve_nywt7")
+reach = SubResource("Curve_hjw46")
+
+[sub_resource type="Curve" id="Curve_5nseo"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -90), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_pfkkf"]
+script = ExtResource("1_b4ffb")
+name = "Place"
+duration = 0.08
+aims = true
+front = SubResource("Resource_we1ur")
+back = SubResource("Resource_fdc1n")
+item_angle_mode = 2
+item_angle = SubResource("Curve_5nseo")
+
+[sub_resource type="Resource" id="Resource_7uefl"]
+script = ExtResource("2_gf4n7")
+
+[sub_resource type="Curve" id="Curve_nky5v"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -15), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Curve" id="Curve_k1gro"]
+_data = [Vector2(0, 0.8), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_u8npm"]
+script = ExtResource("2_gf4n7")
+mode = 1
+angle = SubResource("Curve_nky5v")
+reach = SubResource("Curve_k1gro")
+
+[sub_resource type="Curve" id="Curve_lg6g4"]
+_limits = [-180.0, 180.0, 0.0, 1.0]
+_data = [Vector2(0, -90), 0.0, 0.0, 1, 1]
+point_count = 1
+
+[sub_resource type="Resource" id="Resource_a3d2a"]
+script = ExtResource("1_b4ffb")
+name = "Hold"
+duration = 1.0
+front = SubResource("Resource_u8npm")
+back = SubResource("Resource_7uefl")
+item_angle_mode = 2
+item_angle = SubResource("Curve_lg6g4")
+
+[resource]
+script = ExtResource("3_liy8a")
+hold = SubResource("Resource_a3d2a")
+attacks = Array[ExtResource("1_b4ffb")]([SubResource("Resource_pfkkf")])
+stow_style = 2
+id = &"torch"
+display_name = "Torch (held out in front, flame up; placed with a quick reach)"

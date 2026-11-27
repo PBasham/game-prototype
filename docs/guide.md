@@ -319,10 +319,14 @@ every asset, its size and layout.
 **Background walls** are drawn a little greyer than blocks so the front layer stands
 out: `wall_shade` (1.0, the wall art is already darker) and `wall_desat` (0.2) on the
 `Chunks` node (ChunkRenderer). Built walls (planks, bricks, glass: room walls) are
-brightened again by `built_wall_shade` (1.35).
+brightened again by `built_wall_shade` (1.35). Built blocks are drawn
+`built_block_shade` (1.12) brighter, and back walls get a soft shadow where a built block
+stands right above or beside them (`block_shadow` 0.72 at the edge, fading over
+`block_shadow_px` 2), so a brick wall and its back wall read apart.
 
 **Glass** (`TileDef.see_through`) is a solid block light passes through as through air;
-its texture's alpha shows the wall or sky behind it. A Glass Wall doesn't count as a
+its texture's alpha shows the wall or sky behind it, as one continuous pane with a
+light rim where it meets open space (no dark edge line). A Glass Wall doesn't count as a
 wall for sunlight.
 
 ## UI look

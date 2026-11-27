@@ -35,6 +35,7 @@ so a smaller starting inventory or bags that add rows later only change that num
 the panel lays itself out from it.
 
 - Left click: pick up a stack, put it down, merge or swap.
+- A dev infinite stack (Creative window, right click) shows an infinity sign instead of a count.
 - Right click: take one onto the mouse (hold it to keep taking, faster and faster: `Hud.take_repeat_delay` 0.35 s, down to `take_repeat_fastest` 0.03 s), or put one down in an empty slot from the stack on the mouse. Shift + right click: take half.
 - Shift + left click: move a stack between the hotbar and the rest.
 - Ctrl + left click: **trash** it. The trash slot (bottom right, a bin) also takes the
@@ -114,11 +115,16 @@ left click (`places_object`).
 - **Rope:** climbable (Up / Down), right through platforms (climbing ignores them).
   Can hang through platforms. Needs something next to
   it to be placed (a block, a platform, more rope, or a wall behind), then stays.
+  Clicking a rope with rope in hand adds one to the bottom of that rope
+  (`ItemUser.rope_end`). Ropes side by side are joined by a short rope across.
 - **Torch:** 2 tiles tall (`height_tiles`; drawn upward from its tile, which needs no
   solid block above it). Gives warm light (radius 11, see Lighting in the guide). Goes on a solid
   block below or beside it, or on a back wall, and shows the matching frame (standing,
   leaning left or right, on the wall). It can't go inside a solid block. When what holds
-  it is mined, it pops off as an item.
+  it is mined, it pops off as an item. Held, a torch is out in front of you (item type
+  `torch`) and lights around you (`ItemData.held_light_radius` 24, `held_light_color`;
+  `HeldLight`, a light source that follows your hand). Only blocks and back walls show
+  light, so in open air you see it on the ground and walls around you.
 - Mining (left click) takes an object first when there's no solid block in the tile;
   objects break in one hit and drop their item.
 - Fields: `frames` (strip of frames 8 x 8*height), `height_tiles`, `style` (ROPE or
@@ -351,7 +357,7 @@ else (`CharacterData.STARTING_SPELLS`, `STARTING_ITEMS`). Characters from before
 
 ### Where the spellbook is (Phase 30)
 
-The equipped spellbook rests on your **hip** (`PaperDoll._book_hip`, `book_hip_offset`,
+The equipped spellbook rests on your **hip**, behind the arms so the hand hangs in front of it (`PaperDoll._book_hip`, `book_hip_offset` (0, 20),
 `book_hip_angle`) whenever it isn't in use. Each spell says where it goes while you cast
 it (SpellData `book_pose`):
 

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_hngl0"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_76j7h"]
+[ext_resource type="Texture2D" path="res://assets/items/held/bookshelf.png" id="3_6c0cv"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/bookshelf.png" id="4_jlkv1"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_1ubam"]
+
+[sub_resource type="Resource" id="Resource_sl4af"]
+script = ExtResource("2_76j7h")
+id = &"bookshelf"
+texture = ExtResource("3_6c0cv")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_1ubam")
+kind = 10
+icon = ExtResource("4_jlkv1")
+max_stack = 99
+held = SubResource("Resource_sl4af")
+impact_at = 0.2
+places_object = &"bookshelf"
+place_area_max = 1
+id = &"bookshelf"
+display_name = "Bookshelf"
+description = "Books, spellbooks, scrolls, pages and paper: 12 stacks. Books stand on its shelves, the rest in the drawer."

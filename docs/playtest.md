@@ -358,6 +358,21 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 37: storage, filled bottles, torch, ropes, Catalog search (branch phase-37-storage-potions)**
+- [ ] Alchemy Table, Potions tab: Healing and Mana in every bottle (Clay Bottle / Jug, Glass Vial / Bottle / Flask), from the empty bottle and herbs. Bigger heals more; glass more than clay; bigger means longer sickness.
+- [ ] Pantry Rack and Food Pantry: food only, shown on the shelves. Bookshelf: books as spines, scrolls and paper in the drawer.
+- [ ] Barrel and Crate hold anything; things stand on them.
+- [ ] Hanging Nets (Small 3x2, 2x3, Large 6x4) only go under a block, hang by rope, and show what's inside behind the mesh.
+- [ ] Liquid Barrel and Iron Liquid Barrel place (both need iron; nothing to put in them yet).
+- [ ] Potion cabinets: bottles behind the glass doors.
+- [ ] Hold a torch: held out in front, lights the ground and walls around you at night.
+- [ ] Ropes side by side join; clicking a rope with rope adds to its bottom.
+- [ ] Catalog: Search box (Items, Enemies) finds found things by name.
+- [ ] Creative infinite stack shows an infinity sign, not 9999.
+- [ ] The hip book sits on the hip behind your hand.
+- [ ] Holding right click to place walls doesn't let go when you drag over a tile that already has one.
+- [ ] Brick blocks stand out from brick walls (lighter, a soft shadow on the wall). Glass looks like one continuous pane.
+
 **Phase 36: fixes (branch phase-36-fixes)**
 - [ ] A few Dark Forest blocks up in the air no longer turn the biome dark; a big build or the real Dark Forest still does.
 - [ ] Back walls are brighter, room walls especially; torches light a room well at night.

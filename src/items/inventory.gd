@@ -52,7 +52,7 @@ func accepts(item_id: StringName) -> bool:
 	if accepts_tag == &"":
 		return true
 	var it := ItemData.find(item_id)
-	return it != null and accepts_tag in it.storage_tags
+	return it != null and it.has_storage_tag(accepts_tag)
 
 
 ## How many of an item one slot holds here.

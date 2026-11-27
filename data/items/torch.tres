@@ -10,7 +10,7 @@
 script = ExtResource("2_atmc3")
 id = &"torch"
 texture = ExtResource("3_j7cso")
-type = &"block"
+type = &"torch"
 grip = Vector2(3, 6)
 
 [resource]
@@ -21,7 +21,8 @@ icon = ExtResource("4_die25")
 held = SubResource("Resource_kkb3s")
 impact_at = 0.2
 places_object = &"torch"
+held_light_radius = 24.0
 place_area_max = 1
 id = &"torch"
 display_name = "Torch"
-description = "Light. Goes on a block (below or beside) or a back wall."
+description = "Light. Goes on a block (below or beside) or a back wall. Lights your way while you hold it."

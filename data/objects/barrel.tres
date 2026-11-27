@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/barrel.png" id="1_s17cs"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_o2fi7"]
+
+[resource]
+script = ExtResource("2_o2fi7")
+frames = ExtResource("1_s17cs")
+style = 2
+height_tiles = 2
+detail = 2
+width_tiles = 2
+needs_floor = true
+flat_top = true
+container_slots = 10
+health = 1.0
+drop_item = &"barrel"
+id = &"barrel"
+display_name = "Barrel"

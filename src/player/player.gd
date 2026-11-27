@@ -1594,7 +1594,10 @@ func _update_use(delta: float) -> void:
 		# a cooldown (Chain Spark's 0.6 s) is longer than the window, so holding would
 		# otherwise stop after the first cast.
 		var spell_held := held_item is SpellData and not stowed
-		if not clicked and _repeats() and (_combo_left > 0.0 or spell_held):
+		# Placing (blocks, walls, torches) keeps trying while held too: dragging over
+		# tiles where nothing goes (a wall already there) mustn't let go of the button.
+		var placing_held := held_item != null and not stowed and ItemUser._places(held_item)
+		if not clicked and _repeats() and (_combo_left > 0.0 or spell_held or placing_held):
 			back = use_back
 			held_down = _held(_button(back))
 		if (clicked or held_down) and (not use_check.is_valid() or use_check.call(back)):

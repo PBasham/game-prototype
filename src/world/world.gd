@@ -1152,6 +1152,9 @@ func _can_place_furniture(anchor: Vector2i, def: ObjectDef) -> bool:
 		for t in footprint(anchor, def):
 			if data.get_wall(t.x, t.y) <= 0:
 				return false
+	for col in def.hang_points:
+		if not is_solid(anchor + Vector2i(col, -def.height_tiles)):
+			return false
 	return true
 
 

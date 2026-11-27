@@ -64,6 +64,9 @@ const SPELL_PREFIX := "spell:"
 @export var places_wall: StringName = &""
 ## Tile object placed with left click (data/objects): rope, torches.
 @export var places_object: StringName = &""
+## Lit in your hand (a torch): lights this many tiles around you while held (0 = not).
+@export var held_light_radius := 0.0
+@export var held_light_color := Color(1, 0.86, 0.62)
 ## Plants something: &"tree" (a sapling on grass) or &"grass" (turns dirt to grass).
 @export var plants: StringName = &""
 ## Can be placed anywhere in reach; otherwise it must touch a block or a wall.
@@ -313,3 +316,17 @@ func drop_pixels() -> float:
 		Kind.FURNITURE:
 			return 14.0
 	return 11.0
+
+
+## Whether special storage that takes `tag` takes this item: its `storage_tags`, plus
+## "food" (food, not potions or coatings) and "book" (books, tomes, scrolls, pages,
+## paper) worked out from what it is.
+func has_storage_tag(tag: StringName) -> bool:
+	if tag in storage_tags:
+		return true
+	match tag:
+		&"food":
+			return kind == Kind.FOOD and not (&"potion" in storage_tags) and buff_poison_hits == 0
+		&"book":
+			return kind in [Kind.BOOK, Kind.TOME, Kind.SCROLL, Kind.PAGE] or id in [&"paper", &"blank_scroll"]
+	return false

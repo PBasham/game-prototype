@@ -19,7 +19,7 @@ const RECIPE_ROWS := 8
 const TABS: Array[String] = ["Items", "Enemies", "Recipes"]
 const SILHOUETTE := Color(0.0, 0.0, 0.0, 0.85)
 
-enum Part { NONE, TAB, CELL, SLOT_PICK, RECIPES_BUTTON, RECIPE }
+enum Part { NONE, TAB, CELL, SLOT_PICK, RECIPES_BUTTON, RECIPE, SEARCH }
 
 var tab := 0
 var scroll := 0
@@ -27,6 +27,10 @@ var scroll := 0
 var picked_item: ItemData
 var picked_enemy: EnemyData
 var recipe_item: ItemData
+## The search box (Items and Enemies): narrows the list to names containing it. Only
+## found things match by name, so searching doesn't give away what's still hidden.
+var search := ""
+var searching := false
 
 
 func _init(owner_hud: Hud) -> void:
@@ -89,10 +93,59 @@ func recipe_rect(i: int) -> Rect2:
 func _list_size() -> int:
 	match tab:
 		0:
-			return Catalog.all_items().size()
+			return _items().size()
 		1:
-			return Catalog.all_enemies().size()
+			return _enemies().size()
 	return _recipes().size()
+
+
+## The Items tab's list, narrowed by the search.
+func _items() -> Array[ItemData]:
+	var q := search.strip_edges().to_lower()
+	if q == "":
+		return Catalog.all_items()
+	var c := _char()
+	return Catalog.all_items().filter(func(it: ItemData) -> bool:
+		return Catalog.item_found(c, it.id) and q in it.display_name.to_lower())
+
+
+## The Enemies tab's list, narrowed by the search.
+func _enemies() -> Array[EnemyData]:
+	var q := search.strip_edges().to_lower()
+	if q == "":
+		return Catalog.all_enemies()
+	var c := _char()
+	return Catalog.all_enemies().filter(func(e: EnemyData) -> bool:
+		return Catalog.enemy_found(c, e.id) and q in e.display_name.to_lower())
+
+
+func search_rect() -> Rect2:
+	var d := detail_rect()
+	return Rect2(d.position.x, BODY_TOP, d.size.x, TAB_H)
+
+
+func set_searching(on: bool) -> void:
+	searching = on
+	if hud and hud.world and hud.world.player:
+		hud.world.player.typing = on
+	queue_redraw()
+
+
+## A key while the search box is active (Hud routes keys here). True if used.
+func search_key(k: InputEventKey) -> bool:
+	if not searching or k == null or not k.pressed:
+		return false
+	if k.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE]:
+		set_searching(false)
+	elif k.keycode == KEY_BACKSPACE:
+		search = search.substr(0, maxi(0, search.length() - 1))
+	elif k.unicode >= 32:
+		search += char(k.unicode)
+	else:
+		return true
+	scroll = 0
+	queue_redraw()
+	return true
 
 
 ## [recipe, "makes" or "uses"] for the Recipes tab's item.
@@ -111,6 +164,8 @@ func hit(local: Vector2) -> Array:
 	for i in TABS.size():
 		if tab_rect(i).has_point(local):
 			return [Part.TAB, i]
+	if tab != 2 and search_rect().has_point(local):
+		return [Part.SEARCH, 0]
 	if tab == 2:
 		if pick_rect().has_point(local):
 			return [Part.SLOT_PICK, 0]
@@ -134,6 +189,15 @@ func draw_body(font: Font) -> void:
 	for i in TABS.size():
 		var state := UiSkin.Btn.PRESSED if tab == i else (UiSkin.Btn.HOT if h[0] == Part.TAB and h[1] == i else UiSkin.Btn.NORMAL)
 		UiSkin.button(self, tab_rect(i), TABS[i], state)
+	if tab != 2:
+		var sr := search_rect()
+		UiSkin.slot(self, sr, UiSkin.SlotLook.SELECTED if searching else (UiSkin.SlotLook.HOT if h[0] == Part.SEARCH else UiSkin.SlotLook.NORMAL))
+		var blink := searching and fmod(Time.get_ticks_msec() / 500.0, 2.0) < 1.0
+		var text := search + ("_" if blink else "")
+		if search == "" and not searching:
+			text = "Search..."
+		draw_string(font, sr.position + Vector2(3, 9), text, HORIZONTAL_ALIGNMENT_LEFT, sr.size.x - 6, 6,
+			UiSkin.TEXT if search != "" or searching else UiSkin.DIM)
 	match tab:
 		0:
 			_draw_items(font, h)
@@ -145,7 +209,7 @@ func draw_body(font: Font) -> void:
 
 func _draw_items(font: Font, h: Array) -> void:
 	var c := _char()
-	var items := Catalog.all_items()
+	var items := _items()
 	for i in range(scroll * COLS, mini(items.size(), (scroll + ROWS) * COLS)):
 		var r := cell(i)
 		var it := items[i]
@@ -190,7 +254,7 @@ func _draw_items(font: Font, h: Array) -> void:
 
 func _draw_enemies(font: Font, h: Array) -> void:
 	var c := _char()
-	var list := Catalog.all_enemies()
+	var list := _enemies()
 	for i in range(scroll * COLS, mini(list.size(), (scroll + ROWS) * COLS)):
 		var r := cell(i)
 		var e := list[i]
@@ -327,15 +391,19 @@ func body_click(mb: InputEventMouseButton) -> void:
 	if mb.button_index != MOUSE_BUTTON_LEFT and not (mb.button_index == MOUSE_BUTTON_RIGHT and tab == 2):
 		return
 	var h := hit(mb.position)
+	if h[0] != Part.SEARCH and searching:
+		set_searching(false)
 	match h[0]:
 		Part.TAB:
 			tab = h[1]
 			scroll = 0
+		Part.SEARCH:
+			set_searching(not searching)
 		Part.CELL:
 			if tab == 0:
-				picked_item = Catalog.all_items()[h[1]]
+				picked_item = _items()[h[1]]
 			else:
-				picked_enemy = Catalog.all_enemies()[h[1]]
+				picked_enemy = _enemies()[h[1]]
 		Part.RECIPES_BUTTON:
 			show_recipes(picked_item)
 		Part.SLOT_PICK:
@@ -366,7 +434,7 @@ func tooltip_at(local: Vector2) -> Array:
 	var h := hit(local)
 	var c := _char()
 	if h[0] == Part.CELL and tab == 0:
-		var it: ItemData = Catalog.all_items()[h[1]]
+		var it: ItemData = _items()[h[1]]
 		return [it, ""] if Catalog.item_found(c, it.id) else [null, "Not found yet"]
 	if h[0] == Part.RECIPE:
 		var r: RecipeData = _recipes()[h[1]][0]

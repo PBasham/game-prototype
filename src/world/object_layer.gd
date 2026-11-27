@@ -14,6 +14,10 @@ extends Node2D
 const TILE := World.TILE
 const SIZE := ChunkData.SIZE
 
+## Colors of the short rope joining two ropes side by side.
+const ROPE_JOIN := Color(200 / 255.0, 176 / 255.0, 128 / 255.0)
+const ROPE_JOIN_DARK := Color(154 / 255.0, 132 / 255.0, 86 / 255.0)
+
 var world: World
 ## Unwrapped chunk coord -> its drawing node.
 var _views: Dictionary[Vector2i, ChunkObjects] = {}
@@ -114,6 +118,11 @@ func draw_chunk(view: ChunkObjects) -> void:
 				continue
 			if def == null or def.frames == null:
 				continue
+			if def.style == ObjectDef.Style.ROPE and world.data.get_object(origin.x + lx + 1, origin.y + ly) == id:
+				# Ropes side by side join: a short rope across to the next one.
+				var y := ly * TILE + TILE * 0.5 - 1.0
+				view.draw_rect(Rect2(lx * TILE + TILE * 0.5, y, TILE, 1.0), ROPE_JOIN)
+				view.draw_rect(Rect2(lx * TILE + TILE * 0.5, y + 1.0, TILE, 0.5), ROPE_JOIN_DARK)
 			var frame := frame_for(def, origin + Vector2i(lx, ly), id)
 			var h := maxi(def.height_tiles, 1)
 			var w := maxi(def.width_tiles, 1) if def.style == ObjectDef.Style.FURNITURE else 1
@@ -135,12 +144,26 @@ func draw_chunk(view: ChunkObjects) -> void:
 				view.draw_set_transform(Vector2.ZERO)
 			else:
 				view.draw_texture_rect_region(def.frames, dest, src)
-			if def.fill_look in [ObjectDef.FillLook.BOTTLES, ObjectDef.FillLook.PILE]:
+			if def.fill_look >= ObjectDef.FillLook.BOTTLES:
 				var store := world.container_at(origin + Vector2i(lx, ly))
+				var flip := world.is_flipped(origin + Vector2i(lx, ly))
 				if store and def.fill_look == ObjectDef.FillLook.BOTTLES:
-					_draw_bottles(view, dest, store, world.is_flipped(origin + Vector2i(lx, ly)), def)
-				elif store:
-					_draw_pile(view, dest, store, world.is_flipped(origin + Vector2i(lx, ly)))
+					_draw_bottles(view, dest, store, flip, def)
+				elif store and def.fill_look == ObjectDef.FillLook.PILE:
+					_draw_pile(view, dest, store, flip)
+				elif store and def.fill_look == ObjectDef.FillLook.BOOKS:
+					_draw_books(view, dest, store, flip, def)
+				elif store and def.fill_look == ObjectDef.FillLook.NET:
+					_draw_net(view, dest, store, flip, def)
+			if def.front_frame >= 0:
+				# Drawn over what's inside (glass doors, a net's mesh).
+				var over := Rect2(def.front_frame * sw * d, 0, sw * d, h * TILE * d)
+				if def.style == ObjectDef.Style.FURNITURE and world.is_flipped(origin + Vector2i(lx, ly)):
+					view.draw_set_transform(Vector2(dest.position.x * 2.0 + dest.size.x, 0), 0.0, Vector2(-1, 1))
+					view.draw_texture_rect_region(def.frames, dest, over)
+					view.draw_set_transform(Vector2.ZERO)
+				else:
+					view.draw_texture_rect_region(def.frames, dest, over)
 
 
 ## Redraws every shown chunk's objects (a storage's fill changed).
@@ -215,6 +238,12 @@ static func shelf_texture(it: ItemData) -> Texture2D:
 			var used := img.get_used_rect()
 			if used.size.x > 0:
 				img = img.get_region(used)
+				if it.icon.get_width() <= 16:
+					# A 16x16 icon is already at the furniture's art size (2 art px per
+					# world px vs the icon's 1): used as is.
+					out = ImageTexture.create_from_image(img)
+					_shelf_cache[it.id] = out
+					return out
 				var half := Vector2i(maxi(1, (used.size.x + 1) / 2), maxi(1, (used.size.y + 1) / 2))
 				var small := Image.create_empty(half.x, half.y, false, Image.FORMAT_RGBA8)
 				for y in half.y:
@@ -230,6 +259,138 @@ static func shelf_texture(it: ItemData) -> Texture2D:
 				out = ImageTexture.create_from_image(small)
 	_shelf_cache[it.id] = out
 	return out
+
+
+## How many of an item to show: its share of the storage times `room` (art px or
+## spots), over `each` (what one takes), at least 1.
+static func _shown(inv: Inventory, slot: int, room: float, each: float) -> int:
+	var cap := float(maxi(inv.cap_for(inv.ids[slot]), 1))
+	return maxi(1, roundi(inv.counts[slot] / (cap * inv.size) * room / maxf(each, 1.0)))
+
+
+## Bookshelf: books as spines (2 to 4 art px wide, 10 to 14 tall, in their icon's main
+## color) on the upper shelves, left to right; scrolls, pages and paper as their shelf
+## sprites on the bottom shelf (the drawer).
+func _draw_books(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
+	var art_w := dest.size.x * def.detail
+	var s := dest.size.x / art_w
+	var shelf_w := float(def.bottles_per_shelf) * def.bottle_step
+	var upper := def.bottle_shelves.size() - 1
+	var books: Array[ItemData] = []
+	var papers: Array[ItemData] = []
+	for i in inv.size:
+		if inv.is_empty(i):
+			continue
+		var it := ItemData.find(inv.ids[i])
+		if it == null:
+			continue
+		if it.kind in [ItemData.Kind.BOOK, ItemData.Kind.TOME]:
+			for _k in _shown(inv, i, shelf_w * upper, 4.0):
+				books.append(it)
+		elif shelf_texture(it):
+			for _k in _shown(inv, i, shelf_w, 9.0):
+				papers.append(it)
+	var place := func(x: float, w: float) -> float:
+		return art_w - x - w if flip else x
+	# Books: upper shelves, bottom one up.
+	var shelf := 1
+	var x := 0.0
+	var n := 0
+	for it in books:
+		var seed := absi(hash(String(it.id))) + n
+		n += 1
+		var w := 2.0 + float(seed % 3)
+		var h := 10.0 + float((seed / 3) % 5)
+		if x + w > shelf_w:
+			shelf += 1
+			x = 0.0
+		if shelf >= def.bottle_shelves.size():
+			break
+		var c := icon_color(it)
+		# Each copy a little lighter or darker, so a row of the same book reads as books.
+		c = c.lightened(0.12) if seed % 3 == 0 else (c.darkened(0.12) if seed % 3 == 1 else c)
+		var left: float = place.call(def.bottle_x0 + x, w)
+		var top := def.bottle_shelves[shelf] - h
+		view.draw_rect(Rect2(dest.position + Vector2(left, top) * s, Vector2(w, h) * s), c.darkened(0.15))
+		view.draw_rect(Rect2(dest.position + Vector2(left, top + 2) * s, Vector2(w, 1) * s), c.lightened(0.35))
+		view.draw_rect(Rect2(dest.position + Vector2(left, top + h - 3) * s, Vector2(w, 1) * s), c.lightened(0.35))
+		var edge: float = place.call(def.bottle_x0 + x + w - 1.0, 1.0)
+		view.draw_rect(Rect2(dest.position + Vector2(edge, top) * s, Vector2(1, h) * s), c.darkened(0.45))
+		x += w
+	# Papers: the drawer.
+	x = 0.0
+	for it in papers:
+		var tex := shelf_texture(it)
+		var size := Vector2(tex.get_size())
+		if x + size.x > shelf_w:
+			break
+		var left: float = place.call(def.bottle_x0 + x, size.x)
+		view.draw_texture_rect(tex, Rect2(dest.position + Vector2(left, def.bottle_shelves[0] - size.y) * s, size * s), false)
+		x += size.x * 0.6  # overlapping, like a stack in a drawer
+
+
+## Hanging net: what's inside heaped in its bag (ObjectDef.net_bag), bottom row first,
+## items overlapping a little, each as its shelf sprite.
+func _draw_net(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
+	var art_w := dest.size.x * def.detail
+	var s := dest.size.x / art_w
+	var bag := def.net_bag
+	var items: Array[ItemData] = []
+	for i in inv.size:
+		if inv.is_empty(i):
+			continue
+		var it := ItemData.find(inv.ids[i])
+		if shelf_texture(it):
+			for _k in _shown(inv, i, float(bag.size.x) * maxf(bag.size.y / 6.0, 1.0), 8.0):
+				items.append(it)
+	var x := 0.0
+	var floor_y := float(bag.end.y)
+	var row_h := 0.0
+	for it in items:
+		var tex := shelf_texture(it)
+		var size := Vector2(tex.get_size())
+		if x + size.x > bag.size.x:
+			x = 0.0
+			floor_y -= maxf(row_h * 0.55, 3.0)
+			row_h = 0.0
+		if floor_y - size.y * 0.5 < bag.position.y:
+			break
+		var left := float(bag.position.x) + x
+		if flip:
+			left = art_w - left - size.x
+		view.draw_texture_rect(tex, Rect2(dest.position + Vector2(left, floor_y - size.y) * s, size * s), false)
+		x += size.x * 0.75
+		row_h = maxf(row_h, size.y)
+
+
+static var _icon_colors: Dictionary[StringName, Color] = {}
+
+
+## An item's main color (its icon's average opaque pixel), for book spines. Cached.
+static func icon_color(it: ItemData) -> Color:
+	if _icon_colors.has(it.id):
+		return _icon_colors[it.id]
+	var c := Color(0.45, 0.3, 0.2)
+	if it.shelf_color.a > 0.0:
+		c = it.shelf_color
+	elif it.icon:
+		var img := it.icon.get_image()
+		if img:
+			if img.is_compressed():
+				img.decompress()
+			var sum := Vector3.ZERO
+			var count := 0
+			for y in img.get_height():
+				for x2 in img.get_width():
+					var p := img.get_pixel(x2, y)
+					if p.a > 0.5 and p.get_luminance() > 0.12:
+						sum += Vector3(p.r, p.g, p.b)
+						count += 1
+			if count > 0:
+				sum /= count
+				c = Color(sum.x, sum.y, sum.z)
+	_icon_colors[it.id] = c
+	return c
 
 
 ## Lumber Rack: staggered rows of 5, 4, 5, 4, 5 ends (23), bottom row first, as many as

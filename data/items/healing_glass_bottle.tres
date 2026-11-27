@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/badges/heal.png" id="1_y31mk"]
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="2_cvj0w"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="3_3pjsx"]
+[ext_resource type="Texture2D" path="res://assets/items/held/healing_glass_bottle.png" id="4_fxnvi"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/healing_glass_bottle.png" id="5_x8040"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="6_gd84w"]
+
+[sub_resource type="Resource" id="Resource_1uul8"]
+script = ExtResource("3_3pjsx")
+id = &"healing_glass_bottle"
+texture = ExtResource("4_fxnvi")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("6_gd84w")
+kind = 11
+icon = ExtResource("5_x8040")
+badge = ExtResource("1_y31mk")
+max_stack = 30
+held = SubResource("Resource_1uul8")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 5
+bottle_contents = Color(0.86, 0.27, 0.27, 1)
+heal_value = 60.0
+sickness = &"healing"
+sickness_seconds = 40.5
+id = &"healing_glass_bottle"
+display_name = "Glass Bottle of Healing"
+description = "Drink: +60 health. Then 40 s before another."

@@ -88,8 +88,12 @@ func _ready() -> void:
 	world.player.use_check = can_use
 
 
+var _held_light: HeldLight
+
+
 func _process(delta: float) -> void:
 	_area_shown = maxf(_area_shown - delta, 0.0)
+	_update_held_light()
 	_update_charge(delta)
 	var p := world.player
 	# While using, the layer of that use; otherwise preview the back layer while right
@@ -284,8 +288,14 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 				if _in_reach(anchor) and world.can_place_object(anchor, def) and not blocked:
 					valid.append(anchor)
 			else:
+				var id := world.objects.index_of(_item.places_object)
 				for t in _tiles():
-					if _in_reach(t) and world.can_place_object(t, def) and not world.plants.blocks_placement(t):
+					if def and def.style == ObjectDef.Style.ROPE and _in_reach(t) and world.data.get_object(t.x, t.y) == id:
+						# Clicking a rope with rope: it goes on the bottom of that rope.
+						var end := rope_end(t, id)
+						if world.can_place_object(end, def) and not (end in valid):
+							valid.append(end)
+					elif _in_reach(t) and world.can_place_object(t, def) and not world.plants.blocks_placement(t):
 						valid.append(t)
 			_limit_to_stack()
 		Mode.CAST, Mode.TOGGLE:
@@ -1227,3 +1237,29 @@ func _draw_portal(at: Vector2, radius: float, color: Color, alpha: float) -> voi
 		var start := t * (3.0 + i) * (1.0 if i % 2 == 0 else -1.0)
 		draw_arc(at, r, start, start + PI * 1.3, 18, Color(color, (0.9 - i * 0.25) * alpha), 1.0)
 	draw_circle(at + Vector2.from_angle(t * 5.0) * radius * 0.5, 0.8, Color(1, 1, 1, alpha))
+
+
+## The tile under the bottom of the rope that runs through `tile` (where more rope goes).
+func rope_end(tile: Vector2i, rope_id: int) -> Vector2i:
+	var t := tile
+	for _i in 512:
+		if world.data.get_object(t.x, t.y + 1) != rope_id:
+			break
+		t.y += 1
+	return t + Vector2i.DOWN
+
+
+## A lit item in hand (a torch) lights around you.
+func _update_held_light() -> void:
+	var p := world.player
+	if p == null:
+		return
+	var it := p.held_item
+	var r := it.held_light_radius if it and not p.dead else 0.0
+	if r <= 0.0 and _held_light == null:
+		return
+	if _held_light == null:
+		_held_light = HeldLight.new()
+		_held_light.name = "HeldLight"
+		add_child(_held_light)
+	_held_light.set_light(world, p.doll_item_position(), r, it.held_light_color if it else Color.WHITE)

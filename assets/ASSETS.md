@@ -267,8 +267,12 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/potion_bookcase.png, objects/potion_shelf.png (+ icons, held) | Potion Bookcase (4x6, 64x96, 5 shelves) and Potion Shelf (3x2, 48x32, one plank). Same script |
 | items/{icons,held}/{clay_bottle,clay_jug,glass_vial,glass_bottle,glass_flask}.png | Copies of the empty flask concepts (`art/concepts/flasks/*_empty.png`). Same script |
 | items/{icons,held}/{sand,glass}.png | Sand pile and glass pane placeholders. Same script |
-| terrain/glass.png, terrain/glass_wall.png | 64x64 Glass block and wall: pale frame per block, see-through pane (alpha ~0.25), a shine. Placeholders from `tools/make_glass_clay_art.py` |
+| terrain/glass.png, terrain/glass_wall.png | 64x64 Glass block and wall: one continuous see-through pane (alpha ~0.25) with long diagonal shines; the rim is drawn by the shader. Placeholders from `tools/make_glass_clay_art.py` |
 | terrain/clay_wall.png | The clay block art darkened. Same script |
+| items/{icons,held}/{healing,mana}_{clay_bottle,clay_jug,glass_vial,glass_bottle,glass_flask}.png | Filled bottles (32x32) from `art/concepts/flasks/make_flasks.py` via `tools/make_phase37_art.py` |
+| objects/{pantry_rack,food_pantry,bookshelf,barrel,crate,liquid_barrel,iron_liquid_barrel}.png (+ icons, held) | Storage placeholders (detail 2). Same script |
+| objects/hanging_net_{small,medium,large}.png (+ icons, held) | Nets, 2 frames: rope and bag, then the mesh drawn over the contents. Same script |
+| objects/potion_cabinet.png, potion_bookcase.png | Now 2 frames: the cabinet, then its glass doors (`front_frame`). `tools/make_potion_storage_art.py` |
 | tiles/blocks.png row 19 | Glass's collision row (a copy of row 17). Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |
 | items/icons/tele_grab.png (+ scroll_ and page_ icons) | 16x16 Tele Grab spell icon: a violet swirl pulling in an ore chunk. Placeholder from `art/concepts/spells/make_tele_grab.py` |

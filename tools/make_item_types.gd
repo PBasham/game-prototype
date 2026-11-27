@@ -68,7 +68,7 @@ func _update_holds() -> void:
 func _types() -> Array[ItemTypeData]:
 	return [_tool(), _big_tool(), _dagger(), _sword(), _greatsword(), _wand(), _spell_book(),
 		_crossbow(), _bow(), _unarmed(), _block(), _spell(), _dual_axes(), _spell_float(), _spell_hip(),
-		_spell_offhand()]
+		_spell_offhand(), _torch()]
 
 
 # --- types --------------------------------------------------------------------------------
@@ -282,6 +282,18 @@ func _block() -> ItemTypeData:
 	# A quick reach toward the cursor (holding the button places about 12 a second).
 	var place := _attack("Place", 0.08, _pose([[0, -25], [0.5, 0], [1, 5]], [[0, 0.7], [0.5, 1.0], [1, 0.85]]), null,
 		[[0, -30]], null, "", true)
+	t.attacks = [place]
+	return t
+
+
+func _torch() -> ItemTypeData:
+	var t := _type(&"torch", "Torch (held out in front, flame up; placed with a quick reach)")
+	t.stow_style = ItemTypeData.StowStyle.HIDDEN
+	# The front arm held out ahead a little raised, the torch upright in the hand.
+	t.hold = _hold(_pose([[0, -15]], [[0, 0.8]]), null, ItemMotion.ItemAngle.FIXED, [[0, -90]], "")
+	var place := _attack("Place", 0.08, _pose([[0, -25], [0.5, 0], [1, 5]], [[0, 0.7], [0.5, 1.0], [1, 0.85]]), null,
+		[[0, -90]], null, "", true)
+	place.item_angle_mode = ItemMotion.ItemAngle.FIXED
 	t.attacks = [place]
 	return t
 

@@ -132,6 +132,17 @@ cooked food is just much better.
 | Healing Potion | +30 health | 30 s (`healing`) |
 | Mana Potion | +40 mana | 10 s (`mana`) |
 
+Bigger bottles hold stronger potions, and glass is 30% stronger than clay of the same
+size; bigger ones leave you sick longer (`FILLED_BOTTLES` in `tools/make_items.gd`):
+
+| Bottle | Healing | Mana | Sickness (healing / mana) |
+| --- | --- | --- | --- |
+| Clay Bottle | +45 | +60 | 40 / 13 s |
+| Clay Jug | +60 | +80 | 51 / 17 s |
+| Glass Vial | +40 | +50 | 30 / 10 s |
+| Glass Bottle | +60 | +80 | 40 / 13 s |
+| Glass Flask | +80 | +105 | 51 / 17 s |
+
 ## Dying and the magic bag
 
 At 0 health you die. "You died" shows for `respawn_seconds` (3, on the `World`), then

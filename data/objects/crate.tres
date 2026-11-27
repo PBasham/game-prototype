@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/crate.png" id="1_m32w4"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_k6d40"]
+
+[resource]
+script = ExtResource("2_k6d40")
+frames = ExtResource("1_m32w4")
+style = 2
+height_tiles = 2
+detail = 2
+width_tiles = 2
+needs_floor = true
+flat_top = true
+container_slots = 12
+health = 1.0
+drop_item = &"crate"
+id = &"crate"
+display_name = "Crate"

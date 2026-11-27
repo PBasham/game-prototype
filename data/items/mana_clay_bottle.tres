@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/badges/mana.png" id="1_imecw"]
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="2_7g7m1"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="3_a7fnq"]
+[ext_resource type="Texture2D" path="res://assets/items/held/mana_clay_bottle.png" id="4_j1rjk"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/mana_clay_bottle.png" id="5_3t14m"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="6_kd6lx"]
+
+[sub_resource type="Resource" id="Resource_xqwv5"]
+script = ExtResource("3_a7fnq")
+id = &"mana_clay_bottle"
+texture = ExtResource("4_j1rjk")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("6_kd6lx")
+kind = 11
+icon = ExtResource("5_3t14m")
+badge = ExtResource("1_imecw")
+max_stack = 30
+held = SubResource("Resource_xqwv5")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 2
+bottle_contents = Color(0.3, 0.5, 0.95, 1)
+mana_value = 60.0
+sickness = &"mana"
+sickness_seconds = 13.5
+id = &"mana_clay_bottle"
+display_name = "Clay Bottle of Mana"
+description = "Drink: +60 mana. Then 13 s before another."

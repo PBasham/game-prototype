@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/badges/mana.png" id="1_olnbb"]
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="2_bugjk"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="3_6gv1x"]
+[ext_resource type="Texture2D" path="res://assets/items/held/mana_glass_vial.png" id="4_r6yb0"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/mana_glass_vial.png" id="5_3co2o"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="6_wter7"]
+
+[sub_resource type="Resource" id="Resource_twmis"]
+script = ExtResource("3_6gv1x")
+id = &"mana_glass_vial"
+texture = ExtResource("4_r6yb0")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("6_wter7")
+kind = 11
+icon = ExtResource("5_3co2o")
+badge = ExtResource("1_olnbb")
+max_stack = 30
+held = SubResource("Resource_twmis")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 4
+bottle_contents = Color(0.3, 0.5, 0.95, 1)
+mana_value = 50.0
+sickness = &"mana"
+sickness_seconds = 10.0
+id = &"mana_glass_vial"
+display_name = "Glass Vial of Mana"
+description = "Drink: +50 mana. Then 10 s before another."

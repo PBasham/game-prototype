@@ -54,6 +54,12 @@ class ChunkView:
 ## Built back walls (planks, bricks, glass: the walls of rooms) are drawn this much
 ## brighter again, since their art is already darker than the block's.
 @export_range(0.5, 2.0) var built_wall_shade := 1.35
+## Built blocks drawn this much brighter (they stand out from a wall of the same stuff).
+@export_range(0.5, 2.0) var built_block_shade := 1.12
+## Back walls darken toward a block right above or beside them (a soft shadow):
+## this much at the block's edge, fading over block_shadow_px world px.
+@export_range(0.0, 1.0) var block_shadow := 0.72
+@export_range(0.0, 8.0) var block_shadow_px := 2.0
 @export_range(0.0, 1.0) var wall_desat := 0.2
 ## Chunks loaded around the camera, in each direction.
 var load_radius := Vector2i(2, 2)
@@ -385,6 +391,10 @@ func _build_terrain_material() -> void:
 	built_walls.resize(MAX_SLOTS)
 	var overhang := PackedFloat32Array()
 	overhang.resize(MAX_SLOTS)
+	var clear := PackedFloat32Array()
+	clear.resize(MAX_SLOTS)
+	var clear_walls := PackedFloat32Array()
+	clear_walls.resize(MAX_SLOTS)
 	_block_slot.resize(blocks.size())
 	for i in range(1, blocks.size()):
 		var def := blocks.def(i)
@@ -396,6 +406,7 @@ func _build_terrain_material() -> void:
 		grass[keys.size()] = (2.0 if def.dark_grass else 1.0) if def.grass_cover else 0.0
 		built[keys.size()] = 1.0 if def.built else 0.0
 		overhang[keys.size()] = float(def.overhang_px) if def.built else 0.0
+		clear[keys.size()] = 1.0 if def.see_through else 0.0
 		if def.id == &"stone":
 			_stone_slot = keys.size()
 	var wall_keys: Array[String] = []
@@ -407,6 +418,7 @@ func _build_terrain_material() -> void:
 		wall_keys.append(def.terrain)
 		_wall_slot[i] = wall_keys.size()
 		built_walls[wall_keys.size()] = 1.0 if def.built else 0.0
+		clear_walls[wall_keys.size()] = 1.0 if def.see_through else 0.0
 	_material = ShaderMaterial.new()
 	_material.shader = SHADER
 	_material.set_shader_parameter("materials", _strip(keys, ""))
@@ -417,8 +429,13 @@ func _build_terrain_material() -> void:
 	_material.set_shader_parameter("built_slots", built)
 	_material.set_shader_parameter("built_walls", built_walls)
 	_material.set_shader_parameter("overhang_slots", overhang)
+	_material.set_shader_parameter("clear_slots", clear)
+	_material.set_shader_parameter("clear_walls", clear_walls)
 	_material.set_shader_parameter("wall_shade", wall_shade)
 	_material.set_shader_parameter("built_wall_shade", built_wall_shade)
+	_material.set_shader_parameter("built_block_shade", built_block_shade)
+	_material.set_shader_parameter("block_shadow", block_shadow)
+	_material.set_shader_parameter("block_shadow_px", block_shadow_px)
 	_material.set_shader_parameter("wall_desat", wall_desat)
 	for i in GRASS_COLORS.size():
 		_material.set_shader_parameter("grass_%d" % i, Color(GRASS_COLORS[i]))

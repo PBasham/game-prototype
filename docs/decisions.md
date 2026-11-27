@@ -2,6 +2,21 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 37, storage, filled bottles, torch, ropes, Catalog search
+
+- **Patrick:** filled bottles, bigger = stronger, glass stronger than clay. Claude: clay
+  x1, 1.5, 2 by size, glass x1.3 on top; sickness x1, 1.35, 1.7 by size. Names "Glass
+  Flask of Healing".
+- **Patrick:** Pantry Rack and Food Pantry, Bookshelf (books, scrolls, pages), Barrel,
+  Crate, three Hanging Nets (3x2, 2x3, 6x4) that hang by rope from a block above, and
+  Liquid Barrels now (wooden and iron, both need iron, the iron one holds more).
+- **Patrick:** torch held out in hand lights around you; ropes side by side connect;
+  clicking a rope adds to its bottom; Catalog search; infinity sign for infinite stacks.
+- **Patrick:** bottles behind the cabinet glass (`front_frame`), hip book on the hip
+  behind the hand, glass continuous, blocks and walls of the same stone read apart
+  (blocks x1.12, a soft shadow on walls by built blocks), holding right click to place
+  walls no longer lets go over tiles where nothing goes.
+
 ## 2026-11-26: Phase 36, fixes
 
 - **Patrick:** a few placed Dark Forest Stone shouldn't flip the biome. Biome share is now

@@ -86,7 +86,12 @@ enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 ## PILE: the Lumber Rack: frame 0 (the empty rack), with what's inside drawn on it in
 ## staggered rows filled a layer at a time: round log ends for logs, square board ends
 ## for wood, each in its item's color (`ItemData.shelf_color`, else its icon's).
-enum FillLook { NONE, FRAMES, BOTTLES, PILE }
+## BOTTLES also does food on a pantry's shelves (anything with an icon).
+## BOOKS: books and tomes stand as spines on the upper shelves (their icon's color),
+## scrolls, pages and paper lie on the bottom shelf (bottle_shelves[0]).
+## NET: what's inside heaped in the net's bag (net_bag, art px); its mesh is the
+## front_frame.
+enum FillLook { NONE, FRAMES, BOTTLES, PILE, BOOKS, NET }
 @export var fill_look := FillLook.NONE
 ## BOTTLES: where the bottles stand, in art pixels of its picture: the shelf planks' tops
 ## (bottom shelf first) and where a shelf starts (bottle_x0). A shelf is
@@ -95,6 +100,17 @@ enum FillLook { NONE, FRAMES, BOTTLES, PILE }
 @export var bottles_per_shelf := 7
 @export var bottle_x0 := 8.0
 @export var bottle_step := 5.0
+## NET: the bag's inside, in art px of its picture (items heap up from its bottom).
+@export var net_bag := Rect2i(4, 8, 40, 20)
+## Liquid storage (Liquid Barrels): how much liquid it holds, in buckets. Liquids
+## aren't in the game yet: this is only recorded.
+@export var liquid_capacity := 0
+## A frame of its picture drawn over what's shown inside (glass doors, a net's mesh), so
+## the contents sit behind it. -1 = none.
+@export var front_frame := -1
+## Hangs from the ceiling by rope: these columns (from its left) need a solid block right
+## above its top row. Empty = not hanging.
+@export var hang_points: Array[int] = []
 ## Flat on top: other furniture can stand on it (a cabinet on a cabinet). It can't be
 ## picked up while something stands on it.
 @export var flat_top := false

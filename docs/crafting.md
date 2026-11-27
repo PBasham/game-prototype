@@ -208,6 +208,9 @@ src/items/catalog.gd). Three tabs:
   list what makes it and what it goes into. Recipes you haven't unlocked show as "???"
   with their station; known ones show the ingredients. Click a known row to jump to that
   item's recipes.
+- **Search** (Items and Enemies): the box at the top right narrows the list to names
+  containing what you type. Only found things match, so it doesn't give away what's
+  still hidden. Enter or Esc stops typing.
 
 "Found" items are `CharacterData.seen_items` (anything that's been in your inventory);
 kills and drops are `slain` and `seen_drops` (`CharacterData.note_kill`, called from
@@ -270,6 +273,28 @@ can't mine the floor under furniture.
 | Potion Cabinet | 3x5, glass doors, 4 shelves | Potions, coatings, bottles | 10 normal stacks | 20 Wood + 2 Copper Bars + 4 Glass |
 | Large Potion Cabinet (id `potion_bookcase`) | 4x6, 5 shelves | Potions, coatings, bottles | 16 normal stacks | 30 Wood + 4 Copper Bars + 6 Glass |
 | Potion Shelf | 3x2, on a back wall | Potions, coatings, bottles | 4 normal stacks | 6 Wood |
+| Pantry Rack | 3x3, 2 open shelves | Food (not potions or coatings) | 8 stacks | 12 Wood |
+| Food Pantry | 3x4, 2 open shelves over a cupboard | Food | 14 stacks | 20 Wood + 2 Copper Bars |
+| Bookshelf | 3x4, 2 shelves and a drawer | Books, spellbooks, tomes, scrolls, pages, paper | 12 stacks | 20 Wood |
+
+- **Storage for anything** (like a chest, its picture doesn't change): **Barrel** (2x2, 10
+  stacks, 10 Wood + 1 Copper Bar), **Crate** (2x2, 12 stacks, 12 Wood), and three
+  **Hanging Nets** that hang by rope from a block above (`ObjectDef.hang_points`: the
+  columns that need a solid block right above the top row) and show what's inside heaped
+  in the net (`FillLook.NET`, `net_bag`): Small (3x2, 6 stacks, 8 Rope + 2 Wood), Hanging
+  Net (2x3, 8 stacks, 12 Rope + 2 Wood), Large (6x4, 16 stacks, two ropes, 24 Rope + 4
+  Wood). Barrels, crates, pantries and the bookshelf have flat tops.
+- **Liquid Barrels** (2x3): Liquid Barrel (iron banded wood, 1,000 buckets, 16 Wood + 2
+  Iron Bars) and Iron Liquid Barrel (2,500 buckets, 8 Iron Bars + 4 Wood).
+  `ObjectDef.liquid_capacity` only records the size: there are no liquids yet.
+- Storage tags worked out from the item (`ItemData.has_storage_tag`): `food` is any food
+  that isn't a potion or coating; `book` is books, tomes, scrolls, pages, Paper and Blank
+  Scrolls. Other tags are listed in `storage_tags`.
+- **Looks:** pantries use `BOTTLES` (each food's icon on the shelves, 16x16 icons at full
+  size, 32x32 ones halved); the Bookshelf uses `BOOKS` (books as spines in their icon's
+  color on the upper shelves, scrolls and paper in the drawer: `bottle_shelves[0]`).
+  `ObjectDef.front_frame` draws one frame of the picture over what's inside: the glass
+  doors of both potion cabinets and the nets' mesh, so the contents sit behind them.
 
   Fields on the `ObjectDef`: `container_accepts` (a storage tag; items list theirs in
   `ItemData.storage_tags`: every log and wood is `lumber`; healing and mana potions, poison
@@ -348,6 +373,7 @@ your inventory). Displays are decoration: they don't do anything while displayed
 | --- | --- | --- |
 | Potions | Clay Flask + 2 Red Cap | Healing Potion |
 | Potions | Clay Flask + 2 Glowcap | Mana Potion |
+| Potions | the empty bottle + Red Caps / Glowcaps (Clay Bottle 3, Clay Jug 4, Glass Vial 2, Glass Bottle 3, Glass Flask 4) | the same bottle of Healing / Mana (ids `healing_<bottle>`, `mana_<bottle>`) |
 | Coatings | Clay Flask + 2 Duskcap | Poison Coating |
 | Flasks | Clay Flask + 1 Duskcap + 1 Slime | 2 Poison Flasks |
 

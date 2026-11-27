@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/hanging_net_medium.png" id="1_x2ghu"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_70txi"]
+
+[resource]
+script = ExtResource("2_70txi")
+front_frame = 1
+frames = ExtResource("1_x2ghu")
+style = 2
+height_tiles = 3
+detail = 2
+width_tiles = 2
+flips = false
+fill_look = 5
+net_bag = Rect2i(6, 16, 20, 30)
+hang_points = Array[int]([0])
+container_slots = 8
+health = 1.0
+drop_item = &"hanging_net_medium"
+id = &"hanging_net_medium"
+display_name = "Hanging Net"

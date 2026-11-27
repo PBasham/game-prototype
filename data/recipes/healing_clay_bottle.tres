@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_kn3jg"]
+
+[resource]
+script = ExtResource("1_kn3jg")
+station = &"alchemy"
+tab = "Potions"
+inputs = Dictionary[StringName, int]({
+&"clay_bottle": 1,
+&"red_cap": 3
+})
+output = &"healing_clay_bottle"
+id = &"healing_clay_bottle"
+display_name = "Healing Clay Bottle"
