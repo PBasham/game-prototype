@@ -372,7 +372,8 @@ colors are the average of their terrain texture, walls darker, open air sky blue
 the original surface and dark below. Wheel zooms at the cursor, drag pans, N or Esc
 closes; it wraps sideways like the world. Markers: you (blue dot) and your respawn
 point (gold square). Saved with the world as the picture (`WorldSave.META_MAP`).
-Bare bones for now: no trees, chests or pins yet.
+Water (Phase 63): a cell at least half full of water is drawn blue (`WorldMap.WATER`,
+tinted a little by the wall behind it). Bare bones for now: no trees, chests or pins yet.
 
 The inventory is a **satchel** (`SatchelLook`, `src/ui/satchel_look.gd`, Patrick's
 moonweave concept): a rounded bag of blue cloth that darkens toward the middle, cells

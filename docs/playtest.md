@@ -358,6 +358,9 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 63: water on the map (branch phase-63-map-water)**
+- [ ] Explore a pond or the ocean, open the map (N): the water shows blue.
+
 **Phase 62: fireflies (branch phase-62-fireflies)**
 - [ ] Dark Forest: fireflies drift and blink a few tiles up, glowing (best at night).
 - [ ] Workbench: Bug Net (4 Wood, 6 Rope). Swing it at a firefly: caught, a Firefly in

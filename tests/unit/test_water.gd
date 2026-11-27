@@ -181,3 +181,13 @@ func test_crafting_water_from_around_you() -> void:
 	assert_eq(w.water_for_crafting(w.player.chest()), 20)
 	assert_eq(Crafting.craft(stock, r, 1)[0], 1)
 	assert_eq(w.character.water, 4, "used the Siphon's water")
+
+
+func test_water_shows_on_the_map() -> void:
+	_tank(4)
+	var m := w.world_map
+	var t := floor_tile + Vector2i(4, -2)
+	var c := m.cell_color(t.x / WorldMap.CELL, t.y / WorldMap.CELL)
+	assert_gt(c.b, c.r + 0.2, "blue: water")
+	var dry := floor_tile + Vector2i(4, -10)
+	assert_ne(m.cell_color(dry.x / WorldMap.CELL, dry.y / WorldMap.CELL), c, "air above it isn't")

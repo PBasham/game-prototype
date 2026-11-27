@@ -2,6 +2,11 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 63, water on the map
+
+- **Patrick:** start with the water on the map.
+- **Claude:** map cells half full of voxel water draw blue.
+
 ## 2026-11-27: Phase 62, fireflies
 
 - **Patrick:** fireflies in the Dark Forest, catchable with a net, make a lamp with them.

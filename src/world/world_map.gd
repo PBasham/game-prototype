@@ -12,6 +12,8 @@ const SKY := Color("8fbfe0")
 const CAVE := Color("17151a")
 const TREE := Color("2c5a2e")
 const DARK_TREE := Color("3e2a44")
+## Water (voxel cells): drawn over the wall or sky behind it.
+const WATER := Color("2f6fc0")
 
 ## How far around the player (tiles) the map fills in.
 @export var reveal_tiles := 48.0
@@ -94,6 +96,14 @@ func cell_color(cx: int, cy: int) -> Color:
 				return _block_colors[b]
 			if wall == 0:
 				wall = world.data.get_wall(x0 + dx, y0 + dy)
+	var water := 0
+	if world.voxels:
+		for dy in CELL:
+			for dx in CELL:
+				water += world.voxels.count_in(Vector2i(x0 + dx, y0 + dy), &"water")
+	if water * 2 >= CELL * CELL * VoxelLayer.CELLS:
+		var behind := _wall_colors[wall] if wall > 0 and wall < _wall_colors.size() else WATER
+		return WATER.lerp(behind, 0.2)
 	if wall > 0 and wall < _wall_colors.size():
 		return _wall_colors[wall]
 	var surface := world.generator.surface_at(posmod(x0, world.data.width)) if world.generator else 0
