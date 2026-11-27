@@ -311,7 +311,8 @@ can't mine the floor under furniture.
   shelf, and every potion looks like its icon. Draw a `shelf_sprite` (in the furniture's
   art px, detail 2) to replace one. Each item shows bottles for its share of the shelf
   width, set left to right 1 art px apart, bottom shelf first, wrapping to the next shelf
-  when one doesn't fit. Shelf tunables on the `ObjectDef`: `bottle_shelves` (plank tops in
+  when one doesn't fit. A bottle taller than the room up to the shelf above (less its
+  2 px plank and 1 px of air, `ObjectLayer.shelf_room`) is drawn shrunk to fit. Shelf tunables on the `ObjectDef`: `bottle_shelves` (plank tops in
   art px from the top, bottom shelf first), `bottle_x0` (where a shelf starts), and the
   shelf width `bottles_per_shelf` x `bottle_step`. `ItemData.bottle_shape` and
   `bottle_contents` record the bottle and what's in it. Art from

@@ -207,6 +207,12 @@ func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: O
 			x = 0.0
 		if shelf >= def.bottle_shelves.size():
 			break
+		# Too tall for the room up to the shelf above (its plank, 2 px, and 1 px air):
+		# shrunk to fit, so caps don't poke through.
+		var room := shelf_room(def, shelf)
+		if size.y > room:
+			tex = shelf_texture(it, int(room))
+			size = Vector2(tex.get_size())
 		var left := def.bottle_x0 + x
 		if flip:
 			left = art_w - left - size.x
@@ -218,12 +224,34 @@ func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: O
 static var _shelf_cache: Dictionary[StringName, Texture2D] = {}
 
 
+## Art px of room above a shelf: up to the next shelf's plank (2 px thick) less 1 px of
+## air; the top shelf up to the inside of the top (5 px down).
+static func shelf_room(def: ObjectDef, shelf: int) -> float:
+	var y := def.bottle_shelves[shelf]
+	var above := def.bottle_shelves[shelf + 1] + 2 if shelf + 1 < def.bottle_shelves.size() else 5
+	return float(y - above - 1)
+
+
 ## How an item looks standing on a shelf: its `shelf_sprite` if it has one, else its icon
 ## cropped to the picture and halved (each 2x2 block keeps its most solid pixel, so
 ## outlines survive). Cached. Null for items with no icon.
-static func shelf_texture(it: ItemData) -> Texture2D:
+static func shelf_texture(it: ItemData, max_h: int = 0) -> Texture2D:
 	if it == null:
 		return null
+	if max_h > 0:
+		# A shorter copy (nearest, keeping the width in proportion), cached by height.
+		var key := StringName("%s@%d" % [it.id, max_h])
+		if _shelf_cache.has(key):
+			return _shelf_cache[key]
+		var full := shelf_texture(it)
+		var out: Texture2D = full
+		if full and full.get_height() > max_h:
+			var img := full.get_image()
+			var k := float(max_h) / full.get_height()
+			img.resize(maxi(1, roundi(img.get_width() * k)), max_h, Image.INTERPOLATE_NEAREST)
+			out = ImageTexture.create_from_image(img)
+		_shelf_cache[key] = out
+		return out
 	if it.shelf_sprite:
 		return it.shelf_sprite
 	if _shelf_cache.has(it.id):

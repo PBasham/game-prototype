@@ -95,7 +95,7 @@ def planks(im: Image.Image, ys: list) -> None:
 
 rack = Image.new("RGBA", (48, 48))
 d = ImageDraw.Draw(rack)
-d.rectangle((4, 4, 43, 44), fill=(60, 44, 34, 150))  # open back, a little see-through
+d.rectangle((4, 2, 43, 45), fill=BACK)  # a solid back board
 for x in (2, 44):
     d.rectangle((x, 0, x + 2, 47), fill=WOOD)
     d.line((x, 0, x, 47), fill=WOOD_L)

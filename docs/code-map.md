@@ -511,3 +511,9 @@ saves still load.
 | Hold to place keeps going | `Player` (`placing_held`) |
 | Blocks vs walls, continuous glass | terrain.gdshader (`built_block_shade`, `block_shadow`, `clear_slots`, `clear_walls`); `ChunkRenderer` |
 | Hip book behind the arms | `PaperDoll` (`book_hip_offset`, BookHip moved before BackArmLower) |
+
+## Phase 38: shelf fit
+
+| Change | Where |
+| --- | --- |
+| Tall bottles shrunk to the room under the next shelf | `ObjectLayer.shelf_room`, `shelf_texture(it, max_h)` |

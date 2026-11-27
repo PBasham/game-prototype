@@ -358,6 +358,9 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 38: shelf fit (branch phase-38-shelf-fit)**
+- [ ] Big bottles no longer poke through the shelf above. The Pantry Rack has a solid back.
+
 **Phase 37: storage, filled bottles, torch, ropes, Catalog search (branch phase-37-storage-potions)**
 - [ ] Alchemy Table, Potions tab: Healing and Mana in every bottle (Clay Bottle / Jug, Glass Vial / Bottle / Flask), from the empty bottle and herbs. Bigger heals more; glass more than clay; bigger means longer sickness.
 - [ ] Pantry Rack and Food Pantry: food only, shown on the shelves. Bookshelf: books as spines, scrolls and paper in the drawer.

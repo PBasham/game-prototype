@@ -2,6 +2,11 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 38, shelf fit
+
+- **Patrick:** bottle caps went through the shelf above; the Pantry Rack's back was see-through.
+  Tall shelf items are shrunk to the room under the next shelf; the rack has a solid back.
+
 ## 2026-11-26: Phase 37, storage, filled bottles, torch, ropes, Catalog search
 
 - **Patrick:** filled bottles, bigger = stronger, glass stronger than clay. Claude: clay

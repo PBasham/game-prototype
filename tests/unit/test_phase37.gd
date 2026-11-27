@@ -119,3 +119,11 @@ func test_catalog_search_shows_only_found_matches() -> void:
 	assert_does_not_have(names, &"raspberries", "not found yet: hidden from the search")
 	cat.search = ""
 	assert_eq(cat._items().size(), Catalog.all_items().size())
+
+
+func test_tall_bottles_fit_under_the_shelf_above() -> void:
+	var cab := w.objects.def(w.objects.index_of(&"potion_cabinet")) as ObjectDef
+	var room := ObjectLayer.shelf_room(cab, 0)
+	assert_eq(room, 13.0, "16 px apart, less the plank and 1 px of air")
+	var jug := ObjectLayer.shelf_texture(ItemData.find(&"healing_clay_jug"), int(room))
+	assert_lte(jug.get_height(), 13)
