@@ -33,7 +33,8 @@ tunables change: Patrick tweaks things by hand from these docs.
   schools, marks, the Dual Storm Axes and the Storm Charm; Phase 35: Sand, Glass, Clay
   Bottle, Clay Jug, Glass Vial, Glass Bottle, Glass Flask, Large Potion Cabinet, Potion Shelf;
   Phase 37: Healing and Mana in each bottle, Pantry Rack, Food Pantry, Bookshelf, Barrel,
-  Crate, three Hanging Nets, Liquid Barrel, Iron Liquid Barrel).
+  Crate, three Hanging Nets, Liquid Barrel, Iron Liquid Barrel; later: Long Hanging Net,
+  Siphon Liquid, Bookshelf (tall), Glow Potion).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

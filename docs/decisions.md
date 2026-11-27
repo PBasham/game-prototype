@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 50, break dust, Glow Potion
+
+- **Patrick:** a small dust cloud in the block's colors when it breaks; a Glow Potion
+  from a flask and a Glowcap. Claude: 4 minutes, 18 tiles of soft cyan light, no
+  sickness, a sparkle badge.
+
 ## 2026-11-26: Phase 49, plank section, Tele Grab forage
 
 - **Patrick:** board ends looked funny in the rack: boards now lie flat in a left

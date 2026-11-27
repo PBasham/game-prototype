@@ -132,6 +132,10 @@ cooked food is just much better.
 | Healing Potion | +30 health | 30 s (`healing`) |
 | Mana Potion | +40 mana | 10 s (`mana`) |
 
+**Glow Potion** (Clay Flask + 1 Glowcap): you glow for 4 minutes ("Glowing"), a soft
+cyan light 18 tiles around you, hands free (`ItemData.buff_light_radius`,
+`buff_light_color`; `Player.buff_light`). No sickness.
+
 Bigger bottles hold stronger potions, and glass is 30% stronger than clay of the same
 size; bigger ones leave you sick longer (`FILLED_BOTTLES` in `tools/make_items.gd`):
 

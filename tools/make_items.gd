@@ -274,6 +274,15 @@ func _items() -> Array[ItemData]:
 			pot.bottle_contents = BOTTLE_CONTENTS[&"healing_potion" if effect == &"healing" else &"mana_potion"]
 			_detailed(pot, &"heal" if effect == &"healing" else &"mana")
 			out.append(pot)
+	var glow := _small(&"glow_potion", "Glow Potion", "Drink: you glow softly for 4 minutes, lighting the way around you.")
+	glow.kind = ItemData.Kind.FOOD
+	glow.buff_name = "Glowing"
+	glow.buff_description = "You give off a soft light."
+	glow.buff_seconds = 240.0
+	glow.buff_light_radius = 18.0
+	glow.max_stack = 30
+	_detailed(glow, &"glow")
+	out.append(glow)
 	var coat := _small(&"poison_coating", "Poison Coating", "Rub it on your weapon: the next 10 melee hits poison (2 damage a second for 4 s).")
 	coat.kind = ItemData.Kind.FOOD
 	coat.buff_name = "Poison Coating"
@@ -1167,6 +1176,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"mushroom_stew", &"cooking", {&"field_mushroom": 2, &"red_cap": 1, &"wooden_bowl": 1}, &"mushroom_stew", 1, []],
 		[&"healing_potion", &"alchemy", {&"clay_flask": 1, &"red_cap": 2}, &"healing_potion", 1, []],
 		[&"mana_potion", &"alchemy", {&"clay_flask": 1, &"glowcap": 2}, &"mana_potion", 1, []],
+		[&"glow_potion", &"alchemy", {&"clay_flask": 1, &"glowcap": 1}, &"glow_potion", 1, []],
 		[&"poison_coating", &"alchemy", {&"clay_flask": 1, &"duskcap": 2}, &"poison_coating", 1, []],
 		[&"poison_flask", &"alchemy", {&"clay_flask": 1, &"duskcap": 1, &"slime": 1}, &"poison_flask", 2, []],
 		[&"workbench", &"", {&"wood": 10}, &"workbench", 1, []],
@@ -1365,7 +1375,7 @@ static func _filled_name(effect: StringName, bottle: String) -> String:
 
 ## Which special storage takes an item (Lumber Rack, Potion Cabinet).
 const STORAGE_TAGS := {&"log": &"lumber", &"wood": &"lumber", &"dark_log": &"lumber", &"darkwood": &"lumber",
-	&"reinforced_wood": &"lumber", &"reinforced_darkwood": &"lumber", &"healing_potion": &"potion",
+	&"reinforced_wood": &"lumber", &"reinforced_darkwood": &"lumber", &"healing_potion": &"potion", &"glow_potion": &"potion",
 	&"mana_potion": &"potion", &"poison_coating": &"potion", &"poison_flask": &"potion", &"clay_flask": &"potion",
 	&"clay_bottle": &"potion", &"clay_jug": &"potion", &"glass_vial": &"potion", &"glass_bottle": &"potion",
 	&"glass_flask": &"potion"}
@@ -1375,6 +1385,7 @@ const BOTTLES := {&"clay_flask": ItemData.BottleShape.CLAY_THIN, &"clay_bottle":
 	&"clay_jug": ItemData.BottleShape.CLAY_LARGE, &"glass_vial": ItemData.BottleShape.GLASS_THIN,
 	&"glass_bottle": ItemData.BottleShape.GLASS_REGULAR, &"glass_flask": ItemData.BottleShape.GLASS_LARGE,
 	&"healing_potion": ItemData.BottleShape.CLAY_THIN, &"mana_potion": ItemData.BottleShape.CLAY_THIN,
+	&"glow_potion": ItemData.BottleShape.CLAY_THIN,
 	&"poison_flask": ItemData.BottleShape.CLAY_THIN, &"poison_coating": ItemData.BottleShape.CLAY_THIN}
 const BOTTLE_CONTENTS := {&"healing_potion": Color(0.86, 0.27, 0.27), &"mana_potion": Color(0.3, 0.5, 0.95),
 	&"poison_flask": Color(0.45, 0.8, 0.32), &"poison_coating": Color(0.45, 0.8, 0.32)}

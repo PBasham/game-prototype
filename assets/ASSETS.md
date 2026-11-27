@@ -276,6 +276,7 @@ or .ogg); the generator never overwrites without `--force`.
 | terrain/sand.png, terrain/sand_wall.png | 128x128 detailed sand grains with soft ripples (the wall darker). `tools/make_glass_clay_art.py` |
 | ui/empower/<node id>.png | 16x16 Empower node icons (pick head, axe head, expanding arrows, reaching hand, drop, flame, zigzag, swoosh, hourglass, slime, two orbs and a plus). `tools/make_empower_icons.py` |
 | items/{icons,held}/siphon_liquid.png (+ scroll_, page_ icons) | 16x16 Siphon Liquid: a blue drop under a curling arrow. Placeholder (PIL, Phase 45) |
+| items/{icons,held}/glow_potion.png, items/badges/glow.png | Glow Potion: a thin clay flask with teal glaze (`make_flasks.draw`), and an 8x8 sparkle badge. Placeholders |
 | tiles/blocks.png row 20 | Sand's collision row (a copy of clay's). Same script |
 | tiles/blocks.png row 19 | Glass's collision row (a copy of row 17). Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |

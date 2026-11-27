@@ -358,6 +358,10 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 50: break dust, Glow Potion (branch phase-50-dust-glow)**
+- [ ] Breaking a block or wall puffs a small dust cloud in its colors.
+- [ ] Alchemy Table: Glow Potion (Clay Flask + 1 Glowcap): you glow for 4 minutes, hands free.
+
 **Phase 49: plank section, Tele Grab forage (branch phase-49-plank-section)**
 - [ ] Lumber Rack: boards lie flat in the left part, log ends on the right.
 - [ ] Tele Grab pulls in sticks, rocks and mushrooms lying in its pull.

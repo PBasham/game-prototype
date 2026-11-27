@@ -180,6 +180,9 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 ## While the buff lasts: extra health per second, and move speed (0.1 = +10%).
 @export var buff_health_regen := 0.0
 @export var buff_move_speed := 0.0
+## While the buff lasts: you give off light this many tiles around (Glow Potion).
+@export var buff_light_radius := 0.0
+@export var buff_light_color := Color(0.55, 0.95, 1.0)
 ## While the buff lasts: the next this many melee hits poison what they hit.
 @export var buff_poison_hits := 0
 @export_group("Poison")

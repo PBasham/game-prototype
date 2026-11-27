@@ -559,3 +559,31 @@ static func _luminance(terrain: String) -> float:
 				sum += c.get_luminance()
 				n += 1
 	return sum / n if n > 0 else 0.0
+
+
+static var _terrain_colors: Dictionary[String, Color] = {}
+
+
+## A terrain picture's average color (its solid pixels), for break dust. Cached.
+static func terrain_color(terrain: String) -> Color:
+	if _terrain_colors.has(terrain):
+		return _terrain_colors[terrain]
+	var c := Color(0.5, 0.45, 0.4)
+	var tex := load(TERRAIN_DIR.path_join(terrain + ".png")) as Texture2D
+	if tex:
+		var img := tex.get_image()
+		if img.is_compressed():
+			img.decompress()
+		var sum := Vector3.ZERO
+		var n := 0
+		for y in range(0, img.get_height(), 3):
+			for x in range(0, img.get_width(), 3):
+				var p := img.get_pixel(x, y)
+				if p.a > 0.8:
+					sum += Vector3(p.r, p.g, p.b)
+					n += 1
+		if n > 0:
+			sum /= n
+			c = Color(sum.x, sum.y, sum.z)
+	_terrain_colors[terrain] = c
+	return c

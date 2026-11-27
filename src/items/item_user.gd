@@ -1258,13 +1258,20 @@ func _update_held_light() -> void:
 		return
 	var it := p.held_item
 	var r := it.held_light_radius if it and not p.dead and not p.stowed else 0.0  # put away: dark
+	var color := it.held_light_color if it else Color.WHITE
+	var at := p.doll_item_position()
+	var glow: Array = p.buff_light()  # a Glow Potion: light around you, hands free
+	if float(glow[0]) > r and not p.dead:
+		r = float(glow[0])
+		color = glow[1]
+		at = p.chest()
 	if r <= 0.0 and _held_light == null:
 		return
 	if _held_light == null:
 		_held_light = HeldLight.new()
 		_held_light.name = "HeldLight"
 		add_child(_held_light)
-	_held_light.set_light(world, p.doll_item_position(), r, it.held_light_color if it else Color.WHITE)
+	_held_light.set_light(world, at, r, color)
 
 
 ## Dev `instant_placement` / `instant_break`: while the button is held, place or break

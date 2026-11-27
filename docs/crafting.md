@@ -389,6 +389,7 @@ your inventory). Displays are decoration: they don't do anything while displayed
 | --- | --- | --- |
 | Potions | Clay Flask + 2 Red Cap | Healing Potion |
 | Potions | Clay Flask + 2 Glowcap | Mana Potion |
+| Potions | Clay Flask + 1 Glowcap | Glow Potion |
 | Potions | the empty bottle + Red Caps / Glowcaps (Clay Bottle 3, Clay Jug 4, Glass Vial 2, Glass Bottle 3, Glass Flask 4) | the same bottle of Healing / Mana (ids `healing_<bottle>`, `mana_<bottle>`) |
 | Coatings | Clay Flask + 2 Duskcap | Poison Coating |
 | Flasks | Clay Flask + 1 Duskcap + 1 Slime | 2 Poison Flasks |

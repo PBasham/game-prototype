@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/badges/glow.png" id="1_30rs6"]
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="2_fwiv0"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="3_xo05a"]
+[ext_resource type="Texture2D" path="res://assets/items/held/glow_potion.png" id="4_cysrj"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/glow_potion.png" id="5_kssx2"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="6_k76xw"]
+
+[sub_resource type="Resource" id="Resource_mquor"]
+script = ExtResource("3_xo05a")
+id = &"glow_potion"
+texture = ExtResource("4_cysrj")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("6_k76xw")
+kind = 11
+icon = ExtResource("5_kssx2")
+badge = ExtResource("1_30rs6")
+max_stack = 30
+held = SubResource("Resource_mquor")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 1
+buff_name = "Glowing"
+buff_description = "You give off a soft light."
+buff_seconds = 240.0
+buff_light_radius = 18.0
+id = &"glow_potion"
+display_name = "Glow Potion"
+description = "Drink: you glow softly for 4 minutes, lighting the way around you."

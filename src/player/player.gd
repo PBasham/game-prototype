@@ -1255,6 +1255,17 @@ func _timed_buff(key: StringName, title: String, text: String, seconds: float, i
 	buff_spells[key] = s
 
 
+## The light a buff gives you (Glow Potion): [radius in tiles, color], radius 0 = none.
+func buff_light() -> Array:
+	var best := 0.0
+	var color := Color.WHITE
+	for key: StringName in _item_buffs:
+		if has_buff(key) and _item_buffs[key].buff_light_radius > best:
+			best = _item_buffs[key].buff_light_radius
+			color = _item_buffs[key].buff_light_color
+	return [best, color]
+
+
 ## Extra health per second from food buffs.
 func _food_regen() -> float:
 	var r := 0.0

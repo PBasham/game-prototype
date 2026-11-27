@@ -591,3 +591,10 @@ saves still load.
 | --- | --- |
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
+
+## Phase 50: break dust, Glow Potion
+
+| Change | Where |
+| --- | --- |
+| Break dust | `BreakDust` (src/world/break_dust.gd); `World._break_dust`; `ChunkRenderer.terrain_color` |
+| Glow Potion | `ItemData.buff_light_radius`, `buff_light_color`; `Player.buff_light`; `ItemUser._update_held_light`; `tools/make_items.gd` |

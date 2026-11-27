@@ -297,3 +297,25 @@ func test_lumber_rack_boards_and_logs() -> void:
 	var rack := w.objects.def(w.objects.index_of(&"lumber_rack")) as ObjectDef
 	assert_eq([rack.width_tiles, rack.height_tiles], [5, 4])
 	assert_gt(rack.pile_boards, 0.0, "boards lie flat on the left")
+
+
+func test_breaking_a_block_puffs_dust_in_its_colors() -> void:
+	var t := _floor_spot(4) + Vector2i(0, 1)
+	var before := w.effects.get_children().filter(func(n: Node) -> bool: return n is BreakDust).size()
+	w.instant_break = true
+	assert_true(w.request_damage_block(t, 1.0))
+	w.instant_break = false
+	var dust := w.effects.get_children().filter(func(n: Node) -> bool: return n is BreakDust)
+	assert_eq(dust.size(), before + 1)
+	var grass := ChunkRenderer.terrain_color("dirt")
+	assert_ne(grass, Color(0.5, 0.45, 0.4), "measured from the picture")
+
+
+func test_glow_potion_lights_you() -> void:
+	var r := Registry.get_def(&"recipes", &"glow_potion") as RecipeData
+	assert_eq(r.inputs, {&"clay_flask": 1, &"glowcap": 1} as Dictionary[StringName, int])
+	assert_eq(r.station, &"alchemy")
+	w.player.consume(ItemData.find(&"glow_potion"))
+	assert_gt(float(w.player.buff_light()[0]), 0.0)
+	w.item_user._update_held_light()
+	assert_true(w.item_user._held_light.is_in_group(&"light_sources"), "a light around you")

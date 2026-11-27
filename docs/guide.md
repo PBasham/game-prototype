@@ -328,6 +328,10 @@ pictures as drawn, `ChunkRenderer._wall_mults`), so dirt, stone, logs, bricks an
 all sit the same step behind their blocks. Before this, walls ranged from 0.38 (dirt,
 stone) to 0.86 (clay) of their block.
 
+**Break dust:** a block or wall that breaks puffs a little cloud of dust in its colors
+(`BreakDust`, src/world/break_dust.gd; the color is the terrain picture's average,
+`ChunkRenderer.terrain_color`; walls a bit darker).
+
 **Logs:** a column of log blocks or log walls one wide stands upright (the texture turned
 a quarter: `turn_slots` for any built block with `overhang_px`, `upright_wall` for walls
 with it); a run of logs or log walls ends in rounded tips with the same dark edge line

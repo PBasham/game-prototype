@@ -1658,8 +1658,22 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 	var removed := request_set_wall(tile, WorldData.AIR) if wall else request_set_block(tile, WorldData.AIR)
 	if not removed:
 		return false
+	_break_dust(def, tile, wall)
 	_drop_for(def, tile)
 	return true
+
+
+## A puff of dust in the broken tile's colors (darker for a back wall).
+func _break_dust(def: TileDef, tile: Vector2i, wall: bool) -> void:
+	if effects == null or def.terrain.is_empty():
+		return
+	var c := ChunkRenderer.terrain_color(def.terrain)
+	if wall:
+		c = c.darkened(0.3)
+	var pos := tile_to_world(tile) + Vector2(TILE * 0.5, TILE * 0.5)
+	if player:
+		pos.x += roundf((player.global_position.x - pos.x) / (data.width * TILE)) * data.width * TILE
+	BreakDust.spawn(effects, pos, c)
 
 
 ## A broken tile's item drop, popping out of the tile.
