@@ -156,6 +156,23 @@ func _items() -> Array[ItemData]:
 	torch.place_area_max = 1
 	torch.held.grip = Vector2(3, 6)
 	out.append(torch)
+	# Fireflies (Phase 62): caught in the Dark Forest with a Bug Net, made into lamps.
+	out.append(_small(&"firefly", "Firefly", "Caught in the Dark Forest with a Bug Net. Three in a glass bottle make a Firefly Lamp."))
+	var flamp := _small(&"firefly_lamp", "Firefly Lamp", "A jar of fireflies: a soft green light. Goes on a block (below or beside), a back wall or a tree trunk, like a torch. Lights your way while you hold it.")
+	flamp.held_light_radius = 20.0
+	flamp.held_light_color = Color(0.8, 1.0, 0.55)
+	flamp.held.type = &"torch"
+	flamp.kind = ItemData.Kind.BLOCK
+	flamp.places_object = &"firefly_lamp"
+	flamp.place_area_max = 1
+	flamp.held.grip = Vector2(4, 8)
+	out.append(flamp)
+	var bnet := _weapon(&"bug_net", "Bug Net", "Swing it at a firefly to catch it. Barely hurts anything else.")
+	bnet.melee_damage = 1.0
+	bnet.melee_reach = 4.5
+	bnet.knockback = 1.0
+	bnet.catches_critters = true
+	out.append(bnet)
 	# Materials and seeds.
 	out.append(_small(&"copper_bar", "Copper Bar", "Smelted from copper ore in a Furnace."))
 	out.append(_small(&"iron_bar", "Iron Bar", "Smelted from iron ore in a Furnace."))
@@ -1254,6 +1271,8 @@ func _recipes() -> Array[RecipeData]:
 		# Phase 7: combat and beds.
 		[&"torch_from_slime", &"", {&"slime": 1, &"wood": 1}, &"torch", 5, []],
 		[&"wooden_sword", &"workbench", {&"wood": 10}, &"wooden_sword", 1, []],
+		[&"bug_net", &"workbench", {&"wood": 4, &"rope": 6}, &"bug_net", 1, []],
+		[&"firefly_lamp", &"workbench", {&"glass_bottle": 1, &"firefly": 3}, &"firefly_lamp", 1, []],
 		[&"bed", &"workbench", {&"wood": 20}, &"bed", 1, []],
 		[&"copper_sword", &"anvil", {&"copper_bar": 8, &"wood": 2}, &"copper_sword", 1, []],
 		[&"copper_helmet", &"anvil", {&"copper_bar": 10}, &"copper_helmet", 1, []],

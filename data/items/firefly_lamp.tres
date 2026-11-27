@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_bp7s1"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_wirsw"]
+[ext_resource type="Texture2D" path="res://assets/items/held/firefly_lamp.png" id="3_rhn1c"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/firefly_lamp.png" id="4_bobn7"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_bcbob"]
+
+[sub_resource type="Resource" id="Resource_h4odm"]
+script = ExtResource("2_wirsw")
+id = &"firefly_lamp"
+texture = ExtResource("3_rhn1c")
+type = &"torch"
+grip = Vector2(4, 8)
+
+[resource]
+script = ExtResource("5_bcbob")
+kind = 1
+icon = ExtResource("4_bobn7")
+held = SubResource("Resource_h4odm")
+impact_at = 0.2
+places_object = &"firefly_lamp"
+held_light_radius = 20.0
+held_light_color = Color(0.8, 1, 0.55, 1)
+place_area_max = 1
+id = &"firefly_lamp"
+display_name = "Firefly Lamp"
+description = "A jar of fireflies: a soft green light. Goes on a block (below or beside), a back wall or a tree trunk, like a torch. Lights your way while you hold it."

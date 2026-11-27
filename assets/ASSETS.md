@@ -279,6 +279,7 @@ or .ogg); the generator never overwrites without `--force`.
 | items/{icons,held}/water_{clay_flask,clay_bottle,clay_jug,glass_vial,glass_bottle,glass_flask}.png, ui/icon_thirst.png, ui/icon_breath.png | Placeholder water bottles (the flask drawer with blue water), a drop and a bubble (`tools/make_water_art.py`, Phase 54) |
 | terrain/hard_sand.png, terrain/hard_sand_wall.png, items/{icons,held}/hard_sand.png | Placeholder Hard Sand: the sand pictures darker and redder with flat layers (`tools/make_voxel_art.py`, Phase 55) |
 | enemies/crab.png, enemies/fish.png, items/{icons,held}/{raw_crab,crab_legs,raw_fish,cooked_fish}.png, decor/{kelp,kelp_top,seagrass_0..2,dune_grass_0..1}.png | Placeholder sea life: crab (3 frames 16x10), fish (3 frames 14x8), the four foods, kelp pieces and tufts (`tools/make_sea_life_art.py`, Phase 56) |
+| enemies/firefly.png, items/{icons,held}/{firefly,bug_net,firefly_lamp}.png, objects/firefly_lamp.png | Placeholder firefly (2 frames 6x5), Bug Net, Firefly Lamp (4 torch-style frames 8x16) (`tools/make_firefly_art.py`, Phase 62) |
 | items/{icons,held}/bomb.png | 16x16 placeholder Bomb: a dark round bomb with a lit fuse (`tools/make_voxel_art.py`, Phase 52) |
 | sounds/bomb.wav | Placeholder explosion (`tools/make_sounds.gd`, Phase 52) |
 | items/icons/shaping_spell.png (+ scroll_, page_ icons) | 16x16 Shaping Spell: a small mallet over a slope. Placeholder (`make_item_art.gd --new-spells`, Phase 51) |

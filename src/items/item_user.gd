@@ -470,6 +470,9 @@ func melee_hit(item: ItemData) -> int:
 		var r: Rect2 = node.call(&"hit_rect")
 		if not area.intersects(r) or not _reachable(p.chest(), r):
 			continue
+		if item.catches_critters and node is Enemy and (node as Enemy).catch(p):
+			hit += 1
+			continue  # caught in the net
 		node.call(&"take_damage", amount, p)
 		if node.has_method(&"knock_back"):
 			node.call(&"knock_back", p.chest(), item.knockback, item.staggers)

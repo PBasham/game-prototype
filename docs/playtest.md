@@ -358,6 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 62: fireflies (branch phase-62-fireflies)**
+- [ ] Dark Forest: fireflies drift and blink a few tiles up, glowing (best at night).
+- [ ] Workbench: Bug Net (4 Wood, 6 Rope). Swing it at a firefly: caught, a Firefly in
+      your bag. A sword just kills it.
+- [ ] Workbench: Firefly Lamp (1 Glass Bottle, 3 Fireflies). Place it like a torch (also
+      on a tree trunk): green light. Hold it: it lights around you.
+
 **Phase 61: water fixes, critters, torches on trees (branch phase-61-water-fixes)**
 - [ ] Wade into water: your legs (and fish, crabs, items) show through it, tinted.
 - [ ] Slimes in water float up and bob at the surface, and hop off it.

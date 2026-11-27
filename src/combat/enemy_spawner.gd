@@ -158,7 +158,16 @@ func find_spot(data: EnemyData) -> Vector2:
 					room = false
 					break
 			if room and not world.near_spawn_safe(t) and not _in_view(world.tile_to_world(t) + Vector2(4.0, 0.0), data):
-				return world.tile_to_world(world.wrap_tile(t)) + Vector2(4.0, 0.0)
+				var at := world.tile_to_world(world.wrap_tile(t)) + Vector2(4.0, 0.0)
+				if data.flies:
+					# Up in the air: as high as there's room for, up to 6 tiles.
+					var up := randi_range(2, 6)
+					for k in range(1, up + 1):
+						if world.is_solid(Vector2i(t.x, t.y - k - 1)):
+							up = k
+							break
+					at.y -= up * World.TILE
+				return at
 			break
 	return Vector2.INF
 

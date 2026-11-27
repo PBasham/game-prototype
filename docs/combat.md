@@ -124,6 +124,15 @@ them).
   `flee_tiles` 5. Out of water it flops about. Drops a Raw Fish. Spawns only in tiles
   full of water (`EnemySpawner._water_spot`).
 
+### Firefly (the Dark Forest, Phase 62)
+
+A critter (`AI.FIREFLY`, 1 health, `flies`: no gravity, spawns 2 to 6 tiles up in the
+air): drifts at `drift_speed` 1.6 tiles/s within `drift_tiles` 4 of where it appeared,
+blinks every `blink_seconds` 2.2 and glows (`glow_tiles` 3, a soft green). A **Bug Net**
+swing catches it (`EnemyData.catch_item` firefly, `ItemData.catches_critters`): gone,
+a Firefly in your bag. Any other hit just kills it. Dark Forest table: Firefly as a
+critter, one every 1.5 s, at most 10, day and night.
+
 ## Spawning
 
 Chance based, like Terraria: there's a small chance every frame, so on average one

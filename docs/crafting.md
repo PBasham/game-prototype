@@ -344,6 +344,10 @@ can't mine the floor under furniture.
   Furnace: 16 Sand = 1 Glass; Glass Vial = 1 Glass, Glass Bottle = 2, Glass Flask = 3;
   Clay Bottle = 3 Clay, Clay Jug = 4 Clay (the Clay Flask is unchanged). The window shows
   "used / total" and a fill bar. Art from `art/concepts/storage/make_storage.py`.
+- **Fireflies** (Phase 62): Workbench, 4 Wood + 6 Rope = Bug Net (a melee swing that
+  catches fireflies). Workbench, 1 Glass Bottle + 3 Fireflies = Firefly Lamp: placed like a
+  torch (block below or beside, back wall or tree trunk), a soft green light
+  (`light_radius` 26), and a light in your hand (`held_light_radius` 20).
 - **Liquid Barrels hold water** (Phase 54): `liquid_capacity` in voxel cells (16 a tile):
   Liquid Barrel 400 (25 tiles), Iron Liquid Barrel 960 (60 tiles). Fill and empty them
   with Siphon Liquid; right click shows how full. Crafting within reach can use their

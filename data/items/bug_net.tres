@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_3wb07"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_up3c1"]
+[ext_resource type="Texture2D" path="res://assets/items/held/bug_net.png" id="3_dvjwx"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/bug_net.png" id="4_ftogf"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_mm3er"]
+
+[sub_resource type="Resource" id="Resource_0rl8e"]
+script = ExtResource("2_up3c1")
+id = &"bug_net"
+texture = ExtResource("3_dvjwx")
+type = &"sword"
+grip = Vector2(2, 13)
+
+[resource]
+script = ExtResource("5_mm3er")
+kind = 6
+icon = ExtResource("4_ftogf")
+max_stack = 1
+held = SubResource("Resource_0rl8e")
+catches_critters = true
+melee_damage = 1.0
+knockback = 1.0
+id = &"bug_net"
+display_name = "Bug Net"
+description = "Swing it at a firefly to catch it. Barely hurts anything else."

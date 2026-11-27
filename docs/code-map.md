@@ -592,6 +592,16 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 62: fireflies
+
+| Change | Where |
+| --- | --- |
+| Firefly AI, catching | `EnemyData.AI.FIREFLY`, `flies`, `drift_*`, `blink_seconds`, `catch_item`; `Enemy._firefly`, `blink`, `catch` |
+| Bug Net | `ItemData.catches_critters`; `ItemUser.melee_hit` |
+| Spawning in the air | `EnemySpawner.find_spot` (flyers lifted 2 to 6 tiles) |
+| Data | `data/enemies/firefly.tres`, `data/objects/firefly_lamp.tres`, items `firefly`, `bug_net`, `firefly_lamp` (tools/make_items.gd), `data/spawns/dark_forest_surface.tres` |
+| Art | `tools/make_firefly_art.py` |
+
 ## Phase 61: water fixes, critters, torches on trees
 
 | Change | Where |

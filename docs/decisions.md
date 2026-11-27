@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 62, fireflies
+
+- **Patrick:** fireflies in the Dark Forest, catchable with a net, make a lamp with them.
+- **Claude (defaults):** fireflies are critters (day and night, up to 10), drift and
+  blink with a small green light; the Bug Net (Workbench, 4 Wood, 6 Rope) is a melee
+  swing that catches them; the Firefly Lamp (Workbench, Glass Bottle + 3 Fireflies) is a
+  torch-like light, also held.
+
 ## 2026-11-27: Phase 61, water fixes, critters, torches on trees
 
 - **Patrick:** the character should be behind the water layer; slimes float and bob on

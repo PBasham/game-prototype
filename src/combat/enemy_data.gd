@@ -4,7 +4,7 @@ extends GameData
 ## and when it spawns. Enemy (src/combat/enemy.gd) brings one to life.
 
 ## How it moves.
-enum AI { SLIME, SPIRIT, CRAB, FISH }
+enum AI { SLIME, SPIRIT, CRAB, FISH, FIREFLY }
 
 @export_group("Look")
 ## Sprite sheet: frames side by side, each frame_size: 0 = resting, 1 = squashed (about
@@ -75,6 +75,17 @@ func is_critter() -> bool:
 @export var scuttle_seconds_max := 1.4
 @export var rest_seconds_min := 0.6
 @export var rest_seconds_max := 2.5
+@export_group("Firefly (drifts in the air)")
+## Flies: no gravity, spawns a few tiles up in the air.
+@export var flies := false
+## Tiles per second it drifts, and how far (tiles) it wanders from where it appeared.
+@export var drift_speed := 1.6
+@export var drift_tiles := 4.0
+## Blinks: seconds per glow, on and off.
+@export var blink_seconds := 2.2
+@export_group("Catching")
+## A Bug Net swing catches it (gone, this item in your bag) instead of hurting it.
+@export var catch_item: StringName = &""
 @export_group("Fish (swims in water)")
 ## Lives in water: spawns only in water, swims there, flops about out of it.
 @export var swims := false

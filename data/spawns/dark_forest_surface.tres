@@ -5,6 +5,7 @@
 [ext_resource type="Resource" path="res://data/enemies/forest_spirit.tres" id="3_mcxcm"]
 [ext_resource type="Resource" path="res://data/enemies/green_slime.tres" id="4_dfkf5"]
 [ext_resource type="Script" path="res://src/combat/spawn_table.gd" id="5_opncl"]
+[ext_resource type="Resource" path="res://data/enemies/firefly.tres" id="6_firefly"]
 
 [sub_resource type="Resource" id="Resource_njkxh"]
 script = ExtResource("1_ufs83")
@@ -16,11 +17,17 @@ script = ExtResource("1_ufs83")
 enemy = ExtResource("4_dfkf5")
 weight = 30.0
 
+[sub_resource type="Resource" id="Entry_firefly"]
+script = ExtResource("1_ufs83")
+enemy = ExtResource("6_firefly")
+
 [resource]
 script = ExtResource("5_opncl")
 biome = &"dark_forest"
 day_seconds = 9.0
 max_night = 7
-entries = Array[ExtResource("1_ufs83")]([SubResource("Resource_njkxh"), SubResource("Resource_wyh3t")])
+critter_seconds = 1.5
+max_critters = 10
+entries = Array[ExtResource("1_ufs83")]([SubResource("Resource_njkxh"), SubResource("Resource_wyh3t"), SubResource("Entry_firefly")])
 id = &"dark_forest_surface"
 display_name = "Dark Forest surface"

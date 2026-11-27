@@ -264,9 +264,9 @@ func _physics_process(delta: float) -> void:
 		var bob := sin(Time.get_ticks_msec() * 0.004 + get_instance_id()) * 1.2 * TILE
 		var target := -data.float_rise * TILE if deep else -data.float_rise * 0.3 * TILE + bob
 		# Splashing down is stopped hard by the water; rising back up is gentler.
-		velocity.y = move_toward(velocity.y, target, (180.0 if velocity.y > target else 40.0) * TILE * delta)
+		velocity.y = move_toward(velocity.y, target, (450.0 if velocity.y > target else 40.0) * TILE * delta)
 		velocity.x = move_toward(velocity.x, 0.0, 8.0 * TILE * delta) if _hop_vx == 0.0 else velocity.x
-	elif not wet:
+	elif not wet and not data.flies:
 		velocity.y = minf(velocity.y + data.gravity * TILE * delta, 90.0 * TILE)
 	match data.ai:
 		EnemyData.AI.SLIME:
@@ -277,6 +277,8 @@ func _physics_process(delta: float) -> void:
 			_crab(delta)
 		EnemyData.AI.FISH:
 			_fish(delta, wet)
+		EnemyData.AI.FIREFLY:
+			_firefly(delta)
 	move_and_slide()
 	if is_on_floor() and not _was_on_floor:
 		_squash = 0.15  # landed
@@ -453,6 +455,53 @@ func _fish(delta: float, wet: bool) -> void:
 		_dir = signf(velocity.x)
 
 
+# --- Firefly ---------------------------------------------------------------------
+
+var _home := Vector2.INF
+var _drift_to := Vector2.INF
+
+
+## Drifts about near where it appeared, now and then picking a new spot, blinking.
+func _firefly(delta: float) -> void:
+	if _home == Vector2.INF:
+		_home = global_position
+	_turn_left -= delta
+	if _drift_to == Vector2.INF or _turn_left <= 0.0 or global_position.distance_to(_drift_to) < 2.0 \
+			or get_slide_collision_count() > 0:
+		_turn_left = randf_range(1.0, 3.0)
+		var r := data.drift_tiles * TILE
+		_drift_to = _home + Vector2(randf_range(-r, r), randf_range(-r * 0.5, r * 0.5))
+	var to := _drift_to - global_position
+	var want := to.normalized() * data.drift_speed * TILE if to.length() > 1.0 else Vector2.ZERO
+	want.y += sin(Time.get_ticks_msec() * 0.003 + get_instance_id()) * 3.0  # a little flutter
+	velocity = velocity.lerp(want, clampf(delta * 2.0, 0.0, 1.0))
+	if absf(velocity.x) > 1.0:
+		_dir = signf(velocity.x)
+
+
+## How bright a firefly's blink is now (0 to 1).
+func blink() -> float:
+	var t := fmod(Time.get_ticks_msec() / 1000.0 + float(get_instance_id() % 997) * 0.37, data.blink_seconds) / data.blink_seconds
+	return clampf(sin(t * PI) * 1.4, 0.15, 1.0)
+
+
+## A Bug Net swing: gone, its catch item in your bag (or dropped at your feet if full).
+func catch(by: Player) -> bool:
+	if data.catch_item == &"" or health <= 0.0:
+		return false
+	health = 0.0
+	var left := by.character.inventory.add(data.catch_item, 1) if by and by.character else 1
+	if left > 0:
+		world.request_spawn_drop(data.catch_item, left, global_position, Vector2.ZERO)
+	EventBus.sound_requested.emit(&"item_pickup", global_position)
+	if world.character:
+		world.character.note_kill(data.id, [data.catch_item])  # the Catalog
+	if radius > 0.0 and world.lights:
+		world.lights.mark_dirty()
+	queue_free()
+	return true
+
+
 # --- Forest Spirit ------------------------------------------------------------------
 
 enum SpiritState { DART, CHARGE, SHOT }
@@ -601,6 +650,17 @@ func _update_look() -> void:
 		return
 	if data.ai == EnemyData.AI.CRAB or data.ai == EnemyData.AI.FISH:
 		_critter_look()
+		return
+	if data.ai == EnemyData.AI.FIREFLY:
+		var b := blink()
+		_set_frame(0 if b > 0.5 else 1)
+		_sprite.scale = Vector2(-1.0 if _dir < 0.0 else 1.0, 1.0)
+		var f := data.frame_size
+		_sprite.position = Vector2(-f.x * 0.5 * _sprite.scale.x, -f.y)
+		_sprite.modulate = Color(1, 1, 1, 0.5 + 0.5 * b) if _flash <= 0.0 else Color(2, 2, 2)
+		if _halo:
+			_halo.position = Vector2(0, -data.size.y * 0.5)
+			_halo.strength = b
 		return
 	if not is_on_floor() and not _floating:
 		_set_frame(2)

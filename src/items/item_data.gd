@@ -77,6 +77,9 @@ const SPELL_PREFIX := "spell:"
 ## How many of this item placing one block or wall takes (sand: 16 grains, one per
 ## voxel cell). A tile partly full of its own sand only takes the missing grains.
 @export var place_units := 1
+## A Bug Net: a melee swing catches critters that can be caught (EnemyData.catch_item,
+## fireflies) instead of hurting them.
+@export var catches_critters := false
 ## Placing reach in tiles. 0 = the spellbook's build_reach_tiles.
 @export var place_reach_tiles := 0.0
 

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://src/combat/enemy_data.gd" id="2_enemy"]
+[ext_resource type="Texture2D" path="res://assets/enemies/firefly.png" id="3_tex"]
+
+[resource]
+script = ExtResource("2_enemy")
+texture = ExtResource("3_tex")
+frame_size = Vector2i(6, 5)
+size = Vector2(6, 5)
+max_health = 1.0
+contact_damage = 0.0
+knockback = 0.0
+ai = 4
+gravity = 0.0
+harmless_until_hit = true
+flies = true
+drift_speed = 1.6
+drift_tiles = 4.0
+blink_seconds = 2.2
+catch_item = &"firefly"
+glow_tiles = 3.0
+glow_color = Color(0.75, 1, 0.45, 1)
+id = &"firefly"
+display_name = "Firefly"
+description = "Blinks in the Dark Forest. Catch it with a Bug Net."
