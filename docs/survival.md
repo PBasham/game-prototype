@@ -92,9 +92,27 @@ on Player): `swim_speed_mult` 0.6 of your walking speed, Space or W swims up
 (`swim_sink_speed` 2.5). Jump with your head out of the water to leap out
 (`swim_jump` 0.85 of a jump). Landing in water breaks a fall.
 
-With your head under water, bubbles over your head count down `max_breath` (10 s), then
+With your head under water, bubbles over your head count down `max_breath` (20 s), then
 you take `drown_damage` (2) every second. Out of the water breath refills
-`breath_refill` (4) times as fast.
+`breath_refill` (4) times as fast. While you're under water or your breath refills, the
+status panel (bottom left) grows a fifth row: breath, with the seconds left (Phase 66).
+
+**Water Breathing** (Phase 66, Alchemy Table, Potions tab): a bottle of water plus 2 Kelp.
+Your breath never runs out while it lasts; the breath row turns teal and shows the
+time left (`ItemData.buff_water_breathing`, `Player.water_breathing_left`). It uses up
+the bottle (no empty bottle back). By how much the bottle holds (`BREATHING_BOTTLES` in
+`tools/make_items.gd`):
+
+| Bottle | Lasts |
+| --- | --- |
+| Clay Flask, Glass Vial | 2 min |
+| Clay Bottle, Glass Bottle | 4 min |
+| Glass Flask | 6 min |
+| Clay Jug | 8 min |
+
+**Kelp:** mine standing kelp on the sea floor (the gathering spell, one hit): it drops
+one Kelp for every `kelp_tiles_per_item` (3) tiles of its height (at least 1) and grows
+back after `kelp_regrow_days` (1) in-game day (both on `SeaFlora`; cut kelp is saved).
 
 ## Food and berry bushes
 
@@ -150,6 +168,7 @@ nothing ("You're full", "No need right now") or while its sickness is on.
 | `buff_name`, `buff_description`, `buff_seconds` | A timed buff, shown on the buff bar |
 | `buff_health_regen` | Extra health per second while the buff is on (adds to regen and Cozy) |
 | `buff_move_speed` | Extra walk speed while the buff is on (0.1 = 10%) |
+| `buff_water_breathing` | Your breath never runs out under water while the buff is on |
 | `buff_poison_hits` | A weapon coating: the next this many melee hits poison (see combat.md) |
 
 **Cooking** happens at the **Campfire** (right click it: station `cooking`):

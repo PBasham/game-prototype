@@ -135,7 +135,7 @@ const DEFAULT_LOOK := "res://assets/sprites/scholar_look.tres"
 ## Jumping out at the surface: this share of a normal jump.
 @export var swim_jump := 0.85
 ## Seconds of breath with your head under water, then drown_damage every second.
-@export var max_breath := 10.0
+@export var max_breath := 20.0
 @export var drown_damage := 2.0
 ## Breath comes back this many times as fast as it runs out.
 @export var breath_refill := 4.0
@@ -245,7 +245,7 @@ var hunger := 100.0
 var thirst := 100.0
 ## Thirst drains (the world's option).
 var thirst_on := true
-var breath := 10.0
+var breath := 20.0
 ## In water deep enough to swim, and your head under water (both updated each tick).
 var swimming := false
 var head_under := false
@@ -1115,7 +1115,7 @@ func _update_water() -> void:
 
 
 func _update_breath(delta: float) -> void:
-	if head_under and not invincible:
+	if head_under and not invincible and water_breathing_left() <= 0.0:
 		breath = maxf(breath - delta, 0.0)
 		if breath <= 0.0:
 			_drown_timer += delta
@@ -1387,6 +1387,15 @@ func buff_light() -> Array:
 			best = _item_buffs[key].buff_light_radius
 			color = _item_buffs[key].buff_light_color
 	return [best, color]
+
+
+## Seconds left of a Water Breathing potion (the longest running), 0 = none.
+func water_breathing_left() -> float:
+	var best := 0.0
+	for key: StringName in _item_buffs:
+		if _item_buffs[key].buff_water_breathing:
+			best = maxf(best, float(buffs.get(key, 0.0)))
+	return best
 
 
 ## Extra health per second from food buffs.

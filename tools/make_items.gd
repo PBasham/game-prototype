@@ -333,6 +333,24 @@ func _items() -> Array[ItemData]:
 		wat.bottle_contents = Color(0.36, 0.62, 0.9)
 		_detailed(wat, &"")
 		out.append(wat)
+	# Water Breathing (Phase 66): a bottle of water + 2 Kelp at the Alchemy Table. Breath
+	# never runs out while it lasts; a bigger bottle lasts longer.
+	for b: Array in BREATHING_BOTTLES:
+		var mins: int = b[2]
+		var wb := _small(StringName("water_breathing_" + String(b[0])), "%s of Water Breathing" % b[1],
+			"Drink: you can breathe under water for %d minutes." % mins)
+		wb.kind = ItemData.Kind.FOOD
+		wb.buff_name = "Water Breathing"
+		wb.buff_description = "You can breathe under water."
+		wb.buff_seconds = 60.0 * mins
+		wb.buff_water_breathing = true
+		wb.max_stack = 30
+		wb.storage_tags.assign([&"potion"])
+		wb.bottle_shape = BOTTLES[StringName(b[0])]
+		wb.bottle_contents = Color(0.27, 0.72, 0.62)
+		_detailed(wb, &"")
+		out.append(wb)
+	out.append(_small(&"kelp", "Kelp", "Cut from the sea floor (mine it). Brewed with a bottle of water into Water Breathing."))
 	var water := _base(&"water", "Water", "Recipes that need water use what's around you: water you stand in or next to, Liquid Barrels nearby, and your Siphon Liquid. 16 is one tile of it.")
 	water.icon = load("res://assets/ui/icon_thirst.png") as Texture2D
 	water.obsolete = true  # not an item you carry: kept out of Creative and the Catalog
@@ -1220,6 +1238,9 @@ func _recipes() -> Array[RecipeData]:
 	for b: Array in FILLED_BOTTLES:
 		table.append([StringName("healing_" + b[0]), &"alchemy", {StringName(b[0]): 1, &"red_cap": FILLED_HERBS[b[0]]}, StringName("healing_" + b[0]), 1, []])
 		table.append([StringName("mana_" + b[0]), &"alchemy", {StringName(b[0]): 1, &"glowcap": FILLED_HERBS[b[0]]}, StringName("mana_" + b[0]), 1, []])
+	for b: Array in BREATHING_BOTTLES:
+		var wb := StringName("water_breathing_" + String(b[0]))
+		table.append([wb, &"alchemy", {StringName("water_" + String(b[0])): 1, &"kelp": 2}, wb, 1, []])
 	for b: Array in WATER_BOTTLES:
 		table.append([StringName("water_" + String(b[0])), &"", {StringName(b[0]): 1, &"water": 16 * int(b[2])}, StringName("water_" + String(b[0])), 1, []])
 	table.append_array([
@@ -1446,6 +1467,10 @@ func _spell(spell_id: StringName, label: String, text: String) -> SpellData:
 const FILLED_BOTTLES := [[&"clay_bottle", "Clay Bottle", 1.5, 1.35], [&"clay_jug", "Clay Jug", 2.0, 1.7],
 	[&"glass_vial", "Glass Vial", 1.3, 1.0], [&"glass_bottle", "Glass Bottle", 1.95, 1.35],
 	[&"glass_flask", "Glass Flask", 2.6, 1.7]]
+## Water Breathing: [bottle id, its name, minutes it lasts] (by how much it holds).
+const BREATHING_BOTTLES := [[&"clay_flask", "Clay Flask", 2], [&"glass_vial", "Glass Vial", 2],
+	[&"clay_bottle", "Clay Bottle", 4], [&"glass_bottle", "Glass Bottle", 4],
+	[&"glass_flask", "Glass Flask", 6], [&"clay_jug", "Clay Jug", 8]]
 ## Water bottles: [bottle id, its name, tiles of water it holds].
 const WATER_BOTTLES := [[&"clay_flask", "Clay Flask", 1], [&"clay_bottle", "Clay Bottle", 2],
 	[&"clay_jug", "Clay Jug", 4], [&"glass_vial", "Glass Vial", 1], [&"glass_bottle", "Glass Bottle", 2],

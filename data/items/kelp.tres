@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_ohixu"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_mhrs8"]
+[ext_resource type="Texture2D" path="res://assets/items/held/kelp.png" id="3_42frg"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/kelp.png" id="4_b3acc"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_kdwew"]
+
+[sub_resource type="Resource" id="Resource_bu0ec"]
+script = ExtResource("2_mhrs8")
+id = &"kelp"
+texture = ExtResource("3_42frg")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_kdwew")
+icon = ExtResource("4_b3acc")
+held = SubResource("Resource_bu0ec")
+impact_at = 0.2
+id = &"kelp"
+display_name = "Kelp"
+description = "Cut from the sea floor (mine it). Brewed with a bottle of water into Water Breathing."

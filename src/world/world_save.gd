@@ -47,6 +47,8 @@ const META_KILLS := "kills"
 const META_SHAPES := "shapes"
 const META_VOXELS := "voxels"
 const META_LIQUIDS := "liquids"
+## Kelp cut down (SeaFlora.cut): {"x": the day it was cut}.
+const META_SEA_PLANTS := "sea_plants"
 
 
 static func save(path: String, info: WorldInfo, chunks: Array[ChunkData], blocks: TileTypes, walls: TileTypes,

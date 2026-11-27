@@ -358,6 +358,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 66: Water Breathing (branch phase-66-water-breathing)**
+- [ ] Under water you have 20 s of breath; the status panel grows a breath row with the
+      seconds left, and it goes away once your breath is full again.
+- [ ] Mine kelp on the sea floor: it drops Kelp (more for taller kelp) and grows back
+      after a day.
+- [ ] Alchemy Table, Potions: a bottle of water + 2 Kelp makes Water Breathing in each
+      bottle (2, 4, 6 or 8 minutes). Drink one: breath never runs out, the row is teal
+      with the time left.
+
 **Phase 65: Abyssal Stone and the endless sea (branch phase-65-abyssal-stone)**
 - [ ] Dig down through a beach: a dark Abyssal Stone layer under the sand and Hard Sand,
       following the beach's curve and rising near its end to just above sea level; from

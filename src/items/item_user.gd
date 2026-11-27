@@ -268,6 +268,9 @@ func update_target(at: Vector2, on_back: bool = false) -> void:
 				if not back and id == WorldData.AIR and world.voxels.has_minable(t) and _in_reach(t):
 					valid.append(t)  # sand cells, a broken Sand Bricks tile
 					continue
+				if not back and id == WorldData.AIR and world.sea_flora.kelp_at(t) and _in_reach(t):
+					valid.append(t)  # kelp
+					continue
 				if (obj or (def and not def.unbreakable and def.health > 0.0 and t.y < world.data.height - 1
 						and (back or not world.is_protected(t)))) and _in_reach(t):
 					valid.append(t)

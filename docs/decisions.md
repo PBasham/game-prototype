@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 66, Water Breathing
+
+- **Patrick:** an air bubble meter when you're underwater; Water Breathing potions.
+- **Claude (agreed brief):** 20 s of breath, a breath row on the status panel, Water
+  Breathing from a bottle of water + 2 Kelp in each bottle (2, 4, 6, 8 minutes by size),
+  kelp mineable for Kelp (regrows in a day: Claude's default).
+
 ## 2026-11-27: Phase 65, Abyssal Stone and the endless sea
 
 - **Patrick:** the ocean's water never runs out; a very hard stone nobody can ever break

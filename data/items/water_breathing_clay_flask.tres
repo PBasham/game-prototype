@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_bh5qx"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_wbkub"]
+[ext_resource type="Texture2D" path="res://assets/items/held/water_breathing_clay_flask.png" id="3_f42p3"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/water_breathing_clay_flask.png" id="4_x7443"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_3sofn"]
+
+[sub_resource type="Resource" id="Resource_jmswn"]
+script = ExtResource("2_wbkub")
+id = &"water_breathing_clay_flask"
+texture = ExtResource("3_f42p3")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("5_3sofn")
+kind = 11
+icon = ExtResource("4_x7443")
+max_stack = 30
+held = SubResource("Resource_jmswn")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 1
+bottle_contents = Color(0.27, 0.72, 0.62, 1)
+buff_name = "Water Breathing"
+buff_description = "You can breathe under water."
+buff_seconds = 120.0
+buff_water_breathing = true
+id = &"water_breathing_clay_flask"
+display_name = "Clay Flask of Water Breathing"
+description = "Drink: you can breathe under water for 2 minutes."

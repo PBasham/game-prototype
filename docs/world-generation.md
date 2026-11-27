@@ -416,7 +416,8 @@ Under the ocean, down to the world's floor:
 | `dune_grass_chance` | 0.3 | Dune grass on dry beach sand |
 
 `SeaFlora` exports: `kelp_sway_px` 2.5, `kelp_sway_speed` 1.3, `grass_sway_px` 0.6,
-`underwater_tint` (plants in water are drawn bluer).
+`underwater_tint` (plants in water are drawn bluer), and for mining kelp (Phase 66,
+survival.md) `kelp_tiles_per_item` 3, `kelp_regrow_days` 1.
 
 ### Ponds (Phase 55)
 

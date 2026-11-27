@@ -139,7 +139,10 @@ var _buffs: Pane
 const STATUS_SIZE := Vector2(140, 55)
 const STATUS_BARS: Array[Array] = [
 	["icon_health", "d83a3a"], ["icon_mana", "3a7ae0"], ["icon_hunger", "d8942a"], ["icon_thirst", "3cc4bc"],
+	["icon_breath", "9ad4f5"],
 ]
+## The breath row (the last) only shows under water or while breath refills.
+const STATUS_ROW := 11.0
 var _status_icons: Array[Texture2D] = []
 var _death: Label
 ## Black fade when you sleep.
@@ -231,6 +234,7 @@ func _ready() -> void:
 	_status = _pane(_draw_status, func(_p: Pane, _e: InputEvent) -> void: pass)
 	_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status.size = STATUS_SIZE
+	_status.set_meta(&"rows", 4)
 	for b: Array in STATUS_BARS:
 		_status_icons.append(load(UiSkin.DIR + String(b[0]) + ".png") as Texture2D)
 	_wheel = Wheel.new()
@@ -462,6 +466,10 @@ func _process(delta: float) -> void:
 		paused = true  # the map covers the screen: no playing under it
 	_update_wheel(paused)
 	var p := world.player
+	var rows := 5 if _shows_breath(p) else 4
+	if rows != int(_status.get_meta(&"rows", 4)):
+		_status.set_meta(&"rows", rows)
+		_layout()
 	var over := _over_pane()
 	# The stack on the mouse is held and used like the hotbar (placing shows the preview).
 	var place := _cursor_placeable() if over == null and not paused and not wheel_open else null
@@ -757,7 +765,8 @@ func _layout() -> void:
 	_quick.size = Vector2(PAD * 2 + QUICK_KEYS_SHOWN.size() * STEP - GAP + 4, PAD * 2 + SLOT + QUICK_LABEL_H)
 	_quick.position = _inv.position + Vector2(_inv.size.x + 4, 0)
 	var view := _view_size()
-	_status.position = Vector2(MARGIN.x, view.y - STATUS_SIZE.y - MARGIN.y)
+	_status.size = STATUS_SIZE + Vector2(0, STATUS_ROW * (int(_status.get_meta(&"rows", 4)) - 4))
+	_status.position = Vector2(MARGIN.x, view.y - _status.size.y - MARGIN.y)
 	_buffs.size = Vector2(STATUS_SIZE.x, BUFF_STEP)
 	_buffs.position = _status.position - Vector2(0, BUFF_STEP + 8)
 	_craft.visible = open and crafting
@@ -1251,7 +1260,13 @@ static func _clock(seconds: float) -> String:
 	return "%d:%02d" % [s / 60, s % 60]
 
 
-## Health, mana, hunger and thirst, bottom left: an icon, a bar and the numbers.
+## The breath row shows with your head under water or while your breath refills.
+static func _shows_breath(p: Player) -> bool:
+	return p != null and (p.head_under or p.breath < p.max_breath - 0.01)
+
+
+## Health, mana, hunger and thirst, bottom left: an icon, a bar and the numbers. Under
+## water a fifth row: breath (seconds left), or a Water Breathing potion's time left.
 func _draw_status(g: Control) -> void:
 	var p := world.player
 	var font := ThemeDB.fallback_font
@@ -1267,7 +1282,9 @@ func _draw_status(g: Control) -> void:
 		[p.health, p.max_health, false], [p.mana, p.max_mana, p.infinite_mana], [p.hunger, p.max_hunger, false],
 		[p.thirst, p.max_thirst, false],
 	]
-	for i in STATUS_BARS.size():
+	var potion := p.water_breathing_left()
+	values.append([p.max_breath if potion > 0.0 else p.breath, p.max_breath, false])
+	for i in int(g.get_meta(&"rows", 4)):
 		var y := 6.0 + i * 11.0
 		if _status_icons[i]:
 			g.draw_texture(_status_icons[i], Vector2(7, y))
@@ -1276,11 +1293,15 @@ func _draw_status(g: Control) -> void:
 		var v: Array = values[i]
 		var k := 1.0 if v[2] else clampf(float(v[0]) / maxf(float(v[1]), 1.0), 0.0, 1.0)
 		var fill := Color(STATUS_BARS[i][1]) if not v[2] else Color("b07aff")
+		if i == 4 and potion > 0.0:
+			fill = Color("48d0b0")  # Water Breathing: full, in teal
 		var w := (r.size.x - 2) * k
 		g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(w, 4)), fill)
 		g.draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(w, 1)), fill.lightened(0.35))
 		# Current and total (108/120); hunger is a share, so just the number.
 		var text := "inf" if v[2] else ("%d/%d" % [roundi(float(v[0])), roundi(float(v[1]))] if i < 2 else "%d" % roundi(float(v[0])))
+		if i == 4:
+			text = _clock(potion) if potion > 0.0 else "%d s" % ceili(float(v[0]))
 		g.draw_string(font, Vector2(104, y + 7), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.TEXT)
 
 
@@ -3101,4 +3122,4 @@ func _update_notes(delta: float) -> void:
 
 func _place_notes() -> void:
 	# Above the health, mana and hunger panel.
-	_notes.position.y = _view_size().y - STATUS_SIZE.y - MARGIN.y - 20 - _notes.get_child_count() * 12
+	_notes.position.y = _view_size().y - _status.size.y - MARGIN.y - 20 - _notes.get_child_count() * 12

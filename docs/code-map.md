@@ -592,6 +592,16 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 66: Water Breathing
+
+| Change | Where |
+| --- | --- |
+| 20 s of breath, the potion keeps it | `Player.max_breath`, `_update_breath`, `water_breathing_left` |
+| Breath row on the status panel | `Hud.STATUS_BARS` (5th row), `_shows_breath`, `_draw_status`, `_layout` (panel height) |
+| Water Breathing items and recipes | `ItemData.buff_water_breathing`; `BREATHING_BOTTLES` in `tools/make_items.gd`; `data/items/water_breathing_*.tres`, `data/recipes/water_breathing_*.tres`, `data/items/kelp.tres` |
+| Mining kelp | `SeaFlora.kelp_at`, `request_harvest`, `cut` (saved as `WorldSave.META_SEA_PLANTS`); `World._damage_tile`; targets in `ItemUser` (MINE) |
+| Art | `tools/make_breathing_art.py` |
+
 ## Phase 65: Abyssal Stone and the endless sea
 
 | Change | Where |

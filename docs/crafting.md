@@ -96,6 +96,7 @@ cooking each get their own brief later.
 | Red Cap (red, white spots) | Surface grass, caves | Barely food: +2 hunger | Healing Potions, Mushroom Stew |
 | Duskcap (purple) | Caves only | Ingredient | Poison Coatings, Poison Flasks (spells later) |
 | Glowcap | Caves only | Ingredient; glows (light radius 14, cyan) | Mana potions |
+| Kelp | Mined from kelp on the sea floor | Ingredient | Water Breathing (bottle of water + 2) |
 
 Console: `forage <type>` puts one on the ground under the cursor. `pickups` counts forageables and floor tiles in the loaded area and how many came
 back this session; `pickups <days>` lets that many days pass for them (off screen).

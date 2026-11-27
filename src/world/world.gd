@@ -239,6 +239,7 @@ func _ready() -> void:
 			chest_names[Vector2i(int(np[0]), int(np[1]))] = String(names[key])
 		_saved_map = WorldSave.read_extra(info.path, WorldSave.META_MAP)
 		voxels.from_dict(WorldSave.read_extra(info.path, WorldSave.META_VOXELS))
+		sea_flora.from_dict(WorldSave.read_extra(info.path, WorldSave.META_SEA_PLANTS))
 		var saved_liquids: Dictionary = WorldSave.read_extra(info.path, WorldSave.META_LIQUIDS)
 		for key: String in saved_liquids:
 			var parts := key.split(",")
@@ -479,6 +480,7 @@ func save() -> Error:
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict(),
 			WorldSave.META_POSITIONS: _spots_to_dict(), WorldSave.META_SHAPES: _shapes_to_dict(modified), WorldSave.META_VOXELS: voxels.to_dict(), WorldSave.META_LIQUIDS: _liquids_to_dict(),
+			WorldSave.META_SEA_PLANTS: sea_flora.to_dict(),
 			WorldSave.META_MAP: world_map.to_dict() if world_map else {}}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
@@ -1818,6 +1820,8 @@ func _damage_tile(tile: Vector2i, amount: float, wall: bool) -> bool:
 		return request_remove_object(tile)
 	if not wall and id == WorldData.AIR and voxels.has_minable(tile):
 		return voxels.request_damage(tile, INF if instant_break else amount)
+	if not wall and id == WorldData.AIR and sea_flora and sea_flora.kelp_at(tile):
+		return sea_flora.request_harvest(tile)  # kelp cuts in one hit
 	if id <= 0 or tile.y >= data.height - 1:
 		return false
 	var def := (walls if wall else blocks).def(id)
