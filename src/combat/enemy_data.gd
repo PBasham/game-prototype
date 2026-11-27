@@ -4,7 +4,7 @@ extends GameData
 ## and when it spawns. Enemy (src/combat/enemy.gd) brings one to life.
 
 ## How it moves.
-enum AI { SLIME, SPIRIT }
+enum AI { SLIME, SPIRIT, CRAB, FISH }
 
 @export_group("Look")
 ## Sprite sheet: frames side by side, each frame_size: 0 = resting, 1 = squashed (about
@@ -56,6 +56,25 @@ enum AI { SLIME, SPIRIT }
 @export var aggro_tiles_vertical := 16.0
 ## Gravity in tiles/s².
 @export var gravity := 110.0
+## Critters (crabs, fish): no touch damage until you hit it (a crab then pinches back).
+@export var harmless_until_hit := false
+@export_group("Crab (scuttles on the ground)")
+## Tiles per second sideways, and how long it scuttles or stops (seconds, random).
+@export var scuttle_speed := 4.0
+@export var scuttle_seconds_min := 0.4
+@export var scuttle_seconds_max := 1.4
+@export var rest_seconds_min := 0.6
+@export var rest_seconds_max := 2.5
+@export_group("Fish (swims in water)")
+## Lives in water: spawns only in water, swims there, flops about out of it.
+@export var swims := false
+@export var swim_speed := 5.0
+## Darts away this fast when you come within flee_tiles.
+@export var flee_speed := 11.0
+@export var flee_tiles := 5.0
+## Seconds between new headings (random).
+@export var turn_seconds_min := 1.0
+@export var turn_seconds_max := 3.5
 
 @export_group("Spirit (floats and shoots)")
 ## SPIRIT: darts to a spot near you (dart_speed tiles/s, for dart_seconds), stops,

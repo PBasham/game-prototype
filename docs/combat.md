@@ -109,6 +109,21 @@ a little teal (`SpellData.summon_tint`) with a small gold cross over it
 (`summon_marker`), so you can tell them apart. Sheet:
 `assets/enemies/forest_spirit.png` (24x24 frames: drifting, charging, shooting).
 
+### Crab and Fish (the ocean, Phase 56)
+
+Critters: `harmless_until_hit` (no touch damage, and they don't chase, until you hit
+them).
+
+- **Crab** (`AI.CRAB`, 8 health): scuttles sideways for `scuttle_seconds_min`/`max`
+  (0.4 to 1.4 s) at `scuttle_speed` 4 tiles/s, rests `rest_seconds_min`/`max` (0.6 to
+  2.5 s), turns with `turn_chance` 0.4. Hit it and it comes after you faster and
+  pinches (3 damage). Drops a Raw Crab. Lives on the beach and the sea floor.
+- **Fish** (`AI.FISH`, 5 health, `swims`): no gravity in water; swims at `swim_speed` 5
+  tiles/s toward a new heading every `turn_seconds_min`/`max` (1 to 3.5 s), turns back at
+  the water's edge and surface, and darts away at `flee_speed` 11 when you come within
+  `flee_tiles` 5. Out of water it flops about. Drops a Raw Fish. Spawns only in tiles
+  full of water (`EnemySpawner._water_spot`).
+
 ## Spawning
 
 Chance based, like Terraria: there's a small chance every frame, so on average one
@@ -150,6 +165,9 @@ beaten) are a small script each, extending `SpawnCondition` with `met(world)` an
 
 **Kills** are counted per world (`World.kills`, saved with it), by anyone, including
 `butcher`. Enemies that despawn don't count.
+
+The **Ocean** table (`data/spawns/ocean.tres`, biome `ocean`): Crab 40, Fish 60, a spawn
+every 4 s by day (5 at night), at most 10 (8 at night). Ponds are forest, so no fish there.
 
 ### Despawning
 

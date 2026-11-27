@@ -83,6 +83,13 @@ func water_at(_x: int, _y: int) -> bool:
 	return false
 
 
+## The plant on the ground of column x (SeaFlora): Vector3i(kind, size, ground row).
+## Kinds: 0 none, 1 seagrass (size = art variant), 2 kelp (size = tiles tall), 3 dune
+## grass (size = art variant).
+func sea_plant_at(_x: int) -> Vector3i:
+	return Vector3i.ZERO
+
+
 ## Flower art variant for column x, or -1.
 func flower_at(_x: int) -> int:
 	return -1

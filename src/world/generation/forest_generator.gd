@@ -318,6 +318,37 @@ func water_at(x: int, y: int) -> bool:
 	return pond >= 0 and y >= int(_ponds[pond].w)
 
 
+func sea_plant_at(x: int) -> Vector3i:
+	var s := settings
+	x = posmod(x, width)
+	var ground := surface_at(x)
+	var water_top := -1  # the water's top row over this column, -1 = dry
+	var in_ocean := _ocean_c >= 0 and absf(float(wrap_delta(x, _ocean_c))) < _ocean_half + s.beach_width
+	if in_ocean:
+		if ground > _sea:
+			water_top = _sea
+	else:
+		var pond := _pond_index(x)
+		if pond < 0:
+			return Vector3i.ZERO
+		if ground > int(_ponds[pond].w):
+			water_top = int(_ponds[pond].w)
+	var roll := GenUtil.hash01(x, 51, seed)
+	var variant := floori(GenUtil.hash01(x, 52, seed) * 3.0)
+	if water_top < 0:
+		# Dry: dune grass on beach sand.
+		if in_ocean and _sandy(x, ground) and roll < s.dune_grass_chance:
+			return Vector3i(3, variant % 2, ground)
+		return Vector3i.ZERO
+	var depth := ground - water_top
+	if in_ocean and depth >= s.kelp_min_depth and roll < s.kelp_chance:
+		var tall := 2 + floori(GenUtil.hash01(x, 53, seed) * float(mini(depth - 3, s.kelp_max_tiles) - 1))
+		return Vector3i(2, clampi(tall, 2, depth - 2), ground)
+	if GenUtil.hash01(x, 54, seed) < s.seagrass_chance:
+		return Vector3i(1, variant, ground)
+	return Vector3i.ZERO
+
+
 ## Sandy columns: the ocean's floor and beaches (the beach's land end mixes in clumps).
 func _sandy(x: int, y: int) -> bool:
 	var o := ocean_at(x)

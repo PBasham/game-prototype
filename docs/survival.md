@@ -158,6 +158,8 @@ nothing ("You're full", "No need right now") or while its sickness is on.
 | --- | --- | --- |
 | 3 Berries | Roasted Berries | +25 hunger, +5 health |
 | 1 Field Mushroom | Cooked Mushroom | +16 hunger, +4 health |
+| 1 Raw Crab (from crabs) | Crab Legs | +22 hunger, +6 health |
+| 1 Raw Fish (from fish) | Cooked Fish | +18 hunger, +5 health |
 | 4 Raspberries + 1 Wooden Bowl | Raspberry Compote | +35 hunger, +6 health, Mending 4 min (+1 health/s) |
 | 4 Blueberries + 1 Wooden Bowl | Blueberry Mash | +20 hunger, +10 health, Light Step 4 min (+15% speed) |
 | 2 Field Mushroom + 1 Red Cap + 1 Wooden Bowl | Mushroom Stew | +40 hunger, +8 health, Well Fed 5 min (+0.5 health/s, +10% speed) |

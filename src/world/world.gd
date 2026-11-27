@@ -100,6 +100,7 @@ var objects: TileTypes
 var generator: WorldGenerator
 var renderer: ChunkRenderer
 var voxels: VoxelLayer
+var sea_flora: SeaFlora
 ## Water in Liquid Barrels: wrapped anchor -> voxel cells.
 var liquids: Dictionary[Vector2i, int] = {}
 ## How close (tiles) water has to be to count for crafting while you stand in or by it.
@@ -206,6 +207,10 @@ func _ready() -> void:
 	voxels.name = "Voxels"
 	add_child(voxels)
 	voxels.setup(self)
+	sea_flora = SeaFlora.new()
+	sea_flora.name = "SeaFlora"
+	add_child(sea_flora)
+	sea_flora.setup(self)
 	object_layer = ObjectLayer.new()
 	object_layer.name = "Objects"
 	add_child(object_layer)

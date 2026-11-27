@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_i68k6"]
+
+[resource]
+script = ExtResource("1_i68k6")
+station = &"cooking"
+inputs = Dictionary[StringName, int]({
+&"raw_crab": 1
+})
+output = &"crab_legs"
+id = &"crab_legs"
+display_name = "Crab Legs"

@@ -592,6 +592,17 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 56: sea life
+
+| Change | Where |
+| --- | --- |
+| Crab and fish AI | `EnemyData.AI.CRAB`, `FISH`, `harmless_until_hit`, crab and fish exports; `Enemy._crab`, `_fish`, `_in_water`, `_critter_look` |
+| Spawning | `data/spawns/ocean.tres`; `EnemySpawner._water_spot` |
+| Enemies | `data/enemies/crab.tres`, `fish.tres` |
+| Food | `raw_crab`, `crab_legs`, `raw_fish`, `cooked_fish` (tools/make_items.gd), cooking recipes |
+| Sea plants | `WorldGenerator.sea_plant_at`, `ForestGenerator.sea_plant_at`; `SeaFlora` (src/world/sea_flora.gd), `World.sea_flora` |
+| Art | `tools/make_sea_life_art.py` |
+
 ## Phase 55: ocean and ponds
 
 | Change | Where |

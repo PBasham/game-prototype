@@ -136,6 +136,11 @@ func find_spot(data: EnemyData) -> Vector2:
 		var near := maxf(min_distance_tiles, view_half_tiles().x + view_margin_tiles)
 		var far := maxf(max_distance_tiles, near + (max_distance_tiles - min_distance_tiles))
 		var x := feet.x + side * randi_range(int(near), int(far))
+		if data.swims:
+			var spot := _water_spot(x, feet.y, data)
+			if spot != Vector2.INF:
+				return spot
+			continue
 		# From well above, find the first solid ground with air above it.
 		for y in range(feet.y - 40, feet.y + 40):
 			var t := Vector2i(x, y)
@@ -154,6 +159,22 @@ func find_spot(data: EnemyData) -> Vector2:
 
 
 ## Half the visible area in tiles (bigger when zoomed out).
+## A fish's spot: a random tile full of water in column x (near the player's height).
+func _water_spot(x: int, around_y: int, data: EnemyData) -> Vector2:
+	var found: Array[Vector2i] = []
+	for y in range(around_y - 40, around_y + 40):
+		var t := world.wrap_tile(Vector2i(x, y))
+		if world.voxels.count_in(t, &"water") == VoxelLayer.CELLS:
+			found.append(t)
+	if found.is_empty():
+		return Vector2.INF
+	var t: Vector2i = found[randi() % found.size()]
+	var pos := world.tile_to_world(t) + Vector2(4.0, 7.0)
+	if _in_view(pos, data):
+		return Vector2.INF
+	return pos
+
+
 func view_half_tiles() -> Vector2:
 	var vp := get_viewport()
 	if vp == null:

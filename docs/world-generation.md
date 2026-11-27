@@ -377,6 +377,20 @@ the ocean or its beaches. Walls: Sand Wall, then Hard Sand Wall. The ocean is it
 biome (`biome_at` = `ocean`; Sand and Hard Sand carry `biome = ocean`); there's no spawn
 table for it yet, so nothing spawns there.
 
+### Sea plants (Phase 56)
+
+`sea_plant_at(x)` gives each ocean or pond column at most one plant, drawn by `SeaFlora`
+(decoration only, nothing to harvest; it shows while its ground is there with room above):
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `kelp_chance`, `kelp_min_depth`, `kelp_max_tiles` | 0.3, 6, 22 | Kelp on sea floor at least 6 under water, up to 22 tall, never reaching the surface (ponds have none) |
+| `seagrass_chance` | 0.45 | Seagrass on other underwater floor (ocean and ponds) |
+| `dune_grass_chance` | 0.3 | Dune grass on dry beach sand |
+
+`SeaFlora` exports: `kelp_sway_px` 2.5, `kelp_sway_speed` 1.3, `grass_sway_px` 0.6,
+`underwater_tint` (plants in water are drawn bluer).
+
 ### Ponds (Phase 55)
 
 Small ponds on fairly flat ground: a spot every `pond_spacing` (140) columns, with

@@ -2,6 +2,15 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 56, sea life
+
+- **Patrick:** add some flora and some fish, small crabs on the beach you can kill and cook
+  into crab legs.
+- **Claude (defaults):** crabs and fish leave you alone until hit (crabs then pinch for 3);
+  fish swim, flee and flop on land; both drop raw food cooked at a campfire (Crab Legs,
+  Cooked Fish; raw isn't edible); an ocean spawn table, fish only in water; flora is
+  decoration (dune grass, seagrass, kelp) from the generator, nothing to harvest yet.
+
 ## 2026-11-27: Phase 55, ocean and ponds
 
 - **Patrick:** in addition to some ponds, an ocean biome: sand, hard sand and water,

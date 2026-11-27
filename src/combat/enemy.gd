@@ -255,12 +255,18 @@ func _physics_process(delta: float) -> void:
 	_tick_mark(delta)
 	_since_hit += delta
 	_squash = maxf(_squash - delta, 0.0)
-	velocity.y = minf(velocity.y + data.gravity * TILE * delta, 90.0 * TILE)
+	var wet := data.swims and _in_water()
+	if not wet:
+		velocity.y = minf(velocity.y + data.gravity * TILE * delta, 90.0 * TILE)
 	match data.ai:
 		EnemyData.AI.SLIME:
 			_slime(delta)
 		EnemyData.AI.SPIRIT:
 			_spirit(delta)
+		EnemyData.AI.CRAB:
+			_crab(delta)
+		EnemyData.AI.FISH:
+			_fish(delta, wet)
 	move_and_slide()
 	if is_on_floor() and not _was_on_floor:
 		_squash = 0.15  # landed
@@ -325,6 +331,8 @@ func _target_dir() -> float:
 	if p == null or p.dead:
 		return 0.0
 	var chasing := _angry or not data.wander_by_day or (world.spawner and world.spawner.is_night())
+	if data.harmless_until_hit:
+		chasing = _angry
 	if not chasing and world.generator:
 		var tile := world.world_to_tile(global_position)
 		chasing = tile.y > world.generator.surface_at(tile.x) + 20  # underground
@@ -352,6 +360,85 @@ func _step_up() -> void:
 	if test_move(global_transform, Vector2(0.0, -TILE - 0.5)) or test_move(up, ahead):
 		return
 	global_position.y -= TILE + 0.5
+
+
+# --- Crab ------------------------------------------------------------------------
+
+## Scuttles sideways a little, stops, looks about, scuttles again. Once hit, it comes
+## after you and pinches (its contact damage).
+func _crab(delta: float) -> void:
+	if not is_on_floor():
+		return
+	_wait -= delta
+	if _slither > 0.0:
+		_slither -= delta
+		var target := _target_dir()
+		if target != 0.0:
+			_dir = target
+		velocity.x = _dir * data.scuttle_speed * TILE * (1.5 if _angry else 1.0)
+		_step_up()
+		if absf(get_real_velocity().x) < 1.0 and _slither < 0.3:
+			_dir = -_dir  # a wall: the other way next time
+		if _slither <= 0.0:
+			_wait = randf_range(data.rest_seconds_min, data.rest_seconds_max) * (0.3 if _angry else 1.0)
+		return
+	velocity.x = move_toward(velocity.x, 0.0, 40.0 * TILE * delta)
+	if _wait > 0.0:
+		return
+	if randf() < data.turn_chance:
+		_dir = -_dir
+	_slither = randf_range(data.scuttle_seconds_min, data.scuttle_seconds_max)
+
+
+# --- Fish ------------------------------------------------------------------------
+
+var _heading := Vector2.RIGHT
+var _turn_left := 0.0
+
+
+func _in_water() -> bool:
+	return world.voxels != null and world.voxels.liquid_at(global_position + Vector2(0.0, -data.size.y * 0.5))
+
+
+## Swims about in water, turning now and then and at the water's edge, and darts away
+## from you. Out of water it flops.
+func _fish(delta: float, wet: bool) -> void:
+	if not wet:
+		_slither = 0.0
+		if is_on_floor():
+			velocity.x = move_toward(velocity.x, 0.0, 30.0 * TILE * delta)
+			_wait -= delta
+			if _wait <= 0.0:
+				_wait = randf_range(0.4, 1.0)
+				velocity = Vector2(randf_range(-3.0, 3.0), -randf_range(6.0, 12.0)) * TILE  # a flop
+		return
+	_turn_left -= delta
+	var speed := data.swim_speed
+	var p := world.player
+	var away := Vector2.ZERO
+	if p and not p.dead:
+		var to_me := Vector2(_wrapped_dx(p.global_position.x) * -1.0, global_position.y - p.chest().y)
+		if to_me.length() < data.flee_tiles * TILE:
+			away = to_me.normalized()
+	if away != Vector2.ZERO:
+		_heading = away
+		speed = data.flee_speed
+		_turn_left = 0.6
+	elif _turn_left <= 0.0:
+		_turn_left = randf_range(data.turn_seconds_min, data.turn_seconds_max)
+		_heading = Vector2(signf(randf() - 0.5), randf_range(-0.35, 0.35)).normalized()
+	# Stay in the water: turn back before leaving it (sideways, or out the top).
+	var ahead := global_position + Vector2(_heading.x * (data.size.x * 0.5 + 3.0), -data.size.y * 0.5 + _heading.y * 4.0)
+	if not world.voxels.liquid_at(ahead):
+		if not world.voxels.liquid_at(ahead + Vector2(0.0, 4.0)):
+			_heading.x = -_heading.x
+		_heading.y = absf(_heading.y) * 0.5  # back down from the surface
+		_turn_left = minf(_turn_left, 0.8)
+	velocity = velocity.lerp(_heading * speed * TILE, clampf(delta * 4.0, 0.0, 1.0))
+	if get_slide_collision_count() > 0:
+		_heading.x = -_heading.x
+	if absf(velocity.x) > 1.0:
+		_dir = signf(velocity.x)
 
 
 # --- Forest Spirit ------------------------------------------------------------------
@@ -466,7 +553,7 @@ func _wrapped_dx(x: float) -> float:
 
 func _touch_player() -> void:
 	var p := world.player
-	if p == null or p.dead or health <= 0.0:
+	if p == null or p.dead or health <= 0.0 or (data.harmless_until_hit and not _angry):
 		return
 	var body := p.body_rect()
 	body.position.x = global_position.x + _wrapped_dx(body.position.x + body.size.x * 0.5) - body.size.x * 0.5
@@ -500,6 +587,9 @@ func _update_look() -> void:
 				k = 1.0
 			_halo.strength = k
 		return
+	if data.ai == EnemyData.AI.CRAB or data.ai == EnemyData.AI.FISH:
+		_critter_look()
+		return
 	if not is_on_floor():
 		_set_frame(2)
 		_sprite.scale = Vector2(0.92, 1.1)
@@ -520,6 +610,26 @@ func _update_look() -> void:
 	_sprite.modulate = data.tint if _flash <= 0.0 else Color(2.0, 2.0, 2.0)
 	if _flash <= 0.0 and _poison_left > 0.0:
 		_sprite.modulate = data.tint * Color(0.7, 1.15, 0.6)  # poisoned: green
+	_tint_mark()
+
+
+## Crabs: two walking frames while scuttling (frame 0 resting). Fish: two swimming
+## frames, frame 2 flopping out of water; faces where it's going.
+func _critter_look() -> void:
+	var t := Time.get_ticks_msec()
+	var f := data.frame_size
+	_sprite.scale = Vector2.ONE
+	if data.ai == EnemyData.AI.CRAB:
+		_set_frame((1 + (t / 90) % 2) if _slither > 0.0 else 0)
+	else:
+		var wet := _in_water()
+		_set_frame((t / 160) % 2 if wet else 2)
+		_sprite.scale.x = -1.0 if _dir < 0.0 else 1.0
+		_sprite.rotation = clampf(velocity.y / maxf(absf(velocity.x) + 30.0, 1.0), -0.5, 0.5) * _sprite.scale.x if wet else 0.0
+	_sprite.position = Vector2(-f.x * 0.5 * _sprite.scale.x, -f.y)
+	_sprite.modulate = data.tint if _flash <= 0.0 else Color(2.0, 2.0, 2.0)
+	if _flash <= 0.0 and _poison_left > 0.0:
+		_sprite.modulate = data.tint * Color(0.7, 1.15, 0.6)
 	_tint_mark()
 
 

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_67k4d"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_7asuk"]
+[ext_resource type="Texture2D" path="res://assets/items/held/raw_fish.png" id="3_bkwcb"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/raw_fish.png" id="4_6q2kh"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_hmsv7"]
+
+[sub_resource type="Resource" id="Resource_i7hc8"]
+script = ExtResource("2_7asuk")
+id = &"raw_fish"
+texture = ExtResource("3_bkwcb")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_hmsv7")
+icon = ExtResource("4_6q2kh")
+held = SubResource("Resource_i7hc8")
+impact_at = 0.2
+id = &"raw_fish"
+display_name = "Raw Fish"
+description = "From a fish. Cook it at a campfire."

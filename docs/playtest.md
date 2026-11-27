@@ -358,6 +358,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 56: sea life (branch phase-56-sea-life)**
+- [ ] At the ocean: dune grass on the dry beach, seagrass and tall swaying kelp under water.
+- [ ] Crabs scuttle on the beach and sea floor and ignore you; hit one and it pinches back.
+      It drops a Raw Crab; a campfire cooks it into Crab Legs.
+- [ ] Fish swim in the sea and dart away when you get close. Kill one: Raw Fish, cooked at
+      a campfire into Cooked Fish. A fish knocked out of the water flops.
+- [ ] Console: `summon crab 3`, `summon fish 5` at the cursor.
+
 **Phase 55: ocean and ponds (branch phase-55-ocean)**
 - [ ] New world: walk away from spawn (or `tp` about half the world over) to the ocean:
       a sandy beach down to deep water, sand then Hard Sand underneath, caves only deeper.

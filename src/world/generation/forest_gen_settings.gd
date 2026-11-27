@@ -240,6 +240,14 @@ extends GameData
 @export var ocean_hard_sand_depth := 14
 ## Solid rock under the Hard Sand before any cave (so the sea can't drain into one).
 @export var ocean_cave_crust := 8
+## Plants (SeaFlora): chance a column of sea floor at least kelp_min_depth under water
+## has kelp (up to kelp_max_tiles tall, never reaching the surface), else seagrass; and
+## dune grass on dry beach sand. Ponds get seagrass.
+@export_range(0.0, 1.0) var kelp_chance := 0.3
+@export var kelp_min_depth := 6
+@export var kelp_max_tiles := 22
+@export_range(0.0, 1.0) var seagrass_chance := 0.45
+@export_range(0.0, 1.0) var dune_grass_chance := 0.3
 
 @export_group("Ponds")
 ## A pond spot every this many columns (on fairly flat ground, away from spawn and the

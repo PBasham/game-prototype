@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="SpawnTable" format=3]
+
+[ext_resource type="Script" path="res://src/combat/spawn_entry.gd" id="1_entry"]
+[ext_resource type="Resource" path="res://data/enemies/crab.tres" id="2_crab"]
+[ext_resource type="Resource" path="res://data/enemies/fish.tres" id="3_fish"]
+[ext_resource type="Script" path="res://src/combat/spawn_table.gd" id="4_table"]
+
+[sub_resource type="Resource" id="Entry_crab"]
+script = ExtResource("1_entry")
+enemy = ExtResource("2_crab")
+weight = 40.0
+
+[sub_resource type="Resource" id="Entry_fish"]
+script = ExtResource("1_entry")
+enemy = ExtResource("3_fish")
+weight = 60.0
+
+[resource]
+script = ExtResource("4_table")
+biome = &"ocean"
+max_depth_tiles = 30
+day_seconds = 4.0
+night_seconds = 5.0
+max_day = 10
+max_night = 8
+entries = Array[ExtResource("1_entry")]([SubResource("Entry_crab"), SubResource("Entry_fish")])
+id = &"ocean"
+display_name = "Ocean"

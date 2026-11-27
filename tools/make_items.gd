@@ -174,6 +174,17 @@ func _items() -> Array[ItemData]:
 	blue.food_value = 6.0
 	blue.heal_value = 4.0
 	out.append(blue)
+	# Sea life (Phase 56): raw from crabs and fish, cooked at a campfire.
+	out.append(_small(&"raw_crab", "Raw Crab", "From a beach crab. Cook it at a campfire into Crab Legs."))
+	out.append(_small(&"raw_fish", "Raw Fish", "From a fish. Cook it at a campfire."))
+	for row: Array in [
+			[&"crab_legs", "Crab Legs", "Cracked and cooked. +22 hunger, +6 health.", 22.0, 6.0],
+			[&"cooked_fish", "Cooked Fish", "Grilled on the campfire. +18 hunger, +5 health.", 18.0, 5.0]]:
+		var sea := _small(row[0], row[1], row[2])
+		sea.kind = ItemData.Kind.FOOD
+		sea.food_value = row[3]
+		sea.heal_value = row[4]
+		out.append(sea)
 	# Mushrooms (forageables): food, and ingredients for potions and poisons later.
 	var field := _small(&"field_mushroom", "Field Mushroom", "A plain, filling mushroom. Left click to eat: +8 hunger, +1 health. Better cooked at a campfire.")
 	field.kind = ItemData.Kind.FOOD
@@ -1220,6 +1231,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"chair", &"workbench", {&"wood": 4}, &"chair", 1, []],
 		[&"roasted_berries", &"cooking", {&"berries": 3}, &"roasted_berries", 1, []],
 		[&"cooked_mushroom", &"cooking", {&"field_mushroom": 1}, &"cooked_mushroom", 1, []],
+		[&"crab_legs", &"cooking", {&"raw_crab": 1}, &"crab_legs", 1, []],
+		[&"cooked_fish", &"cooking", {&"raw_fish": 1}, &"cooked_fish", 1, []],
 		[&"raspberry_compote", &"cooking", {&"raspberries": 4, &"wooden_bowl": 1}, &"raspberry_compote", 1, []],
 		[&"blueberry_mash", &"cooking", {&"blueberries": 4, &"wooden_bowl": 1}, &"blueberry_mash", 1, []],
 		[&"mushroom_stew", &"cooking", {&"field_mushroom": 2, &"red_cap": 1, &"wooden_bowl": 1}, &"mushroom_stew", 1, []],
