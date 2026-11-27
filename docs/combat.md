@@ -254,7 +254,8 @@ Spell power for a spell: book and conduit x (1 + magic damage) x `Player.school_
 (1 + the school's gear stat + a same-school weapon's `school_amp`).
 
 **Dual Storm Axes:** 7 per chop (alternating hands, then a crossing chop), shocked for
-3 s (2 every 0.5 s), Storm spells +20% while held. Right click: leap and slam, 14 damage
+3 s (2 every 0.5 s), Storm spells +20% while held. Right click: a long leap (`skill_leap_speed`
+48 tiles/s, `skill_leap_height` 7: about 18 tiles on flat ground) and slam, 14 damage
 in 4 tiles, 5 s cooldown. Held one in each hand (`dual_axes` item type, `dual`: the
 second axe rides in the back hand, `PaperDoll._offhand_sprite`).
 

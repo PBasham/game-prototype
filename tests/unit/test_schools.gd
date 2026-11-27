@@ -78,11 +78,29 @@ func test_axe_hits_shock_and_storm_spells_cash_it_in() -> void:
 	assert_false(e.is_marked(ItemData.School.STORM), "and wears off")
 
 
+func test_storm_axes_leap_far() -> void:
+	var p := w.player
+	_hold(&"dual_storm_axes")
+	w.item_user.cursor_override = p.global_position + Vector2(400, 0)
+	var start := p.global_position
+	assert_true(p.try_weapon_skill())
+	for i in 240:
+		await wait_physics_frames(1)
+		if not p.is_slamming():
+			break
+	assert_gt(p.global_position.x - start.x, 15.0 * World.TILE, "a long leap (about 18 tiles on flat ground)")
+
+
 func test_right_click_leaps_and_slams() -> void:
 	var p := w.player
 	_hold(&"dual_storm_axes")
 	var e := _slime(6 * World.TILE)
 	w.item_user.cursor_override = e.global_position
+	# A short leap, so it lands on the slime (the axes' own leap goes much farther).
+	var axes := ItemData.find(&"dual_storm_axes")
+	var leap := [axes.skill_leap_speed, axes.skill_leap_height]
+	axes.skill_leap_speed = 26.0
+	axes.skill_leap_height = 3.5
 	var hp := e.health
 	var start := p.global_position
 	assert_true(p.try_weapon_skill())
@@ -93,6 +111,8 @@ func test_right_click_leaps_and_slams() -> void:
 		await wait_physics_frames(1)
 		if not p.is_slamming():
 			break
+	axes.skill_leap_speed = leap[0]
+	axes.skill_leap_height = leap[1]
 	assert_false(p.is_slamming(), "landed")
 	assert_gt(p.global_position.x, start.x + 2 * World.TILE, "leapt forward")
 	assert_lt(e.health, hp, "the slam hit it")

@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 57, Storm Axes leap
+
+- **Patrick:** make the leap on the storm axes much farther.
+- **Claude:** `skill_leap_speed` 26 to 48 and `skill_leap_height` 3.5 to 7: about 18
+  tiles instead of 8.
+
 ## 2026-11-27: Phase 56, sea life
 
 - **Patrick:** add some flora and some fish, small crabs on the beach you can kill and cook

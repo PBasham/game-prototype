@@ -358,6 +358,9 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 57: Storm Axes leap (branch phase-57-storm-leap)**
+- [ ] Right click with the Dual Storm Axes: the leap carries about 18 tiles (was 8).
+
 **Phase 56: sea life (branch phase-56-sea-life)**
 - [ ] At the ocean: dune grass on the dry beach, seagrass and tall swaying kelp under water.
 - [ ] Crabs scuttle on the beach and sea floor and ignore you; hit one and it pinches back.

@@ -420,8 +420,8 @@ func _items() -> Array[ItemData]:
 	axes.skill_damage = 14.0
 	axes.skill_radius_tiles = 4.0
 	axes.skill_cooldown = 5.0
-	axes.skill_leap_speed = 26.0
-	axes.skill_leap_height = 3.5
+	axes.skill_leap_speed = 48.0
+	axes.skill_leap_height = 7.0
 	out.append(axes)
 	var csword := _weapon(&"copper_sword", "Copper Sword", "A proper blade.")
 	csword.melee_damage = 13.0
