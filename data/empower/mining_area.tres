@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EmpowerNode" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/items/empower_node.gd" id="1_emp"]
+[ext_resource type="Texture2D" path="res://assets/ui/empower/mining_area.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_emp")
+icon = ExtResource("2_icon")
+stat = 2
+per_rank = 0.0
+max_rank = 3
+rank_costs = Array[Dictionary]([{
+&"copper_bar": 10
+}, {
+&"copper_bar": 20
+}, {
+&"iron_bar": 15
+}])
+adds = Dictionary[StringName, float]({
+&"mining_area_max": 1.0
+})
+spells = Array[StringName]([&"mining_spell"])
+requires = &"mining_power"
+order = 1
+id = &"mining_area"
+display_name = "Area"
+description = "Digs a bigger area (and places one as big)."

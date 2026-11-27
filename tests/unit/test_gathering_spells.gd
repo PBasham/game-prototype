@@ -54,14 +54,17 @@ func test_power_reach_and_sharpness_ranks() -> void:
 	var mining := Registry.get_def(&"spells", &"mining_spell") as SpellData
 	var chop := Registry.get_def(&"spells", &"chopping_spell") as SpellData
 	var nodes := EmpowerNode.for_spell(mining).map(func(n: EmpowerNode) -> StringName: return n.id)
-	assert_eq(nodes, [&"mining_power", &"gather_reach"], "Power, then Reach (no Efficient: it's free)")
+	assert_eq(nodes[0], &"mining_power", "Power first")
+	assert_has(nodes, &"gather_reach")
+	assert_has(nodes, &"mining_area")
+	assert_does_not_have(nodes, &"efficient", "no Efficient: it's free")
 	assert_has(EmpowerNode.for_spell(chop).map(func(n: EmpowerNode) -> StringName: return n.id), &"chopping_power")
-	c.empower[&"mining_spell"] = {&"mining_power": 2, &"gather_reach": 3}
+	c.empower[&"mining_spell"] = {&"mining_power": 2, &"gather_reach": 3, &"mining_area": 2}
 	c.empower[&"chopping_spell"] = {&"chopping_power": 1}
 	c.apply_empower()
 	var m := ItemData.find(ItemData.spell_key(&"mining_spell")) as SpellData
 	assert_eq(m.mining_power, mining.mining_power + 20)
-	assert_eq(m.mining_area_max, 4, "iron rank: up to 4x4")
+	assert_eq(m.mining_area_max, 4, "Area 2/3: up to 4x4")
 	assert_almost_eq(m.mining_damage, mining.mining_damage * 1.6, 0.01)
 	assert_almost_eq(m.reach_tiles, mining.reach_tiles + 6.0, 0.01)
 	assert_eq(m.gather_rank, 2, "glows like iron")

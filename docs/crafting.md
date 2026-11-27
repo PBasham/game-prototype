@@ -417,9 +417,15 @@ Two magic stations:
   from a **Spell Page**. Recipes come from `Crafting.learn_recipes` (made on the fly,
   `RecipeData.teaches`).
 
-  **Empower** (bare bones of the magic progression tree): the next rank of each node on
-  each spell you know, bought for good, per spell. Nodes are data:
-  `data/empower/<id>.tres` (`EmpowerNode`, src/items/empower_node.gd).
+  **Empower**: each spell you know that has nodes is listed once. Click one: its **tree**
+  opens on the right, nodes as pixel circles with an icon and "rank / max" under them,
+  joined by lines (gold once the node above has a rank). A node is locked (dim, a little
+  padlock) until the node it hangs from has a rank. Click a node to pick it: its name,
+  rank, what it does, what the next rank changes ("Max area 2 -> 3") and its cost show
+  below, with the Empower button. Ranks are bought for good, per spell. Nodes are data:
+  `data/empower/<id>.tres` (`EmpowerNode`, src/items/empower_node.gd); the layout is
+  worked out from `requires` / `requires_any` (`Hud._empower_layout`), icons are
+  `assets/ui/empower/<id>.png` (`tools/make_empower_icons.py`).
 
   | Field | What it does |
   | --- | --- |
@@ -432,7 +438,9 @@ Two magic stations:
   | `spells` | Only these spells (by id) |
   | `casts` | Only spells cast this way (projectiles, chains...) |
   | `groups` | Spell groups it's offered for (empty = every spell that uses mana) |
-  | `requires` | A node that needs a rank first (the tree's shape; empty = first node) |
+  | `requires` | The node it hangs from (needs a rank first); only counts when that node is in the spell's tree, else it's a root there |
+  | `requires_any` | The same for nodes shared by trees with different roots: the first of these in the tree (Reach: Power or Sharpness) |
+  | `icon` | Its picture in the tree (16x16) |
   | `order` | Order in the tree |
 
   Nodes so far. Ranks are saved per character (`CharacterData.empower`); the spell's
@@ -442,15 +450,17 @@ Two magic stations:
 
   | Node | Spells | Per rank | Cost |
   | --- | --- | --- | --- |
-  | **Power** | Mining | power +10 (rank 1 mines iron), area up to +1 (4x4 at rank 2), 30% faster, iron glow | 10 copper bars, then 12 iron bars |
-  | **Sharpness** | Chopping | 40% faster, metal glow | 8 copper bars, then 10 iron bars |
-  | **Reach** | Mining, Chopping | +2 tiles (3 ranks) | 5 and 10 copper bars, then 8 iron bars |
-  | **Efficient** | anything that uses mana | 5% less mana (5 ranks) | 2 / 4 / 6 / 8 / 10 Magic Essence |
+  | **Power** | Mining (root) | power +10 (rank 1 mines iron), 30% faster, iron glow | 10 copper bars, then 12 iron bars |
+  | **Area** | Mining, after Power | max area +1: 3x3, 4x4, 5x5 (3 ranks); placing blocks goes as big | 10, then 20 copper bars, then 15 iron bars |
+  | **Sharpness** | Chopping (root) | 40% faster, metal glow | 8 copper bars, then 10 iron bars |
+  | **Reach** | Mining, Chopping, after Power / Sharpness | +2 tiles (3 ranks) | 5 and 10 copper bars, then 8 iron bars |
+  | **Efficient** | anything that uses mana, after Potency where there is one | 5% less mana (5 ranks) | 2 / 4 / 6 / 8 / 10 Magic Essence |
   | **Potency** | projectiles, gusts, charged, zones, summons, chains | 10% more damage (5 ranks) | 2 / 4 / 6... Magic Essence |
-  | **Arc** | Chain Spark | one more jump, a tile farther (2 ranks) | 5 essence + 5 copper bars, then 8 essence + 5 iron bars |
+  | **Arc** | Chain Spark, after Potency | one more jump, a tile farther (2 ranks) | 5 essence + 5 copper bars, then 8 essence + 5 iron bars |
   | **Distance** | Blink | 3 tiles farther (3 ranks) | 3 / 6 / 9 Magic Essence |
   | **Lasting** | buffs, lights, summons | 20% longer (3 ranks) | 2 / 4 / 6 Magic Essence |
-  | **Evolve** | Summon Slime | the next slime form | 6 essence + 15 slime |
+  | **Evolve** | Summon Slime, after Lasting | the next slime form | 6 essence + 15 slime |
+  | **Limit** | summons, after Lasting | one more out at a time (2 ranks, `SpellData.summon_bonus_slots`) | 6 essence + 10 copper bars, then 10 essence + 10 iron bars |
 - **Scribe's Desk** (station `scribing`, 15 wood, 5 paper, 2 copper bars at the
   workbench): scribe a scroll (a one-use cast) of any spell **you know**, and only
   those. It costs the spell's scroll recipe in full, times `World.scribe_cost_mult`

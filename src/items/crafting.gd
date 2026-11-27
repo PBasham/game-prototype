@@ -47,9 +47,11 @@ static func learn_recipes(c: CharacterData) -> Array[RecipeData]:
 	return out
 
 
-## The Spell Weaving Table's Empower tab: the next rank of each Empower node on each
-## spell you know (EmpowerNode.for_spell), for its cost. Buying it is permanent.
-static func empower_recipes(c: CharacterData) -> Array[RecipeData]:
+## The Spell Weaving Table's Empower tab: one entry per spell you know that has an
+## Empower tree (EmpowerNode.for_spell). Each is set to one node of its tree: `picks`
+## (spell id -> node id, the one clicked in the tree), else the first node that can take
+## a rank, else the first. Its inputs are that node's next rank cost (none when maxed).
+static func empower_recipes(c: CharacterData, picks: Dictionary = {}) -> Array[RecipeData]:
 	var out: Array[RecipeData] = []
 	if c == null:
 		return out
@@ -60,22 +62,32 @@ static func empower_recipes(c: CharacterData) -> Array[RecipeData]:
 			spells.append(s)
 	spells.sort_custom(func(a: SpellData, b: SpellData) -> bool: return a.display_name < b.display_name)
 	for spell in spells:
-		for node in EmpowerNode.for_spell(spell):
-			var rank := c.empower_rank(spell.id, node.id)
-			if rank >= node.max_rank:
-				continue
-			if node.requires != &"" and c.empower_rank(spell.id, node.requires) <= 0:
-				continue
-			var r := RecipeData.new()
-			r.id = StringName("empower_%s_%s" % [spell.id, node.id])
-			r.display_name = "%s: %s %d/%d" % [spell.display_name, node.display_name, rank + 1, node.max_rank]
-			r.station = &"spell_weaving"
+		var nodes := EmpowerNode.for_spell(spell)
+		if nodes.is_empty():
+			continue
+		var node: EmpowerNode = null
+		for n in nodes:
+			if picks.get(spell.id, &"") == n.id:
+				node = n
+		if node == null:
+			for n in nodes:
+				var parent := n.parent_in(spell)
+				if c.empower_rank(spell.id, n.id) < n.max_rank and (parent == null or c.empower_rank(spell.id, parent.id) > 0):
+					node = n
+					break
+		if node == null:
+			node = nodes[0]
+		var rank := c.empower_rank(spell.id, node.id)
+		var r := RecipeData.new()
+		r.id = StringName("empower_%s" % spell.id)
+		r.display_name = spell.display_name
+		r.station = &"spell_weaving"
+		if rank < node.max_rank:
 			r.inputs.assign(node.cost_for(rank))
-			r.output = ItemData.spell_key(spell.id)
-			r.empower_node = node.id
-			r.empower_spell = spell.id
-			r.note = node.description
-			out.append(r)
+		r.output = ItemData.spell_key(spell.id)
+		r.empower_node = node.id
+		r.empower_spell = spell.id
+		out.append(r)
 	return out
 
 

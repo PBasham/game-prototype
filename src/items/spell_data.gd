@@ -156,6 +156,8 @@ const GROUP_NAMES: Array[String] = ["Tools", "Movement", "Attack", "Defense", "L
 ## more as slimes are added. It hops after enemies and hits on contact for `damage`
 ## (times its contact damage over the first one's: a Blue Slime hits harder).
 @export var summon_enemy_ranks: Array[StringName] = []
+## Summons: how many more of them can be out at once (Empower's Limit).
+@export var summon_bonus_slots := 0
 
 ## Where the spellbook is while you cast it (Phase 30):
 ## HAND: in the off hand, the main hand aims (most spells; a quick cast with a weapon

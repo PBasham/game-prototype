@@ -634,8 +634,9 @@ func area_size(item: ItemData) -> int:
 		lo = 1
 		start = item.mining_area
 	elif _places(item):
-		var c := world.player.character
-		hi = c.book().build_area_max if c and c.book() else 2
+		# Placing goes as big as your Mining Spell digs (its Empower Area).
+		var mining := ItemData.find(ItemData.spell_key(&"mining_spell")) as SpellData
+		hi = maxi(mining.mining_area_max, mining.mining_area) if mining else 1
 		if item.place_area_max > 0:
 			hi = mini(hi, item.place_area_max)
 		start = 1

@@ -517,3 +517,15 @@ saves still load.
 | Change | Where |
 | --- | --- |
 | Tall bottles shrunk to the room under the next shelf | `ObjectLayer.shelf_room`, `shelf_texture(it, max_h)` |
+
+## Phase 41: the Empower tree
+
+| Change | Where |
+| --- | --- |
+| One entry per spell, the picked node | `Crafting.empower_recipes(c, picks)`; `Hud.empower_picks` |
+| The tree (layout, drawing, clicks) | `Hud._empower_layout`, `_draw_empower_detail`, `_pixel_circle`, `Area.EMPOWER_NODE` |
+| Tree shape, next-rank lines | `EmpowerNode.parent_in`, `requires_any`, `icon`, `next_rank_lines`, `FIELD_NAMES` |
+| Area and Limit nodes | `data/empower/mining_area.tres`, `limit.tres`; `SpellData.summon_bonus_slots` (World's summon limit) |
+| Placing area follows Mining | `ItemUser.area_size` |
+| Node icons | `assets/ui/empower/`, `tools/make_empower_icons.py` |
+| Console `crafttab` | `DevConsole` |

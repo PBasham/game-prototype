@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EmpowerNode" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/items/empower_node.gd" id="1_emp"]
+[ext_resource type="Texture2D" path="res://assets/ui/empower/limit.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_emp")
+icon = ExtResource("2_icon")
+stat = 2
+per_rank = 0.0
+max_rank = 2
+rank_costs = Array[Dictionary]([{
+&"magic_essence": 6,
+&"copper_bar": 10
+}, {
+&"magic_essence": 10,
+&"iron_bar": 10
+}])
+adds = Dictionary[StringName, float]({
+&"summon_bonus_slots": 1.0
+})
+casts = Array[int]([10])
+requires = &"lasting"
+order = 5
+id = &"limit"
+display_name = "Limit"
+description = "One more out at a time."

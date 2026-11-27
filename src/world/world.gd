@@ -762,6 +762,7 @@ func request_spell_effect(spell: SpellData, at: Vector2, power: float) -> Node:
 			# One summon, plus the gear's summon_slots (Forest Spirit Pendant): past that,
 			# the oldest goes. Summon damage gear makes it hit harder.
 			var limit := 1 + maxi(int(player.stat(&"summon_slots")), 0) if player else 1
+			limit += maxi(spell.summon_bonus_slots, 0)  # Empower: Limit
 			var out := get_tree().get_nodes_in_group(&"familiars").filter(
 				func(n: Node) -> bool: return not n.is_queued_for_deletion())
 			while out.size() >= limit:

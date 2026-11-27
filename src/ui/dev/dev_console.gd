@@ -560,6 +560,22 @@ func _register() -> void:
 	_add("reach", "reach", "Toggle unlimited reach for mining, chopping and placing.", func(_a: PackedStringArray) -> void:
 		world.item_user.infinite_reach = not world.item_user.infinite_reach
 		_print("Unlimited reach %s." % ("on" if world.item_user.infinite_reach else "off")))
+	_add("crafttab", "crafttab <tab> [row|name]", "In the open crafting window: switch to a tab (0 = the first) and select a row (for screenshots).", func(a: PackedStringArray) -> void:
+		if a.is_empty() or not a[0].is_valid_int():
+			_print("Usage: crafttab <tab> [row]")
+			return
+		world.hud.craft_tab = int(a[0])
+		world.hud._recipe_key = ""
+		world.hud.selected_recipe = int(a[1]) if a.size() > 1 and a[1].is_valid_int() else 0
+		if a.size() > 1 and not a[1].is_valid_int():
+			var want := " ".join(a.slice(1)).to_lower()
+			var list := world.hud.recipes()
+			for i in list.size():
+				if want in list[i].display_name.to_lower():
+					world.hud.selected_recipe = i
+					break
+		world.hud._redraw()
+		_print("Tab %d, row %d." % [world.hud.craft_tab, world.hud.selected_recipe]))
 	_add("freeplace", "freeplace", "Toggle placing blocks and walls anywhere, with nothing next to or behind them.", func(_a: PackedStringArray) -> void:
 		world.item_user.free_place = not world.item_user.free_place
 		_print("Free placing %s." % ("on" if world.item_user.free_place else "off")))

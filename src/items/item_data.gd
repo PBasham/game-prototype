@@ -71,8 +71,8 @@ const SPELL_PREFIX := "spell:"
 @export var plants: StringName = &""
 ## Can be placed anywhere in reach; otherwise it must touch a block or a wall.
 @export var free_place := false
-## Largest square the area toggle can place at once. 0 = whatever the spellbook allows
-## (build_area_max); 1 = always one at a time (tree seeds).
+## Largest square the area toggle can place at once. 0 = as big as the Mining Spell
+## digs (its max area, Empower's Area); 1 = always one at a time (tree seeds).
 @export var place_area_max := 0
 ## Placing reach in tiles. 0 = the spellbook's build_reach_tiles.
 @export var place_reach_tiles := 0.0
@@ -200,7 +200,7 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 ## Spellbooks: the book is your building tool too (like Starbound's matter manipulator).
 ## Placing blocks, walls and grass seeds reaches this far (tiles)...
 @export var build_reach_tiles := 12.0
-## ...and up to this big an area (Ctrl + wheel, shared with the mining spell's area).
+## Unused since Phase 41 (placing area follows the Mining Spell); kept so files load.
 @export var build_area_max := 3
 ## Spellbooks, conduits and tomes: multiplies spell strength (mining damage for now).
 @export var spell_power := 1.0

@@ -34,7 +34,7 @@ const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
 enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CATALOG_BUTTON, CHEST, CHEST_TAKE,
-	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME, TRASH }
+	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME, TRASH, EMPOWER_NODE }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
 const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
@@ -1326,12 +1326,12 @@ func recipes() -> Array[RecipeData]:
 	var c := world.character
 	var key := "%s|%d|%d|%d|%s|%s|%d|%s|%d|%d" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
 		hash(c.known_spells) if c else 0, world.scribe_cost_mult, world.scroll_max_mana_by_tier, weave_group,
-		weave_search, c.seen_items.size() if c else 0, hash(c.empower) if c else 0]
+		weave_search, c.seen_items.size() if c else 0, hash([c.empower, empower_picks]) if c else 0]
 	if key == _recipe_key:
 		return _recipe_cache
 	var list: Array[RecipeData] = []
 	if def and def.station == &"spell_weaving":
-		list = Crafting.empower_recipes(c) if craft_tab == 1 else Crafting.learn_recipes(c)
+		list = Crafting.empower_recipes(c, empower_picks) if craft_tab == 1 else Crafting.learn_recipes(c)
 	elif def and def.station == &"scribing":
 		list = Crafting.scroll_recipes(c, world.scroll_max_mana_by_tier, world.scribe_cost_mult)
 	else:
@@ -1462,6 +1462,10 @@ func craft_stock() -> CraftStock:
 
 
 func _times(r: RecipeData) -> int:
+	if r.empower_node != &"":
+		var spell := recipe_spell(r)
+		var node := Registry.get_def(&"empower", r.empower_node) as EmpowerNode
+		return 1 if spell and node and world.character.empower_problem(spell, node, world.free_crafting) == "" else 0
 	var n := Crafting.times_craftable(craft_stock(), r, INF if world.free_crafting else _max_mana())
 	return mini(n, 1) if r.teaches != &"" or r.empower_node != &"" else n
 
@@ -1534,6 +1538,14 @@ func _craft_hit(local: Vector2) -> Array:
 	for i in b.size():
 		if b[i].has_point(local):
 			return [Area.CRAFT, i]
+	var er := _empower_selected()
+	if er:
+		var spots := _empower_layout(recipe_spell(er), _detail_rect())
+		var k := 0
+		for node: EmpowerNode in spots:
+			if (spots[node] as Vector2).distance_to(local) <= EMPOWER_NODE_R + 1.0:
+				return [Area.EMPOWER_NODE, k]
+			k += 1
 	return [Area.NONE, -1]
 
 
@@ -1601,7 +1613,7 @@ func _draw_crafting(g: Control) -> void:
 		var label_color := UiSkin.GOOD if r.note != "" and not copying else UiSkin.TEXT
 		g.draw_string(font, rect.position + Vector2(22, 12), label_text, HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 46, 7,
 			Color(label_color, a))
-		if times > 0:
+		if times > 0 and r.empower_node == &"":
 			var t := str(times)
 			var tw := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
 			g.draw_string(font, Vector2(rect.end.x - tw - 3, rect.position.y + 12), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.GOOD)
@@ -1618,6 +1630,8 @@ func _draw_crafting(g: Control) -> void:
 		return
 	if selected_recipe >= list.size():
 		_draw_upgrade_detail(g, font, d, def, hover)
+	elif list[selected_recipe].empower_spell != &"":
+		_draw_empower_detail(g, font, d, list[selected_recipe], hover)
 	else:
 		_draw_recipe_detail(g, font, d, list[selected_recipe], hover)
 	_draw_cursor_stack(g)
@@ -1706,6 +1720,148 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 			_:
 				var state := UiSkin.Btn.DISABLED if times <= 0 else (UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL)
 				UiSkin.button(g, b[i], "Learn" if r.teaches != &"" else ("Empower" if r.empower_node != &"" else "Craft"), state)
+
+
+# --- the Empower tree -----------------------------------------------------------------
+
+const EMPOWER_NODE_R := 10.0
+const EMPOWER_ROW_H := 26.0
+const EMPOWER_TREE_TOP := 20.0
+## The node picked in each spell's tree (spell id -> node id); the first that can take a
+## rank until you click one.
+var empower_picks: Dictionary[StringName, StringName] = {}
+
+
+## The selected Empower entry (the Spell Weaving Table's Empower tab), or null.
+func _empower_selected() -> RecipeData:
+	var list := recipes()
+	if selected_recipe < list.size() and list[selected_recipe].empower_spell != &"":
+		return list[selected_recipe]
+	return null
+
+
+## Where each node of a spell's tree sits (centers, in the window), roots on top, each
+## child under its parent, leaves spread evenly across.
+func _empower_layout(spell: SpellData, d: Rect2) -> Dictionary:
+	var out := {}
+	if spell == null:
+		return out
+	var nodes := EmpowerNode.for_spell(spell)
+	var kids := {}
+	var roots: Array[EmpowerNode] = []
+	for n in nodes:
+		var p := n.parent_in(spell)
+		if p == null or not nodes.has(p):
+			roots.append(n)
+		else:
+			if not kids.has(p):
+				kids[p] = []
+			(kids[p] as Array).append(n)
+	var col := {}
+	var depth := {}
+	var next := [0.0]
+	var place := func(self_ref: Callable, n: EmpowerNode, dep: int) -> void:
+		depth[n] = dep
+		var ch: Array = kids.get(n, [])
+		if ch.is_empty():
+			col[n] = next[0]
+			next[0] += 1.0
+			return
+		var sum := 0.0
+		for c: EmpowerNode in ch:
+			self_ref.call(self_ref, c, dep + 1)
+			sum += float(col[c])
+		col[n] = sum / ch.size()
+	for r in roots:
+		place.call(place, r, 0)
+	var cols := maxf(next[0], 1.0)
+	for n in nodes:
+		var x := d.position.x + (float(col[n]) + 0.5) / cols * d.size.x
+		out[n] = Vector2(roundf(x), d.position.y + EMPOWER_TREE_TOP + EMPOWER_NODE_R + int(depth[n]) * EMPOWER_ROW_H)
+	return out
+
+
+func _draw_empower_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover: Array) -> void:
+	var c := world.character
+	var spell := recipe_spell(r)
+	if spell == null:
+		return
+	# The spell.
+	_draw_icon(g, spell.icon, d.position + Vector2(0, 1))
+	g.draw_string(font, d.position + Vector2(20, 12), spell.display_name, HORIZONTAL_ALIGNMENT_LEFT, d.size.x - 20, 8, UiSkin.TEXT)
+	# The tree: lines first, then the nodes.
+	var spots := _empower_layout(spell, d)
+	var lowest := d.position.y
+	for n: EmpowerNode in spots:
+		var p := n.parent_in(spell)
+		if p and spots.has(p):
+			var lit := c.empower_rank(spell.id, p.id) > 0
+			var a: Vector2 = spots[p]
+			var b: Vector2 = spots[n]
+			var mid := Vector2(a.x, (a.y + b.y) * 0.5)
+			var lc := UiSkin.GOLD if lit else Color(0.4, 0.36, 0.3)
+			g.draw_line(a + Vector2(0, EMPOWER_NODE_R), mid, lc, 1.0)
+			g.draw_line(mid, Vector2(b.x, mid.y), lc, 1.0)
+			g.draw_line(Vector2(b.x, mid.y), b - Vector2(0, EMPOWER_NODE_R), lc, 1.0)
+	var k := 0
+	var picked: EmpowerNode = Registry.get_def(&"empower", r.empower_node) as EmpowerNode
+	for n: EmpowerNode in spots:
+		var at: Vector2 = spots[n]
+		lowest = maxf(lowest, at.y)
+		var rank := c.empower_rank(spell.id, n.id)
+		var parent := n.parent_in(spell)
+		var locked := parent != null and c.empower_rank(spell.id, parent.id) <= 0
+		var hot: bool = hover[0] == Area.EMPOWER_NODE and hover[1] == k
+		var ring := UiSkin.GOLD if n == picked else (UiSkin.TEXT if hot else Color(0.45, 0.4, 0.33))
+		if rank >= n.max_rank:
+			ring = UiSkin.GOOD if n != picked else UiSkin.GOLD
+		_pixel_circle(g, at, EMPOWER_NODE_R, ring)
+		_pixel_circle(g, at, EMPOWER_NODE_R - 1.0, Color(0.12, 0.1, 0.09) if not locked else Color(0.08, 0.07, 0.07))
+		if n.icon:
+			g.draw_texture_rect(n.icon, Rect2(at - Vector2(8, 8), Vector2(16, 16)), false,
+				Color(1, 1, 1, 0.3) if locked else Color.WHITE)
+		if locked:
+			# A little padlock.
+			g.draw_rect(Rect2(at + Vector2(4, 3), Vector2(5, 4)), UiSkin.DIM)
+			g.draw_rect(Rect2(at + Vector2(5, 1), Vector2(3, 2)), UiSkin.DIM, false, 1.0)
+		var rt := "%d/%d" % [rank, n.max_rank]
+		var rw := font.get_string_size(rt, HORIZONTAL_ALIGNMENT_LEFT, -1, 5).x
+		g.draw_string(font, at + Vector2(-rw * 0.5, EMPOWER_NODE_R + 6), rt, HORIZONTAL_ALIGNMENT_LEFT, -1, 5,
+			UiSkin.GOOD if rank > 0 else UiSkin.DIM)
+		k += 1
+	if picked == null:
+		return
+	# The picked node: name, rank, what it does, what the next rank changes, its cost.
+	var rank := c.empower_rank(spell.id, picked.id)
+	var y := lowest + EMPOWER_NODE_R + 16
+	g.draw_string(font, Vector2(d.position.x, y), "%s  %d/%d" % [picked.display_name, rank, picked.max_rank],
+		HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 8, UiSkin.GOLD)
+	y += 9
+	g.draw_string(font, Vector2(d.position.x, y), picked.description, HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.DIM)
+	y += 4
+	if rank < picked.max_rank:
+		for line in picked.next_rank_lines(spell, rank):
+			y += 9
+			g.draw_string(font, Vector2(d.position.x, y), line, HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.GOOD)
+		y += 4
+		var inv := craft_stock()
+		for id: StringName in r.inputs:
+			var need: int = r.inputs[id]
+			y = _ingredient_row(g, font, d, y, id, "%d / %d" % [inv.count_of(id), need], inv.count_of(id) >= need)
+	var b := _craft_button_rects()
+	var problem := c.empower_problem(spell, picked, world.free_crafting)
+	if problem != "" and y < b[0].position.y - 10:
+		g.draw_string(font, Vector2(d.position.x, b[0].position.y - 3), problem, HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.BAD)
+	var hot: bool = hover[0] == Area.CRAFT and hover[1] == CraftBtn.CRAFT
+	UiSkin.button(g, b[CraftBtn.CRAFT], "Empower", UiSkin.Btn.DISABLED if problem != "" else (UiSkin.Btn.HOT if hot else UiSkin.Btn.NORMAL))
+
+
+## A filled circle drawn in whole pixels (no smoothing).
+static func _pixel_circle(g: CanvasItem, at: Vector2, r: float, color: Color) -> void:
+	var ri := int(r)
+	for dy in range(-ri, ri + 1):
+		var w := int(sqrt(maxf(r * r - (dy + 0.5) * (dy + 0.5), 0.0)) + 0.5)
+		g.draw_rect(Rect2(at.x - w, at.y + dy, w * 2, 1), color)
 
 
 ## One "icon name  have / need" line; returns the next y.
@@ -1930,6 +2086,12 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 			selected_recipe = h[1]
 			if mb.double_click and selected_recipe < recipes().size():
 				craft(recipes()[selected_recipe], 1)
+		Area.EMPOWER_NODE:
+			var er := _empower_selected()
+			if er:
+				var spots := _empower_layout(recipe_spell(er), _detail_rect())
+				empower_picks[er.empower_spell] = (spots.keys()[h[1]] as EmpowerNode).id
+				_recipe_key = ""
 		Area.CRAFT:
 			if selected_recipe >= recipes().size():
 				upgrade_station()

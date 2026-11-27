@@ -109,8 +109,9 @@ func empower_problem(spell: SpellData, node: EmpowerNode, free := false) -> Stri
 	var rank := empower_rank(spell.id, node.id)
 	if rank >= node.max_rank:
 		return "Fully empowered"
-	if node.requires != &"" and empower_rank(spell.id, node.requires) <= 0:
-		return "Needs the node before it"
+	var parent := node.parent_in(spell)
+	if parent and empower_rank(spell.id, parent.id) <= 0:
+		return "Needs %s first" % parent.display_name
 	var cost := {} if free else node.cost_for(rank)
 	for id in cost:
 		if inventory.count_of(id) < cost[id]:
@@ -270,7 +271,7 @@ func give_dev_kit() -> void:
 	for d in Registry.get_all(&"spells"):
 		learn_spell(d.id)
 	# Gathering spells fully empowered, like the iron pickaxe the kit used to carry.
-	empower[&"mining_spell"] = {&"mining_power": 2, &"gather_reach": 3}
+	empower[&"mining_spell"] = {&"mining_power": 2, &"gather_reach": 3, &"mining_area": 2}
 	empower[&"chopping_spell"] = {&"chopping_power": 2, &"gather_reach": 3}
 	# A starting loadout to try things with.
 	var q: Array[StringName] = [&"spark", &"arcane_bolt", &"chain_spark", &"air_push", &"familiar",

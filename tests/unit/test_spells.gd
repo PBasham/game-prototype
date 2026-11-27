@@ -928,7 +928,10 @@ func test_empower_efficient_lowers_mana_costs() -> void:
 	assert_eq(node.max_rank, 5)
 	# The tab lists rank 1 for each known spell that uses mana.
 	var ids := Crafting.empower_recipes(c).map(func(r: RecipeData) -> StringName: return r.id)
-	assert_has(ids, &"empower_spark_efficient")
+	assert_has(ids, &"empower_spark", "one entry per spell")
+	assert_string_contains(c.empower_problem(spark, node), "Potency", "Efficient follows Potency on damage spells")
+	assert_false(c.empower_problem(fly, node).contains("Potency"), "a root where there's no Potency")
+	c.empower[&"spark"] = {&"potency": 1}
 	c.inventory.remove(&"magic_essence", c.inventory.count_of(&"magic_essence"))
 	assert_string_contains(c.empower_problem(spark, node), "Magic Essence")
 	c.inventory.add(&"magic_essence", 6)
@@ -951,8 +954,8 @@ func test_empower_efficient_lowers_mana_costs() -> void:
 	assert_eq(back.empower_rank(&"spark", &"efficient"), 2)
 	# The HUD's buy path, through a recipe.
 	c.inventory.add(&"magic_essence", 6)
-	var r: RecipeData = Crafting.empower_recipes(c).filter(
-		func(x: RecipeData) -> bool: return x.id == &"empower_spark_efficient")[0]
-	assert_eq(r.display_name, "Spark: Efficient 3/5")
+	var r: RecipeData = Crafting.empower_recipes(c, {&"spark": &"efficient"}).filter(
+		func(x: RecipeData) -> bool: return x.id == &"empower_spark")[0]
+	assert_eq(r.empower_node, &"efficient", "the node picked in the tree")
 	assert_eq(w.hud.craft(r, 1), 1)
 	assert_eq(c.empower_rank(&"spark", &"efficient"), 3)

@@ -227,7 +227,7 @@ its area instead of a square (Hyper Drill). Mana, costs and tiers: [crafting.md]
 
 | Spell | Cast | Notes |
 | --- | --- | --- |
-| Mining Spell | TOOL beam, phantom pickaxe | Known from the start, free. 45 mining per second per tile, landing once per swing (`phantom_swing_time` 0.3 s); power 30 (stone, dirt, copper), area 2 (toggle 1 to 2), reach 8. Empower: Power (copper then iron bars: power 40 then 50, area up to 3 then 4, 30% faster per rank), Reach (+2 tiles, 3 ranks) |
+| Mining Spell | TOOL beam, phantom pickaxe | Known from the start, free. 45 mining per second per tile, landing once per swing (`phantom_swing_time` 0.3 s); power 30 (stone, dirt, copper), area 2 (toggle 1 to 2), reach 8. Empower: Power (copper then iron bars: power 40 then 50, 30% faster per rank), Area (max 3x3, 4x4, 5x5), Reach (+2 tiles, 3 ranks). Placing blocks and walls goes as big as its max area. |
 | Chopping Spell | TOOL beam, phantom axe | Known from the start, free. 60 chopping per second, once per swing, reach 8. Empower: Sharpness (copper then iron bars, 40% faster per rank), Reach |
 | Fly | TOGGLE | Click to fly, click again to stop. WASD in every direction, Space goes up. No gravity or fall damage while flying. 34 tiles/s (`move_speed`; the Player's `fly_speed` is the fallback), `fly_accel_time` (0.15). **Hold Shift while moving to boost:** speed x2 (`boost_speed_mult`), mana x4 (`boost_mana_mult`: 40/s, a full bar in about 2.5 s). The boost is meant to become an empowerment later. Stays on when you switch items. 10 mana/s. |
 | Spark | PROJECTILE | 8 damage (times spell power), 40 tiles/s, 20 tiles. Hold to keep casting (one per 0.3 s). 2 mana. |

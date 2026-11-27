@@ -141,3 +141,30 @@ func test_freecraft_empowers_for_nothing() -> void:
 	var before := c.empower_rank(&"mining_spell", &"mining_power")
 	assert_true(c.buy_empower(spell, node, true))
 	assert_eq(c.empower_rank(&"mining_spell", &"mining_power"), before + 1)
+
+
+func test_empower_tree_area_limit_and_placing_area() -> void:
+	var c := w.character
+	var mining := ItemData.find(ItemData.spell_key(&"mining_spell")) as SpellData
+	var area := Registry.get_def(&"empower", &"mining_area") as EmpowerNode
+	assert_eq(area.parent_in(mining).id, &"mining_power", "Area hangs from Power")
+	var reach := Registry.get_def(&"empower", &"gather_reach") as EmpowerNode
+	var chop := ItemData.find(ItemData.spell_key(&"chopping_spell")) as SpellData
+	assert_eq(reach.parent_in(chop).id, &"chopping_power", "Reach hangs from Sharpness on Chopping")
+	# Placing follows the Mining Spell's area.
+	c.empower[&"mining_spell"] = {&"mining_power": 1, &"mining_area": 3}
+	c.apply_empower()
+	w.player.select_slot(3)
+	var held := w.player.held_item
+	for _i in 6:
+		w.player.area_scrolled.emit(1)
+	assert_eq(w.item_user.area_size(held), 5, "Area 3/3: places 5x5 too")
+	# Limit: one more summon out.
+	var slime := Registry.get_def(&"spells", &"summon_slime") as SpellData
+	var limit := Registry.get_def(&"empower", &"limit") as EmpowerNode
+	assert_true(limit.fits(slime))
+	var copy := slime.duplicate() as SpellData
+	limit.apply(copy, 2)
+	assert_eq(copy.summon_bonus_slots, 2)
+	assert_has(limit.next_rank_lines(slime, 0), "Summons at a time 0 -> 1")
+	ItemData.set_empowered([])

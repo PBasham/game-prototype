@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 41, the Empower tree
+
+- **Patrick:** each spell once; a node tree on the right, nodes as pixel circles with
+  icons, some locked behind others; descriptions just say what it does; an Area node for
+  Mining; placing area follows the Mining Spell (the book no longer sets it; its build
+  reach still does); summons get Limit (2 ranks); a reaching hand for Reach.
+- **Claude:** Power no longer grows the area: Area does (3 ranks: 3x3, 4x4, 5x5). The
+  tree lays itself out from `requires` / `requires_any`. Efficient hangs from Potency
+  where a spell has Potency. Saves with old Power ranks keep them; dev kit gets Area 2/3.
+
 ## 2026-11-26: Phase 40, sand block, denser reinforced wood
 
 - **Patrick:** Sand is a block and a back wall. Done (atlas row 20, `data/walls/sand_wall.tres`).

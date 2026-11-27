@@ -274,6 +274,7 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/hanging_net_{small,medium,large}.png (+ icons, held) | Nets, 2 frames: rope and bag, then the mesh drawn over the contents. Same script |
 | objects/potion_cabinet.png, potion_bookcase.png | Now 2 frames: the cabinet, then its glass doors (`front_frame`). `tools/make_potion_storage_art.py` |
 | terrain/sand.png, terrain/sand_wall.png | 128x128 detailed sand grains with soft ripples (the wall darker). `tools/make_glass_clay_art.py` |
+| ui/empower/<node id>.png | 16x16 Empower node icons (pick head, axe head, expanding arrows, reaching hand, drop, flame, zigzag, swoosh, hourglass, slime, two orbs and a plus). `tools/make_empower_icons.py` |
 | tiles/blocks.png row 20 | Sand's collision row (a copy of clay's). Same script |
 | tiles/blocks.png row 19 | Glass's collision row (a copy of row 17). Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |

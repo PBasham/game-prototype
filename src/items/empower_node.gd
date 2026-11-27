@@ -8,7 +8,7 @@ extends GameData
 ## MANA_COST: per_rank changes the mana cost. EVOLVE: each rank grows a melee summon
 ## into its next form (SpellData.summon_enemy_ranks: Green Slime, then Blue Slime).
 ## FIELDS: each rank changes spell numbers by name (`adds`, `scales`), e.g. Mining's
-## Power: mining_power +10, mining_area_max +1, mining_damage +30%.
+## Power: mining_power +10, mining_damage +30%.
 enum Stat { MANA_COST, EVOLVE, FIELDS }
 
 ## What a rank changes, and by how much (Efficient: MANA_COST -0.05 = 5% cheaper).
@@ -30,8 +30,15 @@ enum Stat { MANA_COST, EVOLVE, FIELDS }
 @export var casts: Array[SpellData.Cast] = []
 ## Spell groups it's offered for (empty = every spell that uses mana).
 @export var groups: Array[SpellData.Group] = []
-## Another node that needs a rank first (empty = a root node).
+## Another node that needs a rank first (empty = a root node). Only counts when that
+## node is in the spell's tree (Efficient follows Potency on damage spells, and is a root
+## on the rest).
 @export var requires: StringName = &""
+## Like `requires`, for nodes shared by trees with different roots (Reach follows Mining's
+## Power or Chopping's Sharpness): the first of these in the spell's tree.
+@export var requires_any: Array[StringName] = []
+## Its picture in the tree (16x16; drawn in a pixel circle).
+@export var icon: Texture2D
 ## Sort order in the tree.
 @export var order := 0
 
@@ -97,3 +104,52 @@ static func for_spell(spell: SpellData) -> Array[EmpowerNode]:
 			out.append(n)
 	out.sort_custom(func(a: EmpowerNode, b: EmpowerNode) -> bool: return a.order < b.order)
 	return out
+
+
+## The node this one hangs from in `spell`'s tree (null = a root there).
+func parent_in(spell: SpellData) -> EmpowerNode:
+	var ids: Array[StringName] = []
+	if requires != &"":
+		ids.append(requires)
+	ids.append_array(requires_any)
+	for id in ids:
+		var n := Registry.get_def(&"empower", id) as EmpowerNode
+		if n and n.fits(spell):
+			return n
+	return null
+
+
+## Readable names for the spell numbers nodes change (tooltips, the tree's "3 -> 4").
+const FIELD_NAMES := {&"mining_power": "Mining power", &"mining_area_max": "Max area",
+	&"mining_damage": "Speed", &"reach_tiles": "Reach", &"axe_damage": "Chopping speed",
+	&"damage": "Damage", &"chain_jumps": "Jumps", &"chain_tiles": "Jump range",
+	&"blink_tiles": "Blink distance", &"duration": "Duration", &"summon_bonus_slots": "Summons at a time"}
+
+
+## What the next rank changes on `spell` (its current, empowered numbers), one line each:
+## "Max area 3 -> 4". Fields with no name (gather_rank) are left out.
+func next_rank_lines(spell: SpellData, rank: int) -> PackedStringArray:
+	var out := PackedStringArray()
+	match stat:
+		Stat.MANA_COST:
+			out.append("Mana cost %d%% -> %d%%" % [roundi((1.0 + per_rank * rank) * 100.0), roundi((1.0 + per_rank * (rank + 1)) * 100.0)])
+		Stat.EVOLVE:
+			var forms := spell.summon_enemy_ranks
+			if rank + 1 < forms.size():
+				var e := Registry.get_def(&"enemies", forms[rank + 1]) as EnemyData
+				out.append("Becomes a %s" % (e.display_name if e else String(forms[rank + 1])))
+		Stat.FIELDS:
+			for f: StringName in adds:
+				if FIELD_NAMES.has(f):
+					var v := float(spell.get(f))
+					out.append("%s %s -> %s" % [FIELD_NAMES[f], _n(v), _n(v + adds[f])])
+			for f: StringName in scales:
+				if FIELD_NAMES.has(f):
+					var v := float(spell.get(f))
+					var base := v / (1.0 + scales[f] * rank)
+					out.append("%s %s -> %s" % [FIELD_NAMES[f], _n(v), _n(base * (1.0 + scales[f] * (rank + 1)))])
+	return out
+
+
+static func _n(v: float) -> String:
+	return str(roundi(v)) if is_equal_approx(v, roundf(v)) else "%.1f" % v

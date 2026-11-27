@@ -81,7 +81,7 @@ func test_spell_area_toggle() -> void:
 	w.player.area_scrolled.emit(1)
 	assert_eq(u.area_size(spell), 3)
 	w.player.area_scrolled.emit(1)
-	assert_eq(u.area_size(spell), 4, "the dev kit's Power 2/2: up to 4x4")
+	assert_eq(u.area_size(spell), 4, "the dev kit's Area 2/3: up to 4x4")
 	w.player.area_scrolled.emit(1)
 	assert_eq(u.area_size(spell), 4, "capped at mining_area_max")
 	for i in 4:
@@ -296,7 +296,7 @@ func test_building_uses_the_spellbook_reach_and_shared_area() -> void:
 	var planks := w.player.held_item
 	w.player.area_scrolled.emit(1)
 	w.player.area_scrolled.emit(1)
-	assert_eq(u.area_size(planks), 3, "up to the book's build_area_max")
+	assert_eq(u.area_size(planks), 3, "placing goes as big as the Mining Spell digs")
 	w.player.toggle_tool_spell(&"mining_spell")  # R
 	assert_eq(u.area_size(w.player.use_item()), 3, "the spell shares the area")
 	w.player.select_slot(0)  # the dagger
