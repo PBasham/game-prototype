@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_ftq5c"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_htugu"]
+[ext_resource type="Texture2D" path="res://assets/items/held/potion_bookcase.png" id="3_p121b"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/potion_bookcase.png" id="4_882qb"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_s7um6"]
+
+[sub_resource type="Resource" id="Resource_8jnit"]
+script = ExtResource("2_htugu")
+id = &"potion_bookcase"
+texture = ExtResource("3_p121b")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_s7um6")
+kind = 10
+icon = ExtResource("4_882qb")
+max_stack = 99
+held = SubResource("Resource_8jnit")
+impact_at = 0.2
+places_object = &"potion_bookcase"
+place_area_max = 1
+id = &"potion_bookcase"
+display_name = "Potion Bookcase"
+description = "A tall glass fronted case for potions and bottles: 16 stacks on 5 shelves. Furniture can stand on top."

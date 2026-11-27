@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_c8vft"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_ycgtw"]
+[ext_resource type="Texture2D" path="res://assets/items/held/sand.png" id="3_8mh5o"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/sand.png" id="4_sb5l5"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_o3qav"]
+
+[sub_resource type="Resource" id="Resource_q6ob5"]
+script = ExtResource("2_ycgtw")
+id = &"sand"
+texture = ExtResource("3_8mh5o")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_o3qav")
+icon = ExtResource("4_sb5l5")
+held = SubResource("Resource_q6ob5")
+impact_at = 0.2
+id = &"sand"
+display_name = "Sand"
+description = "Fine sand. Melt it in a Furnace into Glass. (No sand in the world yet: the Creative window has it.)"

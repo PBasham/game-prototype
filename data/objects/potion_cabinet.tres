@@ -7,12 +7,14 @@
 script = ExtResource("2_6y885")
 frames = ExtResource("1_wnc6b")
 style = 2
-height_tiles = 4
+height_tiles = 5
 detail = 2
 width_tiles = 3
 needs_floor = true
 container_accepts = &"potion"
 fill_look = 2
+bottle_shelves = Array[int]([72, 56, 40, 24])
+flat_top = true
 container_slots = 10
 health = 1.0
 drop_item = &"potion_cabinet"

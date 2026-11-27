@@ -263,7 +263,10 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/{table,shelf}.png, items/{icons,held}/{table,shelf}.png | Table (64x48, 4x3 tiles) and Shelf (48x16, 3x1, on a back wall), drawn at 1x in the workbench's wood colors by `art/concepts/stations/furn.py`, then the same 2x pass |
 | objects/scribes_desk.png, items/{icons,held}/scribes_desk.png | Scribe's Desk (4x3 tiles, detail 2): a writing desk with an open scroll, inkwell and quill, candle. Hand-drawn placeholder (PIL) |
 | objects/lumber_rack.png, items/{icons,held}/lumber_rack.png | Lumber Rack (3x3 tiles, detail 2): 11 frames of 48x48, empty to full in 10% steps, log ends in staggered rows (5, 4, 5, 4, 5) filled a layer at a time. Placeholder from `art/concepts/storage/make_storage.py` |
-| objects/potion_cabinet.png, items/{icons,held}/potion_cabinet.png | Potion Cabinet (3x4 tiles, detail 2): 48x64 empty cabinet; bottles are drawn in code in each item's `shelf_color`. Same script |
+| objects/potion_cabinet.png, items/{icons,held}/potion_cabinet.png | Potion Cabinet (3x5 tiles, detail 2): 48x80, glass doors, 4 shelves; bottles are drawn in code (`ObjectLayer.draw_bottle`). From `tools/make_potion_storage_art.py` |
+| objects/potion_bookcase.png, objects/potion_shelf.png (+ icons, held) | Potion Bookcase (4x6, 64x96, 5 shelves) and Potion Shelf (3x2, 48x32, one plank). Same script |
+| items/{icons,held}/{clay_bottle,clay_jug,glass_vial,glass_bottle,glass_flask}.png | Copies of the empty flask concepts (`art/concepts/flasks/*_empty.png`). Same script |
+| items/{icons,held}/{sand,glass}.png | Sand pile and glass pane placeholders. Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |
 | items/icons/tele_grab.png (+ scroll_ and page_ icons) | 16x16 Tele Grab spell icon: a violet swirl pulling in an ore chunk. Placeholder from `art/concepts/spells/make_tele_grab.py` |
 | trees/darkwood_{0,1,2}.png | Darkwood trees, 104 wide, 180 / 230 / 280 tall: purple-brown trunk, round dark crown. Placeholders from `art/concepts/dark_forest/make_dark_forest.py` |

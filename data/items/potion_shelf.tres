@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_pqe1r"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_ptjko"]
+[ext_resource type="Texture2D" path="res://assets/items/held/potion_shelf.png" id="3_sdgv8"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/potion_shelf.png" id="4_36qbq"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_t7hhc"]
+
+[sub_resource type="Resource" id="Resource_mg2rx"]
+script = ExtResource("2_ptjko")
+id = &"potion_shelf"
+texture = ExtResource("3_sdgv8")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_t7hhc")
+kind = 10
+icon = ExtResource("4_36qbq")
+max_stack = 99
+held = SubResource("Resource_mg2rx")
+impact_at = 0.2
+places_object = &"potion_shelf"
+place_area_max = 1
+id = &"potion_shelf"
+display_name = "Potion Shelf"
+description = "Hangs on a back wall: 4 stacks of potions and bottles on display."

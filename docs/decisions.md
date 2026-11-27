@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 35, bottles, glass, potion furniture
+
+- **Patrick:** the Potion Cabinet's bottles should be clay, not glass; add 2 more clay
+  sizes and 3 glass sizes, each with its own shelf look; a slightly bigger cabinet, a
+  bookcase-sized one and a shelf, stackable. The cabinet needs glass (not clay flasks);
+  add Sand and Glass (1 Sand = 1 Glass). Big bottles take 2 shelf spaces, heights relative.
+- **Claude:** names Clay Bottle (regular), Clay Jug (large), Glass Vial, Glass Bottle,
+  Glass Flask; the old thin Clay Flask stays. Shelf space counts in spots, large = 2.
+  Stacking via `flat_top` on chests, tables, desks, racks and the potion furniture. Sand
+  is Creative-only until a sand biome is designed. Console `freeplace` added on request.
+
 ## 2026-11-26: Phase 34, Creative window, quit confirmation
 
 - **Patrick:** F7 is a creative mode window, not "Dev items"; add Dev and Test tabs and

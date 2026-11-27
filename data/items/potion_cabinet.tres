@@ -24,4 +24,4 @@ places_object = &"potion_cabinet"
 place_area_max = 1
 id = &"potion_cabinet"
 display_name = "Potion Cabinet"
-description = "Storage for potions, flasks and coatings: 10 stacks, shown on its shelves."
+description = "Glass fronted storage for potions and bottles: 10 stacks, shown on its shelves. Furniture can stand on top."

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/potion_bookcase.png" id="1_unu0m"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_asq28"]
+
+[resource]
+script = ExtResource("2_asq28")
+frames = ExtResource("1_unu0m")
+style = 2
+height_tiles = 6
+detail = 2
+width_tiles = 4
+needs_floor = true
+container_accepts = &"potion"
+fill_look = 2
+bottle_shelves = Array[int]([88, 72, 56, 40, 24])
+bottles_per_shelf = 11
+bottle_x0 = 7.0
+flat_top = true
+container_slots = 16
+health = 1.0
+drop_item = &"potion_bookcase"
+id = &"potion_bookcase"
+display_name = "Potion Bookcase"

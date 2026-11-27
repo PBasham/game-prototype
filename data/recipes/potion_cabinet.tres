@@ -6,8 +6,8 @@
 script = ExtResource("1_j318n")
 station = &"workbench"
 inputs = Dictionary[StringName, int]({
-&"clay_flask": 2,
 &"copper_bar": 2,
+&"glass": 4,
 &"wood": 20
 })
 output = &"potion_cabinet"

@@ -358,6 +358,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 35: bottles, glass, potion furniture (branch phase-35-bottles-glass)**
+- [ ] Creative window: Sand, Glass, Clay Bottle, Clay Jug, Glass Vial, Glass Bottle, Glass Flask, Potion Bookcase, Potion Shelf.
+- [ ] Furnace: 1 Sand makes 1 Glass; the bottles from Glass and Clay.
+- [ ] Potion Cabinet is 3x5 with glass doors and needs 4 Glass; old saves: pick old cabinets up and place them again.
+- [ ] Fill a cabinet: potions show as clay bottles (colored band and seal), glass bottles show their liquid; Clay Jugs and Glass Flasks take two spots.
+- [ ] Stand a cabinet on a cabinet (also on chests, tables, Lumber Racks); the bottom one won't come up until the top one is gone.
+- [ ] Potion Bookcase (4x6) and Potion Shelf (3x2, needs a back wall) fill the same way.
+- [ ] Console `freeplace`: blocks and walls go in mid air.
+
 **Phase 34: Creative window, quit confirmation (branch phase-34-creative-window)**
 - [ ] F7 opens the **Creative** window (not "Dev items"); the tabs wrap onto two rows.
 - [ ] Dev tab: Dev Grimoire, Dev Focus, Dev Ring, Dev Tome. Test tab: placeholder held items, test books, Mining v2+ (click one, drop it on a quick slot).

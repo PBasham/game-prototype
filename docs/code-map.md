@@ -472,3 +472,13 @@ saves still load.
 | --- | --- |
 | The Creative window (F7), its tabs, spawning | `CreativeWindow` (src/ui/hud/creative_window.gd, was DevItemsWindow): `TABS`, `DEV_TAB`, `TEST_TAB`, `ENEMY_TAB`, `TEST_BOOKS`, `spawn`, `spawn_tiles`; `Hud.toggle_creative`; console `creative [tab]` |
 | Quit Game asks first | `PauseMenu._show_quit`, `quit_game`; `World.skip_save` |
+
+## Phase 35: bottles, glass, potion furniture
+
+| Change | Where |
+| --- | --- |
+| Bottle shape and contents per item | `ItemData.BottleShape`, `bottle_shape`, `bottle_contents`; set in `tools/make_items.gd` (`BOTTLES`, `BOTTLE_CONTENTS`) |
+| Bottles on shelves, spots | `ObjectLayer._draw_bottles`, `bottle_spots`, `draw_bottle`; shelves on `ObjectDef` (`bottle_shelves`, `bottles_per_shelf`, `bottle_x0`, `bottle_step`) |
+| Stacking furniture | `ObjectDef.flat_top`; `World.is_flat_top`, `_resting_on`, `_can_place_furniture`, `request_remove_object` |
+| Potion Bookcase, Potion Shelf, sand, glass, bottles | `data/items`, `data/objects`, `data/recipes` (from `tools/make_items.gd`); art `tools/make_potion_storage_art.py` |
+| Console `freeplace` | `ItemUser.free_place` (checked in `_anchored`) |

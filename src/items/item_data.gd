@@ -142,6 +142,13 @@ const SPELL_PREFIX := "spell:"
 ## The color it shows as in a Potion Cabinet (the liquid / wax); clear = worked out
 ## from the icon.
 @export var shelf_color := Color(0, 0, 0, 0)
+## How it looks on a potion shelf (Phase 35): the bottle it comes in. Clay is opaque
+## (a cork and a band show what's inside: `bottle_contents`); glass shows the liquid.
+## NONE: a Clay Flask.
+enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_REGULAR, GLASS_LARGE }
+@export var bottle_shape := BottleShape.NONE
+## What's inside, for its shelf look (alpha 0 = an empty bottle).
+@export var bottle_contents := Color(0, 0, 0, 0)
 @export_group("Spell page")
 ## A Spell Page (found, not crafted): left click learns this spell for good, and the
 ## page is used up. The only way to learn spells that aren't `learnable_at_table`.

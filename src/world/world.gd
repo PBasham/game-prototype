@@ -1142,13 +1142,38 @@ func _can_place_furniture(anchor: Vector2i, def: ObjectDef) -> bool:
 		for dx in def.width_tiles:
 			var below := anchor + Vector2i(dx, 1)
 			var b := data.get_block(below.x, below.y)
-			if not (is_solid(below) or (b > 0 and blocks.collision(b) == TileDef.Collision.PLATFORM)):
+			if not (is_solid(below) or (b > 0 and blocks.collision(b) == TileDef.Collision.PLATFORM)
+					or is_flat_top(below)):
 				return false
 	if def.needs_wall:
 		for t in footprint(anchor, def):
 			if data.get_wall(t.x, t.y) <= 0:
 				return false
 	return true
+
+
+## Whether a tile is the top row of furniture with a flat top (ObjectDef.flat_top):
+## other furniture can stand on it.
+func is_flat_top(tile: Vector2i) -> bool:
+	var a := object_anchor(tile)
+	if a == NO_TILE:
+		return false
+	var def := object_at(a)
+	return def != null and def.flat_top and wrap_tile(tile).y == a.y - (def.height_tiles - 1)
+
+
+## Furniture standing on top of this one (flat tops), else NO_TILE.
+func _resting_on(anchor: Vector2i, def: ObjectDef) -> Vector2i:
+	if not def.flat_top:
+		return NO_TILE
+	for dx in def.width_tiles:
+		var top := anchor + Vector2i(dx, -def.height_tiles)
+		var other := object_anchor(top)
+		if other != NO_TILE and other != wrap_tile(anchor):
+			var od := object_at(other)
+			if od and od.needs_floor and not od.display:  # displayed items just fall off
+				return other
+	return NO_TILE
 
 
 ## Whether the furniture anchored at a tile is drawn mirrored (placed facing left).
@@ -1213,6 +1238,10 @@ func request_remove_object(tile: Vector2i) -> bool:
 	var store: Inventory = containers.get(a)
 	if store and not store.is_all_empty():
 		EventBus.debug_message.emit("Empty the %s first" % def.display_name.to_lower())
+		return false
+	var on_top := _resting_on(a, def)
+	if on_top != NO_TILE:
+		EventBus.debug_message.emit("Take the %s off the top first" % object_at(on_top).display_name.to_lower())
 		return false
 	if def.display:
 		return request_take_display(a, null)

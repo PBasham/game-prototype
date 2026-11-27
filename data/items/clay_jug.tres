@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_xwuro"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_s62p1"]
+[ext_resource type="Texture2D" path="res://assets/items/held/clay_jug.png" id="3_5p1dj"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/clay_jug.png" id="4_o15ex"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_3338w"]
+
+[sub_resource type="Resource" id="Resource_k87ny"]
+script = ExtResource("2_s62p1")
+id = &"clay_jug"
+texture = ExtResource("3_5p1dj")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("5_3338w")
+icon = ExtResource("4_o15ex")
+held = SubResource("Resource_k87ny")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 3
+id = &"clay_jug"
+display_name = "Clay Jug"
+description = "A big round jug of fired clay."

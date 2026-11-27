@@ -12,6 +12,7 @@ detail = 2
 width_tiles = 4
 needs_floor = true
 station = &"scribing"
+flat_top = true
 health = 1.0
 drop_item = &"scribes_desk"
 id = &"scribes_desk"

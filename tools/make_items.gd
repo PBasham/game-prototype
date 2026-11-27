@@ -189,6 +189,18 @@ func _items() -> Array[ItemData]:
 	var flask_empty := _small(&"clay_flask", "Clay Flask", "An empty flask of fired clay. Potions, coatings and thrown flasks start with one.")
 	_detailed(flask_empty, &"")
 	out.append(flask_empty)
+	# Phase 35: more bottles (clay and glass, three sizes each), Sand and Glass.
+	for row: Array in [
+			[&"clay_bottle", "Clay Bottle", "An empty bottle of fired clay, a size up from the flask."],
+			[&"clay_jug", "Clay Jug", "A big round jug of fired clay."],
+			[&"glass_vial", "Glass Vial", "A slim glass vial."],
+			[&"glass_bottle", "Glass Bottle", "An empty glass bottle."],
+			[&"glass_flask", "Glass Flask", "A big round glass flask."]]:
+		var bottle := _small(row[0], row[1], row[2])
+		_detailed(bottle, &"")
+		out.append(bottle)
+	out.append(_small(&"sand", "Sand", "Fine sand. Melt it in a Furnace into Glass. (No sand in the world yet: the Creative window has it.)"))
+	out.append(_small(&"glass", "Glass", "Clear glass, melted from sand. For glass bottles and glass fronted cabinets."))
 	out.append(_small(&"wooden_bowl", "Wooden Bowl", "For stew."))
 	for row: Array in [
 			[&"roasted_berries", "Roasted Berries", "Warm and sweet. +25 hunger, +5 health.", 25.0, 5.0],
@@ -266,7 +278,9 @@ func _items() -> Array[ItemData]:
 			[&"spell_weaving_table", "Spell Weaving Table", "A crafting station: learn spells (and later, empower them)."],
 			[&"scribes_desk", "Scribe's Desk", "A crafting station: scribe scrolls of the spells you know onto blank scrolls."],
 			[&"lumber_rack", "Lumber Rack", "Storage for logs and wood: 1,000 of them. It fills up as you stock it."],
-			[&"potion_cabinet", "Potion Cabinet", "Storage for potions, flasks and coatings: 10 stacks, shown on its shelves."],
+			[&"potion_cabinet", "Potion Cabinet", "Glass fronted storage for potions and bottles: 10 stacks, shown on its shelves. Furniture can stand on top."],
+			[&"potion_bookcase", "Potion Bookcase", "A tall glass fronted case for potions and bottles: 16 stacks on 5 shelves. Furniture can stand on top."],
+			[&"potion_shelf", "Potion Shelf", "Hangs on a back wall: 4 stacks of potions and bottles on display."],
 			[&"chair", "Wooden Chair", "Right click (or E) to sit on it. Move to stand up."],
 			[&"darkwood_workbench", "Darkwood Workbench", "A tier 2 Workbench (upgrade one with 20 Darkwood and 3 Iron Bars): everything a Workbench makes, plus reinforced wood."],
 			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
@@ -748,9 +762,10 @@ func _objects() -> Array[ObjectDef]:
 			[&"table", "Table", 4, 3, &""], [&"shelf", "Shelf", 3, 1, &""],
 			# Added later go last, so the indexes below stay put.
 			[&"scribes_desk", "Scribe's Desk", 4, 3, &"scribing"],
-			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 4, &""],
+			[&"lumber_rack", "Lumber Rack", 3, 3, &""], [&"potion_cabinet", "Potion Cabinet", 3, 5, &""],
 			[&"darkwood_workbench", "Darkwood Workbench", 5, 4, &"workbench"],
-			[&"chair", "Wooden Chair", 2, 3, &""]]:
+			[&"chair", "Wooden Chair", 2, 3, &""],
+			[&"potion_bookcase", "Potion Bookcase", 4, 6, &""], [&"potion_shelf", "Potion Shelf", 3, 2, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -784,10 +799,26 @@ func _objects() -> Array[ObjectDef]:
 	out[12].container_slots = 10
 	out[12].container_accepts = &"lumber"
 	out[12].fill_look = ObjectDef.FillLook.FRAMES
-	out[13].detail = 2
+	# Potion storage (Phase 35): bottles on the shelves, drawn as the bottle each comes in.
+	for i in [13, 16, 17]:
+		out[i].detail = 2
+		out[i].container_accepts = &"potion"
+		out[i].fill_look = ObjectDef.FillLook.BOTTLES
 	out[13].container_slots = 10
-	out[13].container_accepts = &"potion"
-	out[13].fill_look = ObjectDef.FillLook.BOTTLES
+	out[13].bottle_shelves.assign([72, 56, 40, 24])
+	out[16].container_slots = 16
+	out[16].bottle_shelves.assign([88, 72, 56, 40, 24])
+	out[16].bottles_per_shelf = 11
+	out[16].bottle_x0 = 7.0
+	out[17].container_slots = 4
+	out[17].bottle_shelves.assign([26])
+	out[17].bottles_per_shelf = 8
+	out[17].bottle_x0 = 6.5
+	out[17].needs_floor = false
+	out[17].needs_wall = true  # hangs on a back wall
+	# Flat tops: other furniture can stand on these.
+	for i in [4, 9, 11, 12, 13, 16]:
+		out[i].flat_top = true
 	# The Workbench upgrades in place to the Darkwood Workbench (tier 2: reinforced wood).
 	out[1].upgrade_to = &"darkwood_workbench"
 	out[1].upgrade_cost = {&"darkwood": 20, &"iron_bar": 3}
@@ -999,6 +1030,12 @@ func _recipes() -> Array[RecipeData]:
 		[&"campfire", &"", {&"wood": 5, &"stone": 3}, &"campfire", 1, []],
 		# Food & Alchemy.
 		[&"clay_flask", &"furnace", {&"clay": 2}, &"clay_flask", 1, []],
+		[&"clay_bottle", &"furnace", {&"clay": 3}, &"clay_bottle", 1, []],
+		[&"clay_jug", &"furnace", {&"clay": 4}, &"clay_jug", 1, []],
+		[&"glass", &"furnace", {&"sand": 1}, &"glass", 1, []],
+		[&"glass_vial", &"furnace", {&"glass": 1}, &"glass_vial", 1, []],
+		[&"glass_bottle", &"furnace", {&"glass": 2}, &"glass_bottle", 1, []],
+		[&"glass_flask", &"furnace", {&"glass": 3}, &"glass_flask", 1, []],
 		# Bricks: 2 stone of a kind make 1 brick of that kind (like Terraria's Gray Brick).
 		[&"stone_bricks", &"furnace", {&"stone": 2}, &"stone_bricks", 1, []],
 		[&"dark_forest_stone_bricks", &"furnace", {&"dark_forest_stone": 2}, &"dark_forest_stone_bricks", 1, []],
@@ -1048,7 +1085,9 @@ func _recipes() -> Array[RecipeData]:
 		[&"spell_weaving_table", &"workbench", {&"wood": 20, &"copper_bar": 5, &"paper": 4}, &"spell_weaving_table", 1, []],
 		[&"scribes_desk", &"workbench", {&"wood": 15, &"paper": 5, &"copper_bar": 2}, &"scribes_desk", 1, []],
 		[&"lumber_rack", &"workbench", {&"wood": 25, &"log": 4}, &"lumber_rack", 1, []],
-		[&"potion_cabinet", &"workbench", {&"wood": 20, &"copper_bar": 2, &"clay_flask": 2}, &"potion_cabinet", 1, []],
+		[&"potion_cabinet", &"workbench", {&"wood": 20, &"copper_bar": 2, &"glass": 4}, &"potion_cabinet", 1, []],
+		[&"potion_bookcase", &"workbench", {&"wood": 30, &"copper_bar": 4, &"glass": 6}, &"potion_bookcase", 1, []],
+		[&"potion_shelf", &"workbench", {&"wood": 6}, &"potion_shelf", 1, []],
 		[&"reinforced_wood", &"workbench", {&"wood": 4, &"iron_bar": 1}, &"reinforced_wood", 4, []],
 		[&"reinforced_darkwood", &"workbench", {&"darkwood": 4, &"iron_bar": 1}, &"reinforced_darkwood", 4, []],
 	]
@@ -1187,7 +1226,18 @@ func _spell(spell_id: StringName, label: String, text: String) -> SpellData:
 ## Which special storage takes an item (Lumber Rack, Potion Cabinet).
 const STORAGE_TAGS := {&"log": &"lumber", &"wood": &"lumber", &"dark_log": &"lumber", &"darkwood": &"lumber",
 	&"reinforced_wood": &"lumber", &"reinforced_darkwood": &"lumber", &"healing_potion": &"potion",
-	&"mana_potion": &"potion", &"poison_coating": &"potion", &"poison_flask": &"potion", &"clay_flask": &"potion"}
+	&"mana_potion": &"potion", &"poison_coating": &"potion", &"poison_flask": &"potion", &"clay_flask": &"potion",
+	&"clay_bottle": &"potion", &"clay_jug": &"potion", &"glass_vial": &"potion", &"glass_bottle": &"potion",
+	&"glass_flask": &"potion"}
+
+## The bottle each potion item comes in (its look on a potion shelf), and what's inside.
+const BOTTLES := {&"clay_flask": ItemData.BottleShape.CLAY_THIN, &"clay_bottle": ItemData.BottleShape.CLAY_REGULAR,
+	&"clay_jug": ItemData.BottleShape.CLAY_LARGE, &"glass_vial": ItemData.BottleShape.GLASS_THIN,
+	&"glass_bottle": ItemData.BottleShape.GLASS_REGULAR, &"glass_flask": ItemData.BottleShape.GLASS_LARGE,
+	&"healing_potion": ItemData.BottleShape.CLAY_THIN, &"mana_potion": ItemData.BottleShape.CLAY_THIN,
+	&"poison_flask": ItemData.BottleShape.CLAY_THIN, &"poison_coating": ItemData.BottleShape.CLAY_THIN}
+const BOTTLE_CONTENTS := {&"healing_potion": Color(0.86, 0.27, 0.27), &"mana_potion": Color(0.3, 0.5, 0.95),
+	&"poison_flask": Color(0.45, 0.8, 0.32), &"poison_coating": Color(0.45, 0.8, 0.32)}
 
 
 ## How potions look in a Potion Cabinet.
@@ -1207,6 +1257,8 @@ func _base(item_id: StringName, label: String, text: String) -> ItemData:
 		item.storage_tags.assign([STORAGE_TAGS[item_id]])
 	if SHELF_COLORS.has(item_id):
 		item.shelf_color = SHELF_COLORS[item_id]
+	item.bottle_shape = BOTTLES.get(item_id, ItemData.BottleShape.NONE)
+	item.bottle_contents = BOTTLE_CONTENTS.get(item_id, Color(0, 0, 0, 0))
 	return item
 
 

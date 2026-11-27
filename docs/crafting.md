@@ -267,7 +267,9 @@ can't mine the floor under furniture.
 | Object | Size | Holds | Capacity | Recipe (workbench) |
 | --- | --- | --- | --- | --- |
 | Lumber Rack | 3x3 | Any logs and wood (Log, Darkwood Log, Wood, Darkwood, both Reinforced) | 10 full stacks (9,999 each) | 25 Wood + 4 Logs |
-| Potion Cabinet | 3x4 | Potions, coatings, flasks | 10 normal stacks | 20 Wood + 2 Copper Bars + 2 Clay Flasks |
+| Potion Cabinet | 3x5, glass doors, 4 shelves | Potions, coatings, bottles | 10 normal stacks | 20 Wood + 2 Copper Bars + 4 Glass |
+| Potion Bookcase | 4x6, 5 shelves | Potions, coatings, bottles | 16 normal stacks | 30 Wood + 4 Copper Bars + 6 Glass |
+| Potion Shelf | 3x2, on a back wall | Potions, coatings, bottles | 4 normal stacks | 6 Wood |
 
   Fields on the `ObjectDef`: `container_accepts` (a storage tag; items list theirs in
   `ItemData.storage_tags`: every log and wood is `lumber`; healing and mana potions, poison
@@ -277,8 +279,25 @@ can't mine the floor under furniture.
   filled a layer at a time; how full counts each slot as its share of a full stack),
   `PILE` (not used now: draws each kind in its own color, round ends for logs and
   square ends for boards, `ObjectLayer._draw_pile`; set the rack's `fill_look` to PILE
-  to try it) or `BOTTLES` (the Potion Cabinet draws one bottle per item kind on its shelves, in that
-  item's `shelf_color`; filled shelves follow the stacks inside). The window shows
+  to try it) or `BOTTLES` (the potion furniture draws the bottles inside on its shelves).
+- **Bottles on shelves:** each item has a `bottle_shape` (`ItemData.BottleShape`): Clay
+  Thin (Clay Flask and the potions), Clay Regular (Clay Bottle), Clay Large (Clay Jug),
+  Glass Thin (Glass Vial), Glass Regular (Glass Bottle), Glass Large (Glass Flask), and a
+  `bottle_contents` color (clear = empty). Clay is opaque: the contents show as a colored
+  band and wax seal. Glass shows the liquid. Shelf space counts in **spots**: thin and
+  regular bottles take 1, large ones 2 (`ObjectLayer.bottle_spots`); sizes in art pixels
+  (wide x tall): thin 2 or 3 x 6, regular 4 x 7, large 8 x 7. Each item shows bottles for
+  its share of the storage, set left to right, bottom shelf first, wrapping to the next
+  shelf when one doesn't fit. Shelf tunables on the `ObjectDef`: `bottle_shelves` (shelf
+  heights in art pixels from the top, bottom shelf first), `bottles_per_shelf` (spots),
+  `bottle_x0`, `bottle_step`. Art from `tools/make_potion_storage_art.py`.
+- **Stacking:** furniture with `flat_top` (chest, table, Scribe's Desk, Lumber Rack,
+  Potion Cabinet, Potion Bookcase) counts as a floor, so you can stand a Potion Cabinet on
+  a Potion Cabinet. The bottom one can't be picked up while something stands on it ("Take
+  the ... off the top first"); things displayed on a table just fall off as before.
+- **Sand and glass:** Sand is in the Creative window only for now (no world sand yet).
+  Furnace: 1 Sand = 1 Glass; Glass Vial = 1 Glass, Glass Bottle = 2, Glass Flask = 3;
+  Clay Bottle = 3 Clay, Clay Jug = 4 Clay (the Clay Flask is unchanged). The window shows
   "used / total" and a fill bar. Art from `art/concepts/storage/make_storage.py`.
 - Console `stock <item> [count]` fills the chest you have open (testing storage).
 - Furniture is at most 8x8 tiles (`World.MAX_FURNITURE`). Furniture placed before a

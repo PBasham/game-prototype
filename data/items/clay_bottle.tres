@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_xfqdf"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_ryns0"]
+[ext_resource type="Texture2D" path="res://assets/items/held/clay_bottle.png" id="3_te3fa"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/clay_bottle.png" id="4_wyxqm"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_t3rpo"]
+
+[sub_resource type="Resource" id="Resource_51xf3"]
+script = ExtResource("2_ryns0")
+id = &"clay_bottle"
+texture = ExtResource("3_te3fa")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("5_t3rpo")
+icon = ExtResource("4_wyxqm")
+held = SubResource("Resource_51xf3")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 2
+id = &"clay_bottle"
+display_name = "Clay Bottle"
+description = "An empty bottle of fired clay, a size up from the flask."

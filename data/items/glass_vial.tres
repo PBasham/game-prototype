@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_snhd8"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_e0vko"]
+[ext_resource type="Texture2D" path="res://assets/items/held/glass_vial.png" id="3_8wysm"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/glass_vial.png" id="4_2ou3o"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_1ajp1"]
+
+[sub_resource type="Resource" id="Resource_is4ny"]
+script = ExtResource("2_e0vko")
+id = &"glass_vial"
+texture = ExtResource("3_8wysm")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("5_1ajp1")
+icon = ExtResource("4_2ou3o")
+held = SubResource("Resource_is4ny")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 4
+id = &"glass_vial"
+display_name = "Glass Vial"
+description = "A slim glass vial."

@@ -138,7 +138,7 @@ func draw_chunk(view: ChunkObjects) -> void:
 			if def.fill_look in [ObjectDef.FillLook.BOTTLES, ObjectDef.FillLook.PILE]:
 				var store := world.container_at(origin + Vector2i(lx, ly))
 				if store and def.fill_look == ObjectDef.FillLook.BOTTLES:
-					_draw_bottles(view, dest, store, world.is_flipped(origin + Vector2i(lx, ly)))
+					_draw_bottles(view, dest, store, world.is_flipped(origin + Vector2i(lx, ly)), def)
 				elif store:
 					_draw_pile(view, dest, store, world.is_flipped(origin + Vector2i(lx, ly)))
 
@@ -149,15 +149,17 @@ func redraw_all() -> void:
 		v.queue_redraw()
 
 
-## Potion Cabinet: bottles on its 3 shelves (7 each, bottom shelf first), as many as it
-## is full, in the colors of what's inside. In art pixels of its 48x64 picture.
-func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool) -> void:
-	const SHELVES: Array[int] = [54, 38, 22]
-	var spots: Array[Vector2] = []
-	for y in SHELVES:
-		for k in 7:
-			spots.append(Vector2(8 + k * 5, y))
-	var colors: Array[Color] = []
+## Potion storage: bottles on its shelves (ObjectDef.bottle_shelves, bottom first), as
+## many as it is full, each drawn as the bottle it comes in (ItemData.bottle_shape). In
+## art pixels of its picture.
+func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
+	# Shelf space is counted in spots (bottle_step wide): a big round bottle takes 2,
+	# the others 1 (bottle_spots). Each item shows as many bottles as its share of the
+	# storage, in spots, then they're set on the shelves left to right, bottom shelf
+	# first, a bottle that doesn't fit going to the next shelf.
+	var per_shelf := def.bottles_per_shelf
+	var total := per_shelf * def.bottle_shelves.size()
+	var kinds: Array[ItemData] = []
 	var cap := float(inv.stack_cap if inv.stack_cap > 0 else 1)
 	for i in inv.size:
 		if inv.is_empty(i):
@@ -165,19 +167,85 @@ func _draw_bottles(view: Node2D, dest: Rect2, inv: Inventory, flip: bool) -> voi
 		var it := ItemData.find(inv.ids[i])
 		var room := cap if inv.stack_cap > 0 else float(Inventory.max_stack(inv.ids[i]))
 		var share := inv.counts[i] / (room * inv.size)
-		var n := maxi(1, roundi(share * spots.size()))
+		var n := maxi(1, roundi(share * total / float(bottle_spots(it))))
 		for _k in n:
-			colors.append(shelf_color(it))
-	var s := dest.size.x / 48.0  # art pixel to world pixel
-	for b in mini(colors.size(), spots.size()):
-		var p := spots[b]
+			kinds.append(it)
+	var art_w := dest.size.x * def.detail
+	var s := dest.size.x / art_w  # art pixel to world pixel
+	var shelf := 0
+	var spot := 0
+	for it in kinds:
+		var w := bottle_spots(it)
+		if spot + w > per_shelf:
+			shelf += 1
+			spot = 0
+		if shelf >= def.bottle_shelves.size():
+			break
+		var x := def.bottle_x0 + (spot + (w - 1) * 0.5) * def.bottle_step
 		if flip:
-			p.x = 48.0 - p.x
-		var o := dest.position
-		view.draw_rect(Rect2(o + Vector2(p.x - 1, p.y - 9) * s, Vector2(3, 2) * s), Color("966e50"))  # cork
-		view.draw_rect(Rect2(o + Vector2(p.x - 1, p.y - 7) * s, Vector2(3, 2) * s), Color("cdbeaa"))  # neck
-		view.draw_rect(Rect2(o + Vector2(p.x - 2, p.y - 5) * s, Vector2(5, 5) * s), colors[b])
-		view.draw_rect(Rect2(o + Vector2(p.x - 1, p.y - 4) * s, Vector2(1, 1) * s), Color(1, 1, 1, 0.8))
+			x = art_w - x
+		draw_bottle(view, dest.position + Vector2(x, def.bottle_shelves[shelf]) * s, s, it)
+		spot += w
+
+
+## How many shelf spots a bottle takes: big round ones 2, the rest 1.
+static func bottle_spots(it: ItemData) -> int:
+	if it and it.bottle_shape in [ItemData.BottleShape.CLAY_LARGE, ItemData.BottleShape.GLASS_LARGE]:
+		return 2
+	return 1
+
+
+const CLAY := Color("b5704a")
+const CLAY_DARK := Color("7e4b31")
+const CLAY_LIGHT := Color("d18a5e")
+const CORK := Color("8a5f3c")
+const GLASS_RIM := Color(0.55, 0.72, 0.8, 0.95)
+const GLASS_EMPTY := Color(0.8, 0.92, 0.98, 0.3)
+
+
+## One bottle standing on a shelf, `foot` = the middle of its base (world px), `s` =
+## world px per art px. Clay: opaque, the contents show as the cork and a band; glass:
+## the liquid shows through, with a shine.
+static func draw_bottle(view: CanvasItem, foot: Vector2, s: float, it: ItemData) -> void:
+	var shape := it.bottle_shape if it else ItemData.BottleShape.NONE
+	if shape == ItemData.BottleShape.NONE:
+		shape = ItemData.BottleShape.CLAY_THIN
+	var contents := it.bottle_contents if it else Color(0, 0, 0, 0)
+	var filled := contents.a > 0.0
+	# [body width, body height, neck height] in art px per shape.
+	var size: Vector3 = {
+		ItemData.BottleShape.CLAY_THIN: Vector3(3, 6, 2), ItemData.BottleShape.CLAY_REGULAR: Vector3(4, 7, 2),
+		ItemData.BottleShape.CLAY_LARGE: Vector3(8, 7, 2), ItemData.BottleShape.GLASS_THIN: Vector3(2, 6, 2),
+		ItemData.BottleShape.GLASS_REGULAR: Vector3(4, 7, 2), ItemData.BottleShape.GLASS_LARGE: Vector3(8, 7, 2),
+	}[shape]
+	var bw := size.x
+	var bh := size.y
+	var top := -bh
+	var r := func(x: float, y: float, w: float, h: float, c: Color) -> void:
+		view.draw_rect(Rect2(foot + Vector2(x, y) * s, Vector2(w, h) * s), c)
+	var round_body := shape in [ItemData.BottleShape.CLAY_LARGE, ItemData.BottleShape.GLASS_LARGE]
+	var glass := shape >= ItemData.BottleShape.GLASS_THIN
+	if glass:
+		var liquid := contents if filled else GLASS_EMPTY
+		r.call(-bw * 0.5, top, bw, bh, GLASS_RIM)  # the glass
+		var fill_top := top + 1 + (1 if filled else 0)
+		r.call(-bw * 0.5 + (0.5 if bw > 2 else 0.0), fill_top, bw - (1 if bw > 2 else 0), -fill_top - 0.5, liquid)
+		r.call(-bw * 0.5 + 0.5, top + 1, 0.6, minf(2.0, bh - 2), Color(1, 1, 1, 0.75))  # shine
+		r.call(-0.5, top - size.z, 1, size.z, GLASS_RIM)  # neck
+		r.call(-0.5 if bw <= 2 else -1.0, top - size.z - 1, 1 if bw <= 2 else 2, 1, CORK)
+	else:
+		r.call(-bw * 0.5, top, bw, bh, CLAY)
+		r.call(bw * 0.5 - 1, top, 1, bh, CLAY_DARK)  # shaded side
+		r.call(-bw * 0.5, top, 0.6, bh, CLAY_LIGHT)  # lit side
+		if round_body:
+			r.call(-bw * 0.5, top, 1, 1, Color(0, 0, 0, 0))
+			r.call(-bw * 0.5 - 0.5, top + 1, 0.5, bh - 2, CLAY)  # a rounder belly
+			r.call(bw * 0.5, top + 1, 0.5, bh - 2, CLAY_DARK)
+		r.call(-0.5 if bw <= 3 else -1.0, top - size.z, 1 if bw <= 3 else 2, size.z, CLAY)  # neck
+		# What's inside: a colored band and a wax seal on the cork; empty: plain cork.
+		if filled:
+			r.call(-bw * 0.5, top + bh * 0.4, bw, 1, contents)
+		r.call(-1.0, top - size.z - 1, 2, 1, contents if filled else CORK)
 
 
 ## Lumber Rack: staggered rows of 5, 4, 5, 4, 5 ends (23), bottom row first, as many as

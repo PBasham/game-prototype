@@ -14,6 +14,7 @@ needs_floor = true
 container_accepts = &"lumber"
 fill_look = 1
 container_slots = 10
+flat_top = true
 health = 1.0
 drop_item = &"lumber_rack"
 id = &"lumber_rack"

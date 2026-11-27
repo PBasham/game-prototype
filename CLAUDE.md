@@ -30,7 +30,8 @@ tunables change: Patrick tweaks things by hand from these docs.
   Phase 21: Dark Forest Dirt, Grass, Stone and walls, Stone Bricks and Dark Forest Stone
   Bricks, the Forest Spirit Pendant; Phase 22: Slime Core, Summon Slime; Phase 23: the Catalog; Phase 24: no pickaxes or axes,
   the gathering spells from the start, the Copper Dagger, Empower tiers; Phase 25: spell
-  schools, marks, the Dual Storm Axes and the Storm Charm).
+  schools, marks, the Dual Storm Axes and the Storm Charm; Phase 35: Sand, Glass, Clay
+  Bottle, Clay Jug, Glass Vial, Glass Bottle, Glass Flask, Potion Bookcase, Potion Shelf).
   New content gets a design brief first.
 - World generation tunables live in `data/worldgen/forest.tres`, not in code. Patrick
   plans to tune generation himself.

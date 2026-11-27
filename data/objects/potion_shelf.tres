@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/potion_shelf.png" id="1_gsvum"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_7li5r"]
+
+[resource]
+script = ExtResource("2_7li5r")
+frames = ExtResource("1_gsvum")
+style = 2
+height_tiles = 2
+needs_wall = true
+detail = 2
+width_tiles = 3
+container_accepts = &"potion"
+fill_look = 2
+bottle_shelves = Array[int]([26])
+bottles_per_shelf = 8
+bottle_x0 = 6.5
+container_slots = 4
+health = 1.0
+drop_item = &"potion_shelf"
+id = &"potion_shelf"
+display_name = "Potion Shelf"

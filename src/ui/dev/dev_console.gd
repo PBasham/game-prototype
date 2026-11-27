@@ -560,6 +560,9 @@ func _register() -> void:
 	_add("reach", "reach", "Toggle unlimited reach for mining, chopping and placing.", func(_a: PackedStringArray) -> void:
 		world.item_user.infinite_reach = not world.item_user.infinite_reach
 		_print("Unlimited reach %s." % ("on" if world.item_user.infinite_reach else "off")))
+	_add("freeplace", "freeplace", "Toggle placing blocks and walls anywhere, with nothing next to or behind them.", func(_a: PackedStringArray) -> void:
+		world.item_user.free_place = not world.item_user.free_place
+		_print("Free placing %s." % ("on" if world.item_user.free_place else "off")))
 	_add("fly", "fly", "Toggle flying (same as casting Fly).", func(_a: PackedStringArray) -> void:
 		var spell := ItemData.find(&"spell:fly") as SpellData
 		world.player.toggle_concentration(spell)

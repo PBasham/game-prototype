@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_xaio5"]
+
+[resource]
+script = ExtResource("1_xaio5")
+station = &"furnace"
+inputs = Dictionary[StringName, int]({
+&"sand": 1
+})
+output = &"glass"
+id = &"glass"
+display_name = "Glass"

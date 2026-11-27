@@ -88,6 +88,15 @@ enum SpriteAlign { CENTER, FROM_LEFT, FROM_RIGHT }
 ## for wood, each in its item's color (`ItemData.shelf_color`, else its icon's).
 enum FillLook { NONE, FRAMES, BOTTLES, PILE }
 @export var fill_look := FillLook.NONE
+## BOTTLES: where the bottles stand, in art pixels of its picture: the shelf planks' tops
+## (bottom shelf first), how many per shelf, the first one's x and the step between.
+@export var bottle_shelves: Array[int] = [54, 38, 22]
+@export var bottles_per_shelf := 7
+@export var bottle_x0 := 8.0
+@export var bottle_step := 5.0
+## Flat on top: other furniture can stand on it (a cabinet on a cabinet). It can't be
+## picked up while something stands on it.
+@export var flat_top := false
 ## Storage slots (chests). It can only be picked up when empty.
 @export var container_slots := 0
 ## Internal: the filler that marks the tiles furniture covers besides its anchor.

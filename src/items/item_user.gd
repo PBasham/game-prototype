@@ -53,6 +53,8 @@ const TILE := World.TILE
 var world: World
 ## Dev console `reach`: mining, chopping and placing reach anywhere on screen.
 var infinite_reach := false
+## Dev (console `freeplace`): blocks and walls go anywhere, nothing next to them needed.
+var free_place := false
 ## Tests and scripted runs aim here instead of at the mouse (INF = use the mouse).
 var cursor_override := Vector2.INF
 ## Chosen area size per item id (Ctrl + wheel).
@@ -748,6 +750,8 @@ func _place_targets() -> void:
 
 
 func _anchored(t: Vector2i, walls: bool) -> bool:
+	if free_place:
+		return true
 	if walls and world.data.get_block(t.x, t.y) > 0:
 		return true
 	if walls and _anchors(t):

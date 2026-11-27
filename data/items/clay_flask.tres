@@ -18,6 +18,7 @@ detail = 2
 script = ExtResource("5_1j6jo")
 storage_tags = Array[StringName]([&"potion"])
 shelf_color = Color(0.66, 0.46, 0.32, 1)
+bottle_shape = 1
 icon = ExtResource("4_scg40")
 drop_size = 16
 held = SubResource("Resource_0ncjv")

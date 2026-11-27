@@ -12,6 +12,7 @@ display_surface = true
 detail = 2
 width_tiles = 4
 needs_floor = true
+flat_top = true
 health = 1.0
 drop_item = &"table"
 id = &"table"
