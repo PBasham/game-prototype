@@ -322,6 +322,7 @@ can't mine the floor under furniture.
   a Potion Cabinet. The bottom one can't be picked up while something stands on it ("Take
   the ... off the top first"); things displayed on a table just fall off as before.
 - **Sand and glass:** Sand is in the Creative window only for now (no world sand yet).
+  It's a block (left click) and a Sand Wall (right click).
   Glass is also a see-through block (left click) and Glass Wall (right click); Clay places
   a Clay Wall.
   Furnace: 1 Sand = 1 Glass; Glass Vial = 1 Glass, Glass Bottle = 2, Glass Flask = 3;

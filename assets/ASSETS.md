@@ -273,6 +273,8 @@ or .ogg); the generator never overwrites without `--force`.
 | objects/{pantry_rack,food_pantry,bookshelf,barrel,crate,liquid_barrel,iron_liquid_barrel}.png (+ icons, held) | Storage placeholders (detail 2). Same script |
 | objects/hanging_net_{small,medium,large}.png (+ icons, held) | Nets, 2 frames: rope and bag, then the mesh drawn over the contents. Same script |
 | objects/potion_cabinet.png, potion_bookcase.png | Now 2 frames: the cabinet, then its glass doors (`front_frame`). `tools/make_potion_storage_art.py` |
+| terrain/sand.png, terrain/sand_wall.png | 128x128 detailed sand grains with soft ripples (the wall darker). `tools/make_glass_clay_art.py` |
+| tiles/blocks.png row 20 | Sand's collision row (a copy of clay's). Same script |
 | tiles/blocks.png row 19 | Glass's collision row (a copy of row 17). Same script |
 | items/{icons,held}/spellbook_t{1,2,3}.png | Tier 1 / 2 / 3 Spellbooks: the Basic Spellbook recolored green, blue, purple |
 | items/icons/tele_grab.png (+ scroll_ and page_ icons) | 16x16 Tele Grab spell icon: a violet swirl pulling in an ore chunk. Placeholder from `art/concepts/spells/make_tele_grab.py` |
@@ -285,7 +287,7 @@ or .ogg); the generator never overwrites without `--force`.
 | items/icons/call_spirit.png (+ scroll_, page_ icons) | Call Spirit: the spirit's first frame over a ring. Placeholder |
 | items/icons/air_step.png, bound.png (+ scroll_, page_ icons) | 16x16 spell icons: cloud steps with an up chevron; an arcing arrow. Placeholders |
 | objects/darkwood_workbench.png (+ icon, held) | The Workbench recolored to darkwood (80x64, detail 2). Placeholder (`--phase16` on `art/concepts/dark_forest/make_dark_forest.py`) |
-| terrain/reinforced_wood{,_wall}.png, terrain/reinforced_darkwood{,_wall}.png | 64x64 planks with iron straps and rivets; icons and held sprites cut from them. Same script |
+| terrain/reinforced_wood{,_wall}.png, terrain/reinforced_darkwood{,_wall}.png | 64x64 planks with iron straps (one every 2 blocks) and rivets (one per block); icons and held sprites cut from them. Same script |
 | tiles/blocks.png rows 11, 12 | Collision atlas rows for the reinforced blocks (copies of the planks row) |
 | terrain/darkwood_logs.png, terrain/darkwood_logs_wall.png | The log block and wall recolored to darkwood. Placeholders |
 | tiles/blocks.png row 13 | Collision row for the darkwood log block (copy of the log row) |

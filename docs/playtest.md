@@ -358,6 +358,10 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 40: sand, reinforced wood (branch phase-40-sand-reinforced)**
+- [ ] Sand places as a block and (right click) a Sand Wall.
+- [ ] Reinforced Wood and Reinforced Darkwood (block and wall): a strap every 2 blocks, rivets every block.
+
 **Phase 39: freecraft empowers, stat tooltips (branch phase-39-empower-free)**
 - [ ] With `freecraft` on, Empower ranks cost nothing.
 - [ ] Mining and Chopping tooltips: a short line, then stats one per line (power, speed, area, reach) and "Key: R".

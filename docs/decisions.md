@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 40, sand block, denser reinforced wood
+
+- **Patrick:** Sand is a block and a back wall. Done (atlas row 20, `data/walls/sand_wall.tres`).
+- **Patrick:** Reinforced Wood's pattern should be denser. Straps every 16 px (2 blocks)
+  instead of 32, rivets every 8 px.
+
 ## 2026-11-26: Phase 39, freecraft empowers, stat tooltips
 
 - **Patrick:** `freecraft` should cover Empower too. Done (`CharacterData.empower_problem`

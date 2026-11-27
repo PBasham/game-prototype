@@ -201,7 +201,7 @@ func _items() -> Array[ItemData]:
 		var bottle := _small(row[0], row[1], row[2])
 		_detailed(bottle, &"")
 		out.append(bottle)
-	out.append(_small(&"sand", "Sand", "Fine sand. Melt it in a Furnace into Glass. (No sand in the world yet: the Creative window has it.)"))
+	out.append(_block(&"sand", "Sand", "Fine sand: a block and a back wall. Melt it in a Furnace into Glass. (No sand in the world yet: the Creative window has it.)", &"sand_wall"))
 	out.append(_block(&"glass", "Glass", "Clear glass, melted from sand. A see-through block and back wall, and the stuff of glass bottles and cabinets.", &"glass_wall"))
 	out.append(_small(&"wooden_bowl", "Wooden Bowl", "For stew."))
 	for row: Array in [

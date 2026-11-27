@@ -11,13 +11,17 @@ script = ExtResource("2_ycgtw")
 id = &"sand"
 texture = ExtResource("3_8mh5o")
 type = &"block"
-grip = Vector2(4, 6)
+grip = Vector2(3, 5)
 
 [resource]
 script = ExtResource("5_o3qav")
+kind = 1
 icon = ExtResource("4_sb5l5")
+max_stack = 9999
 held = SubResource("Resource_q6ob5")
 impact_at = 0.2
+places_block = &"sand"
+places_wall = &"sand_wall"
 id = &"sand"
 display_name = "Sand"
-description = "Fine sand. Melt it in a Furnace into Glass. (No sand in the world yet: the Creative window has it.)"
+description = "Fine sand: a block and a back wall. Melt it in a Furnace into Glass. (No sand in the world yet: the Creative window has it.)"

@@ -311,10 +311,11 @@ def reinforced(src, dst, wall):
     k = 0.6 if wall else 1.0
     for y in range(H):
         for x in range(W):
-            band = (x % 32) in (14, 15, 16, 17)
+            # A strap every 2 blocks (16 px), rivets every block (Patrick: denser).
+            band = (x % 16) in (6, 7, 8)
             if band:
-                c = light if (x % 32) == 14 else (dark if (x % 32) == 17 else iron)
-                if y % 16 == 7 and (x % 32) in (15, 16):
+                c = light if (x % 16) == 6 else (dark if (x % 16) == 8 else iron)
+                if y % 8 == 3 and (x % 16) == 7:
                     c = (210, 214, 224)  # rivet
                 px[x, y] = tuple(int(v * k) for v in c) + (255,)
     im.save(dst)

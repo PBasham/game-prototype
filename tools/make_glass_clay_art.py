@@ -59,3 +59,35 @@ if atlas.height < 20 * 8:
     grown.paste(atlas.crop((0, 17 * 8, atlas.width, 18 * 8)), (0, 19 * 8))
     grown.save(atlas_path)
     print("blocks.png: added row 19")
+
+
+# Phase 40: Sand block and Sand Wall (128x128 detailed, like clay), and blocks.png row 20.
+def sand_texture(wall: bool) -> Image.Image:
+    import random
+    random.seed(303)
+    pal = [(0x5c, 0x4a, 0x24), (0x7f, 0x65, 0x32), (0xa3, 0x86, 0x4a), (0xb9, 0x9c, 0x5c),
+           (0xc9, 0xad, 0x6c), (0xd6, 0xbd, 0x7f), (0xe4, 0xcf, 0x98)]
+    img = Image.new("RGBA", (128, 128))
+    for y in range(128):
+        for x in range(128):
+            r = random.random()
+            i = 4 if r < 0.45 else (5 if r < 0.72 else (3 if r < 0.9 else (6 if r < 0.96 else 2)))
+            # Soft ripples so it isn't flat noise.
+            if (x + 2 * (y // 6)) % 11 == 0 and random.random() < 0.6:
+                i = max(2, i - 1)
+            c = pal[i]
+            if wall:
+                c = tuple(int(v * 0.8) for v in c)
+            img.putpixel((x, y), c + (255,))
+    return img
+
+
+save(sand_texture(False), "terrain/sand.png")
+save(sand_texture(True), "terrain/sand_wall.png")
+atlas = Image.open(atlas_path).convert("RGBA")
+if atlas.height < 21 * 8:
+    grown = Image.new("RGBA", (atlas.width, 21 * 8))
+    grown.paste(atlas, (0, 0))
+    grown.paste(atlas.crop((0, 9 * 8, atlas.width, 10 * 8)), (0, 20 * 8))  # like clay's row
+    grown.save(atlas_path)
+    print("blocks.png: added row 20")
