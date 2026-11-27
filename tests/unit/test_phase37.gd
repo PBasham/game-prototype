@@ -192,3 +192,15 @@ func test_wall_brightness_follows_its_block() -> void:
 	var lw := ChunkRenderer._luminance("logs_wall") * r.wall_shade * r.built_wall_shade * mults[slot]
 	var lb := ChunkRenderer._luminance("logs") * r.built_block_shade
 	assert_almost_eq(lw / lb, r.wall_block_ratio, 0.02)
+
+
+func test_station_command_opens_a_station_without_one() -> void:
+	w.console.run("station furnace")
+	assert_true(w.hud.crafting)
+	assert_eq(w.hud._station_def().station, &"furnace")
+	assert_has(w.hud.recipes().map(func(r: RecipeData) -> StringName: return r.id), &"copper_bar")
+	w.console.run("station workbench 2")
+	assert_eq(w.hud._station_def().id, &"darkwood_workbench", "tier 2: the Darkwood Workbench")
+	assert_false(w.hud._upgrade_shown(), "no upgrading a station that isn't there")
+	w.console.run("station off")
+	assert_false(w.hud.crafting)

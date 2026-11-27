@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 43, station command
+
+- **Patrick:** a dev command `station [name] [tier]`. It opens that station's crafting
+  window with no station placed (no reach check, no Upgrade row). `crafttab` only picks a
+  tab and row in a window already open.
+
 ## 2026-11-26: Phase 42, dev commands, logs, wall brightness
 
 - **Patrick:** dev commands `instant_placement`, `instant_break`, `no_drop`. Done.

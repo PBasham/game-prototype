@@ -94,6 +94,9 @@ var wheel_key: StringName = &""
 var _key_held := 0.0
 ## The crafting station (anchor tile) or chest that was opened; NO_TILE = none.
 var station := World.NO_TILE
+## Dev console `station`: a crafting station's window opened without the station (no
+## reach check, no upgrade). Null otherwise.
+var virtual_station: ObjectDef
 var chest := World.NO_TILE
 ## The magic bag (ItemBag) that's open, or null.
 var bag: ItemBag
@@ -472,7 +475,7 @@ func _process(delta: float) -> void:
 		dismiss_buff(_buff_entry_at_mouse())
 	_update_tooltip(over if over else (_buffs if _buff_at_mouse() != &"" else
 		(_quick if _quick_key_at_mouse() != &"" else null)))
-	if (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
+	if virtual_station == null and (station != World.NO_TILE or chest != World.NO_TILE) and not _in_reach_of(station if station != World.NO_TILE else chest):
 		close_window()  # walked away from the station or chest
 	if bag != null and (not is_instance_valid(bag) or bag.is_queued_for_deletion()
 			or bag.global_position.distance_to(p.chest()) > (world.interact_tiles + 4.0) * World.TILE):
@@ -627,15 +630,27 @@ func close_window() -> void:
 		set_renaming(false)
 	crafting = false
 	station = World.NO_TILE
+	virtual_station = null
 	chest = World.NO_TILE
 	bag = null
 	_layout()
+
+
+## Opens a station's crafting window with no station there (dev console `station`).
+func open_virtual_station(def: ObjectDef) -> void:
+	chest = World.NO_TILE
+	bag = null
+	station = World.NO_TILE
+	virtual_station = def
+	_recipe_key = ""
+	_open_crafting()
 
 
 func _on_station_opened(anchor: Vector2i) -> void:
 	chest = World.NO_TILE
 	bag = null
 	station = anchor
+	virtual_station = null
 	_open_crafting()
 
 
@@ -1322,7 +1337,7 @@ func _draw_chest(g: Control) -> void:
 ## The recipes in the open crafting window (and tab), as this character pays for them.
 ## Cached until the station, tab, known spells or scroll settings change.
 func recipes() -> Array[RecipeData]:
-	var def := world.object_at(station) if station != World.NO_TILE else null
+	var def := _station_def()
 	var c := world.character
 	var key := "%s|%d|%d|%d|%s|%s|%d|%s|%d|%d" % [String(def.station) if def else "", def.station_tier if def else 0, craft_tab,
 		hash(c.known_spells) if c else 0, world.scribe_cost_mult, world.scroll_max_mana_by_tier, weave_group,
@@ -1471,12 +1486,14 @@ func _times(r: RecipeData) -> int:
 
 
 func _station_def() -> ObjectDef:
+	if virtual_station:
+		return virtual_station
 	return world.object_at(station) if station != World.NO_TILE else null
 
 
 func _upgrade_shown() -> bool:
 	var def := _station_def()
-	return def != null and def.upgrade_to != &""
+	return def != null and def.upgrade_to != &"" and virtual_station == null
 
 
 ## List entries: the recipes, plus the upgrade (when the station has one).

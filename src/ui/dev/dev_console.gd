@@ -569,6 +569,7 @@ func _register() -> void:
 	_add("no_drop", "no_drop", "Toggle drops: nothing drops from mining, trees or enemies (throwing still works).", func(_a: PackedStringArray) -> void:
 		world.no_drop = not world.no_drop
 		_print("No drops %s." % ("on" if world.no_drop else "off")))
+	_add("station", "station <name> [tier] | station off", "Open a crafting station's window without the station (workbench, furnace, anvil, alchemy, spell weaving, scribing, cooking...). Tier 2 workbench = Darkwood.", _station)
 	_add("crafttab", "crafttab <tab> [row|name]", "In the open crafting window: switch to a tab (0 = the first) and select a row (for screenshots).", func(a: PackedStringArray) -> void:
 		if a.is_empty() or not a[0].is_valid_int():
 			_print("Usage: crafttab <tab> [row]")
@@ -932,3 +933,42 @@ func _complete() -> void:
 		_entry.caret_column = _entry.text.length()
 	elif options.size() > 1:
 		_print("  " + "  ".join(options))
+
+
+func _station(a: PackedStringArray) -> void:
+	var stations: Array[ObjectDef] = []
+	for i in range(1, world.objects.size()):
+		var d := world.objects.def(i) as ObjectDef
+		if d and d.station != &"" and not d.filler:
+			stations.append(d)
+	if a.is_empty():
+		_print("Stations: " + ", ".join(stations.map(func(d: ObjectDef) -> String: return "%s (%s, tier %d)" % [d.id, d.station, d.station_tier])))
+		return
+	if a[0] == "off":
+		world.hud.close_window()
+		_print("Closed.")
+		return
+	var tier := 1
+	var words := a
+	if a.size() > 1 and a[a.size() - 1].is_valid_int():
+		tier = int(a[a.size() - 1])
+		words = a.slice(0, a.size() - 1)
+	var want := _norm(" ".join(words))
+	var pick: ObjectDef = null
+	for d in stations:
+		if (String(d.id) == want or String(d.station) == want or String(d.station).begins_with(want)
+				or String(d.id).begins_with(want)) and (d.station_tier == tier or (pick == null and tier == 1)):
+			if pick == null or d.station_tier == tier:
+				pick = d
+	if pick and pick.station_tier != tier:
+		# Asked for another tier: the same station at that tier (Workbench 2 = Darkwood).
+		for d in stations:
+			if d.station == pick.station and d.station_tier == tier:
+				pick = d
+	if pick == null:
+		_print("No station '%s'. Type station for the list." % " ".join(words))
+		return
+	if not world.hud.open:
+		world.hud.set_open(true)
+	world.hud.open_virtual_station(pick)
+	_print("Opened %s (tier %d)." % [pick.display_name, pick.station_tier])

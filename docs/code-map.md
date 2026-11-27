@@ -537,3 +537,9 @@ saves still load.
 | `instant_placement`, `instant_break`, `no_drop` | `World.instant_place`, `instant_break`, `no_drop` (`_damage_tile`, `request_spawn_drop`, `PlantLayer.request_hit_tree`); `ItemUser._instant_use`; `DevConsole` |
 | Upright logs, rounded log wall ends | terrain.gdshader (`upright`, `strip_t`, `turn_slots`, `overhang_walls`); `ChunkRenderer`; `data/walls/{log,darkwood_log}_wall.tres` `overhang_px` |
 | Walls evened out against their blocks | `ChunkRenderer.wall_block_ratio`, `_wall_mults`, `_luminance`; shader `wall_mult` |
+
+## Phase 43: station command
+
+| Change | Where |
+| --- | --- |
+| Console `station <name> [tier]` | `DevConsole._station`; `Hud.virtual_station`, `open_virtual_station`, `_station_def` |

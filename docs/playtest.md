@@ -358,6 +358,9 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 43: station command (branch phase-43-station-cmd)**
+- [ ] Console `station` lists stations; `station furnace` opens the Furnace window anywhere; `station workbench 2` the Darkwood Workbench; `station off` closes it.
+
 **Phase 42: dev commands, logs, wall brightness (branch phase-42-dev-logs)**
 - [ ] Console `instant_placement`, `instant_break`, `no_drop` toggle as named.
 - [ ] A single column of logs stands upright; a run of log walls ends in rounded tips.
