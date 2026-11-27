@@ -2099,7 +2099,7 @@ func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vect
 		return null  # spell shortcuts aren't things; throwing one just removes it
 	var drop := ItemDrop.new()
 	drop.setup(self, item_id, count, vel, thrown)
-	drop.position = Vector2(near_player_x(pos.x), pos.y)
+	drop.position = out_of_ground(Vector2(near_player_x(pos.x), pos.y))
 	_drops.add_child(drop)
 	# Too many loose items: the oldest go (Terraria keeps at most 400).
 	while max_drops > 0 and _drops.get_child_count() > max_drops:
@@ -2107,6 +2107,20 @@ func request_spawn_drop(item_id: StringName, count: int, pos: Vector2, vel: Vect
 		_drops.remove_child(oldest)
 		oldest.queue_free()
 	return drop
+
+
+## A point inside solid ground moved straight up to rest on top of it (the first open
+## tile above, up to `max_tiles`), so things that drop there aren't buried: a tree
+## felled into a hillside, loot from an enemy against a wall. Open points are unchanged.
+func out_of_ground(pos: Vector2, max_tiles: int = 40) -> Vector2:
+	var t := world_to_tile(pos + Vector2(0.0, -1.0))
+	if collision_at(pos + Vector2(0.0, -1.0)) != TileDef.Collision.SOLID:
+		return pos
+	for i in range(1, max_tiles + 1):
+		var up := Vector2i(t.x, t.y - i)
+		if collision_at(tile_to_world(up) + Vector2(TILE * 0.5, TILE * 0.5)) != TileDef.Collision.SOLID:
+			return Vector2(pos.x, (up.y + 1) * TILE)
+	return pos
 
 
 ## Fires a spell projectile from `from` along `dir` (normalized). `power` multiplies

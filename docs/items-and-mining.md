@@ -531,6 +531,9 @@ you walk away from a drop flying toward you, it slows to this instead of shootin
 off), `thrown_pickup_delay` (1 s, so a thrown stack doesn't come straight back),
 `despawn_minutes` (10). Drops aren't
 saved with the world yet.
+Drops never start buried: one made inside solid ground (a tree felled into a hillside,
+loot against a wall) moves straight up onto the first open tile (`World.out_of_ground`),
+and a resting drop with a block placed on it comes up onto the block.
 
 ## Trees, saplings, flowers, grass (`Plants` node, `src/world/plant_layer.gd`)
 

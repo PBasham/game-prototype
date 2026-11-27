@@ -119,6 +119,8 @@ func _physics_process(delta: float) -> void:
 		if _merge_left <= 0.0:
 			_merge_left = merge_every
 			_merge_nearby()
+			# A block placed on top of it: up onto the block instead of buried.
+			global_position = world.out_of_ground(global_position)
 		_bob += delta * 3.0
 		_sprite.position.y = -_size * 0.5 - absf(sin(_bob)) * 1.0
 		return

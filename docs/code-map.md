@@ -592,6 +592,12 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 58: drops in the ground
+
+| Change | Where |
+| --- | --- |
+| Drops lifted out of solid ground | `World.out_of_ground` (used by `request_spawn_drop`); `ItemDrop._physics_process` (resting check) |
+
 ## Phase 56: sea life
 
 | Change | Where |

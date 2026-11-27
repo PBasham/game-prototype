@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 58, drops in the ground
+
+- **Patrick:** a chopped tree dropped wood below ground; it should be stopped by the ground.
+- **Claude:** every drop made inside solid ground moves up onto it; a resting drop covered
+  by a block comes up too.
+
 ## 2026-11-27: Phase 57, Storm Axes leap
 
 - **Patrick:** make the leap on the storm axes much farther.
