@@ -270,7 +270,7 @@ or .ogg); the generator never overwrites without `--force`.
 | terrain/glass.png, terrain/glass_wall.png | 64x64 Glass block and wall: one continuous see-through pane (alpha ~0.25) with long diagonal shines; the rim is drawn by the shader. Placeholders from `tools/make_glass_clay_art.py` |
 | terrain/clay_wall.png | The clay block art darkened. Same script |
 | items/{icons,held}/{healing,mana}_{clay_bottle,clay_jug,glass_vial,glass_bottle,glass_flask}.png | Filled bottles (32x32) from `art/concepts/flasks/make_flasks.py` via `tools/make_phase37_art.py` |
-| objects/{pantry_rack,food_pantry,bookshelf,barrel,crate,liquid_barrel,iron_liquid_barrel}.png (+ icons, held) | Storage placeholders (detail 2). Same script |
+| objects/{pantry_rack,food_pantry,bookshelf,tall_bookshelf,barrel,crate,liquid_barrel,iron_liquid_barrel}.png (+ icons, held) | Storage placeholders (detail 2). Same script |
 | objects/hanging_net_{small,medium,long,large}.png (+ icons, held) | Nets (4x2, 2x3, 2x5, 6x4; ropes 4 art px thick), 2 frames: rope and bag, then the mesh drawn over the contents. Same script |
 | objects/potion_cabinet.png, potion_bookcase.png | Now 2 frames: the cabinet, then its glass doors (`front_frame`). `tools/make_potion_storage_art.py` |
 | terrain/sand.png, terrain/sand_wall.png | 128x128 detailed sand grains with soft ripples (the wall darker). `tools/make_glass_clay_art.py` |

@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/tall_bookshelf.png" id="1_dqyds"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_w8dro"]
+
+[resource]
+script = ExtResource("2_w8dro")
+frames = ExtResource("1_dqyds")
+style = 2
+height_tiles = 6
+detail = 2
+width_tiles = 4
+needs_floor = true
+container_accepts = &"book"
+container_stack_mult = 4
+fill_look = 4
+bottle_shelves = Array[int]([68, 46, 24])
+bottles_per_shelf = 11
+bottle_x0 = 4.0
+flat_top = true
+container_slots = 24
+health = 1.0
+drop_item = &"tall_bookshelf"
+id = &"tall_bookshelf"
+display_name = "Bookshelf"

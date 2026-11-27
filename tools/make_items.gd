@@ -307,7 +307,8 @@ func _items() -> Array[ItemData]:
 			[&"potion_shelf", "Shelf", "Hangs on a back wall: 4 stacks of anything, shown in its 4 spots."],
 			[&"pantry_rack", "Pantry Rack", "Open shelves for food: 8 stacks, shown on its shelves. Furniture can stand on top."],
 			[&"food_pantry", "Food Pantry", "A cupboard for food: 14 stacks, shown on its open shelves. Furniture can stand on top."],
-			[&"bookshelf", "Bookshelf", "Books, spellbooks, scrolls, pages and paper: 12 stacks. Books stand on its shelves, the rest in the drawer."],
+			[&"bookshelf", "Small Bookshelf", "Books, spellbooks, scrolls, pages and paper: 12 slots of 4 stacks. Books stand on its 2 shelves, the rest go in the cupboard."],
+			[&"tall_bookshelf", "Bookshelf", "Books, spellbooks, scrolls, pages and paper: 24 slots of 4 stacks. Books stand on its 3 shelves, the rest go in the cupboard. Furniture can stand on top."],
 			[&"barrel", "Barrel", "Storage for anything: 10 stacks. Furniture can stand on top."],
 			[&"crate", "Crate", "Storage for anything: 12 stacks. Furniture can stand on top."],
 			[&"hanging_net_small", "Small Hanging Net", "Hangs by a rope from a block above: 6 stacks of anything, heaped in the net."],
@@ -812,11 +813,12 @@ func _objects() -> Array[ObjectDef]:
 			[&"potion_bookcase", "Large Potion Cabinet", 4, 6, &""], [&"potion_shelf", "Shelf", 3, 2, &""],
 			# Phase 37 (18 to 27).
 			[&"pantry_rack", "Pantry Rack", 3, 3, &""], [&"food_pantry", "Food Pantry", 3, 4, &""],
-			[&"bookshelf", "Bookshelf", 3, 4, &""], [&"barrel", "Barrel", 2, 2, &""], [&"crate", "Crate", 2, 2, &""],
+			[&"bookshelf", "Small Bookshelf", 3, 4, &""], [&"barrel", "Barrel", 2, 2, &""], [&"crate", "Crate", 2, 2, &""],
 			[&"hanging_net_small", "Small Hanging Net", 4, 2, &""], [&"hanging_net_medium", "Hanging Net", 2, 3, &""],
 			[&"hanging_net_large", "Large Hanging Net", 6, 4, &""], [&"liquid_barrel", "Liquid Barrel", 2, 3, &""],
 			[&"iron_liquid_barrel", "Iron Liquid Barrel", 2, 3, &""],
-			[&"hanging_net_long", "Long Hanging Net", 2, 5, &""]]:
+			[&"hanging_net_long", "Long Hanging Net", 2, 5, &""],
+			[&"tall_bookshelf", "Bookshelf", 4, 6, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -877,7 +879,7 @@ func _objects() -> Array[ObjectDef]:
 	out[17].container_accepts = &""  # the Shelf (was the Potion Shelf): anything
 	# Phase 37 storage: pantries (food on shelves), bookshelf, barrel, crate, nets, liquid
 	# barrels.
-	for i in range(18, 29):
+	for i in range(18, 30):
 		out[i].detail = 2
 	out[18].container_slots = 8
 	out[18].slots_per_shelf = 4
@@ -894,11 +896,16 @@ func _objects() -> Array[ObjectDef]:
 		out[i].bottles_per_shelf = 8
 		out[i].bottle_x0 = 4.0
 	out[20].container_slots = 12
-	out[20].container_accepts = &"book"
-	out[20].fill_look = ObjectDef.FillLook.BOOKS
-	out[20].bottle_shelves.assign([57, 38, 20])
+	out[20].bottle_shelves.assign([38, 20])
 	out[20].bottles_per_shelf = 8
-	out[20].bottle_x0 = 4.0
+	out[29].container_slots = 24
+	out[29].bottle_shelves.assign([68, 46, 24])
+	out[29].bottles_per_shelf = 11
+	for i in [20, 29]:
+		out[i].container_accepts = &"book"
+		out[i].fill_look = ObjectDef.FillLook.BOOKS
+		out[i].bottle_x0 = 4.0
+		out[i].container_stack_mult = 4
 	out[21].container_slots = 10
 	out[22].container_slots = 12
 	# Hanging nets: [slots, rope columns, the bag's inside in art px].
@@ -915,7 +922,7 @@ func _objects() -> Array[ObjectDef]:
 	out[26].liquid_capacity = 1000
 	out[27].liquid_capacity = 2500
 	# Flat tops: other furniture can stand on these.
-	for i in [4, 9, 11, 12, 13, 16, 18, 19, 20, 21, 22, 26, 27]:
+	for i in [4, 9, 11, 12, 13, 16, 18, 19, 20, 21, 22, 26, 27, 29]:
 		out[i].flat_top = true
 	# The Workbench upgrades in place to the Darkwood Workbench (tier 2: reinforced wood).
 	out[1].upgrade_to = &"darkwood_workbench"
@@ -1193,6 +1200,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"pantry_rack", &"workbench", {&"wood": 12}, &"pantry_rack", 1, []],
 		[&"food_pantry", &"workbench", {&"wood": 20, &"copper_bar": 2}, &"food_pantry", 1, []],
 		[&"bookshelf", &"workbench", {&"wood": 20}, &"bookshelf", 1, []],
+		[&"tall_bookshelf", &"workbench", {&"wood": 36}, &"tall_bookshelf", 1, []],
 		[&"barrel", &"workbench", {&"wood": 10, &"copper_bar": 1}, &"barrel", 1, []],
 		[&"crate", &"workbench", {&"wood": 12}, &"crate", 1, []],
 		[&"hanging_net_small", &"workbench", {&"rope": 8, &"wood": 2}, &"hanging_net_small", 1, []],

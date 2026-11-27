@@ -99,7 +99,7 @@ func shown() -> Array:
 	var out: Array = []
 	for entry in _tab_entries():
 		var name: String = entry.display_name
-		if q != "" and not (q in name.to_lower() or q in String(entry.id)):
+		if q != "" and not q in name.to_lower():  # by name only (ids can say "bookcase")
 			continue
 		out.append(entry)
 	return out

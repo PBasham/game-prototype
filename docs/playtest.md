@@ -358,6 +358,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 47: bookshelves, fuller spots, right click fix (branch phase-47-bookshelves)**
+- [ ] Bookshelf (4x6, 3 shelves over a cupboard) and Small Bookshelf (3x4): one spine per book; scrolls and paper don't show.
+- [ ] Shelf spots fill up with overlapping bottles as the stack grows (one item: one; two or more: two or more).
+- [ ] Creative search "book" no longer finds the Large Potion Cabinet (names only).
+- [ ] Right clicking furniture that's too far away says "Too far away" instead of mining behind it.
+
 **Phase 46: shelf spots, Creative tabs, wall pantry rack (branch phase-46-shelf-slots)**
 - [ ] Potion cabinets, the Shelf and pantries: each slot is its own spot on a shelf; the window shows the slots as shelves (top shelf first) with planks.
 - [ ] A cabinet slot holds 120 potions (4 stacks); a spot fills up with bottles as its stack fills.

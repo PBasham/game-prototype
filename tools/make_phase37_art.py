@@ -114,14 +114,23 @@ d.rectangle((21, 50, 22, 52), fill=BRASS)
 d.rectangle((26, 50, 27, 52), fill=BRASS)
 furniture("food_pantry", pantry)
 
-books = frame_box(48, 64)
-planks(books, [20, 38])
-d = ImageDraw.Draw(books)
-d.rectangle((3, 41, 44, 60), fill=WOOD_D)  # the drawer, pulled open
-d.rectangle((5, 44, 42, 57), fill=(40, 30, 24, 255))
-d.rectangle((3, 58, 44, 60), fill=WOOD_L)  # its front, low
-d.rectangle((22, 59, 25, 59), fill=BRASS)
-furniture("bookshelf", books)
+def bookcase(w: int, h: int, shelves: list, low: int) -> Image.Image:
+    """Book shelves on top, a closed cupboard below (from `low` down) with two doors."""
+    im = frame_box(w, h)
+    planks(im, shelves)
+    d = ImageDraw.Draw(im)
+    d.rectangle((3, low, w - 4, h - 4), fill=WOOD)
+    mid = w // 2
+    for x0, x1 in ((5, mid - 2), (mid + 1, w - 6)):
+        d.rectangle((x0, low + 2, x1, h - 6), outline=WOOD_D)
+        d.rectangle((x0 + 2, low + 4, x1 - 2, low + 5), fill=WOOD_L)
+    d.rectangle((mid - 3, (low + h) // 2 - 1, mid - 2, (low + h) // 2 + 1), fill=BRASS)
+    d.rectangle((mid + 1, (low + h) // 2 - 1, mid + 2, (low + h) // 2 + 1), fill=BRASS)
+    return im
+
+
+furniture("bookshelf", bookcase(48, 64, [20, 38], 41))
+furniture("tall_bookshelf", bookcase(64, 96, [24, 46, 68], 71))
 
 
 # --- barrel and crate ----------------------------------------------------------------

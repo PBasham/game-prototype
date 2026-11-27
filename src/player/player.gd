@@ -1587,6 +1587,11 @@ func _update_use(delta: float) -> void:
 					return
 				if world and world.try_place_display(aim_point(), self):
 					return
+				if world and (outlined or world.usable_object_at(aim_point())):
+					# Furniture under the cursor but too far to use: nothing, rather than
+					# mining the wall or block behind it.
+					EventBus.debug_message.emit("Too far away")
+					return
 			back = held_item != null and not stowed
 			clicked = back
 		var held_down := false

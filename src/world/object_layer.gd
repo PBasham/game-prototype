@@ -262,13 +262,21 @@ func _draw_sections(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: 
 		if tex.get_width() > sec_w:
 			tex = shelf_fit(ItemData.find(inv.ids[i]), int(sec_w), int(room))
 		var size := Vector2(tex.get_size())
-		var fits := maxi(1, int((sec_w + 1.0) / (size.x + 1.0)))
+		# How many can stand in the spot, overlapping by up to half: a full stack fills
+		# it, fewer show fewer (one item: one; two or more: at least two).
+		var fits := maxi(1, int((sec_w - size.x) / maxf(size.x * 0.5, 1.0)) + 1)
 		var full := clampf(inv.counts[i] / maxf(float(inv.cap_for(inv.ids[i])), 1.0), 0.0, 1.0)
 		var n := clampi(ceili(full * fits), 1, fits)
-		var gap := (sec_w - n * size.x) / (n + 1)
+		if inv.counts[i] >= 2 and fits >= 2:
+			n = maxi(n, 2)
+		n = mini(n, inv.counts[i])
 		var x0 := def.bottle_x0 + (i % per) * sec_w
+		var step := (sec_w - size.x) / (n - 1) if n > 1 else 0.0
+		step = minf(step, size.x + 1.0)
+		var span := size.x + step * (n - 1)
+		var start := x0 + (sec_w - span) * 0.5
 		for k in n:
-			var left := roundf(x0 + gap + k * (size.x + gap))
+			var left := roundf(start + k * step)
 			if flip:
 				left = art_w - left - size.x
 			view.draw_texture_rect(tex, Rect2(dest.position + Vector2(left, def.bottle_shelves[shelf] - size.y) * s, size * s), false)
@@ -366,32 +374,24 @@ static func _shown(inv: Inventory, slot: int, room: float, each: float) -> int:
 	return maxi(1, roundi(inv.counts[slot] / (cap * inv.size) * room / maxf(each, 1.0)))
 
 
-## Bookshelf: books as spines (2 to 4 art px wide, 10 to 14 tall, in their icon's main
-## color) on the upper shelves, left to right; scrolls, pages and paper as their shelf
-## sprites on the bottom shelf (the drawer).
+## Bookshelf: one spine per book (a stack shows one per copy), 2 to 4 art px wide, 10 to
+## 14 tall, in the book's icon color, on the shelves from the top one down, left to
+## right. Scrolls, pages and paper go in the closed cupboard below and don't show.
 func _draw_books(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: ObjectDef) -> void:
 	var art_w := dest.size.x * def.detail
 	var s := dest.size.x / art_w
 	var shelf_w := float(def.bottles_per_shelf) * def.bottle_step
-	var upper := def.bottle_shelves.size() - 1
 	var books: Array[ItemData] = []
-	var papers: Array[ItemData] = []
 	for i in inv.size:
 		if inv.is_empty(i):
 			continue
 		var it := ItemData.find(inv.ids[i])
-		if it == null:
-			continue
-		if it.kind in [ItemData.Kind.BOOK, ItemData.Kind.TOME]:
-			for _k in _shown(inv, i, shelf_w * upper, 4.0):
+		if it and it.kind in [ItemData.Kind.BOOK, ItemData.Kind.TOME]:
+			for _k in mini(inv.counts[i], 64):
 				books.append(it)
-		elif shelf_texture(it):
-			for _k in _shown(inv, i, shelf_w, 9.0):
-				papers.append(it)
 	var place := func(x: float, w: float) -> float:
 		return art_w - x - w if flip else x
-	# Books: upper shelves, bottom one up.
-	var shelf := 1
+	var shelf := def.bottle_shelves.size() - 1  # the top shelf first
 	var x := 0.0
 	var n := 0
 	for it in books:
@@ -400,10 +400,11 @@ func _draw_books(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: Obj
 		var w := 2.0 + float(seed % 3)
 		var h := 10.0 + float((seed / 3) % 5)
 		if x + w > shelf_w:
-			shelf += 1
+			shelf -= 1
 			x = 0.0
-		if shelf >= def.bottle_shelves.size():
+		if shelf < 0:
 			break
+		h = minf(h, shelf_room(def, shelf))
 		var c := icon_color(it)
 		# Each copy a little lighter or darker, so a row of the same book reads as books.
 		c = c.lightened(0.12) if seed % 3 == 0 else (c.darkened(0.12) if seed % 3 == 1 else c)
@@ -415,16 +416,6 @@ func _draw_books(view: Node2D, dest: Rect2, inv: Inventory, flip: bool, def: Obj
 		var edge: float = place.call(def.bottle_x0 + x + w - 1.0, 1.0)
 		view.draw_rect(Rect2(dest.position + Vector2(edge, top) * s, Vector2(1, h) * s), c.darkened(0.45))
 		x += w
-	# Papers: the drawer.
-	x = 0.0
-	for it in papers:
-		var tex := shelf_texture(it)
-		var size := Vector2(tex.get_size())
-		if x + size.x > shelf_w:
-			break
-		var left: float = place.call(def.bottle_x0 + x, size.x)
-		view.draw_texture_rect(tex, Rect2(dest.position + Vector2(left, def.bottle_shelves[0] - size.y) * s, size * s), false)
-		x += size.x * 0.6  # overlapping, like a stack in a drawer
 
 
 ## Hanging net: what's inside heaped in its bag (ObjectDef.net_bag), bottom row first,

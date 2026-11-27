@@ -23,5 +23,5 @@ impact_at = 0.2
 places_object = &"bookshelf"
 place_area_max = 1
 id = &"bookshelf"
-display_name = "Bookshelf"
-description = "Books, spellbooks, scrolls, pages and paper: 12 stacks. Books stand on its shelves, the rest in the drawer."
+display_name = "Small Bookshelf"
+description = "Books, spellbooks, scrolls, pages and paper: 12 slots of 4 stacks. Books stand on its 2 shelves, the rest go in the cupboard."

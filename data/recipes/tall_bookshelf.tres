@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_podmg"]
+
+[resource]
+script = ExtResource("1_podmg")
+station = &"workbench"
+inputs = Dictionary[StringName, int]({
+&"wood": 36
+})
+output = &"tall_bookshelf"
+id = &"tall_bookshelf"
+display_name = "Tall Bookshelf"

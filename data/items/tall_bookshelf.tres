@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_sguo5"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_33md5"]
+[ext_resource type="Texture2D" path="res://assets/items/held/tall_bookshelf.png" id="3_vn6p7"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/tall_bookshelf.png" id="4_3eate"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_5g0rr"]
+
+[sub_resource type="Resource" id="Resource_xcm1c"]
+script = ExtResource("2_33md5")
+id = &"tall_bookshelf"
+texture = ExtResource("3_vn6p7")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_5g0rr")
+kind = 10
+icon = ExtResource("4_3eate")
+max_stack = 99
+held = SubResource("Resource_xcm1c")
+impact_at = 0.2
+places_object = &"tall_bookshelf"
+place_area_max = 1
+id = &"tall_bookshelf"
+display_name = "Bookshelf"
+description = "Books, spellbooks, scrolls, pages and paper: 24 slots of 4 stacks. Books stand on its 3 shelves, the rest go in the cupboard. Furniture can stand on top."

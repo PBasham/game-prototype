@@ -285,7 +285,8 @@ can't mine the floor under furniture.
   storage beats a chest (40 slots of 1 stack) for its kind. The old display Shelf is
   retired (`ItemData.obsolete`: no recipe, not in Creative or the Catalog; placed ones
   still work); the Potion Shelf is now the Shelf and takes anything.
-| Bookshelf | 3x4, 2 shelves and a drawer | Books, spellbooks, tomes, scrolls, pages, paper | 12 stacks | 20 Wood |
+| Small Bookshelf (id `bookshelf`) | 3x4, 2 shelves over a cupboard | Books, spellbooks, tomes, scrolls, pages, paper | 12 slots of 4 stacks | 20 Wood |
+| Bookshelf (id `tall_bookshelf`) | 4x6, 3 shelves over a cupboard | the same | 24 slots of 4 stacks | 36 Wood |
 
 - **Storage for anything** (like a chest, its picture doesn't change): **Barrel** (2x2, 10
   stacks, 10 Wood + 1 Copper Bar), **Crate** (2x2, 12 stacks, 12 Wood), and three
@@ -303,8 +304,9 @@ can't mine the floor under furniture.
   that isn't a potion or coating; `book` is books, tomes, scrolls, pages, Paper and Blank
   Scrolls. Other tags are listed in `storage_tags`.
 - **Looks:** pantries use `BOTTLES` (each food's icon on the shelves, 16x16 icons at full
-  size, 32x32 ones halved); the Bookshelf uses `BOOKS` (books as spines in their icon's
-  color on the upper shelves, scrolls and paper in the drawer: `bottle_shelves[0]`).
+  size, 32x32 ones halved); the bookshelves use `BOOKS`: one spine per book (a stack shows
+  one per copy) in its icon's color, top shelf first; scrolls, pages and paper go in the
+  closed cupboard and don't show.
   `ObjectDef.front_frame` draws one frame of the picture over what's inside: the glass
   doors of both potion cabinets and the nets' mesh, so the contents sit behind them.
 

@@ -569,3 +569,11 @@ saves still load.
 | Floor or wall | `ObjectDef.floor_or_wall`; `World._can_place_furniture` |
 | Retired items | `ItemData.obsolete` (Creative, Catalog) |
 | Creative tabs | `CreativeWindow.TABS`, `category_of` |
+
+## Phase 47: bookshelves, fuller spots, right click fix
+
+| Change | Where |
+| --- | --- |
+| Bookshelves | `ObjectLayer._draw_books`; object index 29 (`tall_bookshelf`) in `tools/make_items.gd`; art `bookcase()` in `tools/make_phase37_art.py` |
+| Overlapping spots | `ObjectLayer._draw_sections` |
+| Far furniture right click | `Player` (the right click branch) |

@@ -265,3 +265,17 @@ func test_put_away_torch_is_dark() -> void:
 	w.item_user._update_held_light()
 	assert_false(w.item_user._held_light != null and w.item_user._held_light.is_in_group(&"light_sources"))
 	w.player.stowed = false
+
+
+func test_bookshelves_and_creative_search_by_name() -> void:
+	var tall := w.objects.def(w.objects.index_of(&"tall_bookshelf")) as ObjectDef
+	assert_eq([tall.width_tiles, tall.height_tiles, tall.container_slots], [4, 6, 24])
+	assert_eq(tall.display_name, "Bookshelf")
+	assert_eq((w.objects.def(w.objects.index_of(&"bookshelf")) as ObjectDef).display_name, "Small Bookshelf")
+	var win := w.hud._creative
+	win.tab = 0
+	win.search = "book"
+	var names: Array = win.shown().map(func(it: ItemData) -> StringName: return it.id)
+	assert_does_not_have(names, &"potion_bookcase", "ids don't match the search, names do")
+	assert_has(names, &"tall_bookshelf")
+	win.search = ""

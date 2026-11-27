@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-26: Phase 47, bookshelves, fuller spots, right click fix
+
+- **Patrick:** a bigger Bookshelf (the old one is the Small Bookshelf), bottom half a
+  cupboard, books only on show, one book each; shelf spots should fill with the stack;
+  Creative search matched ids ("bookcase"); right clicking a far shelf mined behind it.
+
 ## 2026-11-26: Phase 46, shelf spots, Creative tabs, wall pantry rack
 
 - **Patrick:** cabinets didn't fill up; each slot should be a section of the shelf and
