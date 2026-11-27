@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 53: Sand Bricks counted like sand (branch phase-53-brick-grains)**
+- [ ] Workbench: 16 Sand = 16 Sand Bricks; a block or wall takes 16, mining one gives 16.
+- [ ] Bomb a Sand Bricks wall, mine a bitten tile: you get exactly the bricks left in it.
+- [ ] Refill a bitten tile: it takes only the missing bricks.
+
 **Phase 52: voxels: falling sand, water, Sand Bricks, Bomb (branch phase-52-voxels)**
 - [ ] Place sand in the air (or dig out under a sand block): it falls apart into grains
       and piles at 45 degrees. `fill sand 6 4` high up drops a big pile.

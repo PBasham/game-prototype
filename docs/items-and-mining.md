@@ -605,7 +605,7 @@ tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are
 | --- | --- | --- |
 | Sand | POWDER | Falls, piles at 45 degrees, sinks through water. One Sand item a cell. |
 | Water | LIQUID | Falls, slides sideways (`water_spread` 3 cells a step) to level out. No collision, no effect on you yet, no way to carry it (dev console `water <w> <h>`). |
-| Sand Bricks | STATIC | Never moves. Only explosions turn a Sand Bricks block into cells. |
+| Sand Bricks | STATIC | Never moves. Only explosions turn a Sand Bricks block into cells. One Sand Bricks item a cell, like sand. |
 
 - **Sand falls:** a sand block (`TileDef.voxel`) with nothing whole under it (a solid
   unshaped block, or a tile full of solid cells) turns into 16 sand cells. A block that
@@ -613,11 +613,10 @@ tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are
   `solidify_piles` (off) would turn resting full tiles back into blocks; off because the
   terrain shader rounds their edges inside a loose pile.
 - **Mining** a tile of cells takes all its solid cells at once (water stays). Sand gives
-  one Sand per cell; a broken Sand Bricks tile gives a brick if at least half of it
-  (`cells_per_item` 8) is left.
+  one Sand per cell, a bitten Sand Bricks tile one brick per cell left (`cells_per_item` 1).
 - **Placing:** Sand costs `place_units` 16 a tile, but a tile partly full of loose sand
-  only takes the missing grains (they become the block). A Sand Brick placed on a broken
-  Sand Bricks tile makes it whole for one brick. Other cells in the way: other solid
+  only takes the missing grains (they become the block). Sand Bricks work the same way
+  (16 a tile, a bitten tile takes only the missing bricks). Other cells in the way: other solid
   cells are lost, water is pushed into the tile above.
 - **Collision:** solid cells have 2x2 px collision (a hidden TileMapLayer), so you walk
   on piles; water has none. Thrown items stop on solid cells.

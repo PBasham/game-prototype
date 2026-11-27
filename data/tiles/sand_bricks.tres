@@ -8,6 +8,7 @@ atlas_row = 21
 collision = 1
 climbable = false
 health = 60.0
+drop_count = 16
 voxel = &"sand_bricks"
 terrain = "sand_bricks"
 built = true

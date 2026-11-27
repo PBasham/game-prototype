@@ -9,5 +9,6 @@ inputs = Dictionary[StringName, int]({
 &"sand": 16
 })
 output = &"sand_bricks"
+output_count = 16
 id = &"sand_bricks"
 display_name = "Sand Bricks"

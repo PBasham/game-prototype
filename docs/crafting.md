@@ -338,7 +338,7 @@ can't mine the floor under furniture.
 - **Sand and glass:** Sand is in the Creative window only for now (no world sand yet).
   It's counted in grains (Phase 52): a block (left click) or a Sand Wall (right click)
   takes 16, and mining one gives 16 back. Sand blocks fall (see items-and-mining.md,
-  "Voxels"). Workbench: 16 Sand = 1 Sand Bricks (a block and wall that don't fall).
+  "Voxels"). Workbench: 16 Sand = 16 Sand Bricks (one block or wall; bricks count like sand, 16 a tile, and don't fall).
   Glass is also a see-through block (left click) and Glass Wall (right click); Clay places
   a Clay Wall.
   Furnace: 16 Sand = 1 Glass; Glass Vial = 1 Glass, Glass Bottle = 2, Glass Flask = 3;

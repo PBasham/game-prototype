@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 53, Sand Bricks counted like sand
+
+- **Patrick:** mining a bitten brick should give the quantity it actually has, not a
+  brick for half. Leave wall shaping as it is for now.
+- **Claude:** Sand Bricks are counted per cell like sand: 16 a tile (`place_units`,
+  `drop_count`), the recipe makes 16, refilling takes the missing ones.
+
 ## 2026-11-27: Phase 52, voxels: falling sand, water, Sand Bricks, Bomb
 
 - **Patrick:** start the voxel style with sand and water, plus a Sand Brick that doesn't

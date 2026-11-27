@@ -151,25 +151,33 @@ func test_bomb_bites_sand_bricks_and_they_stay_put() -> void:
 	assert_eq(w.data.get_block(w.wrap_tile(floor + Vector2i(0, -1)).x, floor.y - 1), bricks, "far tiles untouched")
 	_steps(60)
 	assert_eq(v.count_in(t, &"sand_bricks"), left, "static: doesn't fall")
-	# Placing a brick makes it whole, for one brick.
+	# Refilling takes only the missing bricks.
 	var item := ItemData.find(&"sand_bricks")
-	assert_eq(w.place_cost(t, item), 1)
+	assert_eq(item.place_units, 16)
+	assert_eq(w.place_cost(t, item), 16 - left)
 	assert_true(w.request_place_block(t, bricks))
 	assert_eq(v.count_in(t, &"sand_bricks"), 0)
 	assert_eq(w.data.get_block(w.wrap_tile(t).x, t.y), bricks)
 
 
-func test_mining_a_broken_brick_tile() -> void:
+func test_mining_a_broken_brick_tile_gives_what_is_left() -> void:
 	var floor := _air_spot()
 	_basin(floor)
 	var t := floor + Vector2i(2, -1)
 	w.request_set_block(t, w.blocks.index_of(&"sand_bricks"))
 	v.explode(w.tile_to_world(t), 0.5 * World.TILE)  # a nibble off one corner
 	assert_true(v.has_minable(t))
-	var drops := w.drop_count()
+	var left := v.count_in(t, &"sand_bricks")
+	assert_between(left, 1, 15)
+	w.teleport_player(w.tile_to_world(floor + Vector2i(4, -1)) + Vector2(4, 0))
+	await wait_physics_frames(2)
+	var inv := w.character.inventory
+	var before := inv.count_of(&"sand_bricks")
 	assert_true(w.request_damage_block(t, 1000.0))
 	assert_false(v.has_minable(t))
-	assert_eq(w.drop_count(), drops + 1, "most of a brick left: a brick back")
+	await wait_seconds(1.0)
+	assert_eq(inv.count_of(&"sand_bricks") - before, left, "one brick a cell left")
+	assert_eq(w.blocks.def(w.blocks.index_of(&"sand_bricks")).drop_count, 16, "a whole block gives 16")
 
 
 func test_placing_sand_takes_grains() -> void:

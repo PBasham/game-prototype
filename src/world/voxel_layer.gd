@@ -628,8 +628,8 @@ func _take_solid(t: Vector2i) -> Dictionary:
 
 
 ## How many of `item` placing its block at this tile takes: the item's `place_units`
-## for an empty tile; a tile partly full of the same powder only needs the missing
-## cells (sand grains); a broken Sand Bricks tile is made whole with one brick.
+## for an empty tile; a tile partly full of the same material (loose sand, a bitten
+## Sand Bricks tile) only needs the missing cells.
 func place_cost(tile: Vector2i, item: ItemData) -> int:
 	var units := maxi(item.place_units, 1)
 	var t := world.wrap_tile(tile)
@@ -638,9 +638,7 @@ func place_cost(tile: Vector2i, item: ItemData) -> int:
 	var m := material_for_block(world.blocks.index_of(item.places_block))
 	if m == null:
 		return units
-	if m.behavior == VoxelMaterial.Behavior.POWDER:
-		return maxi(units - count_in(t, m.id) * units / CELLS, 1)
-	return 1
+	return maxi(units - count_in(t, m.id) * units / CELLS, 1)
 
 
 ## Makes room for a block: powder of the block's own material is kept (it becomes the
