@@ -47,6 +47,8 @@ const META_KILLS := "kills"
 const META_SHAPES := "shapes"
 const META_VOXELS := "voxels"
 const META_LIQUIDS := "liquids"
+## Rain (Weather.to_dict): {"raining": bool, "left": seconds}.
+const META_WEATHER := "weather"
 ## Kelp cut down (SeaFlora.cut): {"x": the day it was cut}.
 const META_SEA_PLANTS := "sea_plants"
 

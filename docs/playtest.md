@@ -358,6 +358,19 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 81: salt water, rain, catchers, lakes (branch phase-81-salt-rain-lakes)**
+(Make a new world: lakes, ponds and salt water only come with newly generated land.)
+- [ ] The sea is a slightly greener water. Right-click it with empty hands: "Too salty to
+      drink". Fill a Clay Jug there: "Clay Jug of Salt Water".
+- [ ] Campfire (or Furnace, Bottles tab): boil it into a Clay Jug of Water, plus 4 Salt.
+- [ ] Find a lake (24 to 60 wide) or a pond: fresh water, drinkable.
+- [ ] Console `rain on`: the sky greys, the sun hides, rain streaks fall and stop on roofs;
+      none underground. `rain off` ends it.
+- [ ] Rain Catcher (Workbench: 12 Wood, 4 Slime, 1 Clay Jug) and Clay Rain Catcher (Furnace:
+      20 Clay, 4 Wood): placed under open sky they fill in rain (right click shows how
+      full), not under a roof. Fill a bottle from one.
+- [ ] A bucket of salt water won't pour into a Liquid Barrel.
+
 **Phase 80: water sips (branch phase-80-water-charges)**
 - [ ] A Clay Jug of Water: drink it, +20 thirst, and you still hold "Clay Jug of Water
       (3/4)". Four sips, then the empty jug.

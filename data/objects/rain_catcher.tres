@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/rain_catcher.png" id="1_5sufe"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_kb2cp"]
+
+[resource]
+script = ExtResource("2_kb2cp")
+frames = ExtResource("1_5sufe")
+style = 2
+height_tiles = 3
+detail = 2
+width_tiles = 2
+needs_floor = true
+liquid_capacity = 96
+catches_rain = 8.0
+health = 1.0
+drop_item = &"rain_catcher"
+id = &"rain_catcher"
+display_name = "Rain Catcher"

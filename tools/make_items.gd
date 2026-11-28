@@ -220,6 +220,7 @@ func _items() -> Array[ItemData]:
 	flask_empty.fills_into = &"water_clay_flask"
 	flask_empty.fill_takes = 1  # a cell of water a sip (Phase 80)
 	flask_empty.holds_charges = 1
+	flask_empty.fills_salt_into = &"salt_water_clay_flask"
 	_detailed(flask_empty, &"")
 	out.append(flask_empty)
 	# Phase 35: more bottles (clay and glass, three sizes each), Sand and Glass.
@@ -235,11 +236,13 @@ func _items() -> Array[ItemData]:
 			if wb[0] == row[0]:
 				bottle.fill_takes = wb[2]
 				bottle.holds_charges = wb[2]
+		bottle.fills_salt_into = StringName("salt_water_" + String(row[0]))
 		_detailed(bottle, &"")
 		out.append(bottle)
 	# Phase 79: the Clay Bucket carries a tile of water (16 cells) and pours it back out.
 	var bucket := _small(&"clay_bucket", "Clay Bucket", "Right-click water to scoop up a tile of it (or take it from a Liquid Barrel).")
 	bucket.fills_into = &"clay_bucket_water"
+	bucket.fills_salt_into = &"clay_bucket_salt_water"
 	bucket.fill_takes = 16
 	bucket.max_stack = 10
 	_detailed(bucket, &"")
@@ -247,9 +250,17 @@ func _items() -> Array[ItemData]:
 	var bucket_water := _small(&"clay_bucket_water", "Clay Bucket of Water", "A tile of water. Left-click to pour it out (or into a Liquid Barrel).")
 	bucket_water.pours_water = 16
 	bucket_water.leaves_item = &"clay_bucket"
+	bucket_water.liquid = &"water"
 	bucket_water.max_stack = 1
 	_detailed(bucket_water, &"")
 	out.append(bucket_water)
+	var bucket_salt := _small(&"clay_bucket_salt_water", "Clay Bucket of Salt Water", "A tile of sea water. Left-click to pour it out.")
+	bucket_salt.pours_water = 16
+	bucket_salt.leaves_item = &"clay_bucket"
+	bucket_salt.liquid = &"salt_water"
+	bucket_salt.max_stack = 1
+	_detailed(bucket_salt, &"")
+	out.append(bucket_salt)
 	var sand := _block(&"sand", "Sand", "Fine sand, counted in grains: a block or back wall takes 16. It falls and piles up. Melt 16 in a Furnace into Glass, or press them into Sand Bricks at a Workbench. (No sand in the world yet: the Creative window has it.)", &"sand_wall")
 	sand.place_units = 16  # one grain per voxel cell (Phase 52)
 	out.append(sand)
@@ -345,6 +356,22 @@ func _items() -> Array[ItemData]:
 	# SIP_THIRST. A part-drunk one is its own item, `water_<bottle>_<n>`.
 	for b: Array in WATER_BOTTLES:
 		out.append_array(_water_bottles(b))
+	# Phase 81: the sea is salt water. Bottles of it (full only) boil into water and Salt.
+	for b: Array in WATER_BOTTLES:
+		var sw := _small(StringName("salt_water_" + String(b[0])), "%s of Salt Water" % b[1],
+			"Sea water: too salty to drink. Boil it at a Campfire or Furnace into a %s of Water and %d Salt." % [b[1], b[2]])
+		sw.charges = b[2]
+		sw.liquid = &"salt_water"
+		sw.container = b[0]
+		sw.max_stack = 30
+		sw.storage_tags.assign([&"potion"])
+		sw.bottle_shape = BOTTLES[StringName(b[0])]
+		sw.bottle_contents = Color(0.3, 0.6, 0.62)
+		_detailed(sw, &"")
+		out.append(sw)
+	var salt := _small(&"salt", "Salt", "Left over from boiling salt water.")
+	_detailed(salt, &"")
+	out.append(salt)
 	# Water Breathing (Phase 66): a bottle of water + 2 Kelp at the Alchemy Table. Breath
 	# never runs out while it lasts; a bigger bottle lasts longer.
 	for b: Array in BREATHING_BOTTLES:
@@ -425,7 +452,9 @@ func _items() -> Array[ItemData]:
 			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."],
 			[&"alchemists_bench", "Alchemist's Bench", "Brew by hand: grind, mix and bottle. Wrong mixes go murky; new mixes teach you recipes."],
 			[&"table", "Table", "Put things on display on top: hold an item and right click the table top."],
-			[&"shelf", "Shelf", "Hangs on a back wall. Put things on display on it: hold an item and right click the shelf."]]:
+			[&"shelf", "Shelf", "Hangs on a back wall. Put things on display on it: hold an item and right click the shelf."],
+			[&"rain_catcher", "Rain Catcher", "A wooden funnel sealed with slime over a clay jug. Gathers fresh water in the rain under open sky: 6 tiles of it. Fill bottles from it like a Liquid Barrel."],
+			[&"clay_rain_catcher", "Clay Rain Catcher", "A wide fired-clay basin on a wooden stand. Its wide mouth gathers rain faster: 9 tiles of fresh water."]]:
 		var furn := _small(f[0], f[1], f[2])
 		furn.kind = ItemData.Kind.FURNITURE
 		furn.places_object = f[0]
@@ -977,7 +1006,9 @@ func _objects() -> Array[ObjectDef]:
 			[&"iron_liquid_barrel", "Iron Liquid Barrel", 2, 3, &""],
 			[&"hanging_net_long", "Long Hanging Net", 2, 5, &""],
 			[&"tall_bookshelf", "Bookshelf", 4, 6, &""],
-			[&"alchemists_bench", "Alchemist's Bench", 6, 4, &"alchemists_bench"]]:
+			[&"alchemists_bench", "Alchemist's Bench", 6, 4, &"alchemists_bench"],
+			# Phase 81 (31, 32).
+			[&"rain_catcher", "Rain Catcher", 2, 3, &""], [&"clay_rain_catcher", "Clay Rain Catcher", 3, 3, &""]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -1085,6 +1116,12 @@ func _objects() -> Array[ObjectDef]:
 		net.flips = false
 	out[26].liquid_capacity = 400  # voxel cells: 25 tiles of water (Phase 54)
 	out[27].liquid_capacity = 960  # 60 tiles
+	# Rain Catchers (Phase 81): hold their size in water (16 cells a tile), filling in rain.
+	for i in [31, 32]:
+		assert(String(out[i].id).ends_with("rain_catcher"))
+		out[i].detail = 2
+		out[i].liquid_capacity = out[i].width_tiles * out[i].height_tiles * 16
+		out[i].catches_rain = 8.0 * out[i].width_tiles / 2.0  # a wider mouth catches more
 	# Flat tops: other furniture can stand on these.
 	for i in [4, 9, 11, 12, 13, 16, 18, 19, 20, 21, 22, 26, 27, 29]:
 		out[i].flat_top = true
@@ -1306,6 +1343,12 @@ func _recipes() -> Array[RecipeData]:
 		table.append([wb, &"alchemy", {StringName("water_" + String(b[0])): 1, &"kelp": 2}, wb, 1, []])
 	for b: Array in WATER_BOTTLES:
 		table.append([StringName("water_" + String(b[0])), &"", {StringName(b[0]): 1, &"water": int(b[2])}, StringName("water_" + String(b[0])), 1, []])
+	# Boiling salt water (Phase 81): at the Campfire or the Furnace; Salt alongside.
+	for b: Array in WATER_BOTTLES:
+		var salty := StringName("salt_water_" + String(b[0]))
+		var fresh := StringName("water_" + String(b[0]))
+		table.append([StringName("boil_" + String(b[0])), &"cooking", {salty: 1}, fresh, 1, []])
+		table.append([StringName("boil_%s_furnace" % b[0]), &"furnace", {salty: 1}, fresh, 1, []])
 	table.append_array([
 		# By hand.
 		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
@@ -1392,6 +1435,8 @@ func _recipes() -> Array[RecipeData]:
 		[&"hanging_net_large", &"workbench", {&"rope": 24, &"wood": 4}, &"hanging_net_large", 1, []],
 		[&"liquid_barrel", &"workbench", {&"wood": 16, &"iron_bar": 2}, &"liquid_barrel", 1, []],
 		[&"iron_liquid_barrel", &"workbench", {&"iron_bar": 8, &"wood": 4}, &"iron_liquid_barrel", 1, []],
+		[&"rain_catcher", &"workbench", {&"wood": 12, &"slime": 4, &"clay_jug": 1}, &"rain_catcher", 1, []],
+		[&"clay_rain_catcher", &"furnace", {&"clay": 20, &"wood": 4}, &"clay_rain_catcher", 1, []],
 		[&"reinforced_wood", &"workbench", {&"wood": 4, &"iron_bar": 1}, &"reinforced_wood", 4, []],
 		[&"reinforced_darkwood", &"workbench", {&"darkwood": 4, &"iron_bar": 1}, &"reinforced_darkwood", 4, []],
 	])
@@ -1421,6 +1466,15 @@ func _recipes() -> Array[RecipeData]:
 		for u: StringName in UNLOCKS.get(r.id, key_items(r.inputs)):
 			r.unlock_items.append(u)
 		r.tab = {&"poison_coating": "Coatings", &"poison_flask": "Flasks"}.get(r.id, "Potions" if r.station == &"alchemy" else RECIPE_TABS.get(r.id, ""))
+		if String(r.id).begins_with("boil_"):
+			var sips: int = ItemData.find(r.inputs.keys()[0]).charges if ItemData.find(r.inputs.keys()[0]) else 1
+			for b: Array in WATER_BOTTLES:
+				if r.inputs.has(StringName("salt_water_" + String(b[0]))):
+					sips = b[2]
+			r.also_makes[&"salt"] = sips
+			r.display_name = "Boil %s" % String(r.output).capitalize()
+			if r.station == &"furnace":
+				r.tab = "Bottles"
 		for g: StringName in BENCH_GROUND:
 			if r.station == &"alchemy" and r.inputs.has(g) and (String(r.id).begins_with(BENCH_GROUND[g]) or r.id == BENCH_GROUND[g]):
 				r.bench_ground.append(g)
@@ -1545,6 +1599,8 @@ const RECIPE_TABS := {
 	&"iron_greaves": "Armor",
 	&"iron_helmet": "Armor",
 	&"iron_liquid_barrel": "Storage",
+	&"rain_catcher": "Storage",
+	&"clay_rain_catcher": "Bottles",
 	&"iron_sword": "Weapons",
 	&"liquid_barrel": "Storage",
 	&"lumber_rack": "Storage",

@@ -1756,7 +1756,7 @@ func _update_use(delta: float) -> void:
 					and world.item_user.sip_at(world.world_to_tile(aim_point())):
 				return
 			# An empty bottle or bucket fills from water (or a Liquid Barrel) first.
-			if held_item != null and not stowed and held_item.fills_into != &"" and world and world.item_user \
+			if held_item != null and not stowed and (held_item.fills_into != &"" or held_item.fills_salt_into != &"") and world and world.item_user \
 					and world.item_user.fill_held(world.world_to_tile(aim_point()), Input.is_key_pressed(KEY_SHIFT)) > 0:
 				return
 			if not outlined and try_weapon_skill():

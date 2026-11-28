@@ -175,7 +175,12 @@ static func craft(inv: Inventory, r: RecipeData, times: int, max_mana: float = I
 	for k: StringName in r.inputs:
 		inv.remove(k, r.inputs[k] * n)
 	var left := inv.add(r.output, r.output_count * n)
-	return [n, left]
+	var extra := {}  # byproducts that didn't fit: id -> count
+	for k: StringName in r.also_makes:
+		var more := inv.add(k, r.also_makes[k] * n)
+		if more > 0:
+			extra[k] = more
+	return [n, left, extra]
 
 
 static func _name(item_id: StringName) -> String:

@@ -29,6 +29,8 @@ signal day_started(day: int)
 
 ## Fraction of the day: 0 = midnight, 0.5 = noon.
 var time := 0.0
+## How much the weather dims the sky light right now (0 to 1; Weather sets it).
+var overcast := 0.0
 ## Day number, from 1.
 var day := 1
 var _loaded := false
@@ -92,7 +94,7 @@ func sun_light() -> Color:
 	var d := daylight()
 	var base := night_color.lerp(day_color, d)
 	base = base.lerp(twilight_color, twilight() * 0.6)
-	var level := lerpf(night_light, 1.0, d)
+	var level := lerpf(night_light, 1.0, d) * (1.0 - overcast)
 	return Color(base.r * level, base.g * level, base.b * level)
 
 

@@ -4,8 +4,9 @@
 
 [resource]
 script = ExtResource("1_vox")
+code = 3
 behavior = 1
 color = Color(0.22, 0.46, 0.86, 1)
 id = &"water"
 display_name = "Water"
-description = "Flows down and levels out. No way to carry it yet."
+description = "Fresh water: ponds, lakes and rain. Flows down and levels out."

@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 81, salt water, rain, catchers, lakes
+
+- **Patrick:** the sea is salt water; boiling leaves water and salt; glass can boil too;
+  rain and a Rain Catcher (wood, slime as sealant, a clay jug) holding its size in water,
+  plus an all-clay one; bigger pools of fresh water; can't drink salt water.
+- **Claude:** salt water is a second voxel material (fixed cell codes so saves keep their
+  water); salt bottles come full only; barrels and catchers take fresh water only; boiling
+  at the Campfire or Furnace gives a Salt a sip (`RecipeData.also_makes`); rain is visual
+  plus catcher filling, no flooding; lakes (1 or 2 a world) share the pond code, and pools
+  that would open onto a cave are skipped; ponds try 6 spots each, so there are more.
+
 ## 2026-11-27: Phase 80, water sips
 
 - **Patrick:** bottles hold charges by size, +20 thirst a charge; part-drunk ones keep

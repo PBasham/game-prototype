@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_8oltd"]
+
+[resource]
+script = ExtResource("1_8oltd")
+station = &"cooking"
+inputs = Dictionary[StringName, int]({
+&"salt_water_glass_vial": 1
+})
+unlock_items = Array[StringName]([&"salt_water_glass_vial"])
+output = &"water_glass_vial"
+also_makes = Dictionary[StringName, int]({
+&"salt": 1
+})
+id = &"boil_glass_vial"
+display_name = "Boil Water Glass Vial"

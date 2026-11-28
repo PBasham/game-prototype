@@ -290,6 +290,8 @@ or .ogg); the generator never overwrites without `--force`.
 | items/{icons,held}/{clay_bucket,clay_bucket_water}.png | Placeholder Clay Bucket, empty and full (a banded clay pot with a handle) (`tools/make_bucket_art.py`, Phase 79) |
 | items/{icons,held}/water_{clay_bottle_1,clay_jug_1..3,glass_bottle_1,glass_flask_1..2}.png | Part-drunk water bottles: copies of the full pictures for now (Phase 80) |
 | sounds/sip.wav | Placeholder sip (`tools/make_sounds.gd`, Phase 80) |
+| items/{icons,held}/salt_water_*.png (six bottles), clay_bucket_salt_water.png, salt.png | Placeholder salt water (the water bottles turned sea green) and Salt (a white heap) (`tools/make_salt_art.py`, Phase 81) |
+| objects/{rain_catcher,clay_rain_catcher}.png, items/{icons,held}/{rain_catcher,clay_rain_catcher}.png | Placeholder Rain Catcher (wood funnel, slime seams, clay jug) and Clay Rain Catcher (basin on a stand) (`tools/make_rain_art.py`, Phase 81). Rain is drawn in code (`Weather._draw`) |
 | sounds/splash.wav | Placeholder splash for filling and pouring (`tools/make_sounds.gd`, Phase 79) |
 | sounds/bomb.wav | Placeholder explosion (`tools/make_sounds.gd`, Phase 52) |
 | items/icons/shaping_spell.png (+ scroll_, page_ icons) | 16x16 Shaping Spell: a small mallet over a slope. Placeholder (`make_item_art.gd --new-spells`, Phase 51) |

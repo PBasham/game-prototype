@@ -24,6 +24,7 @@ storage_tags = Array[StringName]([&"potion"])
 shelf_color = Color(0.66, 0.46, 0.32, 1)
 bottle_shape = 1
 fills_into = &"water_clay_flask"
+fills_salt_into = &"salt_water_clay_flask"
 fill_takes = 1
 holds_charges = 1
 id = &"clay_flask"

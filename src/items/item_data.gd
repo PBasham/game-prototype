@@ -182,6 +182,9 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 ## Right-click water (or a Liquid Barrel) to fill it: the full item it becomes.
 ## Empty = it can't be filled.
 @export var fills_into: StringName = &""
+## The same from the sea: the bottle (or bucket) of salt water it becomes (Phase 81).
+## Empty = it can't hold salt water (a part-drunk bottle of fresh water: no mixing).
+@export var fills_salt_into: StringName = &""
 ## Water cells filling it takes away (16 = a tile): 1 for bottles, 16 for the Clay
 ## Bucket. 0 = none.
 @export var fill_takes := 0

@@ -11,6 +11,9 @@ enum Behavior {
 }
 
 @export var behavior: Behavior = Behavior.POWDER
+## Its cell code in saved worlds (1 to 15). Keep it: changing it turns saved cells into
+## another material. New materials take the next free number (Phase 81).
+@export_range(0, 15) var code := 0
 ## Terrain picture (assets/terrain/<name>.png) its cells take their colors from. Empty =
 ## `color` with a little variation.
 @export var terrain: String = ""

@@ -106,7 +106,11 @@ func setup(w: World) -> void:
 	for d in Registry.get_all(&"voxels"):
 		if d is VoxelMaterial:
 			list.append(d as VoxelMaterial)
-	list.sort_custom(func(a: VoxelMaterial, b: VoxelMaterial) -> bool: return String(a.id) < String(b.id))
+	# By code (saved cells keep their material), then id for any without one.
+	list.sort_custom(func(a: VoxelMaterial, b: VoxelMaterial) -> bool:
+		var ka := a.code if a.code > 0 else 100
+		var kb := b.code if b.code > 0 else 100
+		return ka < kb if ka != kb else String(a.id) < String(b.id))
 	for m in list:
 		materials.append(m)
 		_index[m.id] = materials.size()
@@ -428,8 +432,9 @@ func import_generated() -> void:
 
 
 func _import_chunk(chunk: ChunkData) -> void:
-	var code := code_of(&"water")
-	if code == 0 or chunk.water.is_empty():
+	# The generator marks fresh water 1 (ponds, lakes) and salt water 2 (the sea).
+	var codes := [0, code_of(&"water"), code_of(&"salt_water")]
+	if codes[1] == 0 or chunk.water.is_empty():
 		return
 	_imported[chunk.coord] = true
 	var ox := chunk.coord.x * ChunkData.SIZE
@@ -442,6 +447,9 @@ func _import_chunk(chunk: ChunkData) -> void:
 			continue
 		var arr := PackedByteArray()
 		arr.resize(CELLS)
+		var code: int = codes[clampi(chunk.water[i], 1, 2)]
+		if code == 0:
+			code = codes[1]
 		for k in CELLS:
 			arr[k] = code | ((randi() % 16) << 4)
 		tiles[t] = arr
@@ -499,7 +507,7 @@ func _drop_chunk(c: Vector2i) -> void:
 			_regions.erase(Vector2i(c.x * per + rx, c.y * per + ry))
 
 
-## Fills open sea tiles near `center` that touch water, up to the budget.
+## Fills open sea tiles near `center` that touch salt water, up to the budget.
 func refill_sea(center: Vector2i, budget: int) -> int:
 	var gen := world.generator
 	var air := WorldData.AIR
@@ -511,15 +519,15 @@ func refill_sea(center: Vector2i, budget: int) -> int:
 				center.y + randi_range(-refill_radius, refill_radius))
 		if t.y < 0 or t.y >= world.data.height - 1 or not gen.sea_at(t.x, t.y):
 			continue
-		if world.data.get_block(t.x, t.y) != air or count_in(t, &"water") == CELLS:
+		if world.data.get_block(t.x, t.y) != air or count_in(t, &"salt_water") == CELLS:
 			continue
-		var wet := count_in(t, &"water") > 0
+		var wet := count_in(t, &"salt_water") > 0
 		if not wet:
 			for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-				if count_in(Vector2i(world.data.wrap_x(t.x + d.x), t.y + d.y), &"water") > 0:
+				if count_in(Vector2i(world.data.wrap_x(t.x + d.x), t.y + d.y), &"salt_water") > 0:
 					wet = true
 					break
-		if wet and request_fill(t, &"water") > 0:
+		if wet and request_fill(t, &"salt_water") > 0:
 			n += 1
 	return n
 

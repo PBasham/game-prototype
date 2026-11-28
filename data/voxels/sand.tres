@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_vox")
+code = 1
 behavior = 0
 terrain = "sand"
 color = Color(0.81, 0.68, 0.42, 1)

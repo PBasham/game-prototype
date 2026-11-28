@@ -377,6 +377,16 @@ can't mine the floor under furniture.
   Liquid Barrel 400 (25 tiles), Iron Liquid Barrel 960 (60 tiles). Fill and empty them
   with Siphon Liquid; right click shows how full. Crafting within reach can use their
   water. Breaking one spills its water around it. Saved in world meta "liquids".
+  Fresh water only: a bucket of salt water won't pour in (Phase 81).
+- **Rain Catchers** (Phase 81): Rain Catcher (2x3, Workbench: 12 Wood, 4 Slime, 1 Clay Jug;
+  a wooden funnel sealed with slime over the jug) and Clay Rain Catcher (3x3, Furnace,
+  Bottles tab: 20 Clay, 4 Wood; a wide basin on a stand). Each holds its size in water
+  (`liquid_capacity` = tiles x 16: 96 and 144 cells) and fills in rain while nothing solid
+  is above it (`ObjectDef.catches_rain`, cells a minute in full rain: 8 and 12). They work
+  like Liquid Barrels (right click shows how full, fill bottles and buckets from them,
+  crafting nearby uses the water), and stay listed in `World.liquids` even when empty.
+- **Byproducts** (Phase 81): `RecipeData.also_makes` (id: count each craft) comes out with
+  the output; the recipe shows "Also makes ...". Boiling salt water uses it for Salt.
 - **Water** in recipes is the pseudo item `water` (not carried, `obsolete` so it stays out
   of Creative and the Catalog): `CraftStock.water_count` / `water_take`, set by the HUD
   from `World.water_for_crafting`. Water bottle recipes: survival.md, "Thirst".

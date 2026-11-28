@@ -22,6 +22,7 @@ held = SubResource("Resource_3g64i")
 drop_size = 16
 impact_at = 0.2
 leaves_item = &"clay_bucket"
+liquid = &"water"
 pours_water = 16
 id = &"clay_bucket_water"
 display_name = "Clay Bucket of Water"

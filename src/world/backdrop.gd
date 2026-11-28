@@ -91,7 +91,7 @@ func _ready() -> void:
 void fragment() {
 	vec2 d = min(UV, 1.0 - UV);
 	float k = smoothstep(0.0, 0.22, d.x) * smoothstep(0.0, 0.22, d.y);
-	COLOR = texture(TEXTURE, UV);
+	COLOR = texture(TEXTURE, UV) * COLOR;  // keeps the node's modulate (rain hides the sun)
 	COLOR.a *= k;
 }"""
 	sun.material = fade
@@ -176,7 +176,10 @@ func _update_sky() -> void:
 	var tw := clock.twilight()
 	for i in 2:
 		var c := night_sky[i].lerp(day_sky[i], d)
-		_gradient.set_color(i, c.lerp(twilight_sky[i], tw * 0.75))
+		c = c.lerp(twilight_sky[i], tw * 0.75)
+		# Rain: the sky goes grey (WorldClock.overcast).
+		var grey := Color(c.get_luminance(), c.get_luminance(), c.get_luminance()) * Color(0.8, 0.82, 0.88)
+		_gradient.set_color(i, c.lerp(grey, clampf(clock.overcast * 2.4, 0.0, 0.85)))
 	var view := get_viewport().get_visible_rect().size
 	# The sun crosses from sunrise to sunset, the moon through the night: an arc from
 	# the left edge, up to the top, down to the right edge.
@@ -188,6 +191,7 @@ func _update_sky() -> void:
 	_place_on_arc(_sun, k_sun, view)
 	_place_on_arc(_moon, k_moon, view)
 	_sun.visible = k_sun > -0.1 and k_sun < 1.1
+	_sun.modulate.a = clampf(1.0 - clock.overcast * 3.0, 0.0, 1.0)  # hidden by rain clouds
 	_moon.visible = k_moon > -0.1 and k_moon < 1.1
 	_stars.modulate.a = clampf(1.0 - d * 1.6, 0.0, 1.0)
 	var sky := clock.sun_light()

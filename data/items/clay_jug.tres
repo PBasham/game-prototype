@@ -23,6 +23,7 @@ impact_at = 0.2
 storage_tags = Array[StringName]([&"potion"])
 bottle_shape = 3
 fills_into = &"water_clay_jug"
+fills_salt_into = &"salt_water_clay_jug"
 fill_takes = 4
 holds_charges = 4
 id = &"clay_jug"

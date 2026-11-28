@@ -592,6 +592,17 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 81: salt water, rain, catchers, lakes
+
+| Change | Where |
+| --- | --- |
+| Salt water | `data/voxels/salt_water.tres`; `VoxelMaterial.code` (fixed cell codes, sorted in `VoxelLayer.setup`); `VoxelLayer._import_chunk` (1 fresh, 2 salt), `refill_sea`; `ForestGenerator.salt_at`, `generate_chunk` |
+| Salt bottles, bucket, Salt | `ItemData.fills_salt_into`; `ItemUser.fill_held`, `pour_held`, `sip_at`; `tools/make_items.gd` (salt_water_*, clay_bucket_salt_water, salt); art `tools/make_salt_art.py` |
+| Boiling | `boil_<bottle>` (Campfire) and `boil_<bottle>_furnace` recipes; `RecipeData.also_makes`; `Crafting.craft` (3rd result: byproducts that didn't fit); `Hud.craft`, `_draw_recipe_detail` |
+| Rain | `Weather` (`src/world/weather.gd`); `WorldClock.overcast`; `Backdrop._update_sky`; `WorldSave.META_WEATHER`; dev console `rain` |
+| Rain Catchers | `ObjectDef.catches_rain`; `data/objects/rain_catcher.tres`, `clay_rain_catcher.tres`; `World.request_place_object`, `request_barrel_water` (kept at 0); `Weather.fill_catchers`, `sky_open`; art `tools/make_rain_art.py` |
+| Lakes, more ponds | `ForestGenSettings` Lakes group, `pond_tries`; `ForestGenerator._place_pools`, `_try_pool`, `_water_top` |
+
 ## Phase 80: water sips
 
 | Change | Where |

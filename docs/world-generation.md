@@ -426,7 +426,25 @@ Small ponds on fairly flat ground: a spot every `pond_spacing` (140) columns, wi
 deep, where the ground rises or falls at most `pond_max_slope` (5) over the width, not
 within `pond_spawn_clear` (40) of spawn, the ocean or the Dark Forest. The bed is sand,
 the water's top is one row below the lower bank, and there are no caves within 12 tiles
-under a pond or trees right beside it.
+under a pond or trees right beside it. Phase 81: each `pond_spacing` stretch tries
+`pond_tries` (6) spots for flat enough ground, and a spot whose banks or floor would be
+open (a cave entrance) is skipped, so nothing leaks.
+
+### Lakes (Phase 81)
+
+Big fresh water pools, placed before the ponds and built the same way (they share
+`ponds()` and the pond code): a spot every `lake_spacing` (700) columns with `lake_chance`
+(0.8), `lake_width_min`/`max` (24, 60) wide and `lake_depth_min`/`max` (6, 15) deep, where
+the ground rises or falls at most `lake_max_slope` (12), trying `lake_tries` (12) spots, not
+within `lake_spawn_clear` (80) of spawn. Ponds keep clear of lakes.
+
+### Salt and fresh water (Phase 81)
+
+Generated water is salt in the sea and the Deep's flooded caves (`salt_at`, chunk water
+value 2) and fresh in ponds and lakes (value 1); the voxel layer imports them as the
+`salt_water` and `water` materials. The sea refills with salt water. Voxel materials keep a
+fixed cell `code` (sand 1, Sand Bricks 2, water 3, salt water 4) so saved cells keep their
+material.
 
 ### Abyssal Stone (Phase 65)
 

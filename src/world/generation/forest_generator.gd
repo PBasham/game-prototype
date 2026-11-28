@@ -61,6 +61,7 @@ var _entrance_cell_w: float
 var _dark: Array[Vector2] = []
 # Ocean and ponds (Phase 55).
 var _sea := 0  ## sea level row: water fills rows at or below it
+var _water_top := 0  ## the highest generated water row (the sea's, or a pond's or lake's above it)
 var _ocean_c := -1  ## middle column, -1 = no ocean
 var _ocean_half := 0.0  ## half the water's width at sea level
 var _ocean_floor: FastNoiseLite
@@ -460,35 +461,76 @@ func ocean_at(x: int) -> float:
 func _place_ponds() -> void:
 	var s := settings
 	_ponds.clear()
-	if s.pond_spacing < 20 or s.pond_chance <= 0.0:
-		return
-	var cells := floori(float(width) / s.pond_spacing)
+	# Lakes first (Phase 81), then ponds between them; both are fresh water.
+	if s.lake_spacing >= 40 and s.lake_chance > 0.0:
+		_place_pools(s.lake_spacing, s.lake_chance, s.lake_width_min, s.lake_width_max,
+			s.lake_depth_min, s.lake_depth_max, s.lake_max_slope, s.lake_spawn_clear, s.lake_tries, 60)
+	if s.pond_spacing >= 20 and s.pond_chance > 0.0:
+		_place_pools(s.pond_spacing, s.pond_chance, s.pond_width_min, s.pond_width_max,
+			s.pond_depth_min, s.pond_depth_max, s.pond_max_slope, s.pond_spawn_clear, s.pond_tries, 41)
+	_water_top = _sea
+	for p in _ponds:
+		_water_top = mini(_water_top, int(p.w))
+
+
+## Places pools of fresh water (lakes or ponds): one spot per `spacing` columns with
+## `chance`, trying `tries` places in it for flat enough ground. Salt `k` keeps lakes and
+## ponds from sharing rolls.
+func _place_pools(spacing: int, chance: float, w_min: int, w_max: int, d_min: int, d_max: int,
+		max_slope: int, spawn_clear: int, tries: int, k: int) -> void:
+	var s := settings
+	var cells := floori(float(width) / spacing)
 	for i in cells:
-		if GenUtil.hash01(i, 41, seed) >= s.pond_chance:
+		if GenUtil.hash01(i, k, seed) >= chance:
 			continue
-		var half := lerpf(s.pond_width_min, s.pond_width_max, GenUtil.hash01(i, 42, seed)) * 0.5
-		var c := roundi(i * s.pond_spacing + half + 2 + GenUtil.hash01(i, 43, seed) * maxf(s.pond_spacing - half * 2.0 - 4.0, 0.0))
-		c = posmod(c, width)
-		if absi(wrap_delta(c, s.spawn_x)) < s.pond_spawn_clear + half:
-			continue
-		if _ocean_c >= 0 and absf(float(wrap_delta(c, _ocean_c))) < _ocean_half + s.beach_width + half + 10.0:
-			continue
-		if dark_forest_at(c) > 0.0:
-			continue  # not under the dark trees
-		var lo := 1000000
-		var hi := -1000000
-		for k in range(-ceili(half) - 1, ceili(half) + 2):
-			var y := _land_surface(posmod(c + k, width))
-			lo = mini(lo, y)
-			hi = maxi(hi, y)
-		if hi - lo > s.pond_max_slope:
-			continue
-		var depth := lerpf(s.pond_depth_min, s.pond_depth_max, GenUtil.hash01(i, 44, seed))
-		# The water's top row: one below the lower bank, so it can't spill over.
-		var left := _land_surface(posmod(c - ceili(half) - 1, width))
-		var right := _land_surface(posmod(c + ceili(half) + 1, width))
-		var water := maxi(left, right) + 1
-		_ponds.append(Vector4(c, half, depth, water))
+		var half := lerpf(w_min, w_max, GenUtil.hash01(i, k + 1, seed)) * 0.5
+		var depth := lerpf(d_min, d_max, GenUtil.hash01(i, k + 3, seed))
+		for attempt in tries:
+			var roll := GenUtil.hash01(i * 37 + attempt, k + 2, seed)
+			var c := roundi(i * spacing + half + 2 + roll * maxf(spacing - half * 2.0 - 4.0, 0.0))
+			c = posmod(c, width)
+			var pool := _try_pool(c, half, depth, max_slope, spawn_clear)
+			if pool != Vector4.ZERO:
+				_ponds.append(pool)
+				break
+
+
+## A pool at `c` (center, half width, depth, water row), or ZERO if it can't go there.
+func _try_pool(c: int, half: float, depth: float, max_slope: int, spawn_clear: int) -> Vector4:
+	var s := settings
+	if absi(wrap_delta(c, s.spawn_x)) < spawn_clear + half:
+		return Vector4.ZERO
+	if _ocean_c >= 0 and absf(float(wrap_delta(c, _ocean_c))) < _ocean_half + s.beach_width + half + 10.0:
+		return Vector4.ZERO
+	for p in _ponds:
+		if absf(float(wrap_delta(c, roundi(p.x)))) < p.y + half + 6.0:
+			return Vector4.ZERO  # another pool there
+	for k in range(-ceili(half) - 2, ceili(half) + 3, 3):
+		if dark_forest_at(posmod(c + k, width)) > 0.0:
+			return Vector4.ZERO  # not under the dark trees
+	var lo := 1000000
+	var hi := -1000000
+	for k in range(-ceili(half) - 1, ceili(half) + 2):
+		var y := _land_surface(posmod(c + k, width))
+		lo = mini(lo, y)
+		hi = maxi(hi, y)
+	if hi - lo > max_slope:
+		return Vector4.ZERO
+	# The water's top row: one below the lower bank, so it can't spill over.
+	var left := _land_surface(posmod(c - ceili(half) - 1, width))
+	var right := _land_surface(posmod(c + ceili(half) + 1, width))
+	var row := maxi(left, right) + 1
+	# Solid banks and floor (no cave entrance or cave cuts into it), or it would leak.
+	var edge := ceili(half) + 1
+	for k in range(-edge, edge + 1):
+		var x := posmod(c + k, width)
+		var t := absf(float(k)) / maxf(half, 1.0)
+		var bottom := roundi(row + depth * (1.0 - t * t)) if absi(k) < edge else row - 1
+		var from := row if absi(k) == edge else bottom + 1
+		for y in range(from, bottom + 3 if absi(k) == edge else bottom + 2):
+			if block_at(x, y) == WorldData.AIR:
+				return Vector4.ZERO
+	return Vector4(c, half, depth, row)
 
 
 func _pond_index(x: int) -> int:
@@ -501,6 +543,12 @@ func _pond_index(x: int) -> int:
 ## The ponds (center x, half width, depth, water row), for the world map preview.
 func ponds() -> Array[Vector4]:
 	return _ponds.duplicate()
+
+
+## True where generated water is salt (the sea and the Deep's flooded caves), not a
+## pond or lake.
+func salt_at(x: int, y: int) -> bool:
+	return water_at(x, y) and not (_pond_index(posmod(x, width)) >= 0 and y < surface_at(x))
 
 
 ## Middle and half width of the ocean's water (x = -1: none), for the world map preview.
@@ -593,10 +641,10 @@ func generate_chunk(chunk: ChunkData) -> void:
 			var i := ChunkData.local_index(lx, ly)
 			chunk.blocks[i] = _block(x, y, col, entrances)
 			chunk.walls[i] = _wall(x, y, col)
-			if chunk.blocks[i] == WorldData.AIR and y >= _sea - 1 and water_at(x, y):
+			if chunk.blocks[i] == WorldData.AIR and y >= _water_top - 1 and water_at(x, y):
 				if chunk.water.is_empty():
 					chunk.water.resize(ChunkData.AREA)
-				chunk.water[i] = 1
+				chunk.water[i] = 1 if _pond_index(x) >= 0 and y < surface_at(x) else 2  # fresh, salt
 
 
 ## Block at one tile, for tests and tools. Slower than generate_chunk (no caching).

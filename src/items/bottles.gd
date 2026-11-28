@@ -35,4 +35,7 @@ static func pour(from: ItemData, to: ItemData) -> Array[StringName]:
 	var n := mini(from.charges, room)
 	if n <= 0:
 		return []
-	return [id_for(from.liquid, from.container, from.charges - n), id_for(from.liquid, to_bottle, to.charges + n)]
+	var out: Array[StringName] = [id_for(from.liquid, from.container, from.charges - n), id_for(from.liquid, to_bottle, to.charges + n)]
+	if ItemData.find(out[0]) == null or ItemData.find(out[1]) == null:
+		return []  # salt water only comes in full bottles
+	return out

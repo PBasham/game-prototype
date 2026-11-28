@@ -103,6 +103,8 @@ var voxels: VoxelLayer
 var sea_flora: SeaFlora
 ## Water in Liquid Barrels: wrapped anchor -> voxel cells.
 var liquids: Dictionary[Vector2i, int] = {}
+## Rain (Phase 81).
+var weather: Weather
 ## How close (tiles) water has to be to count for crafting while you stand in or by it.
 @export var craft_water_tiles := 2
 var lights: LightMap
@@ -193,6 +195,12 @@ func _ready() -> void:
 	if is_saved():
 		clock.from_dict(WorldSave.read_extra(info.path, WorldSave.META_TIME))
 	add_child(clock)
+	weather = Weather.new()
+	weather.name = "Weather"
+	weather.world = self
+	if is_saved():
+		weather.from_dict(WorldSave.read_extra(info.path, WorldSave.META_WEATHER))
+	add_child(weather)
 	backdrop = Backdrop.new()
 	backdrop.name = "Backdrop"
 	backdrop.clock = clock
@@ -480,7 +488,7 @@ func save() -> Error:
 			WorldSave.META_BAGS: {"list": bags_to_list()}, WorldSave.META_TIME: clock.to_dict(),
 			WorldSave.META_SPAWNS: _spawns_to_dict(), WorldSave.META_KILLS: _kills_to_dict(),
 			WorldSave.META_POSITIONS: _spots_to_dict(), WorldSave.META_SHAPES: _shapes_to_dict(modified), WorldSave.META_VOXELS: voxels.to_dict(), WorldSave.META_LIQUIDS: _liquids_to_dict(),
-			WorldSave.META_SEA_PLANTS: sea_flora.to_dict(),
+			WorldSave.META_SEA_PLANTS: sea_flora.to_dict(), WorldSave.META_WEATHER: weather.to_dict(),
 			WorldSave.META_MAP: world_map.to_dict() if world_map else {}}, objects)
 	PerfStats.add("world save (main)", Time.get_ticks_usec() - t)
 	if err != OK:
@@ -1359,6 +1367,8 @@ func request_place_object(anchor: Vector2i, id: int, facing_left: bool = false) 
 	request_set_object(anchor, id)
 	if def.container_slots > 0:
 		containers[wrap_tile(anchor)] = _new_container(def)
+	if def.catches_rain > 0.0:
+		liquids[wrap_tile(anchor)] = 0  # listed even when empty, so the rain finds it
 	return true
 
 
@@ -1638,7 +1648,7 @@ func request_barrel_water(tile: Vector2i, delta: int) -> int:
 	var key := wrap_tile(a)
 	var have: int = liquids.get(key, 0)
 	var after := clampi(have + delta, 0, def.liquid_capacity)
-	if after == 0:
+	if after == 0 and def.catches_rain <= 0.0:
 		liquids.erase(key)
 	else:
 		liquids[key] = after

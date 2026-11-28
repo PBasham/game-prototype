@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="VoxelMaterial" format=3]
+
+[ext_resource type="Script" path="res://src/world/voxel_material.gd" id="1_vox"]
+
+[resource]
+script = ExtResource("1_vox")
+code = 4
+behavior = 1
+color = Color(0.18, 0.46, 0.7, 1)
+id = &"salt_water"
+display_name = "Salt Water"
+description = "The sea. Too salty to drink: boil it for fresh water and salt."

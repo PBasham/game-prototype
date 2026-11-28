@@ -37,6 +37,8 @@ var empower_spell: StringName = &""
 @export var unlock_items: Array[StringName] = []
 @export var output: StringName = &""
 @export var output_count := 1
+## Made alongside the output, each time (boiling salt water also leaves Salt; Phase 81).
+@export var also_makes: Dictionary[StringName, int] = {}
 
 
 func validate() -> PackedStringArray:

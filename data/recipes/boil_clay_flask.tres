@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_fl6r2"]
+
+[resource]
+script = ExtResource("1_fl6r2")
+station = &"cooking"
+inputs = Dictionary[StringName, int]({
+&"salt_water_clay_flask": 1
+})
+unlock_items = Array[StringName]([&"salt_water_clay_flask"])
+output = &"water_clay_flask"
+also_makes = Dictionary[StringName, int]({
+&"salt": 1
+})
+id = &"boil_clay_flask"
+display_name = "Boil Water Clay Flask"

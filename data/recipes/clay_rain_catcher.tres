@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_4wj2n"]
+
+[resource]
+script = ExtResource("1_4wj2n")
+station = &"furnace"
+tab = "Bottles"
+inputs = Dictionary[StringName, int]({
+&"clay": 20,
+&"wood": 4
+})
+unlock_items = Array[StringName]([&"clay"])
+output = &"clay_rain_catcher"
+id = &"clay_rain_catcher"
+display_name = "Clay Rain Catcher"

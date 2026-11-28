@@ -315,6 +315,25 @@ extends GameData
 @export var pond_max_slope := 5
 ## No ponds this close to spawn.
 @export var pond_spawn_clear := 40
+## Spots tried in each pond_spacing stretch to find flat enough ground (Phase 81).
+@export_range(1, 20) var pond_tries := 6
+
+@export_group("Lakes")
+## Big fresh water lakes (Phase 81): a lake spot every this many columns, and the
+## chance a spot has one. Fresh water, like ponds; the sea is salt.
+@export var lake_spacing := 700
+@export_range(0.0, 1.0) var lake_chance := 0.8
+## Lake width and depth (tiles), picked per lake between these.
+@export var lake_width_min := 24
+@export var lake_width_max := 60
+@export var lake_depth_min := 6
+@export var lake_depth_max := 15
+## Ground can't rise or fall more than this over a lake's width.
+@export var lake_max_slope := 12
+## Spots tried in each lake_spacing stretch.
+@export_range(1, 30) var lake_tries := 12
+## No lakes this close to spawn.
+@export var lake_spawn_clear := 80
 
 
 func validate() -> PackedStringArray:
@@ -331,6 +350,8 @@ func validate() -> PackedStringArray:
 		problems.append("%s: dark_tree_spacing must be at least 3" % id)
 	if pond_width_min > pond_width_max or pond_depth_min > pond_depth_max:
 		problems.append("%s: pond min > max" % id)
+	if lake_width_min > lake_width_max or lake_depth_min > lake_depth_max:
+		problems.append("%s: lake min > max" % id)
 	if tree_spacing < 3:
 		problems.append("%s: tree_spacing must be at least 3" % id)
 	return problems

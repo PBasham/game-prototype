@@ -122,6 +122,9 @@ enum FillLook { NONE, FRAMES, BOTTLES, PILE, BOOKS, NET }
 ## Liquid storage (Liquid Barrels): how much water it holds, in voxel cells (16 a tile).
 ## Fill and empty it with Siphon Liquid; crafting nearby can use its water.
 @export var liquid_capacity := 0
+## Rain Catchers (Phase 81): fresh water it gathers a minute in full rain, in voxel cells,
+## while open sky is above it (fills up to liquid_capacity). 0 = none.
+@export var catches_rain := 0.0
 ## A frame of its picture drawn over what's shown inside (glass doors, a net's mesh), so
 ## the contents sit behind it. -1 = none.
 @export var front_frame := -1

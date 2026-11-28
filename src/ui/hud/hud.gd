@@ -2008,8 +2008,15 @@ func _draw_recipe_detail(g: Control, font: Font, d: Rect2, r: RecipeData, hover:
 	g.draw_multiline_string(font, d.position + Vector2(42, 22), sub, HORIZONTAL_ALIGNMENT_LEFT, d.size.x - 42, 6, 2,
 		UiSkin.DIM)
 	var y := d.position.y + 48
-	if r.note != "":
-		g.draw_string(font, Vector2(d.position.x, y - 4), r.note, HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.GOOD)
+	var note := r.note
+	if note == "" and not r.also_makes.is_empty():
+		var parts := PackedStringArray()
+		for k: StringName in r.also_makes:
+			var it := ItemData.find(k)
+			parts.append("%d %s" % [r.also_makes[k], it.display_name if it else String(k)])
+		note = "Also makes " + ", ".join(parts)
+	if note != "":
+		g.draw_string(font, Vector2(d.position.x, y - 4), note, HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6, UiSkin.GOOD)
 		y += 6
 	g.draw_string(font, Vector2(d.position.x, y), "Needs", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 	y += 4
@@ -2526,6 +2533,12 @@ func craft(r: RecipeData, times: int) -> int:
 	_stock = null  # counts changed
 	if int(result[1]) > 0:
 		world.request_spawn_drop(r.output, int(result[1]), world.player.chest(), Vector2.ZERO, true)
+	var extra: Dictionary = result[2] if result.size() > 2 else {}
+	for k: StringName in extra:
+		world.request_spawn_drop(k, int(extra[k]), world.player.chest(), Vector2.ZERO, true)
+	if int(result[0]) > 0:
+		for k: StringName in r.also_makes:
+			EventBus.item_picked_up.emit(k, int(result[0]) * r.also_makes[k])
 	if int(result[0]) > 0:
 		EventBus.item_picked_up.emit(r.output, int(result[0]) * r.output_count)
 		EventBus.sound_requested.emit(&"craft", Vector2.INF)

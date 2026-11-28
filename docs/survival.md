@@ -110,6 +110,30 @@ tile back out around the cursor, or into a Liquid Barrel with room
 (`ItemData.pours_water`); if it doesn't fit, nothing pours. Empty buckets stack to 10,
 full ones don't stack.
 
+## Salt water and rain (Phase 81)
+
+**The sea is salt water** (its own voxel material, a touch greener). You can't drink it:
+right-click it with empty hands and you get "Too salty to drink". Bottles and the Clay
+Bucket fill with it like fresh water (`ItemData.fills_salt_into`), into a "Clay Jug of
+Salt Water" and so on (full bottles only, no sips) or a "Clay Bucket of Salt Water". A
+part-drunk bottle of fresh water won't take salt water (no mixing), and Liquid Barrels and
+Rain Catchers take fresh water only. Siphon Liquid and crafting water only use fresh water.
+
+**Boiling:** at the Campfire or the Furnace (Bottles tab), a bottle of Salt Water boils into
+the same bottle of Water plus Salt, a Salt a sip (Clay Jug 4). Salt has no use yet.
+
+**Fresh water:** ponds, lakes (world-generation.md) and rain.
+
+**Rain** (`Weather`, src/world/weather.gd, the World's `Weather` node): a shower can start
+any in-game hour (`rain_chance_per_hour` 0.07, about one or two a day) and lasts
+`rain_minutes_min` to `rain_minutes_max` (1 to 3) real minutes, fading in and out over
+`fade_seconds` (5). Rain greys the sky, hides the sun and dims the light
+(`overcast` 0.3, through `WorldClock.overcast`), and falls as streaks (`drops` 500,
+`drop_speed`, `drop_length`, `drop_slant`, `drop_color`) that stop on the first block
+below the top of the screen, so a roof keeps it off and none falls underground. It adds no
+water to the world; it fills Rain Catchers (crafting.md). Saved in world meta "weather".
+Dev console: `rain on [minutes]`, `rain off`, `rain`.
+
 ## Swimming and breath (Phase 54)
 
 You swim when at least `swim_depth` (half) of your body is in water ("Swimming" exports

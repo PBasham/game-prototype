@@ -649,16 +649,24 @@ func _give_back(item: ItemData) -> void:
 func fill_held(tile: Vector2i, all := false) -> int:
 	var p := world.player
 	var item := p.held_item if p.mouse_stack == null else p.mouse_stack
-	if item == null or item.fills_into == &"":
+	if item == null or (item.fills_into == &"" and item.fills_salt_into == &""):
 		return 0
 	var barrel := world.barrel_water(tile)
 	var near := Rect2i(tile - Vector2i.ONE, Vector2i(3, 3))
-	var here := barrel if barrel > 0 else world.voxels.liquid_in(near)
+	# Fresh water (a barrel's, ponds, lakes, rain) or the sea's salt water (Phase 81).
+	var liquid := &"water"
 	if barrel <= 0 and world.voxels.count_in(tile, &"water") <= 0:
-		return 0  # no water here: the right click does its usual thing
+		if world.voxels.count_in(tile, &"salt_water") <= 0:
+			return 0  # no water here: the right click does its usual thing
+		liquid = &"salt_water"
+	var into := item.fills_into if liquid == &"water" else item.fills_salt_into
 	if not _in_reach(tile):
 		EventBus.debug_message.emit("Too far away")
 		return 0
+	if into == &"":
+		EventBus.debug_message.emit("Can't mix fresh and salt water")
+		return 0
+	var here := barrel if barrel > 0 else world.voxels.liquid_in(near, liquid)
 	var want := p.held_count() if all else 1
 	var filled := 0
 	for i in want:
@@ -670,9 +678,9 @@ func fill_held(tile: Vector2i, all := false) -> int:
 			if barrel > 0:
 				world.request_barrel_water(tile, -item.fill_takes)
 			else:
-				var got := world.voxels.take_liquid(near, item.fill_takes)
+				var got := world.voxels.take_liquid(near, item.fill_takes, liquid)
 				if got < item.fill_takes:
-					world.voxels.pour_liquid(near, got)  # put it back
+					world.voxels.pour_liquid(near, got, liquid)  # put it back
 					if filled == 0:
 						EventBus.debug_message.emit("Not enough water to fill it")
 					break
@@ -681,9 +689,9 @@ func fill_held(tile: Vector2i, all := false) -> int:
 			break
 		filled += 1
 	if filled > 0:
-		var left := p.character.inventory.add(item.fills_into, filled)
+		var left := p.character.inventory.add(into, filled)
 		if left > 0:
-			world.request_spawn_drop(item.fills_into, left, p.chest(), Vector2.ZERO)
+			world.request_spawn_drop(into, left, p.chest(), Vector2.ZERO)
 		p.refresh_held()
 		EventBus.sound_requested.emit(&"splash", world.tile_to_world(tile))
 	return filled
@@ -699,6 +707,9 @@ var _sip_ms := -100000
 ## Returns false with no water there (quietly) or when you can't drink now.
 func sip_at(tile: Vector2i) -> bool:
 	if world.voxels.count_in(tile, &"water") <= 0:
+		if world.voxels.count_in(tile, &"salt_water") > 0 and _in_reach(tile):
+			EventBus.debug_message.emit("Too salty to drink")
+			return true
 		return false
 	if not _in_reach(tile):
 		EventBus.debug_message.emit("Too far away")
@@ -729,7 +740,11 @@ func pour_held(tile: Vector2i) -> bool:
 	var n := item.pours_water
 	var a := world.object_anchor(tile)
 	var def := world.object_at(a) if a != World.NO_TILE else null
+	var liquid := item.liquid if item.liquid != &"" else &"water"
 	if def and def.liquid_capacity > 0:
+		if liquid != &"water":
+			EventBus.debug_message.emit("Only fresh water goes in the %s" % def.display_name)
+			return false
 		if def.liquid_capacity - world.barrel_water(a) < n:
 			EventBus.debug_message.emit("The barrel is full")
 			return false
@@ -740,13 +755,13 @@ func pour_held(tile: Vector2i) -> bool:
 		if world.is_solid(tile):
 			return false
 		var box := Rect2i(tile - Vector2i.ONE, Vector2i(3, 3))
-		var poured := world.voxels.pour_liquid(box, n)
+		var poured := world.voxels.pour_liquid(box, n, liquid)
 		if poured < n:
-			world.voxels.take_liquid(box, poured)  # take it back
+			world.voxels.take_liquid(box, poured, liquid)  # take it back
 			EventBus.debug_message.emit("No room for the water")
 			return false
 		if not p.take_held():
-			world.voxels.take_liquid(box, poured)
+			world.voxels.take_liquid(box, poured, liquid)
 			return false
 	_give_back(item)
 	p.refresh_held()
