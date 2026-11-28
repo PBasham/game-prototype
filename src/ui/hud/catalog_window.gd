@@ -19,7 +19,10 @@ const RECIPE_ROWS := 8
 const TABS: Array[String] = ["Items", "Enemies", "Recipes"]
 const SILHOUETTE := Color(0.0, 0.0, 0.0, 0.85)
 
-enum Part { NONE, TAB, CELL, SLOT_PICK, RECIPES_BUTTON, RECIPE, SEARCH }
+enum Part { NONE, TAB, CELL, SLOT_PICK, RECIPES_BUTTON, RECIPE, SEARCH, LINK }
+## A link's color (an enemy on an item's page, a drop on an enemy's page).
+const LINK := Color("9fd4ff")
+const DROP_ROW := 18
 
 var tab := 0
 var scroll := 0
@@ -30,6 +33,8 @@ var recipe_item: ItemData
 ## The search box (Items and Enemies): narrows the list to names containing it. Only
 ## found things match by name, so searching doesn't give away what's still hidden.
 var search := ""
+## Links drawn on the open page: [Rect2, ItemData or EnemyData]. Rebuilt each draw.
+var _links: Array[Array] = []
 var searching := false
 
 
@@ -166,6 +171,10 @@ func hit(local: Vector2) -> Array:
 			return [Part.TAB, i]
 	if tab != 2 and search_rect().has_point(local):
 		return [Part.SEARCH, 0]
+	if tab != 2:
+		for i in _links.size():
+			if (_links[i][0] as Rect2).has_point(local):
+				return [Part.LINK, i]
 	if tab == 2:
 		if pick_rect().has_point(local):
 			return [Part.SLOT_PICK, 0]
@@ -186,6 +195,8 @@ func hit(local: Vector2) -> Array:
 
 func draw_body(font: Font) -> void:
 	var h := hit(get_local_mouse_position()) if hovered() else [Part.NONE, -1]
+	var hot_link: Variant = _links[h[1]][1] if h[0] == Part.LINK else null
+	_links.clear()
 	for i in TABS.size():
 		var state := UiSkin.Btn.PRESSED if tab == i else (UiSkin.Btn.HOT if h[0] == Part.TAB and h[1] == i else UiSkin.Btn.NORMAL)
 		UiSkin.button(self, tab_rect(i), TABS[i], state)
@@ -200,14 +211,14 @@ func draw_body(font: Font) -> void:
 			UiSkin.TEXT if search != "" or searching else UiSkin.DIM)
 	match tab:
 		0:
-			_draw_items(font, h)
+			_draw_items(font, h, hot_link)
 		1:
-			_draw_enemies(font, h)
+			_draw_enemies(font, h, hot_link)
 		2:
 			_draw_recipes(font, h)
 
 
-func _draw_items(font: Font, h: Array) -> void:
+func _draw_items(font: Font, h: Array, hot_link: Variant) -> void:
 	var c := _char()
 	var items := _items()
 	for i in range(scroll * COLS, mini(items.size(), (scroll + ROWS) * COLS)):
@@ -240,19 +251,26 @@ func _draw_items(font: Font, h: Array) -> void:
 			if not s in where:
 				where.append(s)
 		lines.append("Made at: " + ", ".join(where))
-	var drops := Catalog.dropped_by(c, it.id)
-	if not drops.is_empty():
-		lines.append("Dropped by: " + ", ".join(drops.map(func(e: EnemyData) -> String: return e.display_name)))
 	var uses := Catalog.recipes_using(it.id)
 	if not uses.is_empty():
 		lines.append("Used in %d recipe%s" % [uses.size(), "" if uses.size() == 1 else "s"])
 	for line in lines:
 		y = _text(font, Vector2(d.position.x + 5, y + 3), line, d.size.x - 10, UiSkin.DIM, 2)
+	# Dropped by: each enemy a link to its page, with its drop chance.
+	var drops := Catalog.dropped_by(c, it.id)
+	if not drops.is_empty():
+		y = _text(font, Vector2(d.position.x + 5, y + 3), "Dropped by:", d.size.x - 10, UiSkin.DIM)
+		for e in drops:
+			if y + 10 > recipes_button_rect().position.y:
+				break
+			var l := Catalog.loot_line(e, it.id)
+			var label := e.display_name + ("  (%s)" % Catalog.loot_text(l) if l else "")
+			y = _link(font, Vector2(d.position.x + 9, y + 1), label, e, hot_link == e)
 	if not makes.is_empty() or not uses.is_empty():
 		UiSkin.button(self, recipes_button_rect(), "Recipes", UiSkin.Btn.HOT if h[0] == Part.RECIPES_BUTTON else UiSkin.Btn.NORMAL)
 
 
-func _draw_enemies(font: Font, h: Array) -> void:
+func _draw_enemies(font: Font, h: Array, hot_link: Variant) -> void:
 	var c := _char()
 	var list := _enemies()
 	for i in range(scroll * COLS, mini(list.size(), (scroll + ROWS) * COLS)):
@@ -281,15 +299,26 @@ func _draw_enemies(font: Font, h: Array) -> void:
 	y = _text(font, Vector2(d.position.x + 5, y + 3), stats, d.size.x - 10, UiSkin.TEXT)
 	y = _text(font, Vector2(d.position.x + 5, y + 1), "Slain: %d" % int(c.slain.get(e.id, 0)), d.size.x - 10, UiSkin.DIM)
 	y = _text(font, Vector2(d.position.x + 5, y + 3), "Drops:", d.size.x - 10, UiSkin.DIM)
-	var x := d.position.x + 5
+	# One row per drop: its icon, its name (a link to its page once seen), how many and
+	# the chance. Unseen drops stay blacked out, but their chance shows.
+	y -= 6
 	for pair in Catalog.drops_of(c, e):
-		var r := Rect2(x, y - 2, SLOT, SLOT)
-		UiSkin.slot(self, r, UiSkin.SlotLook.NORMAL)
-		_icon(r, pair[0], pair[1])
-		x += STEP
-		if x + SLOT > d.end.x:
-			x = d.position.x + 5
-			y += STEP
+		if y + DROP_ROW > d.end.y:
+			break
+		var it: ItemData = pair[0]
+		var seen: bool = pair[1]
+		var l := Catalog.loot_line(e, it.id)
+		var r := Rect2(d.position.x + 5, y, 16, 16)
+		_icon(r, it, seen)
+		var chance := Catalog.loot_text(l) if l else ""
+		var cw := font.get_string_size(chance, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
+		draw_string(font, Vector2(d.end.x - cw - 5, y + 11), chance, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.TEXT)
+		var name_w := d.size.x - 30 - cw - 8
+		if seen:
+			_link(font, Vector2(r.end.x + 4, y + 5), it.display_name, it, hot_link == it, name_w, 6)
+		else:
+			draw_string(font, Vector2(r.end.x + 4, y + 11), "???", HORIZONTAL_ALIGNMENT_LEFT, name_w, 6, UiSkin.DIM)
+		y += DROP_ROW
 
 
 func _draw_recipes(font: Font, h: Array) -> void:
@@ -337,6 +366,18 @@ func _draw_recipes(font: Font, h: Array) -> void:
 				_count(font, ir, int(r.inputs[id]))
 			x -= 3
 	_scroll_marks(font, list.size(), 1, RECIPE_ROWS)
+
+
+## A clickable line (link color, underlined when hovered); remembers where it is for
+## clicks. Returns the y below it.
+func _link(font: Font, at: Vector2, text: String, target: Variant, hot: bool, width: float = -1.0,
+		font_size: int = 7) -> float:
+	var w := minf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x, width if width > 0.0 else INF)
+	draw_string(font, at + Vector2(0, font_size), text, HORIZONTAL_ALIGNMENT_LEFT, width, font_size, UiSkin.TEXT if hot else LINK)
+	if hot:
+		draw_line(at + Vector2(0, font_size + 2), at + Vector2(w, font_size + 2), UiSkin.TEXT, 1.0)
+	_links.append([Rect2(at - Vector2(1, 1), Vector2(w + 2, font_size + 4)), target])
+	return at.y + font_size + 3
 
 
 func _icon(r: Rect2, it: ItemData, found: bool) -> void:
@@ -406,6 +447,8 @@ func body_click(mb: InputEventMouseButton) -> void:
 				picked_enemy = _enemies()[h[1]]
 		Part.RECIPES_BUTTON:
 			show_recipes(picked_item)
+		Part.LINK:
+			follow(_links[h[1]][1])
 		Part.SLOT_PICK:
 			if mb.button_index == MOUSE_BUTTON_RIGHT:
 				recipe_item = null
@@ -419,6 +462,19 @@ func body_click(mb: InputEventMouseButton) -> void:
 			var r: RecipeData = _recipes()[h[1]][0]
 			if Catalog.recipe_known(_char(), r) and ItemData.find(r.output):
 				show_recipes(ItemData.find(r.output))
+	queue_redraw()
+
+
+## Opens an enemy's or an item's page (a link on another page).
+func follow(target: Variant) -> void:
+	if target is EnemyData:
+		picked_enemy = target
+		tab = 1
+	elif target is ItemData:
+		picked_item = target
+		tab = 0
+	scroll = 0
+	_links.clear()
 	queue_redraw()
 
 
@@ -443,4 +499,7 @@ func tooltip_at(local: Vector2) -> Array:
 		return [ItemData.find(r.output), ""]
 	if h[0] == Part.SLOT_PICK:
 		return [null, "Drop an item from the mouse here. Right click: clear."]
+	if h[0] == Part.LINK:
+		var t: Variant = _links[h[1]][1]
+		return [null, "Open %s's page" % (t as EnemyData).display_name] if t is EnemyData else [t, ""]
 	return [null, ""]

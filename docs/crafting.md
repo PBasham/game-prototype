@@ -201,10 +201,14 @@ src/items/catalog.gd). Three tabs:
 
 - **Items:** every item but spells. Ones you've never had show as black silhouettes;
   the title shows "found / total". Click a found item for its page: description, where
-  it's made, which enemies drop it, how many recipes use it, and a **Recipes** button.
+  it's made, how many recipes use it, a **Recipes** button, and **Dropped by**: each
+  enemy you've had it from, with how many and the chance ("Green Slime (1%)"), as a link
+  (blue) to that enemy's page.
 - **Enemies:** an enemy counts as found once you've killed one. Its page shows health,
-  damage, defense, how many you've slain, and its drops (drops you've never had from it
-  stay silhouettes).
+  damage, defense, how many you've slain, and its drops, one row each with how many and
+  the chance ("1-2, 100%", from its `LootDrop`s). Drops you've never had from it stay
+  silhouettes named "???" (their chance still shows); seen ones link to their item page
+  (Phase 68: `Catalog.loot_line`, `chance_text`, `loot_text`; `CatalogWindow._link`, `follow`).
 - **Recipes:** put an item in the slot (drop it from the mouse; right click clears) to
   list what makes it and what it goes into. Recipes you haven't unlocked show as "???"
   with their station; known ones show the ingredients. Click a known row to jump to that

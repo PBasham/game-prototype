@@ -87,3 +87,38 @@ func test_enemy_kills_fill_the_catalog_and_j_opens_it() -> void:
 	w.hud.show_catalog_recipes(ItemData.find(&"slime"))
 	assert_eq(w.hud._catalog.tab, 2)
 	assert_gt(w.hud._catalog._recipes().size(), 0)
+
+
+## Phase 68: drop chances as text, and links between an item's "Dropped by" and the
+## enemy's page (and back from its drops).
+func test_drop_chances_and_links() -> void:
+	assert_eq(Catalog.chance_text(1.0), "100%")
+	assert_eq(Catalog.chance_text(0.025), "2.5%")
+	assert_eq(Catalog.chance_text(0.01), "1%")
+	assert_eq(Catalog.chance_text(0.0025), "0.25%")
+	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
+	assert_eq(Catalog.loot_text(Catalog.loot_line(slime, &"page_summon_slime")), "1%")
+	assert_eq(Catalog.loot_text(Catalog.loot_line(slime, &"slime")), "1-2, 100%")
+	Game.world_info = WorldInfo.test_course()
+	Game.character = null
+	w = WORLD_SCENE.instantiate() as World
+	add_child(w)
+	await wait_physics_frames(3)
+	var c := w.character
+	c.seen_items[&"page_summon_slime"] = true
+	c.seen_drops[&"green_slime"] = {&"page_summon_slime": true}
+	c.slain[&"green_slime"] = 1
+	w.hud.toggle_catalog()
+	var cat := w.hud._catalog
+	cat.follow(ItemData.find(&"page_summon_slime"))
+	cat.queue_redraw()
+	await wait_process_frames(2)
+	assert_eq(cat._links.size(), 1, "Green Slime is a link on the page's Dropped by")
+	cat.follow(cat._links[0][1])
+	assert_eq(cat.tab, 1)
+	assert_eq(cat.picked_enemy, slime, "it opens the slime's page")
+	cat.queue_redraw()
+	await wait_process_frames(2)
+	assert_eq(cat._links.size(), 1, "only the seen drop links back")
+	cat.follow(cat._links[0][1])
+	assert_eq(cat.picked_item.id, &"page_summon_slime")

@@ -358,6 +358,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 68: Catalog drop chances and links (branch phase-68-catalog-drops)**
+- [ ] An enemy's page lists each drop with how many and its chance; unseen drops are
+      "???" but show their chance.
+- [ ] Click a seen drop (blue): its item page opens. On an item's page, "Dropped by"
+      lists each enemy with the chance; click one: its enemy page opens.
+
 **Phase 67: the Alchemist's Bench (branch phase-67-alchemists-bench)**
 - [ ] Workbench: Alchemist's Bench (16 Wood, 10 Stone, 4 Glass). Place it, right click it.
 - [ ] Is it easy to understand without reading anything? The mortar, bowl and bottle

@@ -592,6 +592,13 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 68: Catalog drop chances and links
+
+| Change | Where |
+| --- | --- |
+| Chance text, an enemy's loot line for an item | `Catalog.loot_line`, `chance_text`, `loot_text` |
+| Drop rows, "Dropped by" links, following a link | `CatalogWindow._draw_enemies`, `_draw_items`, `_link`, `_links`, `follow`, `Part.LINK` |
+
 ## Phase 67: the Alchemist's Bench
 
 | Change | Where |

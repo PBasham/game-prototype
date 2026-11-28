@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 68, Catalog drop chances and links
+
+- **Patrick:** show the drop chance of an enemy's items, and make "Dropped by" link to
+  the enemy's entry.
+- **Claude:** drops are rows (icon, name, count and chance); unseen ones stay "???" but
+  show their chance; links go both ways (a drop opens its item page).
+
 ## 2026-11-27: Phase 67, the Alchemist's Bench
 
 - **Patrick:** a second version of the alchemy table, a tabletop window with a mixing bowl

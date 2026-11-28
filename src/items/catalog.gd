@@ -105,6 +105,29 @@ static func dropped_by(c: CharacterData, id: StringName) -> Array[EnemyData]:
 	return out
 
 
+## The loot line `e` drops `id` by (its chance and counts), or null.
+static func loot_line(e: EnemyData, id: StringName) -> LootDrop:
+	for l in e.loot:
+		if l and l.item == id:
+			return l
+	return null
+
+
+## A drop chance as text: "100%", "2.5%", "1%", "0.25%".
+static func chance_text(chance: float) -> String:
+	var pct := chance * 100.0
+	if is_equal_approx(pct, roundf(pct)):
+		return "%d%%" % roundi(pct)
+	var s := ("%.1f" if pct >= 1.0 else "%.2f") % pct
+	return s.rstrip("0").rstrip(".") + "%"
+
+
+## A loot line as text: "1-2, 100%" ("2.5%" alone for a single item).
+static func loot_text(l: LootDrop) -> String:
+	var n := "" if l.max_count <= 1 else ("%d" % l.min_count if l.min_count == l.max_count else "%d-%d" % [l.min_count, l.max_count])
+	return (n + ", " if n != "" else "") + chance_text(l.chance)
+
+
 ## An enemy's drops: [item, seen] for each thing it can drop (unseen ones stay hidden).
 static func drops_of(c: CharacterData, e: EnemyData) -> Array[Array]:
 	var out: Array[Array] = []
