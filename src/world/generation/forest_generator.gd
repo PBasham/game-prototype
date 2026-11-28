@@ -38,6 +38,15 @@ var _dark_walls: Dictionary[int, int] = {}
 # Caves.
 var _tunnels: FastNoiseLite
 var _tunnel_mask: FastNoiseLite
+# Phase 89: the second tunnel network, tunnel width, small caves.
+var _tunnels2: FastNoiseLite
+var _tunnel2_mask: FastNoiseLite
+var _tunnel2_t: float
+var _tunnel2_mask_t: float
+var _tunnel_width: FastNoiseLite
+var _small_caves: FastNoiseLite
+var _small_cave_t: float
+var _top_edge: FastNoiseLite
 var _caverns: FastNoiseLite
 # Surface life.
 var _groves: FastNoiseLite
@@ -111,6 +120,11 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	_tunnel_mask = _noise(10, 1.0 / (s.tunnel_spacing * 2.0))
 	_tunnel_cut = _noise(14, 1.0 / maxf(s.tunnel_length, 20.0), 2)
 	_caverns = _noise(11, 1.0 / s.cavern_size, 3)
+	_tunnels2 = _noise(17, 1.0 / maxf(s.tunnel2_spacing, 20.0), 2)
+	_tunnel2_mask = _noise(18, 1.0 / maxf(s.tunnel2_spacing * 2.5, 40.0))
+	_tunnel_width = _noise(19, 1.0 / 60.0)
+	_small_caves = _noise(20, 1.0 / maxf(s.small_cave_size, 4.0), 2)
+	_top_edge = _noise(21, 1.0 / 30.0)
 	_groves = _noise(12, 1.0 / s.grove_width, 2)
 
 	_big_t = _calibrate(_big, s.big_hill_amount, false)
@@ -121,6 +135,9 @@ func _init(tiles: TileTypes, walls: TileTypes, world_width: int, world_height: i
 	_tunnel_t = s.tunnel_width / s.tunnel_spacing * 0.9
 	_tunnel_mask_t = _calibrate(_tunnel_mask, s.tunnel_coverage, true, 0.5)
 	_tunnel_cut_t = _calibrate(_tunnel_cut, 1.0 - s.tunnel_breaks, true, 0.5)
+	_tunnel2_t = s.tunnel2_width / maxf(s.tunnel2_spacing, 20.0) * 0.9
+	_tunnel2_mask_t = _calibrate(_tunnel2_mask, s.tunnel2_coverage, true)
+	_small_cave_t = _calibrate(_small_caves, s.small_cave_amount, true)
 	_dirt_pocket_t = _calibrate(_dirt_pockets, s.dirt_pocket_amount, true)
 	_stone_pocket_t = _calibrate(_stone_pockets, s.stone_pocket_amount, true)
 	_grove_t = _calibrate(_groves, s.grove_amount, false)
@@ -853,24 +870,38 @@ func _carved(x: int, y: int, depth: int, col: PackedFloat32Array, entrances: Arr
 	for e in entrances:
 		if _in_entrance(x, depth, e):
 			return true
-	if depth < s.tunnel_min_depth:
-		return false
-	if col[4] < s.spawn_safe_radius and depth < 40:
+	if col[4] <= s.spawn_safe_radius + 2 and depth < 40:
 		return false
 	var px := col[2]
 	var py := col[3]
 	var yy := y * s.cave_flatten
-	# Tunnels: thin ribbons where the noise crosses zero, only inside the coverage mask.
+	# Small caves and pockets in the upper ground (Phase 89).
+	if depth >= s.small_cave_depth_min and depth <= s.small_cave_depth_max:
+		var k := clampf(minf(depth - s.small_cave_depth_min, s.small_cave_depth_max - depth) / 6.0, 0.0, 1.0)
+		if _small_caves.get_noise_3d(px, py, yy) > _small_cave_t + (1.0 - k) * 0.3:
+			return true
+	# Tunnels start under a wavy line (Phase 89: rounded ends, not thinning upward).
+	var top := s.tunnel_min_depth + _top_edge.get_noise_2d(px, py) / 0.6 * s.tunnel_top_fade * 0.5
+	if depth < top:
+		return false
+	var grow := clampf((depth - top) / maxf(s.tunnel_top_fade, 1.0), 0.0, 1.0)
+	var round_top := sqrt(grow)  # quick to full size: a rounded head
+	var size := 1.0 + _tunnel_width.get_noise_3d(px, py, yy * 0.5) / 0.6 * s.tunnel_width_vary
+	# Tunnels: ribbons where the noise crosses zero, only inside the coverage mask.
 	var cover := smoothstep(_tunnel_mask_t, _tunnel_mask_t + 0.15, _tunnel_mask.get_noise_3d(px, py, yy * 0.5))
 	if s.tunnel_breaks > 0.0:
 		# Random gaps cut tunnels into runs of different lengths (tunnel_length).
 		cover *= smoothstep(_tunnel_cut_t, _tunnel_cut_t + 0.12, _tunnel_cut.get_noise_3d(px, py, yy * 0.5))
 	if cover > 0.0:
-		# Tunnels fade in over their first few tiles of depth, and narrow (to
-		# tunnel_taper of their height) where the coverage runs out, then end.
-		var fade := clampf((depth - s.tunnel_min_depth) / 6.0, s.tunnel_taper, 1.0)
+		# Where the coverage runs out a tunnel narrows (to tunnel_taper), then ends.
 		var thick := lerpf(s.tunnel_taper, 1.0, cover) if cover > 0.15 else cover / 0.15 * s.tunnel_taper
-		if absf(_tunnels.get_noise_3d(px, py, yy)) < _tunnel_t * thick * fade:
+		if absf(_tunnels.get_noise_3d(px, py, yy)) < _tunnel_t * thick * round_top * size:
+			return true
+	# The second, finer network crossing the first.
+	var cover2 := smoothstep(_tunnel2_mask_t, _tunnel2_mask_t + 0.15, _tunnel2_mask.get_noise_3d(px, py, yy * 0.5))
+	if cover2 > 0.0:
+		var thick2 := lerpf(s.tunnel_taper, 1.0, cover2) if cover2 > 0.15 else cover2 / 0.15 * s.tunnel_taper
+		if absf(_tunnels2.get_noise_3d(px, py, yy)) < _tunnel2_t * thick2 * round_top * size:
 			return true
 	# Caverns: big blobs, more common the deeper you go.
 	if depth >= s.cavern_min_depth:

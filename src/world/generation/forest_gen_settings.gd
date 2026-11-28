@@ -76,14 +76,15 @@ extends GameData
 
 @export_group("Caves: tunnels")
 ## Tunnels start this deep (except where a surface entrance leads down).
-@export var tunnel_min_depth := 16
+@export var tunnel_min_depth := 20
 ## Typical tunnel height, in tiles. The Scholar is 8 tall and 3 wide, so tunnels under
 ## about 10 are crawl spaces he can't walk through.
-@export var tunnel_width := 24.0
+@export var tunnel_width := 18.0
 ## Rough distance between neighboring tunnels.
-@export var tunnel_spacing := 240.0
-## How much of the underground has tunnels: 0 = none, 1 = everywhere.
-@export_range(0.0, 1.0) var tunnel_coverage := 0.5
+@export var tunnel_spacing := 200.0
+## How much of the underground has tunnels: 0 = none, 1 = everywhere (Phase 89: more,
+## like Terraria's long winding tunnels).
+@export_range(0.0, 1.0) var tunnel_coverage := 0.55
 ## Above 1, caves stretch sideways (wider than tall), like Terraria. 1 = no stretch.
 @export_range(0.5, 3.0) var cave_flatten := 1.5
 ## Where a tunnel runs out (the edge of the tunnel coverage, or its first tiles of
@@ -92,33 +93,50 @@ extends GameData
 @export_range(0.0, 1.0) var tunnel_taper := 0.8
 ## Tunnels break into pieces about this long (tiles), some shorter and some longer, so
 ## not every tunnel goes on and on. Bigger = longer runs.
-@export var tunnel_length := 160.0
+@export var tunnel_length := 280.0
 ## How much of each tunnel's run is cut away into gaps: 0 = no breaks (one long
 ## ribbon wherever the coverage allows), higher = shorter, more separate tunnels.
-@export_range(0.0, 0.9) var tunnel_breaks := 0.35
+@export_range(0.0, 0.9) var tunnel_breaks := 0.15
+## Phase 89: tunnels swell and narrow along their length by this share of their width.
+@export_range(0.0, 0.8) var tunnel_width_vary := 0.35
+## A second, finer network of tunnels that crosses the first (Terraria's maze of
+## passages): its spacing, height (tiles) and how much of the underground has it.
+@export var tunnel2_spacing := 110.0
+@export var tunnel2_width := 10.0
+@export_range(0.0, 1.0) var tunnel2_coverage := 0.3
+## Tunnels fade out over this many tiles above tunnel_min_depth, with a wavy edge, so
+## they end in rounded heads instead of thinning upward.
+@export var tunnel_top_fade := 10.0
+
+@export_group("Caves: small caves")
+## Phase 89: little caves and pockets in the upper ground (Terraria's surface caves).
+@export var small_cave_amount := 0.03
+@export var small_cave_size := 26.0
+@export var small_cave_depth_min := 6
+@export var small_cave_depth_max := 70
 
 @export_group("Caves: caverns")
 ## Large open caverns start this deep.
-@export var cavern_min_depth := 80
+@export var cavern_min_depth := 60
 ## Rough size of a cavern.
-@export var cavern_size := 140.0
+@export var cavern_size := 160.0
 ## How much of the underground is cavern near cavern_min_depth (0 to 1).
-@export_range(0.0, 1.0) var cavern_amount_top := 0.04
+@export_range(0.0, 1.0) var cavern_amount_top := 0.05
 ## ...and at cavern_full_depth and below. Caverns get more common with depth.
-@export_range(0.0, 1.0) var cavern_amount_deep := 0.2
+@export_range(0.0, 1.0) var cavern_amount_deep := 0.22
 @export var cavern_full_depth := 500
 
 @export_group("Caves: surface entrances")
 ## Average distance between surface entrances. Each one sits somewhere in its stretch.
-@export var entrance_spacing := 600
+@export var entrance_spacing := 380
 ## Chance that a stretch actually gets an entrance.
 @export_range(0.0, 1.0) var entrance_chance := 0.85
 ## How deep an entrance shaft goes before ending in a small chamber.
-@export var entrance_depth_min := 50
-@export var entrance_depth_max := 110
+@export var entrance_depth_min := 60
+@export var entrance_depth_max := 150
 ## Shaft width (the Scholar is 3 wide).
-@export var entrance_width_min := 10
-@export var entrance_width_max := 13
+@export var entrance_width_min := 9
+@export var entrance_width_max := 15
 ## How far the shaft winds left and right.
 @export var entrance_wobble := 8.0
 ## Radius of the chamber at the bottom of the shaft.

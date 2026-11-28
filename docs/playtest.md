@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 89: caves (branch phase-89-caves)** (new world)
+- [ ] More cave entrances; tunnels go on, wind and join; small caves near the top;
+      bigger caverns deeper. Tunnels are tall enough to walk through mostly.
+- [ ] Tunnels don't all end by bending upward.
+
 **Phase 88: lakes, ponds, shorelines (branch phase-88-lakes-shores)** (new world)
 - [ ] Lakes are big (80 to 200 wide); ponds range from puddles to big ponds.
 - [ ] Banks slope down to the water: no cliffs at the edge of lakes or ponds.

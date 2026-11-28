@@ -2,6 +2,15 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 89, caves
+
+- **Patrick:** caves are rare, tight and short, and bend upward at the end; Terraria is
+  the ideal.
+- **Claude:** more and longer tunnels with varied width, a second crossing network, small
+  caves near the top, more caverns, more and deeper entrances; tunnels start under a
+  wavy line and round off instead of thinning upward (the upward look). About a quarter of
+  the underground is open (tested 12 to 40%).
+
 ## 2026-11-28: Phase 88, lakes, ponds, shorelines
 
 - **Patrick:** lakes too small; ponds always tiny; a weird drop-off at lakes and the

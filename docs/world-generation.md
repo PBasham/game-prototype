@@ -172,12 +172,21 @@ zero.
 
 ### Caves
 
-Three kinds, all carved out of the solid ground:
+Phase 89 made them Terraria-like: more of them, long winding tunnels that cross each
+other, little caves up top and bigger caverns deeper down. Kinds, all carved out of the
+solid ground:
 
 - **Tunnels:** winding passages. Made where a noise value is close to zero, which
-  traces long wiggly lines; `tunnel_width` sets how thick the lines are. A second,
-  slower noise switches tunnels on and off by region (`tunnel_coverage`), so some
-  areas are riddled with them and others are solid.
+  traces long wiggly lines; `tunnel_width` sets how thick the lines are, and they swell
+  and narrow along their length (`tunnel_width_vary`). A second, slower noise switches
+  tunnels on and off by region (`tunnel_coverage`). A second, finer network
+  (`tunnel2_*`) crosses the first, so tunnels join into a maze.
+- **Tunnel tops:** tunnels start under a wavy line (`tunnel_min_depth`, wobbling by
+  `tunnel_top_fade`) and grow to full size quickly under it, so they end in rounded heads
+  instead of thinning out upward (that made every tunnel look like it turned up at its
+  end).
+- **Small caves** (Phase 89): little caves and pockets from `small_cave_depth_min` to
+  `small_cave_depth_max` deep (6 to 70), `small_cave_amount` of the ground.
 - **Caverns:** big open blobs, rarer near the top and more common deeper down.
 - **Surface entrances:** shafts from the surface down into the ground, ending in a
   small chamber. One candidate per `entrance_spacing` columns, placed randomly inside
@@ -191,28 +200,32 @@ is a crawl space he can't walk through.
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `tunnel_min_depth` | 16 | Tunnels start this deep. They narrow near the top so they rarely break the surface. |
-| `tunnel_width` | 24 | Typical tunnel height in tiles (was 13, then 18: tunnels were too low to move through without mining). |
-| `tunnel_length`, `tunnel_breaks` | 160, 0.35 | Tunnels break into runs about `tunnel_length` tiles long (some shorter, some longer); `tunnel_breaks` is how much is cut away into gaps (0 = one long ribbon wherever coverage allows). |
-| `tunnel_taper` | 0.8 | Where a tunnel runs out (edge of its coverage, or its first tiles of depth) it narrows to this share of `tunnel_width` before ending. Low = long crawl spaces at tunnel ends. |
-| `tunnel_spacing` | 240 | Rough distance between neighboring tunnels. Smaller = denser network. |
-| `tunnel_coverage` | 0.5 | Fraction of the underground with tunnels (0 to 1). |
+| `tunnel_min_depth` | 20 | Tunnels start about this deep (a wavy line). |
+| `tunnel_top_fade` | 10 | How much that line waves, and how quickly tunnels reach full size under it. |
+| `tunnel_width` | 18 | Typical tunnel height in tiles. |
+| `tunnel_width_vary` | 0.35 | Tunnels swell and narrow by this share along their length. |
+| `tunnel_length`, `tunnel_breaks` | 280, 0.15 | Tunnels break into runs about `tunnel_length` tiles long; `tunnel_breaks` is how much is cut away into gaps (0 = one long ribbon wherever coverage allows). |
+| `tunnel_taper` | 0.8 | Where a tunnel's coverage runs out it narrows to this share before ending. |
+| `tunnel_spacing` | 200 | Rough distance between neighboring tunnels. Smaller = denser network. |
+| `tunnel_coverage` | 0.55 | Fraction of the underground with tunnels (0 to 1). |
+| `tunnel2_spacing`, `tunnel2_width`, `tunnel2_coverage` | 110, 10, 0.3 | The second, finer network. |
+| `small_cave_amount`, `small_cave_size` | 0.03, 26 | Little caves near the top. |
 | `cave_flatten` | 1.5 | Above 1, caves are wider than tall. |
-| `cavern_min_depth` | 80 | Caverns start this deep. |
-| `cavern_size` | 140 | Rough size of a cavern. |
-| `cavern_amount_top` | 0.04 | Fraction of the ground that's cavern at `cavern_min_depth`... |
-| `cavern_amount_deep` | 0.2 | ...and at `cavern_full_depth` and below (it ramps in between). |
+| `cavern_min_depth` | 60 | Caverns start this deep. |
+| `cavern_size` | 160 | Rough size of a cavern. |
+| `cavern_amount_top` | 0.05 | Fraction of the ground that's cavern at `cavern_min_depth`... |
+| `cavern_amount_deep` | 0.22 | ...and at `cavern_full_depth` and below (it ramps in between). |
 | `cavern_full_depth` | 500 | Depth where caverns reach their deep amount. |
-| `entrance_spacing` | 600 | Average distance between entrances. |
+| `entrance_spacing` | 380 | Average distance between entrances. |
 | `entrance_chance` | 0.85 | Chance each stretch actually gets one. |
-| `entrance_depth_min` / `max` | 50 / 110 | How deep the shaft goes. |
-| `entrance_width_min` / `max` | 10 / 13 | Shaft width (the mouth is a bit wider). Was 7 / 10: the tightest shallow spots. |
+| `entrance_depth_min` / `max` | 60 / 150 | How deep the shaft goes. |
+| `entrance_width_min` / `max` | 9 / 15 | Shaft width (the mouth is a bit wider). |
 | `entrance_wobble` | 8 | How far the shaft winds left and right. |
 | `entrance_chamber` | 9 | Radius of the chamber at the bottom. |
 
-**Density presets** (from the brief): the defaults are "medium". For *sparser*, try
-`tunnel_coverage 0.3`, `cavern_amount_deep 0.12`, `entrance_spacing 900`. For
-*denser*, try `tunnel_coverage 0.7`, `tunnel_spacing 180`, `cavern_amount_deep 0.3`.
+**Density presets:** for *sparser*, try `tunnel_coverage 0.35`, `tunnel2_coverage 0.15`,
+`cavern_amount_deep 0.14`, `entrance_spacing 600`. For *denser*, try `tunnel_coverage
+0.75`, `tunnel2_coverage 0.5`, `cavern_amount_deep 0.3`.
 
 ### Copper
 

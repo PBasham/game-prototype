@@ -592,6 +592,13 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 89: caves
+
+| Change | Where |
+| --- | --- |
+| Tunables | `ForestGenSettings` Caves groups (tunnels, small caves, caverns, entrances) |
+| Carving | `ForestGenerator._carved`; noises `_tunnels2`, `_tunnel2_mask`, `_tunnel_width`, `_small_caves`, `_top_edge` |
+
 ## Phase 88: lakes, ponds, shorelines
 
 | Change | Where |
