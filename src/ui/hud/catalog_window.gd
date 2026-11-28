@@ -16,7 +16,7 @@ const TAB_H := 12
 const DETAIL_W := 132
 const ROW_H := 20
 const RECIPE_ROWS := 8
-const TABS: Array[String] = ["Items", "Enemies", "Recipes"]
+const TABS: Array[String] = ["Items", "Creatures", "Recipes"]
 const SILHOUETTE := Color(0.0, 0.0, 0.0, 0.85)
 
 enum Part { NONE, TAB, CELL, SLOT_PICK, RECIPES_BUTTON, RECIPE, SEARCH, LINK }
@@ -282,7 +282,7 @@ func _draw_enemies(font: Font, h: Array, hot_link: Variant) -> void:
 	var d := detail_rect()
 	UiSkin.slot(self, d, UiSkin.SlotLook.NORMAL)
 	if picked_enemy == null:
-		_text(font, d.position + Vector2(5, 12), "Click an enemy to read about it. Slay one to fill in its page.", d.size.x - 10, UiSkin.DIM)
+		_text(font, d.position + Vector2(5, 12), "Click a creature to read about it. Slay one to fill in its page.", d.size.x - 10, UiSkin.DIM)
 		return
 	var e := picked_enemy
 	var found := Catalog.enemy_found(c, e.id)
@@ -292,6 +292,9 @@ func _draw_enemies(font: Font, h: Array, hot_link: Variant) -> void:
 		_text(font, d.position + Vector2(5, 34), "Not slain yet.", d.size.x - 10, UiSkin.DIM)
 		return
 	_text(font, d.position + Vector2(36, 15), e.display_name, d.size.x - 40, UiSkin.GOLD)
+	# Hostile or passive (critters only fight back once you've hit them).
+	var kind := "Passive" if e.is_critter() else "Hostile"
+	_text(font, d.position + Vector2(36, 24), kind, d.size.x - 40, UiSkin.GOOD if e.is_critter() else UiSkin.BAD)
 	var y := _text(font, d.position + Vector2(5, 34), e.description, d.size.x - 10, UiSkin.TEXT, 4)
 	var stats := "Health %d   Damage %d" % [roundi(e.max_health), roundi(e.contact_damage)]
 	if e.defense > 0:

@@ -28,7 +28,11 @@ static func all_enemies() -> Array[EnemyData]:
 		var e := d as EnemyData
 		if e:
 			out.append(e)
-	out.sort_custom(func(a: EnemyData, b: EnemyData) -> bool: return a.display_name < b.display_name)
+	# Enemies first, then the passive creatures (critters: fish, crabs, fireflies), each by name.
+	out.sort_custom(func(a: EnemyData, b: EnemyData) -> bool:
+		if a.is_critter() != b.is_critter():
+			return not a.is_critter()
+		return a.display_name < b.display_name)
 	return out
 
 

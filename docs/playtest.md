@@ -358,6 +358,10 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 74: Catalog creatures (branch phase-74-catalog-creatures)**
+- [ ] The Catalog's second tab is Creatures: enemies first, then fish, crabs, fireflies.
+      Each page says Hostile or Passive.
+
 **Phase 73: Command and the middle mouse slot (branch phase-73-command-spell)**
 - [ ] The quick bar has "Mid" (middle mouse) with Command in it; so does the Equipment
       window (Z X C Mid).

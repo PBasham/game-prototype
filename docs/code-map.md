@@ -592,6 +592,12 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 74: Catalog creatures
+
+| Change | Where |
+| --- | --- |
+| Creatures tab, passive ones last, Hostile / Passive label | `CatalogWindow.TABS`, `_draw_enemies`; `Catalog.all_enemies` |
+
 ## Phase 73: Command and the middle mouse slot
 
 | Change | Where |

@@ -220,7 +220,9 @@ src/items/catalog.gd). Three tabs:
   it's made, how many recipes use it, a **Recipes** button, and **Dropped by**: each
   enemy you've had it from, with how many and the chance ("Green Slime (1%)"), as a link
   (blue) to that enemy's page.
-- **Enemies:** an enemy counts as found once you've killed one. Its page shows health,
+- **Creatures** (was Enemies; Phase 74): hostile enemies first, then the passive
+  creatures (critters: fish, crabs, fireflies), and each page says **Hostile** or
+  **Passive**. A creature counts as found once you've killed one. Its page shows health,
   damage, defense, how many you've slain, and its drops, one row each with how many and
   the chance ("1-2, 100%", from its `LootDrop`s). Drops you've never had from it stay
   silhouettes named "???" (their chance still shows); seen ones link to their item page

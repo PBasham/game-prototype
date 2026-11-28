@@ -2,6 +2,11 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 74, Catalog creatures
+
+- **Patrick:** fish aren't enemies in the Catalog (they're passive).
+- **Claude:** the tab is Creatures; hostile ones first, then passive, each page labelled.
+
 ## 2026-11-27: Phase 73, Command and the middle mouse slot
 
 - **Patrick:** a way to direct summons at a specific enemy; a Command spell, with the

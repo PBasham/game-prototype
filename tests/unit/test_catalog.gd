@@ -122,3 +122,19 @@ func test_drop_chances_and_links() -> void:
 	assert_eq(cat._links.size(), 1, "only the seen drop links back")
 	cat.follow(cat._links[0][1])
 	assert_eq(cat.picked_item.id, &"page_summon_slime")
+
+
+## Phase 74: the Creatures tab: enemies first, then the passive ones (critters).
+func test_creatures_tab_lists_passive_ones_last() -> void:
+	var list := Catalog.all_enemies()
+	var seen_passive := false
+	for e in list:
+		if e.is_critter():
+			seen_passive = true
+		else:
+			assert_false(seen_passive, "%s (hostile) comes before the passive ones" % e.display_name)
+	var ids := list.map(func(e: EnemyData) -> StringName: return e.id)
+	for id: StringName in [&"fish", &"crab", &"firefly"]:
+		assert_has(ids, id)
+		assert_true((Registry.get_def(&"enemies", id) as EnemyData).is_critter(), "%s is passive" % id)
+	assert_eq(CatalogWindow.TABS[1], "Creatures")
