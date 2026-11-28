@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 88, lakes, ponds, shorelines
+
+- **Patrick:** lakes too small; ponds always tiny; a weird drop-off at lakes and the
+  ocean; beds not always sand (dirt or sand); a random jut of land in the water.
+- **Claude:** lakes 80 to 200 wide and 15 to 40 deep, ponds 6 to 40; banks slope down to
+  the water; beds sand or dirt (sand near the ocean); the beach follows smoothed land and
+  blends into it; thin rock sheets in the Deep (the floating strips) are opened.
+
 ## 2026-11-28: Phase 87, rain
 
 - **Patrick:** rain from short to in-game hours; drops move along with the player.

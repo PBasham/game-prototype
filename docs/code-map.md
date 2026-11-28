@@ -592,6 +592,16 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 88: lakes, ponds, shorelines
+
+| Change | Where |
+| --- | --- |
+| Sizes, banks, beds, coast, Deep strips | `ForestGenSettings` (Ponds, Lakes, Coast groups) |
+| Pool shape and banks | `ForestGenerator.surface_at`, `_bed_noise`, `_place_pools`, `_try_pool`, `_pool_sand` |
+| Beds | `ForestGenerator._block` |
+| Coast | `ForestGenerator._coast_land`, `surface_at` |
+| Deep strips | `ForestGenerator.deep_open`, `_deep_raw` |
+
 ## Phase 87: rain
 
 | Change | Where |

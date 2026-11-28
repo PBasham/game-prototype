@@ -422,7 +422,7 @@ survival.md) `kelp_tiles_per_item` 3, `kelp_regrow_days` 1.
 ### Ponds (Phase 55)
 
 Small ponds on fairly flat ground: a spot every `pond_spacing` (140) columns, with
-`pond_chance` (0.6), `pond_width_min`/`max` (8, 18) wide and `pond_depth_min`/`max` (3, 6)
+`pond_chance` (0.6), `pond_width_min`/`max` (6, 40; Phase 88, was 8 to 18) wide and `pond_depth_min`/`max` (2, 10; was 3 to 6)
 deep, where the ground rises or falls at most `pond_max_slope` (5) over the width, not
 within `pond_spawn_clear` (40) of spawn, the ocean or the Dark Forest. The bed is sand,
 the water's top is one row below the lower bank, and there are no caves within 12 tiles
@@ -430,13 +430,36 @@ under a pond or trees right beside it. Phase 81: each `pond_spacing` stretch tri
 `pond_tries` (6) spots for flat enough ground, and a spot whose banks or floor would be
 open (a cave entrance) is skipped, so nothing leaks.
 
-### Lakes (Phase 81)
+### Lakes (Phase 81, Phase 88)
 
 Big fresh water pools, placed before the ponds and built the same way (they share
-`ponds()` and the pond code): a spot every `lake_spacing` (700) columns with `lake_chance`
-(0.8), `lake_width_min`/`max` (24, 60) wide and `lake_depth_min`/`max` (6, 15) deep, where
-the ground rises or falls at most `lake_max_slope` (12), trying `lake_tries` (12) spots, not
-within `lake_spawn_clear` (80) of spawn. Ponds keep clear of lakes.
+`ponds()` and the pond code): a spot every `lake_spacing` (1000) columns with
+`lake_chance` (0.8), `lake_width_min`/`max` (80, 200) wide and `lake_depth_min`/`max` (15,
+40) deep (wider ones tend to be deeper), where the ground rises or falls at most
+`lake_max_slope` (30), trying `lake_tries` (20) spots, not within `lake_spawn_clear` (80)
+of spawn. Ponds keep clear of lakes and their banks.
+
+### Pool shape, banks and beds (Phase 88)
+
+- **Bowl:** the bed follows `(1 - t²)^1.3` across the width (shallow at the edges, deep in
+  the middle), a little uneven (`_bed_noise`).
+- **Banks:** higher ground beside a pool slopes down to one row above its water over
+  `pool_bank_ratio` (0.7) of its half width, at least `pool_bank_min` (6) tiles, instead of
+  a cliff (`surface_at`). A spot whose banks or floor would open onto a cave is skipped.
+- **Beds:** each pool has a sand bed (2 rows) or a dirt one, `pool_sand_chance` (0.5);
+  within 400 tiles of the ocean it's 0.85.
+
+### The coast (Phase 88)
+
+The beach rises toward the land smoothed over `beach_land_smooth` (24) tiles each way
+(`_coast_land`), so a cliff in the land doesn't land at the water, then blends into the
+real land over `coast_blend` (40) more tiles.
+
+### The Deep's caves (Phase 88)
+
+Rock sheets thinner than `deep_min_rock` (3) tiles between open spaces above and below
+are opened (`deep_open` around `_deep_raw`), so there are no thin strips floating in the
+water.
 
 ### Salt and fresh water (Phase 81)
 

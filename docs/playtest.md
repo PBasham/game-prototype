@@ -358,6 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 88: lakes, ponds, shorelines (branch phase-88-lakes-shores)** (new world)
+- [ ] Lakes are big (80 to 200 wide); ponds range from puddles to big ponds.
+- [ ] Banks slope down to the water: no cliffs at the edge of lakes or ponds.
+- [ ] Some pools have sand beds, some dirt.
+- [ ] The beach rises smoothly into the land (no cliff right at the sand).
+- [ ] No thin rock strips floating in the Deep's water.
+
 **Phase 87: rain (branch phase-87-rain)**
 - [ ] `rain on`: walk or fly sideways, you move through the rain (it doesn't slide
       with you).

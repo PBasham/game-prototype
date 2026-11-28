@@ -301,37 +301,54 @@ extends GameData
 @export_range(0.0, 1.0) var seagrass_chance := 0.45
 @export_range(0.0, 1.0) var dune_grass_chance := 0.3
 
+@export_group("Coast")
+## Phase 88: the beach rises toward the land's height smoothed over this many tiles each
+## way (no cliff right at the beach), and blends into the real land over coast_blend.
+@export var beach_land_smooth := 24
+@export var coast_blend := 40
+## The Deep's flooded caves: rock sheets thinner than this (tiles, up and down) are
+## opened, so there are no thin floating strips in the water.
+@export_range(0, 4) var deep_min_rock := 3
+
 @export_group("Ponds")
 ## A pond spot every this many columns (on fairly flat ground, away from spawn and the
 ## ocean), and the chance a spot has one.
 @export var pond_spacing := 140
 @export_range(0.0, 1.0) var pond_chance := 0.6
-## Pond width and depth (tiles), picked per pond between these.
-@export var pond_width_min := 8
-@export var pond_width_max := 18
-@export var pond_depth_min := 3
-@export var pond_depth_max := 6
-## Ground can't rise or fall more than this over a pond's width.
-@export var pond_max_slope := 5
+## Pond width and depth (tiles), picked per pond between these (Phase 88: from puddles
+## to big ponds; wider ones tend to be deeper).
+@export var pond_width_min := 6
+@export var pond_width_max := 40
+@export var pond_depth_min := 2
+@export var pond_depth_max := 10
+## Ground can't rise or fall more than this over a pond's width (the banks are sloped
+## down to the water, so it can be uneven).
+@export var pond_max_slope := 10
 ## No ponds this close to spawn.
 @export var pond_spawn_clear := 40
 ## Spots tried in each pond_spacing stretch to find flat enough ground (Phase 81).
 @export_range(1, 20) var pond_tries := 6
+## Phase 88: higher ground beside a pond or lake slopes down to the water over this share
+## of its half width (at least pool_bank_min tiles), instead of a cliff.
+@export_range(0.0, 2.0) var pool_bank_ratio := 0.7
+@export var pool_bank_min := 6
+## How many ponds and lakes have a sand bed (the rest dirt). Near the ocean it's sand.
+@export_range(0.0, 1.0) var pool_sand_chance := 0.5
 
 @export_group("Lakes")
 ## Big fresh water lakes (Phase 81): a lake spot every this many columns, and the
 ## chance a spot has one. Fresh water, like ponds; the sea is salt.
-@export var lake_spacing := 700
+@export var lake_spacing := 1000
 @export_range(0.0, 1.0) var lake_chance := 0.8
-## Lake width and depth (tiles), picked per lake between these.
-@export var lake_width_min := 24
-@export var lake_width_max := 60
-@export var lake_depth_min := 6
-@export var lake_depth_max := 15
+## Lake width and depth (tiles), picked per lake between these (Phase 88: real lakes).
+@export var lake_width_min := 80
+@export var lake_width_max := 200
+@export var lake_depth_min := 15
+@export var lake_depth_max := 40
 ## Ground can't rise or fall more than this over a lake's width.
-@export var lake_max_slope := 12
+@export var lake_max_slope := 30
 ## Spots tried in each lake_spacing stretch.
-@export_range(1, 30) var lake_tries := 12
+@export_range(1, 40) var lake_tries := 20
 ## No lakes this close to spawn.
 @export var lake_spawn_clear := 80
 

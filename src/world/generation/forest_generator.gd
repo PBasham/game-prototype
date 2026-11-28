@@ -66,8 +66,11 @@ var _ocean_c := -1  ## middle column, -1 = no ocean
 var _ocean_half := 0.0  ## half the water's width at sea level
 var _ocean_floor: FastNoiseLite
 var _beach_mix: FastNoiseLite
+var _bed_noise: FastNoiseLite  ## pond and lake beds (Phase 88)
 ## Ponds: [center x, half width, depth, water row] each.
 var _ponds: Array[Vector4] = []
+## Per pond (same order): a sand bed (true) or dirt (Phase 88).
+var _pool_sand: Array[bool] = []
 # The Deep (Phase 64).
 var _chasm_half := 0.0
 var _deep_noise: FastNoiseLite
@@ -199,18 +202,46 @@ func surface_at(x: int) -> int:
 		if d < _ocean_half:
 			return _sea_floor(x, d)
 		if d < _ocean_half + settings.beach_width:
-			# The beach: from the water's edge (sea level) up to the land.
+			# The beach: from the water's edge (sea level) up to the land, smoothed
+			# (Phase 88) so a cliff in the land doesn't end up at the water.
 			var u := (d - _ocean_half) / float(settings.beach_width)
+			var smooth := _coast_land(x)
 			# Never below sea level, so water can't spill out over a low beach.
-			var beach := mini(roundi(lerpf(float(_sea), float(land), smoothstep(0.0, 1.0, u))), _sea)
+			var beach := mini(roundi(lerpf(float(_sea), smooth, smoothstep(0.0, 1.0, u))), _sea)
 			return mini(beach, _beach_cap(u, land))
+		if d < _ocean_half + settings.beach_width + settings.coast_blend:
+			# Past the beach: from the beach's end into the real land.
+			var start := mini(roundi(_coast_land(x)), _beach_cap(1.0, land))
+			var v := (d - _ocean_half - settings.beach_width) / float(maxi(settings.coast_blend, 1))
+			return roundi(lerpf(float(start), float(land), smoothstep(0.0, 1.0, v)))
 	var pond := _pond_index(x)
 	if pond >= 0:
 		var p := _ponds[pond]
 		var t := absf(float(wrap_delta(x, roundi(p.x)))) / maxf(p.y, 1.0)
-		var bottom := roundi(p.w + p.z * (1.0 - t * t))
-		return maxi(land, bottom)
+		# A bowl with shallow edges (Phase 88), a little uneven.
+		var shape := pow(maxf(1.0 - t * t, 0.0), 1.3)
+		var bump := _bed_noise.get_noise_1d(float(x)) * minf(p.z * 0.15, 2.0) * shape
+		var bottom := roundi(p.w + p.z * shape + bump)
+		return maxi(maxi(land, bottom), int(p.w))
+	# Higher ground beside a pool slopes down to its water (Phase 88).
+	for p in _ponds:
+		var dx := absf(float(wrap_delta(x, roundi(p.x))))
+		var bank := maxf(p.y * settings.pool_bank_ratio, float(settings.pool_bank_min))
+		if dx >= p.y and dx < p.y + bank and land < int(p.w) - 1:
+			var k := smoothstep(0.0, 1.0, (dx - p.y) / bank)
+			return roundi(lerpf(float(p.w) - 1.0, float(land), k))
 	return land
+
+
+## The land's height near the ocean smoothed over beach_land_smooth each way (floats).
+func _coast_land(x: int) -> float:
+	var r := settings.beach_land_smooth
+	if r <= 0:
+		return float(_land_surface(x))
+	var sum := 0.0
+	for k in [-r, -r / 2, 0, r / 2, r]:
+		sum += _land_surface(posmod(x + k, width))
+	return sum / 5.0
 
 
 ## The beach's highest allowed row at u (0 the water's edge, 1 the land): it rises over
@@ -386,8 +417,26 @@ func chasm_center(y: int) -> int:
 
 
 ## True where the Deep is open (flooded): its caverns and tunnels, the arena and the
-## scene caverns, under the upper sea floor within the ocean's width.
+## scene caverns, under the upper sea floor within the ocean's width. Phase 88: rock
+## sheets thinner than deep_min_rock between open spaces are open too (no thin strips
+## floating in the water).
 func deep_open(x: int, y: int) -> bool:
+	if _deep_raw(x, y):
+		return true
+	var m := settings.deep_min_rock
+	if m <= 0 or _ocean_c < 0:
+		return false
+	for up in range(1, m + 1):
+		if not _deep_raw(x, y - up):
+			continue
+		for down in range(1, m + 2 - up):
+			if _deep_raw(x, y + down):
+				return true
+		return false
+	return false
+
+
+func _deep_raw(x: int, y: int) -> bool:
 	if _ocean_c < 0:
 		return false
 	var s := settings
@@ -461,6 +510,8 @@ func ocean_at(x: int) -> float:
 func _place_ponds() -> void:
 	var s := settings
 	_ponds.clear()
+	_pool_sand.clear()
+	_bed_noise = _noise(71, 1.0 / 9.0)
 	# Lakes first (Phase 81), then ponds between them; both are fresh water.
 	if s.lake_spacing >= 40 and s.lake_chance > 0.0:
 		_place_pools(s.lake_spacing, s.lake_chance, s.lake_width_min, s.lake_width_max,
@@ -483,15 +534,16 @@ func _place_pools(spacing: int, chance: float, w_min: int, w_max: int, d_min: in
 	for i in cells:
 		if GenUtil.hash01(i, k, seed) >= chance:
 			continue
-		var half := lerpf(w_min, w_max, GenUtil.hash01(i, k + 1, seed)) * 0.5
-		var depth := lerpf(d_min, d_max, GenUtil.hash01(i, k + 3, seed))
+		var wide := GenUtil.hash01(i, k + 1, seed)
+		var half := lerpf(w_min, w_max, wide) * 0.5
+		# Wider ones tend to be deeper (Phase 88).
+		var depth := lerpf(d_min, d_max, clampf(wide * 0.7 + GenUtil.hash01(i, k + 3, seed) * 0.3, 0.0, 1.0))
 		for attempt in tries:
 			var roll := GenUtil.hash01(i * 37 + attempt, k + 2, seed)
 			var c := roundi(i * spacing + half + 2 + roll * maxf(spacing - half * 2.0 - 4.0, 0.0))
 			c = posmod(c, width)
 			var pool := _try_pool(c, half, depth, max_slope, spawn_clear)
 			if pool != Vector4.ZERO:
-				_ponds.append(pool)
 				break
 
 
@@ -502,9 +554,11 @@ func _try_pool(c: int, half: float, depth: float, max_slope: int, spawn_clear: i
 		return Vector4.ZERO
 	if _ocean_c >= 0 and absf(float(wrap_delta(c, _ocean_c))) < _ocean_half + s.beach_width + half + 10.0:
 		return Vector4.ZERO
+	var my_bank := maxf(half * s.pool_bank_ratio, float(s.pool_bank_min))
 	for p in _ponds:
-		if absf(float(wrap_delta(c, roundi(p.x)))) < p.y + half + 6.0:
-			return Vector4.ZERO  # another pool there
+		var bank := maxf(p.y * s.pool_bank_ratio, float(s.pool_bank_min))
+		if absf(float(wrap_delta(c, roundi(p.x)))) < p.y + bank + half + my_bank + 4.0:
+			return Vector4.ZERO  # another pool (or its banks) there
 	for k in range(-ceili(half) - 2, ceili(half) + 3, 3):
 		if dark_forest_at(posmod(c + k, width)) > 0.0:
 			return Vector4.ZERO  # not under the dark trees
@@ -520,17 +574,30 @@ func _try_pool(c: int, half: float, depth: float, max_slope: int, spawn_clear: i
 	var left := _land_surface(posmod(c - ceili(half) - 1, width))
 	var right := _land_surface(posmod(c + ceili(half) + 1, width))
 	var row := maxi(left, right) + 1
-	# Solid banks and floor (no cave entrance or cave cuts into it), or it would leak.
+	var pool := Vector4(c, half, depth, row)
+	# Try it: solid banks and floor (no cave entrance or cave cuts into it), or it'd leak.
+	_ponds.append(pool)
+	var sandy := s.pool_sand_chance
+	if _ocean_c >= 0 and absf(float(wrap_delta(c, _ocean_c))) < _ocean_half + s.beach_width + 400.0:
+		sandy = maxf(sandy, 0.85)  # near the sea, mostly sand
+	_pool_sand.append(GenUtil.hash01(c, 73, seed) < sandy)
 	var edge := ceili(half) + 1
+	var ok := true
 	for k in range(-edge, edge + 1):
 		var x := posmod(c + k, width)
-		var t := absf(float(k)) / maxf(half, 1.0)
-		var bottom := roundi(row + depth * (1.0 - t * t)) if absi(k) < edge else row - 1
-		var from := row if absi(k) == edge else bottom + 1
-		for y in range(from, bottom + 3 if absi(k) == edge else bottom + 2):
-			if block_at(x, y) == WorldData.AIR:
-				return Vector4.ZERO
-	return Vector4(c, half, depth, row)
+		var surface := surface_at(x)
+		var from := row - 1 if absi(k) == edge else surface + 1
+		for y in range(from, maxi(surface, row) + 3):
+			if y >= surface and block_at(x, y) == WorldData.AIR:
+				ok = false
+				break
+		if not ok:
+			break
+	if not ok:
+		_ponds.pop_back()
+		_pool_sand.pop_back()
+		return Vector4.ZERO
+	return pool
 
 
 func _pond_index(x: int) -> int:
@@ -681,8 +748,15 @@ func _block(x: int, y: int, col: PackedFloat32Array, entrances: Array[PackedFloa
 		if depth < settings.ocean_sand_depth + settings.ocean_hard_sand_depth:
 			return _b[&"hard_sand"]
 	var b := _plain_block(x, y, col, entrances)
-	if not _ponds.is_empty() and y >= int(col[0]) and y <= int(col[0]) + 1 and _pond_index(x) >= 0:
-		return _b[&"sand"]  # a sandy pond bed (no grass under water)
+	if not _ponds.is_empty() and y >= int(col[0]) and y <= int(col[0]) + 1:
+		var pi := _pond_index(x)
+		if pi >= 0:
+			# The bed (no grass under water): sand or dirt (Phase 88), keeping ore and
+			# clay in the dirt below.
+			if _pool_sand[pi]:
+				return _b[&"sand"]
+			if b == _b[&"grass"]:
+				return _b[&"dirt"]
 	if (_dark_blocks.has(b) or b == _b.get(&"clay", -1)) and dark_forest_blocks_at(x, y, col):
 		if b == _b.get(&"clay", -1):
 			return _dark_blocks.get(_b[&"dirt"], b)  # no clay under the Dark Forest
