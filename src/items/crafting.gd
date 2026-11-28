@@ -190,8 +190,13 @@ static func revealed_by(fresh: Array[StringName], c: CharacterData) -> PackedStr
 	for d in Registry.get_all(&"recipes"):
 		var r := d as RecipeData
 		if r and r.unlock_items.any(func(id: StringName) -> bool: return fresh.has(id)):
+			# Already known through another key item seen before: not new.
+			if r.unlock_items.any(func(id: StringName) -> bool: return not fresh.has(id) and c.seen_items.has(id)):
+				continue
 			var it := ItemData.find(r.output)
-			out.append(r.display_name if r.display_name != "" else (it.display_name if it else String(r.output)))
+			var name := it.display_name if it else (r.display_name if r.display_name != "" else String(r.output))
+			if not name in out:
+				out.append(name)
 	for d in Registry.get_all(&"spells"):
 		var s := d as SpellData
 		if s and not c.knows(s.id) and s.learn_unlock_items.any(func(id: StringName) -> bool: return fresh.has(id)):

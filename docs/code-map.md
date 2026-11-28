@@ -592,6 +592,14 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 78: recipe banner, coin bag, fewer coins
+
+| Change | Where |
+| --- | --- |
+| The banner | `Hud.show_banner`, `show_new_recipe`, `_update_banner`, `banner_seconds`, `banner_fade`; `Crafting.revealed_by` (only new ones, item names) |
+| The coin bag | `Hud.coin_bag_rect`, `BAG_W`, `_grid_origin`, `click_coin_bag`, `pouch_open`, `Area.COIN_BAG` |
+| Coin drops | `data/enemies/*.tres`, `tools/make_items.gd` |
+
 ## Phase 77: Catalog Entities
 
 | Change | Where |

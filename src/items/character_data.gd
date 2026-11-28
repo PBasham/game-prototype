@@ -196,8 +196,6 @@ var brews: Dictionary[StringName, bool] = {}
 ## The coin pouch (Phase 76): every coin you have, as a copper total (Coins.split shows it
 ## by coin). Coins you pick up go here, not into the inventory. Kept when you die.
 var coins := 0
-## The pouch's panel folded down to one line.
-var coins_folded := false
 ## The Catalog: enemies this character has slain (id -> how many), and what each has
 ## been seen to drop (id -> {item id: true}). Saved.
 var slain: Dictionary[StringName, int] = {}
@@ -690,7 +688,6 @@ static func load_file(path: String) -> CharacterData:
 	for id: String in d.get("brews", []):
 		c.brews[StringName(id)] = true
 	c.coins = int(d.get("coins", 0))
-	c.coins_folded = bool(d.get("coins_folded", false))
 	for id: String in d.get("slain", {}):
 		c.slain[StringName(id)] = int(d["slain"][id])
 	for id: String in d.get("seen_drops", {}):
@@ -809,7 +806,7 @@ func to_dict() -> Dictionary:
 		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k)),
 		"brews": brews.keys().map(func(k: StringName) -> String: return String(k)),
 		"command_slot": true,
-		"coins": coins, "coins_folded": coins_folded,
+		"coins": coins,
 		"slain": _slain_dict(), "seen_drops": _drops_dict()}
 
 

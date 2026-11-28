@@ -1147,7 +1147,7 @@ func _enemies() -> Array[EnemyData]:
 	slime.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
 	slime.loot.append(LootDrop.make(&"magic_essence", 1, 1, 0.1))  # Phase 75
 	slime.loot.append(LootDrop.make(&"page_floating_torch", 1, 1, 0.01))
-	slime.loot.append(LootDrop.make(&"copper_coin", 5, 15))  # Phase 76
+	slime.loot.append(LootDrop.make(&"copper_coin", 1, 3))  # Phase 76 (78: fewer)
 	out.append(slime)
 	# The rare one: tougher, hits harder, hops higher, drops more slime.
 	var blue := EnemyData.new()
@@ -1171,7 +1171,7 @@ func _enemies() -> Array[EnemyData]:
 	blue.loot.append(LootDrop.make(&"slime_core", 1, 1, 0.025))
 	blue.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
 	blue.loot.append(LootDrop.make(&"magic_essence", 1, 1, 0.1))  # Phase 75
-	blue.loot.append(LootDrop.make(&"copper_coin", 15, 40))  # Phase 76
+	blue.loot.append(LootDrop.make(&"copper_coin", 2, 5))  # Phase 76 (78: fewer)
 	out.append(blue)
 	# Dark Forest: a glowing ball that darts about, stops, charges and shoots.
 	var spirit := EnemyData.new()
@@ -1195,7 +1195,7 @@ func _enemies() -> Array[EnemyData]:
 	spirit.loot.append(LootDrop.make(&"magic_essence", 1, 2))
 	spirit.loot.append(LootDrop.make(&"spirit_core", 1, 1, 0.05))
 	spirit.loot.append(LootDrop.make(&"page_call_spirit", 1, 1, 0.02))
-	spirit.loot.append(LootDrop.make(&"silver_coin", 1, 1))  # Phase 76
+	spirit.loot.append(LootDrop.make(&"copper_coin", 10, 20))  # Phase 76 (78: copper, fewer)
 	out.append(spirit)
 	return out
 

@@ -358,6 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 78: recipe banner, coin bag, fewer coins (branch phase-78-banner-bag-coins)**
+- [ ] Get Glass: "New recipes: Alchemist's Bench, Glass Bottle and 4 more" at the top
+      middle, held a few seconds, fading out.
+- [ ] A coin bag left of the hotbar: hover it for your coins, click it: the inventory
+      with the coin pouch under it, on the left. Click again (or the pouch's x): closed.
+- [ ] Coins come slower: 1 to 3 Copper a Green Slime, 2 to 5 a Blue, 10 to 20 a Spirit.
+
 **Phase 77: Catalog Entities (branch phase-77-catalog-entities)**
 - [ ] The Catalog's second tab is Entities, with Enemies, Bosses, NPCs and Peaceful.
       Slimes and the Forest Spirit under Enemies; fish, crabs and fireflies under

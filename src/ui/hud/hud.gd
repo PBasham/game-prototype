@@ -34,7 +34,8 @@ const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
 enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CATALOG_BUTTON, CHEST, CHEST_TAKE,
-	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME, TRASH, EMPOWER_NODE, UPGRADE }
+	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME, TRASH, EMPOWER_NODE, UPGRADE,
+	COIN_BAG }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
 const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
@@ -161,6 +162,17 @@ var _wheel: Wheel
 var _quick: Pane
 ## The coin pouch (Phase 76): under the inventory's bottom right, open with it.
 var _pouch: Pane
+## Phase 78: the coin bag icon left of the slots (opens the pouch), and the banner at
+## the top middle of the screen ("New recipe: ...").
+const BAG_W := 18
+var pouch_open := false
+var _banner: Label
+var _banner_left := 0.0
+## The recipes in the banner showing now (several found at once share one banner).
+var _banner_recipes: PackedStringArray = []
+## Seconds the banner holds, then fades over banner_fade.
+@export var banner_seconds := 3.0
+@export var banner_fade := 1.0
 const POUCH_HEAD := 14
 const POUCH_ICON := preload("res://assets/ui/coin_pouch.png")
 var _name_label: Label
@@ -259,6 +271,15 @@ func _ready() -> void:
 	_wheel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_wheel.visible = false
 	add_child(_wheel)
+	_banner = Label.new()
+	_banner.add_theme_font_size_override("font_size", 12)
+	_banner.add_theme_color_override("font_color", UiSkin.GOLD)
+	_banner.add_theme_color_override("font_outline_color", Color(0.1, 0.06, 0.03))
+	_banner.add_theme_constant_override("outline_size", 4)
+	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_banner.visible = false
+	add_child(_banner)
 	_name_label = Label.new()
 	_name_label.add_theme_font_size_override("font_size", 8)
 	_name_label.add_theme_color_override("font_color", UiSkin.TEXT)
@@ -345,7 +366,7 @@ func _ready() -> void:
 	world.character.inventory.changed.connect(_redraw)
 	world.character.magic_changed.connect(_layout)
 	world.character.recipe_discovered.connect(func(what: String) -> void:
-		EventBus.debug_message.emit("New recipe: %s" % what)
+		show_new_recipe(what)
 		EventBus.sound_requested.emit(&"learn_spell", world.player.chest())
 		_recipe_key = ""
 		_redraw())
@@ -464,6 +485,7 @@ func toggle_map() -> void:
 
 func _process(delta: float) -> void:
 	_update_notes(delta)
+	_update_banner(delta)
 	_update_take_repeat(delta)
 	var paused := world.get_tree().paused or (world.console != null and world.console.open) or _spells.searching \
 		or _creative.searching or _catalog.searching or renaming \
@@ -794,15 +816,18 @@ func _layout() -> void:
 		var bottom := maxf(_rows(_inventory().size) * STEP - GAP, 3 * 20.0 - 4.0) + PAD * 2
 		_inv.size = Vector2(_equip_origin().x + EQUIP_W + PAD, bottom)
 	else:
-		_inv.size = Vector2(PAD * 2 + 10 * STEP - GAP, PAD * 2 + SLOT)
+		_inv.size = Vector2(PAD * 2 + BAG_W + 10 * STEP - GAP, PAD * 2 + SLOT)
 	_name_label.position = MARGIN + Vector2(2, _inv.size.y + 2)
 	_name_icon.position = MARGIN + Vector2(2, _inv.size.y + 3)
 	_quick.size = Vector2(PAD * 2 + QUICK_KEYS_SHOWN.size() * STEP - GAP + 4, PAD * 2 + SLOT + QUICK_LABEL_H)
 	_quick.position = _inv.position + Vector2(_inv.size.x + 4, 0)
-	var folded := world.character.coins_folded if world and world.character else false
-	_pouch.size = Vector2(PAD * 2 + Coins.IDS.size() * STEP - GAP, PAD + POUCH_HEAD + (0 if folded else SLOT + PAD))
-	_pouch.position = _inv.position + Vector2(_inv.size.x - _pouch.size.x, _inv.size.y + 3)
-	_pouch.visible = open
+	_pouch.size = Vector2(PAD * 2 + Coins.IDS.size() * STEP - GAP, PAD + POUCH_HEAD + SLOT + PAD)
+	_pouch.position = _inv.position + Vector2(0, _inv.size.y + 3)
+	_pouch.visible = open and pouch_open
+	if _pouch.visible:
+		# The item name goes under the pouch.
+		_name_label.position.y += _pouch.size.y + 3
+		_name_icon.position.y += _pouch.size.y + 3
 	var view := _view_size()
 	_status.size = STATUS_SIZE + Vector2(0, STATUS_ROW * (int(_status.get_meta(&"rows", 4)) - 4))
 	_status.position = Vector2(MARGIN.x, view.y - _status.size.y - MARGIN.y)
@@ -899,7 +924,14 @@ func _view_size() -> Vector2:
 
 
 func _grid_origin() -> Vector2:
-	return Vector2(PAD, PAD)
+	return Vector2(PAD + BAG_W, PAD)  # the coin bag sits left of the slots
+
+
+## The coin bag (Phase 78): left of the bottom row of slots (the hotbar when closed).
+func coin_bag_rect() -> Rect2:
+	var n := _inventory().size if open else Inventory.HOTBAR
+	var last := _cell(_grid_origin(), n - 1)
+	return Rect2(Vector2(PAD - 1, last.position.y + 2), Vector2(16, 16))
 
 
 func _rows(n: int) -> int:
@@ -975,6 +1007,8 @@ func hit(local: Vector2) -> Array:
 	for i in n:
 		if _cell(_grid_origin(), i).has_point(local):
 			return [Area.INVENTORY, i]
+	if coin_bag_rect().has_point(local):
+		return [Area.COIN_BAG, 0]
 	if not open:
 		return [Area.NONE, -1]
 	if _craft_button_rect().has_point(local):
@@ -996,6 +1030,53 @@ func trash_rect() -> Rect2:
 	return Rect2(Vector2(_equip_origin().x + EQUIP_W - 2 - SLOT, last.position.y), Vector2(SLOT, SLOT))
 
 
+# --- banner (Phase 78) ---------------------------------------------------------------------
+
+## Big text at the top middle of the screen: holds banner_seconds, then fades out. A new
+## one replaces the one showing.
+func show_banner(text: String) -> void:
+	_banner.text = text
+	_banner_left = banner_seconds + banner_fade
+	_banner.modulate.a = 1.0
+	_banner.visible = true
+	_banner.reset_size()
+
+
+## "New recipe: X". More found within a moment join the same banner: "New recipes: A, B
+## and 3 more".
+func show_new_recipe(what: String) -> void:
+	var fresh := _banner.visible and not _banner_recipes.is_empty() and _banner_left > banner_seconds + banner_fade - 0.5
+	if not fresh:
+		_banner_recipes.clear()
+	_banner_recipes.append(what)
+	var n := _banner_recipes.size()
+	if n == 1:
+		show_banner("New recipe: %s" % what)
+	elif n <= 3:
+		show_banner("New recipes: %s and %s" % [", ".join(_banner_recipes.slice(0, n - 1)), _banner_recipes[n - 1]])
+	else:
+		show_banner("New recipes: %s and %d more" % [", ".join(_banner_recipes.slice(0, 2)), n - 2])
+	_banner_left = banner_seconds + banner_fade  # (show_banner reset it; keep counting from the first)
+
+
+func _update_banner(delta: float) -> void:
+	if not _banner.visible:
+		return
+	_banner_left -= delta
+	if _banner_left <= 0.0:
+		_banner.visible = false
+		return
+	_banner.modulate.a = clampf(_banner_left / maxf(banner_fade, 0.01), 0.0, 1.0)
+	var view := _view_size()
+	_banner.reset_size()
+	# Under whatever is open along the top (the quick bar, the inventory and its pouch).
+	var top := 40.0
+	for pane: Control in [_quick, _inv, _pouch]:
+		if pane.visible:
+			top = maxf(top, pane.position.y + pane.size.y + 10.0)
+	_banner.position = Vector2((view.x - _banner.size.x) * 0.5, top)
+
+
 # --- coin pouch (Phase 76) ----------------------------------------------------------------
 
 ## The pouch's header (click to fold or unfold it).
@@ -1015,17 +1096,12 @@ func _draw_pouch(g: Control) -> void:
 	var m := g.get_local_mouse_position()
 	var hot := _over_pane() == g
 	g.draw_texture_rect(POUCH_ICON, Rect2(Vector2(PAD - 1, PAD - 2), Vector2(12, 12)), false)
-	var head := "Coins: " + Coins.text(c.coins) if c.coins_folded else "Coins"
-	g.draw_string(font, Vector2(PAD + 14, PAD + 7), head, HORIZONTAL_ALIGNMENT_LEFT, g.size.x - PAD * 2 - 22, 7,
-		UiSkin.TEXT if hot and pouch_head_rect().has_point(m) else UiSkin.GOLD)
-	# The fold arrow, right side.
-	var tip := Vector2(g.size.x - PAD - 3, PAD + 4)
-	var arrow := PackedVector2Array([tip + Vector2(-3, -2), tip + Vector2(3, -2), tip + Vector2(0, 2)]) if not c.coins_folded \
-		else PackedVector2Array([tip + Vector2(-2, -3), tip + Vector2(2, 0), tip + Vector2(-2, 3)])
-	g.draw_colored_polygon(arrow, UiSkin.GOLD)
-	if c.coins_folded:
-		_draw_cursor_stack(g)
-		return
+	g.draw_string(font, Vector2(PAD + 14, PAD + 7), "Coins", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
+	# The close mark, right side.
+	var x := Vector2(g.size.x - PAD - 4, PAD + 3)
+	var xc := UiSkin.TEXT if hot and pouch_head_rect().has_point(m) else UiSkin.GOLD
+	g.draw_line(x + Vector2(-2, -2), x + Vector2(2, 2), xc, 1.0)
+	g.draw_line(x + Vector2(-2, 2), x + Vector2(2, -2), xc, 1.0)
 	var parts := Coins.split(c.coins)
 	for i in Coins.IDS.size():
 		var r := pouch_slot_rect(i)
@@ -1041,17 +1117,31 @@ func _pouch_input(pane: Pane, event: InputEvent) -> void:
 	if mb == null or not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
 		return
 	pane.accept_event()
-	var c := world.character
 	if Coins.is_coin(cursor_id) and cursor_count > 0:
 		deposit_cursor_coins()
 	elif pouch_head_rect().has_point(mb.position):
-		c.coins_folded = not c.coins_folded
+		pouch_open = false
 		_layout()
 	else:
 		for i in Coins.IDS.size():
-			if pouch_slot_rect(i).has_point(mb.position) and not c.coins_folded:
+			if pouch_slot_rect(i).has_point(mb.position):
 				take_coins(i, mb.shift_pressed)
 	_redraw()
+
+
+## The coin bag: opens the inventory with the pouch, or opens and closes the pouch (coins
+## on the mouse go in instead).
+func click_coin_bag() -> void:
+	if Coins.is_coin(cursor_id) and cursor_count > 0:
+		deposit_cursor_coins()
+		return
+	if not open:
+		set_open(true)
+		pouch_open = true
+	else:
+		pouch_open = not pouch_open
+	_layout()
+	EventBus.sound_requested.emit(&"ui_click", Vector2.INF)
 
 
 ## Coins on the mouse go into the pouch.
@@ -1206,6 +1296,10 @@ func _draw_inventory(g: Control) -> void:
 	# The satchel (Patrick's moonweave concept): soft blue cloth, darker toward the
 	# middle, cells set apart only by a faint hue change; tied off on the right when open.
 	SatchelLook.draw_bag(g, g.size, _grid_origin(), n, SLOT, STEP)
+	var bag := coin_bag_rect()
+	if hover[0] == Area.COIN_BAG or pouch_open and open:
+		SatchelLook.draw_cell_glow(g, bag.grow(1), pouch_open and open)
+	g.draw_texture_rect(POUCH_ICON, Rect2(bag.position + Vector2(2, 2), Vector2(12, 12)), false)
 	if open:
 		SatchelLook.draw_knot(g, Vector2(g.size.x - 6.0, 60.0))
 	for i in n:
@@ -2182,6 +2276,9 @@ func _inventory_input(pane: Pane, event: InputEvent) -> void:
 		Area.CATALOG_BUTTON:
 			if left:
 				toggle_catalog()
+		Area.COIN_BAG:
+			if left:
+				click_coin_bag()
 		Area.TRASH:
 			if left:
 				click_trash()
@@ -2948,6 +3045,8 @@ func _update_tooltip(over: Control) -> void:
 			Area.INVENTORY:
 				item = c.inventory.item(h[1])
 				meta = c.inventory.metas[h[1]]
+			Area.COIN_BAG:
+				extra_only = "Coins: %s\nClick: %s the coin pouch" % [Coins.text(c.coins), "close" if pouch_open and open else "open"]
 			Area.TRASH:
 				item = c.trash.item(0)
 				meta = c.trash.metas[0]

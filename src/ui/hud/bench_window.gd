@@ -523,7 +523,7 @@ func do_mix() -> void:
 		EventBus.sound_requested.emit(&"splash", Vector2.INF)
 	elif r["new"]:
 		note = "New recipe: %s! It's in your recipes now." % it.display_name
-		EventBus.debug_message.emit("New recipe: %s" % it.display_name)
+		hud.show_new_recipe(it.display_name)
 		EventBus.sound_requested.emit(&"learn_spell", Vector2.INF)
 	else:
 		note = "Made %s." % it.display_name

@@ -28,8 +28,8 @@ chance = 0.1
 [sub_resource type="Resource" id="Loot_copper_coin"]
 script = ExtResource("1_j3x2u")
 item = &"copper_coin"
-min_count = 15
-max_count = 40
+min_count = 2
+max_count = 5
 
 [resource]
 script = ExtResource("2_217tg")

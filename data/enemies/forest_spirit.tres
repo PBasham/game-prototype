@@ -21,9 +21,9 @@ chance = 0.02
 
 [sub_resource type="Resource" id="Loot_silver_coin"]
 script = ExtResource("1_x1301")
-item = &"silver_coin"
-min_count = 1
-max_count = 1
+item = &"copper_coin"
+min_count = 10
+max_count = 20
 
 [resource]
 script = ExtResource("2_5vjx8")

@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 78, recipe banner, coin bag, fewer coins
+
+- **Patrick:** new recipes float at the top middle of the screen for a few seconds and
+  fade; the coin bag on the inventory's left edge, a bag icon that opens the pouch; money
+  less abundant, and a smaller step from Green to Blue Slimes.
+- **Claude:** the bag also shows beside the hotbar (it opens the inventory and pouch);
+  several recipes at once share one banner; coins 1 to 3 / 2 to 5 / 10 to 20 Copper.
+
 ## 2026-11-27: Phase 77, Catalog Entities
 
 - **Patrick:** rename the Catalog's Creatures tab to Entities, with sub tabs Enemies,
