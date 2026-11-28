@@ -44,6 +44,12 @@ const EQUIP_NAMES: Array[String] = ["Head armor", "Chest armor", "Leg armor", "A
 	"Accessory", "Spellbook (empty: the Basic Spellbook)", "Conduit"]
 ## Width of the button column right of the inventory grid.
 const EQUIP_W := 3 * STEP - GAP
+## The open inventory's right column (Phase 92): the buttons, and Catalog, coin bag and
+## trash on the bottom row.
+const SIDE_W := EQUIP_W + STEP
+## Inventory buttons (Phase 92): height and text size.
+const INV_BUTTON_H := 13
+const INV_BUTTON_FONT := 6
 
 ## Crafting window: size, list width, row height.
 const CRAFT_SIZE := Vector2(288, 214)
@@ -162,9 +168,9 @@ var _wheel: Wheel
 var _quick: Pane
 ## The coin pouch (Phase 76): under the inventory's bottom right, open with it.
 var _pouch: Pane
-## Phase 78: the coin bag icon left of the slots (opens the pouch), and the banner at
-## the top middle of the screen ("New recipe: ...").
-const BAG_W := 18
+## Phase 78: the coin bag (opens the pouch; Phase 92: right of the hotbar, or between
+## Catalog and the trash when open), and the banner at the top middle of the screen
+## ("New recipe: ...").
 var pouch_open := false
 var _banner: Label
 var _banner_left := 0.0
@@ -175,6 +181,7 @@ var _banner_recipes: PackedStringArray = []
 @export var banner_fade := 1.0
 const POUCH_HEAD := 14
 const POUCH_ICON := preload("res://assets/ui/coin_pouch.png")
+const TRASH_ICON := preload("res://assets/ui/trash_bin.png")
 var _name_label: Label
 ## The held spell's icon, left of its name (a spell in hand).
 var _name_icon: TextureRect
@@ -817,20 +824,17 @@ func _inventory() -> Inventory:
 func _layout() -> void:
 	if open:
 		var bottom := maxf(_rows(_inventory().size) * STEP - GAP, 3 * 20.0 - 4.0) + PAD * 2
-		_inv.size = Vector2(_equip_origin().x + EQUIP_W + PAD, bottom)
+		_inv.size = Vector2(_equip_origin().x + SIDE_W + PAD, bottom)
 	else:
-		_inv.size = Vector2(PAD * 2 + BAG_W + 10 * STEP - GAP, PAD * 2 + SLOT)
+		_inv.size = Vector2(PAD * 2 + 11 * STEP - GAP, PAD * 2 + SLOT)  # the bag after slot 0
 	_name_label.position = MARGIN + Vector2(2, _inv.size.y + 2)
 	_name_icon.position = MARGIN + Vector2(2, _inv.size.y + 3)
 	_quick.size = Vector2(PAD * 2 + QUICK_KEYS_SHOWN.size() * STEP - GAP + 4, PAD * 2 + SLOT + QUICK_LABEL_H)
 	_quick.position = _inv.position + Vector2(_inv.size.x + 4, 0)
 	_pouch.size = Vector2(PAD * 2 + Coins.IDS.size() * STEP - GAP, PAD + POUCH_HEAD + SLOT + PAD)
-	_pouch.position = _inv.position + Vector2(0, _inv.size.y + 3)
+	# Under the inventory's right end, below the bag (the item name stays at the left).
+	_pouch.position = _inv.position + Vector2(_inv.size.x - _pouch.size.x, _inv.size.y + 3)
 	_pouch.visible = open and pouch_open
-	if _pouch.visible:
-		# The item name goes under the pouch.
-		_name_label.position.y += _pouch.size.y + 3
-		_name_icon.position.y += _pouch.size.y + 3
 	var view := _view_size()
 	_status.size = STATUS_SIZE + Vector2(0, STATUS_ROW * (int(_status.get_meta(&"rows", 4)) - 4))
 	_status.position = Vector2(MARGIN.x, view.y - _status.size.y - MARGIN.y)
@@ -932,14 +936,15 @@ func _view_size() -> Vector2:
 
 
 func _grid_origin() -> Vector2:
-	return Vector2(PAD + BAG_W, PAD)  # the coin bag sits left of the slots
+	return Vector2(PAD, PAD)
 
 
-## The coin bag (Phase 78): left of the bottom row of slots (the hotbar when closed).
+## The coin bag (Phase 78): a slot. Open, between Catalog and the trash; closed, right
+## of the hotbar (Phase 92).
 func coin_bag_rect() -> Rect2:
-	var n := _inventory().size if open else Inventory.HOTBAR
-	var last := _cell(_grid_origin(), n - 1)
-	return Rect2(Vector2(PAD - 1, last.position.y + 2), Vector2(16, 16))
+	if open:
+		return Rect2(trash_rect().position - Vector2(STEP, 0), Vector2(SLOT, SLOT))
+	return Rect2(_grid_origin() + Vector2(10 * STEP, 0), Vector2(SLOT, SLOT))
 
 
 func _rows(n: int) -> int:
@@ -951,22 +956,23 @@ func _equip_origin() -> Vector2:
 
 
 func _craft_button_rect() -> Rect2:
-	return Rect2(_equip_origin() + Vector2(0, 2), Vector2(EQUIP_W - 2, 16))
+	return Rect2(_equip_origin() + Vector2(0, 3), Vector2(SIDE_W - 2, INV_BUTTON_H))
 
 
 func _equip_button_rect() -> Rect2:
-	return Rect2(_equip_origin() + Vector2(0, 22), Vector2(EQUIP_W - 2, 16))
+	return Rect2(_equip_origin() + Vector2(0, 23), Vector2(SIDE_W - 2, INV_BUTTON_H))
 
 
 func _spells_button_rect() -> Rect2:
-	return Rect2(_equip_origin() + Vector2(0, 42), Vector2(EQUIP_W - 2, 16))
+	return Rect2(_equip_origin() + Vector2(0, 43), Vector2(SIDE_W - 2, INV_BUTTON_H))
 
 
-## The Catalog (J) button: last row, left of the trash.
+## The Catalog (J) button: last row, left of the coin bag and trash.
 func _catalog_button_rect() -> Rect2:
 	var t := trash_rect()
 	var x := _equip_origin().x
-	return Rect2(Vector2(x, t.position.y + 2), Vector2(t.position.x - x - GAP, 16))
+	var bag_x := t.position.x - STEP
+	return Rect2(Vector2(x, t.position.y + (SLOT - INV_BUTTON_H) * 0.5), Vector2(bag_x - x - GAP, INV_BUTTON_H))
 
 
 
@@ -1052,7 +1058,7 @@ func hit(local: Vector2) -> Array:
 ## The trash slot: bottom right of the open inventory, level with the last row.
 func trash_rect() -> Rect2:
 	var last := _cell(_grid_origin(), _inventory().size - 1)
-	return Rect2(Vector2(_equip_origin().x + EQUIP_W - 2 - SLOT, last.position.y), Vector2(SLOT, SLOT))
+	return Rect2(Vector2(_equip_origin().x + SIDE_W - 2 - SLOT, last.position.y), Vector2(SLOT, SLOT))
 
 
 # --- banner (Phase 78) ---------------------------------------------------------------------
@@ -1131,7 +1137,7 @@ func _draw_pouch(g: Control) -> void:
 	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
 	var m := g.get_local_mouse_position()
 	var hot := _over_pane() == g
-	g.draw_texture_rect(POUCH_ICON, Rect2(Vector2(PAD - 1, PAD - 2), Vector2(12, 12)), false)
+	g.draw_texture_rect(POUCH_ICON, Rect2(Vector2(PAD - 2, PAD - 3), Vector2(12, 12)), false)
 	g.draw_string(font, Vector2(PAD + 14, PAD + 7), "Coins", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 	# The close mark, right side.
 	var x := Vector2(g.size.x - PAD - 4, PAD + 3)
@@ -1329,21 +1335,26 @@ func _draw_inventory(g: Control) -> void:
 	var font := ThemeDB.fallback_font
 	var hover := hit(g.get_local_mouse_position()) if _over_pane() == g else [Area.NONE, -1]
 	var n := inv.size if open else Inventory.HOTBAR
-	# The satchel (Patrick's moonweave concept): soft blue cloth, darker toward the
-	# middle, cells set apart only by a faint hue change; tied off on the right when open.
-	SatchelLook.draw_bag(g, g.size, _grid_origin(), n, SLOT, STEP)
+	# Phase 92: the dark arcane panel (UiSkin), slots in the skin's slot art.
+	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
 	var bag := coin_bag_rect()
-	if hover[0] == Area.COIN_BAG or pouch_open and open:
-		SatchelLook.draw_cell_glow(g, bag.grow(1), pouch_open and open)
-	g.draw_texture_rect(POUCH_ICON, Rect2(bag.position + Vector2(2, 2), Vector2(12, 12)), false)
-	if open:
-		SatchelLook.draw_knot(g, Vector2(g.size.x - 6.0, 60.0))
+	var bag_look := UiSkin.SlotLook.SELECTED if pouch_open and open else (
+		UiSkin.SlotLook.HOT if hover[0] == Area.COIN_BAG else UiSkin.SlotLook.NORMAL)
+	UiSkin.slot(g, bag, bag_look)
+	g.draw_texture_rect(POUCH_ICON, Rect2(bag.position + (bag.size - Vector2(14, 14)) * 0.5, Vector2(14, 14)), false)
+	if open and n > Inventory.HOTBAR:
+		# A faint gold rule under the hotbar row.
+		var y := _grid_origin().y + SLOT + GAP * 0.5
+		g.draw_line(Vector2(_grid_origin().x + 2, y), Vector2(_grid_origin().x + 10 * STEP - GAP - 2, y),
+			Color(UiSkin.GOLD, 0.35), 1.0 / UiSkin.DETAIL)
 	for i in n:
 		var r := _cell(_grid_origin(), i)
+		var look := UiSkin.SlotLook.NORMAL
 		if i == world.player.selected:
-			SatchelLook.draw_cell_glow(g, r, true)
+			look = UiSkin.SlotLook.SELECTED
 		elif hover[0] == Area.INVENTORY and hover[1] == i:
-			SatchelLook.draw_cell_glow(g, r, false)
+			look = UiSkin.SlotLook.HOT
+		UiSkin.slot(g, r, look)
 		var item := inv.item(i)
 		if item:
 			_draw_item(g, font, r, item, inv.counts[i], 1.0, inv.metas[i])
@@ -1353,20 +1364,23 @@ func _draw_inventory(g: Control) -> void:
 	if open:
 		var br := _craft_button_rect()
 		var state := UiSkin.Btn.PRESSED if crafting else (UiSkin.Btn.HOT if hover[0] == Area.CRAFT_BUTTON else UiSkin.Btn.NORMAL)
-		UiSkin.button(g, br, "Craft (K)", state)
+		UiSkin.button(g, br, "Craft (K)", state, INV_BUTTON_FONT)
 		var er := _equip_button_rect()
 		state = UiSkin.Btn.PRESSED if equipping else (UiSkin.Btn.HOT if hover[0] == Area.EQUIP_BUTTON else UiSkin.Btn.NORMAL)
-		UiSkin.button(g, er, "Equip (P)", state)
+		UiSkin.button(g, er, "Equip (P)", state, INV_BUTTON_FONT)
 		var sr := _spells_button_rect()
 		state = UiSkin.Btn.PRESSED if spells_open else (UiSkin.Btn.HOT if hover[0] == Area.SPELLS_BUTTON else UiSkin.Btn.NORMAL)
-		UiSkin.button(g, sr, "Spells (L)", state)
+		UiSkin.button(g, sr, "Spells (L)", state, INV_BUTTON_FONT)
 		state = UiSkin.Btn.PRESSED if catalog_open else (UiSkin.Btn.HOT if hover[0] == Area.CATALOG_BUTTON else UiSkin.Btn.NORMAL)
-		UiSkin.button(g, _catalog_button_rect(), "Catalog", state)
-		# The trash: a dimmer cell with a bin drawn in it until something's thrown away.
+		UiSkin.button(g, _catalog_button_rect(), "Catalog", state, INV_BUTTON_FONT)
+		# The trash: a slot with a bin in it until something's thrown away.
 		var tr := trash_rect()
 		var trash := c.trash
-		SatchelLook.draw_trash(g, tr, hover[0] == Area.TRASH, trash.counts[0] <= 0)
-		if trash.counts[0] > 0:
+		UiSkin.slot(g, tr, UiSkin.SlotLook.HOT if hover[0] == Area.TRASH else UiSkin.SlotLook.NORMAL)
+		if trash.counts[0] <= 0:
+			g.draw_texture_rect(TRASH_ICON, Rect2(tr.position + (tr.size - Vector2(14, 14)) * 0.5, Vector2(14, 14)),
+				false, Color(1, 1, 1, 0.85))
+		else:
 			_draw_item(g, font, tr, trash.item(0), trash.counts[0], 0.8, trash.metas[0])
 	_draw_cursor_stack(g)
 

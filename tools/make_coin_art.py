@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Phase 76 placeholders: Copper, Silver, Gold and Platinum coins (16x16 icon and held,
-a small stack of two coins) and the coin pouch icon (ui/coin_pouch.png, 12x12). Kept
+a small stack of two coins) (the coin pouch icon is now
+tools/make_inventory_art_hd.py). Kept
 unless --force (Patrick repaints them).
 
 Run: python3 tools/make_coin_art.py [--force]
@@ -45,11 +46,4 @@ for cid, m in METALS.items():
     save(im, "items/icons/%s.png" % cid)
     save(im, "items/held/%s.png" % cid)
 
-# The pouch: a little drawstring bag.
-im = Image.new("RGBA", (12, 12))
-d = ImageDraw.Draw(im)
-d.ellipse([1, 3, 10, 11], fill=(120, 80, 44, 255))
-d.ellipse([2, 4, 8, 9], fill=(150, 104, 60, 255))
-d.rectangle([4, 1, 7, 3], fill=(120, 80, 44, 255))
-d.line([3, 3, 8, 3], fill=(222, 172, 40, 255))
-save(im, "ui/coin_pouch.png")
+# The pouch icon moved to tools/make_inventory_art_hd.py (Phase 92).

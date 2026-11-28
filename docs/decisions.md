@@ -2,6 +2,20 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 92, inventory in the new UI style
+
+- **Patrick:** the inventory should match the Phase 91 look too, buttons and coin bag
+  included. Of three spots for the coin bag (left, right, a tab below) he picked the
+  right "for now" (not fully sold); keep the pouch's slot per coin; smaller buttons with
+  smaller text.
+- **Claude:** the blue satchel (`SatchelLook`) is gone: the inventory is a UiSkin panel
+  with skin slots (gold glow on the selected one, blue on hover), a faint gold rule under
+  the hotbar row, the coin bag and trash as slots, and new 3x icons for the pouch (navy
+  velvet, gold drawstring and coin) and the bin. The knot and crystal went with the
+  satchel. The coin bag is a slot between Catalog and the trash (the right column is one
+  slot wider), right of the hotbar when closed; the pouch opens under the inventory's
+  right end. Inventory buttons are 13 tall with size 6 text.
+
 ## 2026-11-28: Phase 91, nicer UI
 
 - **Patrick:** option (b), dark arcane, more detailed: the UI looked like an old retro
@@ -9,7 +23,7 @@ Newest first. Each entry: what was decided, why, and what it affects.
 - **Claude:** new nine-slice art at 3 art pixels per UI pixel (crisp, more detail): navy
   gradient panels with a beveled gold frame, blue inner glow and gem corners; recessed
   slots with blue, gold or violet glows; glassy navy buttons with gold trim; light text.
-  The inventory's blue satchel stays. The old 1x art is behind `--old`.
+  The inventory's blue satchel stays (until Phase 92). The old 1x art is behind `--old`.
 
 ## 2026-11-28: Phase 90, biome backdrops, Dark Forest colors
 

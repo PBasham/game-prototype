@@ -54,7 +54,7 @@ one new file: `godot --headless --path . --script res://tools/make_items.gd -- -
 | `src/items/` | Item and spell data classes, the inventory, crafting, `item_user.gd` (using whatever you hold: mining, placing, casting), drops, the character save |
 | `src/player/` | `player.gd` (movement, health, mana, buffs, concentration) and `doll/` (the paper doll drawing) |
 | `src/combat/` | Enemies, spawning, projectiles, spell effects (zones, wards, summons, light orbs), loot |
-| `src/ui/` | `hud/` (inventory, crafting, chests, equipment, spells, map, dev items), `menu/` (main and pause menus), `dev/` (console, doll viewer), `ui_skin.gd`, `satchel_look.gd` |
+| `src/ui/` | `hud/` (inventory, crafting, chests, equipment, spells, map, dev items), `menu/` (main and pause menus), `dev/` (console, doll viewer), `ui_skin.gd`, `ui_nine_slice.gd` |
 | `data/` | All content (see each section) |
 | `assets/` | Art and sounds; every placeholder is listed in `assets/ASSETS.md` |
 | `art/` | Source art (Aseprite) and the Python scripts that make concept and placeholder art (`art/concepts/<topic>/`) |
@@ -289,9 +289,8 @@ option (`WorldInfo.DeathDrop`). The magic bag: `src/items/item_bag.gd`. Details 
 
 `src/ui/hud/hud.gd` draws the inventory, hotbar, crafting, chests, tooltips, the spell
 wheel and pickup notes. Separate windows: `equipment_window.gd`, `spell_window.gd`,
-`creative_window.gd`, `map_view.gd`. Look: `src/ui/ui_skin.gd` (wooden windows,
-buttons) and `src/ui/satchel_look.gd` (the satchel inventory: colors are the consts at
-its top). The trash slot is `CharacterData.trash`. Menus: `src/ui/menu/`.
+`creative_window.gd`, `map_view.gd`. Look: `src/ui/ui_skin.gd` (every window, slot
+and button, the inventory included; `Hud._draw_inventory`). The trash slot is `CharacterData.trash`. Menus: `src/ui/menu/`.
 
 ## Chat and emotes
 
@@ -592,6 +591,15 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 92: inventory in the new UI style
+
+| Change | Where |
+| --- | --- |
+| Drawing | `Hud._draw_inventory` (UiSkin panel and slots), `_draw_pouch`; `SatchelLook` removed |
+| Layout | `Hud.SIDE_W` (right column), `coin_bag_rect` (beside the trash, or after the hotbar), `_catalog_button_rect`, `trash_rect`, `_layout` (pouch under the right end); `BAG_W` removed |
+| Buttons | `Hud.INV_BUTTON_H`, `INV_BUTTON_FONT`; `UiSkin.button(..., font_size)` |
+| Art | `tools/make_inventory_art_hd.py` (`assets/ui/coin_pouch.png`, `trash_bin.png`); `Hud.POUCH_ICON`, `TRASH_ICON` |
+
 ## Phase 91: nicer UI
 
 | Change | Where |
@@ -729,7 +737,7 @@ saves still load.
 | Picked up into the pouch | `Player.pick_up`, `ItemDrop` (magnets even when full); `CharacterData.coins`, `coins_folded` |
 | The pouch panel | `Hud._pouch`, `_draw_pouch`, `_pouch_input`, `take_coins`, `deposit_cursor_coins`, `pouch_slot_rect` |
 | Drops | coin loot in `data/enemies/{green_slime,blue_slime,forest_spirit}.tres` (and `tools/make_items.gd`) |
-| Art | `tools/make_coin_art.py` (`assets/items/*/..._coin.png`, `assets/ui/coin_pouch.png`) |
+| Art | `tools/make_coin_art.py` (`assets/items/*/..._coin.png`); the pouch icon is `tools/make_inventory_art_hd.py` |
 
 ## Phase 75: Floating Torch
 

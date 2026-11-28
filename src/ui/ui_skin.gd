@@ -78,15 +78,15 @@ static func slot(ci: CanvasItem, r: Rect2, kind: SlotLook = SlotLook.NORMAL) -> 
 enum Btn { NORMAL, HOT, PRESSED, DISABLED }
 
 
-## A drawn button with centered text.
-static func button(ci: CanvasItem, r: Rect2, text: String, state: Btn = Btn.NORMAL) -> void:
+## A drawn button with centered text (`font_size` in UI px).
+static func button(ci: CanvasItem, r: Rect2, text: String, state: Btn = Btn.NORMAL, font_size: int = 7) -> void:
 	var file_name: String = ["button", "button_hot", "button_pressed", "button_disabled"][state]
 	box(file_name).draw(ci.get_canvas_item(), r)
 	var font := ThemeDB.fallback_font
-	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var color := TEXT if state != Btn.DISABLED else Color(DIM, 0.6)
-	ci.draw_string(font, Vector2(r.get_center().x - w * 0.5, r.position.y + r.size.y * 0.5 + 3), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, 7, color)
+	ci.draw_string(font, Vector2(r.get_center().x - w * 0.5, r.position.y + r.size.y * 0.5 + font_size * 0.43), text,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
 static func row_highlight(ci: CanvasItem, r: Rect2) -> void:

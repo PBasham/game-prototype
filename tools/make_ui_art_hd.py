@@ -2,7 +2,8 @@
 """Phase 91: the UI's nine-slice art, "dark arcane": deep navy panels with gold trim, blue
 glows and gem corners, drawn at 3 art pixels per UI pixel (UiSkin.DETAIL) so it reads
 crisp instead of chunky. Replaces tools/make_ui_art.gd's panel, title, slot, button,
-field and row art (the inventory's blue satchel, bench art and icons are untouched).
+field and row art (bench art and icons are untouched; the inventory icons are
+tools/make_inventory_art_hd.py).
 Patrick replaces these later. Overwrites only with --force.
 
 Run: python3 tools/make_ui_art_hd.py --force

@@ -50,19 +50,22 @@ func test_picked_up_coins_go_in_the_pouch_and_combine() -> void:
 	hud.deposit_cursor_coins()
 	assert_eq(c.coins, 100)
 	assert_eq(hud.cursor_count, 0)
-	# Phase 78: the coin bag left of the slots opens and closes it.
+	# Phase 78: the coin bag opens and closes it (Phase 92: between Catalog and the trash).
 	assert_false(hud._pouch.visible, "closed until you click the bag")
 	var bag := hud.coin_bag_rect()
-	assert_lt(bag.end.x, hud._cell(hud._grid_origin(), 0).position.x + 1.0, "left of the slots")
+	assert_gt(bag.position.x, hud._catalog_button_rect().end.x, "right of Catalog")
+	assert_lt(bag.end.x, hud.trash_rect().position.x + 0.5, "left of the trash")
 	assert_eq(hud.hit(bag.get_center())[0], Hud.Area.COIN_BAG)
 	hud.click_coin_bag()
 	assert_true(hud._pouch.visible)
 	assert_gt(hud._pouch.position.y, hud._inv.position.y + hud._inv.size.y, "under the inventory")
-	assert_almost_eq(hud._pouch.position.x, hud._inv.position.x, 0.5, "at its left")
+	assert_almost_eq(hud._pouch.position.x + hud._pouch.size.x, hud._inv.position.x + hud._inv.size.x, 0.5,
+		"at its right")
 	hud.click_coin_bag()
 	assert_false(hud._pouch.visible)
 	# From the hotbar (inventory closed): opens both.
 	hud.set_open(false)
+	assert_gt(hud.coin_bag_rect().position.x, hud._cell(hud._grid_origin(), 9).end.x, "right of the hotbar")
 	assert_eq(hud.hit(hud.coin_bag_rect().get_center())[0], Hud.Area.COIN_BAG)
 	hud.click_coin_bag()
 	assert_true(hud.open and hud._pouch.visible)

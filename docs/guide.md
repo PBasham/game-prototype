@@ -375,11 +375,12 @@ edges at 1/3 scale). They're placeholders from `tools/make_ui_art_hd.py`; replac
 file with real art of the same size, or change its margin (art pixels) in
 `UiSkin.MARGINS`. Text colors (`TEXT`, `DIM`, `GOLD`, `INK` for title strips,
 `PARCHMENT_INK` for the bench's parchment) are constants there too. Menus built from
-Controls get the same look through `UiSkin.theme()`. The inventory's blue satchel is
-drawn separately and stays as it was.
+Controls get the same look through `UiSkin.theme()`, and since Phase 92 the inventory
+uses it too.
 
 ```
 python3 tools/make_ui_art_hd.py --force   # panels, slots, buttons, field, row
+python3 tools/make_inventory_art_hd.py --force   # coin pouch and trash bin icons
 godot --headless --path . --script res://tools/make_ui_art.gd   # status icons (--old: the 1x Scholar art)
 ```
 
@@ -402,12 +403,14 @@ point (gold square). Saved with the world as the picture (`WorldSave.META_MAP`).
 Water (Phase 63): a cell at least half full of water is drawn blue (`WorldMap.WATER`,
 tinted a little by the wall behind it). Bare bones for now: no trees, chests or pins yet.
 
-The inventory is a **satchel** (`SatchelLook`, `src/ui/satchel_look.gd`, Patrick's
-moonweave concept): a rounded bag of blue cloth that darkens toward the middle, cells
-set apart only by a faint hue change (no lines), a soft glow on the selected and
-hovered cell, and, open, a tied knot with a cord and a violet crystal off its right
-side. The pictures are made in code and cached; colors and amounts are the consts at
-the top (`RIM`, `MIDDLE`, `CELL_HUE`, `CELL_VALUE`). Other windows keep the UiSkin look.
+The inventory (Phase 92) is a UiSkin panel: each cell is a skin slot (gold glow on the
+selected one, blue on hover), hotbar numbers in the corner, a faint gold rule under the
+hotbar row when open. The right column has the Craft, Equip and Spells buttons
+(`Hud.INV_BUTTON_H` 13 tall, `INV_BUTTON_FONT` 6), then Catalog, the coin bag and the
+trash. The coin bag is a slot (gold while the pouch is open; right of the hotbar when
+the inventory is closed) and the pouch, one slot per coin, opens under the inventory's
+right end. The trash has a bin in it until something's thrown away. Their icons are `assets/ui/coin_pouch.png` and `trash_bin.png` (42x42,
+drawn at 14 UI px), placeholders from `tools/make_inventory_art_hd.py`.
 
 In game, the HUD (`src/ui/hud/hud.gd`) has the inventory panel top left, the
 **health, mana and hunger** panel bottom left (pickup notes stack above it), and
