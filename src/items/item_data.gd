@@ -179,6 +179,15 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 @export var thirst_value := 0.0
 ## What's left after drinking it (the empty bottle). Empty = nothing.
 @export var leaves_item: StringName = &""
+## Right-click water (or a Liquid Barrel) to fill it: the full item it becomes.
+## Empty = it can't be filled.
+@export var fills_into: StringName = &""
+## Water cells filling it takes away (16 = a tile): 1 for bottles, 16 for the Clay
+## Bucket. 0 = none.
+@export var fill_takes := 0
+## Left-click to pour out this many water cells (a full Clay Bucket); it becomes
+## `leaves_item`.
+@export var pours_water := 0
 ## Potions: after drinking, no other item with the same sickness for this long
 ## (Terraria's Potion Sickness). Empty = none.
 @export var sickness: StringName = &""

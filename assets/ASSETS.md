@@ -287,6 +287,8 @@ or .ogg); the generator never overwrites without `--force`.
 | enemies/crab.png, enemies/fish.png, items/{icons,held}/{raw_crab,crab_legs,raw_fish,cooked_fish}.png, decor/{kelp,kelp_top,seagrass_0..2,dune_grass_0..1}.png | Placeholder sea life: crab (3 frames 16x10), fish (3 frames 14x8), the four foods, kelp pieces and tufts (`tools/make_sea_life_art.py`, Phase 56) |
 | enemies/firefly.png, items/{icons,held}/{firefly,bug_net,firefly_lamp}.png, objects/firefly_lamp.png | Placeholder firefly (2 frames 6x5), Bug Net, Firefly Lamp (4 torch-style frames 8x16) (`tools/make_firefly_art.py`, Phase 62) |
 | items/{icons,held}/bomb.png | 16x16 placeholder Bomb: a dark round bomb with a lit fuse (`tools/make_voxel_art.py`, Phase 52) |
+| items/{icons,held}/{clay_bucket,clay_bucket_water}.png | Placeholder Clay Bucket, empty and full (a banded clay pot with a handle) (`tools/make_bucket_art.py`, Phase 79) |
+| sounds/splash.wav | Placeholder splash for filling and pouring (`tools/make_sounds.gd`, Phase 79) |
 | sounds/bomb.wav | Placeholder explosion (`tools/make_sounds.gd`, Phase 52) |
 | items/icons/shaping_spell.png (+ scroll_, page_ icons) | 16x16 Shaping Spell: a small mallet over a slope. Placeholder (`make_item_art.gd --new-spells`, Phase 51) |
 | items/{icons,held}/siphon_liquid.png (+ scroll_, page_ icons) | 16x16 Siphon Liquid: a blue drop under a curling arrow. Placeholder (PIL, Phase 45) |

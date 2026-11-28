@@ -19,7 +19,7 @@ extends Node2D
 ## the edge of reach. Ctrl + mouse wheel changes the area.
 
 enum Mode { NONE, MINE, CHOP, PLACE_BLOCK, PLACE_WALL, PLACE_OBJECT, PLANT_TREE, PLANT_GRASS, CAST, TOGGLE, EAT,
-	CHARGE, SCROLL, THROW, PAGE, GRAB, SHAPE, SIPHON }
+	CHARGE, SCROLL, THROW, PAGE, GRAB, SHAPE, SIPHON, FILL, POUR }
 
 const TILE := World.TILE
 
@@ -375,6 +375,13 @@ func can_use(on_back: bool = false) -> bool:
 				_eat_frame = Engine.get_process_frames()  # asked twice in one click: eat once
 				eat_held()
 			return false  # no swing
+		Mode.FILL:
+			return false  # the Player fills on right click (before furniture), no swing
+		Mode.POUR:
+			if Input.is_action_just_pressed("use_primary") and _eat_frame != Engine.get_process_frames():
+				_eat_frame = Engine.get_process_frames()  # once per click
+				pour_held(world.world_to_tile(cursor()))
+			return false
 		Mode.PAGE:
 			if not on_back and Input.is_action_just_pressed("use_primary"):
 				read_page()
@@ -635,6 +642,92 @@ func _give_back(item: ItemData) -> void:
 		world.request_spawn_drop(item.leaves_item, left, p.chest(), Vector2.ZERO)
 
 
+## Fills the held bottle (or all of them with `all`, as far as the water goes) from
+## water at a tile: the water there or a Liquid Barrel. Each takes its `fill_takes`
+## cells (a bottle 1, a Clay Bucket a whole tile) and fills only when there's that much. Returns how many
+## it filled (0 with no water there, quietly, so the right click can open a chest). The filled ones go to your inventory (the rest drop at your feet).
+func fill_held(tile: Vector2i, all := false) -> int:
+	var p := world.player
+	var item := p.held_item if p.mouse_stack == null else p.mouse_stack
+	if item == null or item.fills_into == &"":
+		return 0
+	var barrel := world.barrel_water(tile)
+	var near := Rect2i(tile - Vector2i.ONE, Vector2i(3, 3))
+	var here := barrel if barrel > 0 else world.voxels.liquid_in(near)
+	if barrel <= 0 and world.voxels.count_in(tile, &"water") <= 0:
+		return 0  # no water here: the right click does its usual thing
+	if not _in_reach(tile):
+		EventBus.debug_message.emit("Too far away")
+		return 0
+	var want := p.held_count() if all else 1
+	var filled := 0
+	for i in want:
+		if item.fill_takes > 0:
+			if here < item.fill_takes:
+				if filled == 0:
+					EventBus.debug_message.emit("Not enough water to fill it")
+				break
+			if barrel > 0:
+				world.request_barrel_water(tile, -item.fill_takes)
+			else:
+				var got := world.voxels.take_liquid(near, item.fill_takes)
+				if got < item.fill_takes:
+					world.voxels.pour_liquid(near, got)  # put it back
+					if filled == 0:
+						EventBus.debug_message.emit("Not enough water to fill it")
+					break
+			here -= item.fill_takes
+		if not p.take_held():
+			break
+		filled += 1
+	if filled > 0:
+		var left := p.character.inventory.add(item.fills_into, filled)
+		if left > 0:
+			world.request_spawn_drop(item.fills_into, left, p.chest(), Vector2.ZERO)
+		p.refresh_held()
+		EventBus.sound_requested.emit(&"splash", world.tile_to_world(tile))
+	return filled
+
+
+## Pours the held full bucket out at a tile: into a Liquid Barrel there (if it has
+## room) or into the empty space around the tile. Nothing happens if the water
+## doesn't fit. Returns true if it poured.
+func pour_held(tile: Vector2i) -> bool:
+	var p := world.player
+	var item := p.held_item if p.mouse_stack == null else p.mouse_stack
+	if item == null or item.pours_water <= 0:
+		return false
+	if not _in_reach(tile):
+		EventBus.debug_message.emit("Too far away")
+		return false
+	var n := item.pours_water
+	var a := world.object_anchor(tile)
+	var def := world.object_at(a) if a != World.NO_TILE else null
+	if def and def.liquid_capacity > 0:
+		if def.liquid_capacity - world.barrel_water(a) < n:
+			EventBus.debug_message.emit("The barrel is full")
+			return false
+		if not p.take_held():
+			return false
+		world.request_barrel_water(a, n)
+	else:
+		if world.is_solid(tile):
+			return false
+		var box := Rect2i(tile - Vector2i.ONE, Vector2i(3, 3))
+		var poured := world.voxels.pour_liquid(box, n)
+		if poured < n:
+			world.voxels.take_liquid(box, poured)  # take it back
+			EventBus.debug_message.emit("No room for the water")
+			return false
+		if not p.take_held():
+			world.voxels.take_liquid(box, poured)
+			return false
+	_give_back(item)
+	p.refresh_held()
+	EventBus.sound_requested.emit(&"splash", world.tile_to_world(tile))
+	return true
+
+
 ## Returns true if it was used up.
 func eat_held() -> bool:
 	var p := world.player
@@ -757,6 +850,10 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 		return Mode.SHAPE
 	if item is SpellData and (item as SpellData).siphons:
 		return Mode.SIPHON
+	if item.fills_into != &"" and on_back:
+		return Mode.FILL  # right click water
+	if item.pours_water > 0 and not on_back:
+		return Mode.POUR
 	if item.kind == ItemData.Kind.FOOD:
 		return Mode.EAT if not on_back else Mode.NONE  # left click
 	if item.throw_speed > 0.0:

@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 79, filling bottles and the Clay Bucket
+
+- **Patrick:** right-click water with an empty clay or glass bottle to fill it; filling
+  a Clay Bucket moves a tile of water and can pour it out. First "bottles don't move
+  water", then: bottles take a small amount, like a cell even for the big jug.
+- **Claude:** every bottle takes 1 cell (`fill_takes`, tunable per bottle), which also
+  stops a nearly empty barrel acting as an endless well; Shift fills the whole stack as
+  far as the water goes; Liquid Barrels work too (buckets take 16); a bucket fills only from a full tile of water and pours only
+  when all 16 cells fit; Clay Bucket is 5 Clay at the Furnace; crafting water bottles by
+  hand stays.
+
 ## 2026-11-27: Phase 78, recipe banner, coin bag, fewer coins
 
 - **Patrick:** new recipes float at the top middle of the screen for a few seconds and

@@ -358,6 +358,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 79: filling bottles, Clay Bucket (branch phase-79-fill-bottles)**
+- [ ] Hold empty Glass Vials, right-click a pond: one Glass Vial of Water, and the pond
+      loses one cell (barely visible). Shift + right-click: the whole stack.
+- [ ] Right-click a Liquid Barrel with water holding a bottle: filled, the barrel shows 1
+      less. With no water under the cursor, right click still opens chests.
+- [ ] Furnace, Bottles tab: Clay Bucket (5 Clay). Right-click water: a tile of it goes
+      away and you hold a Clay Bucket of Water. Left-click somewhere dry: the water pours
+      out and you get the bucket back. Pouring into a barrel works too.
+
 **Phase 78: recipe banner, coin bag, fewer coins (branch phase-78-banner-bag-coins)**
 - [ ] Get Glass: "New recipes: Alchemist's Bench, Glass Bottle and 4 more" at the top
       middle, held a few seconds, fading out.

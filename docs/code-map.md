@@ -592,6 +592,14 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 79: filling bottles, Clay Bucket
+
+| Change | Where |
+| --- | --- |
+| Fill and pour | `ItemData.fills_into`, `fill_takes`, `pours_water`; `ItemUser.Mode.FILL`/`POUR`, `fill_held`, `pour_held`; `Player` right click tries `fill_held` before furniture |
+| Clay Bucket | `data/items/clay_bucket.tres`, `clay_bucket_water.tres`, `data/recipes/clay_bucket.tres`; `tools/make_items.gd`; art `tools/make_bucket_art.py` |
+| Splash sound | `tools/make_sounds.gd` (`splash`) |
+
 ## Phase 78: recipe banner, coin bag, fewer coins
 
 | Change | Where |

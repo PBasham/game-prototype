@@ -82,6 +82,20 @@ Siphon Liquid's reservoir, used in that order. Drinking gives the empty bottle b
 | Glass Flask | 48 | +45 |
 | Clay Jug | 64 | +60 |
 
+**Filling bottles (Phase 79):** with an empty bottle in hand, right-click water within
+reach (or a Liquid Barrel with water in it) to fill one; Shift + right-click fills the
+whole stack, as far as the water goes. Each bottle takes just 1 cell of water, whatever
+its size (`ItemData.fill_takes`), so a tile fills 16. The full bottles go to your inventory,
+the rest drop at your feet. With no water under the cursor, right click does its usual
+thing (open a chest, and so on). `ItemData.fills_into` names the full item.
+
+**Clay Bucket (Phase 79, Furnace, Bottles tab, 5 Clay):** right-click water to scoop up
+a tile of it (16 cells, `ItemData.fill_takes`) from around the cursor, or from a Liquid
+Barrel; it needs a full tile there. Left-click with the Clay Bucket of Water to pour the
+tile back out around the cursor, or into a Liquid Barrel with room
+(`ItemData.pours_water`); if it doesn't fit, nothing pours. Empty buckets stack to 10,
+full ones don't stack.
+
 You can't drink water straight from a pond yet.
 
 ## Swimming and breath (Phase 54)

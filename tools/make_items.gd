@@ -216,7 +216,9 @@ func _items() -> Array[ItemData]:
 	out.append(_small(&"glowcap", "Glowcap", "Glows in dark caves. Brewed into Mana Potions."))
 	# Food & Alchemy.
 	out.append(_block(&"clay", "Clay", "Found in patches in the dirt. Fire it in a Furnace into flasks, bottles and jugs.", &"clay_wall"))
-	var flask_empty := _small(&"clay_flask", "Clay Flask", "An empty flask of fired clay. Potions, coatings and thrown flasks start with one.")
+	var flask_empty := _small(&"clay_flask", "Clay Flask", "An empty flask of fired clay. Potions, coatings and thrown flasks start with one. Right-click water to fill it.")
+	flask_empty.fills_into = &"water_clay_flask"
+	flask_empty.fill_takes = 1  # a sip of the pond (Phase 79)
 	_detailed(flask_empty, &"")
 	out.append(flask_empty)
 	# Phase 35: more bottles (clay and glass, three sizes each), Sand and Glass.
@@ -226,9 +228,24 @@ func _items() -> Array[ItemData]:
 			[&"glass_vial", "Glass Vial", "A slim glass vial."],
 			[&"glass_bottle", "Glass Bottle", "An empty glass bottle."],
 			[&"glass_flask", "Glass Flask", "A big round glass flask."]]:
-		var bottle := _small(row[0], row[1], row[2])
+		var bottle := _small(row[0], row[1], row[2] + " Right-click water to fill it.")
+		bottle.fills_into = StringName("water_" + String(row[0]))
+		bottle.fill_takes = 1
 		_detailed(bottle, &"")
 		out.append(bottle)
+	# Phase 79: the Clay Bucket carries a tile of water (16 cells) and pours it back out.
+	var bucket := _small(&"clay_bucket", "Clay Bucket", "Right-click water to scoop up a tile of it (or take it from a Liquid Barrel).")
+	bucket.fills_into = &"clay_bucket_water"
+	bucket.fill_takes = 16
+	bucket.max_stack = 10
+	_detailed(bucket, &"")
+	out.append(bucket)
+	var bucket_water := _small(&"clay_bucket_water", "Clay Bucket of Water", "A tile of water. Left-click to pour it out (or into a Liquid Barrel).")
+	bucket_water.pours_water = 16
+	bucket_water.leaves_item = &"clay_bucket"
+	bucket_water.max_stack = 1
+	_detailed(bucket_water, &"")
+	out.append(bucket_water)
 	var sand := _block(&"sand", "Sand", "Fine sand, counted in grains: a block or back wall takes 16. It falls and piles up. Melt 16 in a Furnace into Glass, or press them into Sand Bricks at a Workbench. (No sand in the world yet: the Creative window has it.)", &"sand_wall")
 	sand.place_units = 16  # one grain per voxel cell (Phase 52)
 	out.append(sand)
@@ -1304,6 +1321,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"clay_flask", &"furnace", {&"clay": 2}, &"clay_flask", 1, []],
 		[&"clay_bottle", &"furnace", {&"clay": 3}, &"clay_bottle", 1, []],
 		[&"clay_jug", &"furnace", {&"clay": 4}, &"clay_jug", 1, []],
+		[&"clay_bucket", &"furnace", {&"clay": 5}, &"clay_bucket", 1, []],
 		[&"glass", &"furnace", {&"sand": 16}, &"glass", 1, []],
 		[&"sand_bricks", &"workbench", {&"sand": 16}, &"sand_bricks", 16, []],
 		[&"glass_vial", &"furnace", {&"glass": 1}, &"glass_vial", 1, []],
@@ -1503,6 +1521,7 @@ const RECIPE_TABS := {
 	&"clay_bottle": "Bottles",
 	&"clay_flask": "Bottles",
 	&"clay_jug": "Bottles",
+	&"clay_bucket": "Bottles",
 	&"copper_anvil": "Stations",
 	&"copper_bar": "Smelting",
 	&"copper_chestplate": "Armor",
