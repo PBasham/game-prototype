@@ -52,7 +52,7 @@ extends ItemData
 ## channels at the cursor). Its Channel motion (0.3 s) is the time between casts.
 
 enum Cast { TOOL, PROJECTILE, TOGGLE, GUST, BLINK, LIGHT, BUFF, CHARGED, ZONE, WARD, SUMMON, CONJURE,
-	CHAIN, RITUAL, SENSE, GRAB }
+	CHAIN, RITUAL, SENSE, GRAB, COMMAND }
 
 ## Spell Index tabs.
 enum Group { TOOLS, MOVEMENT, ATTACK, DEFENSE, LIGHT }

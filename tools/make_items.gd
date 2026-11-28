@@ -564,6 +564,16 @@ func _spells() -> Array[ItemData]:
 	shaping.learnable_at_table = false
 	out.append(shaping)
 
+	# Command (Phase 73): known from the start, on the middle mouse quick slot. Cast at an
+	# enemy: your summons go after it (World.command_summons).
+	var command := _spell(&"command", "Command", "Point at an enemy: your summons go after it until it's gone. Point at nothing: they come back to fighting whatever's nearest.")
+	command.cast = SpellData.Cast.COMMAND
+	command.group = SpellData.Group.ATTACK
+	command.learnable_at_table = false
+	command.impact_at = 0.15
+	command.projectile_color = Color(0.91, 0.36, 0.27)
+	out.append(command)
+
 	# Siphon Liquid (Phase 45): ready for liquids. Empower: Reach and Area.
 	var siphon := _spell(&"siphon_liquid", "Siphon Liquid", "Hold left click to draw up water where you aim (or from a Liquid Barrel) into the spell; right click pours it out. Holds 16 tiles of water. Crafting can use the water it holds.")
 	siphon.reach_tiles = 8.0

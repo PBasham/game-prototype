@@ -122,7 +122,7 @@ func quick_rect(slot: StringName) -> Rect2:
 	var row := 0
 	if CharacterData.is_buff_slot(slot):
 		row = 2
-		col = 3 + int(text.get_slice("_", 1))
+		col = CharacterData.QUICK_KEYS.size() + int(text.get_slice("_", 1))
 		return Rect2(o + Vector2(col * STEP + 14, row * STEP + 8), Vector2(SLOT, SLOT))
 	if slot in CharacterData.QUICK_KEYS:
 		row = 2
@@ -147,7 +147,7 @@ func mode_rect(slot: StringName) -> Rect2:
 func layout() -> void:
 	var w := _stats_x() + STATS_W + PAD
 	var h := _fold_y() + 14 + PAD
-	var quick_w := PAD * 2 + LABEL_W + (3 + CharacterData.BUFF_SET_SIZE) * STEP + 14 - Hud.GAP
+	var quick_w := PAD * 2 + LABEL_W + (CharacterData.QUICK_KEYS.size() + CharacterData.BUFF_SET_SIZE) * STEP + 14 - Hud.GAP
 	if spells_shown:
 		h = move_rect().end.y + PAD
 	size = Vector2(maxf(w, quick_w), h)
@@ -230,8 +230,12 @@ func draw_body(font: Font) -> void:
 	var o := _quick_origin()
 	draw_string(font, Vector2(PAD, o.y + 12), "Q", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 	draw_string(font, Vector2(PAD, o.y + STEP + 12), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
-	draw_string(font, o + Vector2(0, 2 * STEP + 6), "Z  X  C", HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.GOLD)
-	draw_string(font, o + Vector2(3 * STEP + 14, 2 * STEP + 6), "Buff set (B): casts them all", HORIZONTAL_ALIGNMENT_LEFT,
+	for i in CharacterData.QUICK_KEYS.size():
+		var k := CharacterData.QUICK_KEYS[i]
+		var lbl := Hud.quick_key_label(k)
+		var lw := font.get_string_size(lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 6).x
+		draw_string(font, o + Vector2(i * STEP + (SLOT - lw) * 0.5, 2 * STEP + 6), lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 6, UiSkin.GOLD)
+	draw_string(font, o + Vector2(CharacterData.QUICK_KEYS.size() * STEP + 14, 2 * STEP + 6), "Buff set (B): casts them all", HORIZONTAL_ALIGNMENT_LEFT,
 		-1, 6, UiSkin.GOLD)
 	# The Movement slot: empty shows the default (Fly, else Levitate) faded.
 	var mr := move_rect()

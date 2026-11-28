@@ -21,6 +21,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **Q**, **E** (hold) | That spell wheel: move the mouse toward a spell, let go. That spell becomes the wheel's tap spell; a cast-right-away spell isn't cast by the pick (tap to cast), an in-hand one goes in your hand |
 | **Q**, **E** (tap) | The wheel's last pick again |
 | **Z**, **X**, **C** | Their quick spell (cast or put in hand, by the slot's mode), or the item they're a shortcut to |
+| **Middle mouse** | Its quick slot ("Mid", Phase 73), like Z X C. Command by default |
 | **B** | The buff set: casts every spell in it at once |
 | **R** | Mining Spell in hand (again: put it away, back to your hotbar slot) |
 | **Ctrl + R** | Chopping Spell in hand (same) |

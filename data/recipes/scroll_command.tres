@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://src/items/recipe_data.gd" id="1_b7g6r"]
+
+[resource]
+script = ExtResource("1_b7g6r")
+station = &"scribing"
+inputs = Dictionary[StringName, int]({
+&"blank_scroll": 1,
+&"copper_bar": 2
+})
+unlock_items = Array[StringName]([&"blank_scroll", &"copper_bar"])
+output = &"scroll_command"
+id = &"scroll_command"
+display_name = "Scroll Command"

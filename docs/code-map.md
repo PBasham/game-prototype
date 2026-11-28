@@ -592,6 +592,14 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 73: Command and the middle mouse slot
+
+| Change | Where |
+| --- | --- |
+| The spell | `data/spells/command.tres` (`SpellData.Cast.COMMAND`), `ItemUser.cast`; art `tools/make_command_art.py` |
+| The target | `World.summon_target`, `command_summons`, `commanded_target`; `Enemy._summon_target` and the reticle in `_draw`; `Familiar.nearest_enemy` |
+| Middle mouse quick slot | `CharacterData.QUICK_KEYS` (+ `MIDDLE`), `_give_command_slot`; input `quick_m`; `Hud.QUICK_KEYS_SHOWN`, `quick_key_label`; `EquipmentWindow.quick_rect`, `layout` |
+
 ## Phase 72: tweaks
 
 | Change | Where |

@@ -849,6 +849,39 @@ func request_spell_effect(spell: SpellData, at: Vector2, power: float) -> Node:
 	return null
 
 
+## The Command spell (Phase 73): the enemy your summons go after (null = the nearest, as
+## usual). Ends when it dies.
+var summon_target: Enemy = null
+
+
+## Your summons' commanded target, if it's still alive (else null).
+func commanded_target() -> Enemy:
+	if summon_target != null and (not is_instance_valid(summon_target) or summon_target.is_queued_for_deletion()
+			or summon_target.health <= 0.0):
+		summon_target = null
+	return summon_target
+
+
+## Command: the enemy at (or within 2 tiles of) `at` becomes your summons' target. At
+## nothing, the target is cleared. Returns the new target (or null).
+func command_summons(at: Vector2) -> Enemy:
+	var best: Enemy = null
+	var best_d := 2.0 * TILE
+	for e in enemies():
+		var r := e.hit_rect()
+		# The point as seen from the enemy's side of the world's wrap.
+		var p := Vector2(e.global_position.x + e._wrapped_dx(at.x), at.y)
+		var d := 0.0 if r.grow(2.0).has_point(p) else (r.get_center() - p).length()
+		if d < best_d:
+			best_d = d
+			best = e
+	summon_target = best
+	if best:
+		FloatingText.spawn(_enemies, best.global_position + Vector2(0, -best.data.size.y - 12), "Target!", Color("ff8a6a"))
+		EventBus.sound_requested.emit(&"craft", best.global_position)
+	return best
+
+
 ## The top of the first solid tile at or below `at` (within `max_tiles`), or INF.
 func _ground_under(at: Vector2, max_tiles: int) -> Vector2:
 	var t := world_to_tile(at)

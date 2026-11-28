@@ -60,7 +60,9 @@ const DEV_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"fly
 
 const WHEELS: Array[StringName] = [&"q", &"e"]
 const WHEEL_SIZE := 8
-const QUICK_KEYS: Array[StringName] = [&"z", &"x", &"c"]
+const QUICK_KEYS: Array[StringName] = [&"z", &"x", &"c", &"m"]
+## The middle mouse button's quick slot (Phase 73): Command by default.
+const MIDDLE := &"m"
 const BUFF_SET_SIZE := 6
 
 func _init() -> void:
@@ -244,14 +246,21 @@ static func create(char_name: String) -> CharacterData:
 
 ## Spells everyone knows from the start: the gathering spells (tools are spells; R and
 ## Ctrl + R take them in hand). Empower makes them stronger.
-const STARTING_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"shaping_spell"]
+const STARTING_SPELLS: Array[StringName] = [&"mining_spell", &"chopping_spell", &"shaping_spell", &"command"]
 ## Items a new character starts with (first hotbar slots).
 const STARTING_ITEMS: Array = [[&"copper_dagger", 1]]
+
+
+## Command on the middle mouse button's slot, if it's free.
+func _give_command_slot() -> void:
+	if knows(&"command") and quick_spell(MIDDLE) == &"" and quick_item(MIDDLE) == &"":
+		quick[MIDDLE] = &"command"
 
 
 func give_starting_kit() -> void:
 	for s in STARTING_SPELLS:
 		learn_spell(s)
+	_give_command_slot()
 	for e: Array in STARTING_ITEMS:
 		if ItemData.find(e[0]):
 			inventory.add(e[0], e[1])
@@ -712,6 +721,8 @@ static func load_file(path: String) -> CharacterData:
 		c._migrate_spell_slots(d.get("book_spells", []))
 	for s in STARTING_SPELLS:
 		c.learn_spell(s)  # from before tools were spells: the pickaxes and axes are gone
+	if not d.has("command_slot"):
+		c._give_command_slot()  # from before Phase 73: Command on the middle mouse button
 	var look: Dictionary = d.get("look", {})
 	var cols: Dictionary = look.get("colors", {})
 	for group: String in cols:
@@ -790,6 +801,7 @@ func to_dict() -> Dictionary:
 		"empower": _empower_dict(),
 		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k)),
 		"brews": brews.keys().map(func(k: StringName) -> String: return String(k)),
+		"command_slot": true,
 		"slain": _slain_dict(), "seen_drops": _drops_dict()}
 
 

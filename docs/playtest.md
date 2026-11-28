@@ -358,6 +358,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 73: Command and the middle mouse slot (branch phase-73-command-spell)**
+- [ ] The quick bar has "Mid" (middle mouse) with Command in it; so does the Equipment
+      window (Z X C Mid).
+- [ ] Summon your slime near two enemies; middle click the farther one: "Target!", a red
+      reticle over it, and the slime goes for it. Middle click empty ground: back to the
+      nearest.
+- [ ] Put another spell on Mid: middle click casts it.
+
 **Phase 72: tweaks (branch phase-72-tweaks)**
 - [ ] Ctrl + Shift + R takes the Shaping Spell (Alt + R no longer does).
 - [ ] Trees drop a few more Logs (3 to 5).

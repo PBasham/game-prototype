@@ -91,6 +91,15 @@ More forms as more slimes are added (add them to `summon_enemy_ranks`, raise the
 node's `max_rank`). It shares the summon limit with the Forest Spirit (one, two with
 the Pendant).
 
+**Command** (Phase 73, `data/spells/command.tres`, `SpellData.Cast.COMMAND`): everyone
+knows it and it starts on the **middle mouse** quick slot (`CharacterData.MIDDLE`; old
+characters get it once, if the slot is free). Cast it at an enemy (within 2 tiles of the
+cursor): "Target!", a red reticle over it, and every summon goes after it instead of the
+nearest (`World.command_summons`, `summon_target`, `commanded_target`; the slime while
+it's within `SUMMON_LEASH_TILES` of it, familiars within twice their `summon_tiles`).
+Even a critter, if you point at it. It ends when the enemy dies; cast it at nothing to
+clear it. Free, no cooldown.
+
 Phase 72: no summon (slime or familiar) goes after **critters** (fish, crabs, fireflies)
 unless they've turned on you (`Enemy.summon_should_attack`). In water the slime floats
 as usual, but with an enemy in the water it **dives**: it swims straight at it at

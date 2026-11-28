@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 73, Command and the middle mouse slot
+
+- **Patrick:** a way to direct summons at a specific enemy; a Command spell, with the
+  middle mouse as another quick slot.
+- **Claude:** Command is known from the start and starts on the middle mouse slot; it
+  targets the enemy near the cursor until it dies, nothing clears it; a red reticle shows
+  the target.
+
 ## 2026-11-27: Phase 72, tweaks
 
 - **Patrick:** Shaping Spell on Ctrl + Shift + R; trees drop a little more logs; Summon

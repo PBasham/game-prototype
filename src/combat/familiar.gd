@@ -87,6 +87,9 @@ func _shoot(target: Enemy) -> void:
 
 ## The nearest enemy within range, or null.
 func nearest_enemy() -> Enemy:
+	var told := world.commanded_target()
+	if told and told.hit_rect().get_center().distance_to(global_position) < spell.summon_tiles * 2.0 * World.TILE:
+		return told  # the Command spell's target
 	var best: Enemy = null
 	var best_d := spell.summon_tiles * World.TILE
 	for e in world.enemies():

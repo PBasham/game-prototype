@@ -744,7 +744,8 @@ func _mode_for(item: ItemData, on_back: bool) -> Mode:
 				return Mode.CHARGE
 			SpellData.Cast.PROJECTILE, SpellData.Cast.GUST, SpellData.Cast.BLINK, SpellData.Cast.LIGHT, \
 					SpellData.Cast.BUFF, SpellData.Cast.ZONE, SpellData.Cast.WARD, SpellData.Cast.SUMMON, \
-					SpellData.Cast.CONJURE, SpellData.Cast.CHAIN, SpellData.Cast.RITUAL, SpellData.Cast.SENSE:
+					SpellData.Cast.CONJURE, SpellData.Cast.CHAIN, SpellData.Cast.RITUAL, SpellData.Cast.SENSE, \
+					SpellData.Cast.COMMAND:
 				return Mode.CAST
 			SpellData.Cast.TOGGLE:
 				return Mode.TOGGLE
@@ -1020,6 +1021,8 @@ func cast(spell: SpellData) -> bool:
 			chain(spell, from)  # a miss is still a cast: the bolt flies and fizzles
 		SpellData.Cast.RITUAL:
 			return p.start_ritual(spell)
+		SpellData.Cast.COMMAND:
+			world.command_summons(cursor())  # pointing at nothing clears it: still a cast
 	return true
 
 

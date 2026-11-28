@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/command.png" id="1_w1to8"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_rkb5r"]
+
+[resource]
+script = ExtResource("2_rkb5r")
+cast = 16
+learnable_at_table = false
+projectile_color = Color(0.91, 0.36, 0.27, 1)
+learn_cost = Dictionary[StringName, int]({
+&"copper_bar": 4
+})
+kind = 4
+icon = ExtResource("1_w1to8")
+max_stack = 1
+impact_at = 0.15
+id = &"command"
+display_name = "Command"
+description = "Point at an enemy: your summons go after it until it's gone. Point at nothing: they come back to fighting whatever's nearest."

@@ -1021,7 +1021,7 @@ func slot_at(local: Vector2) -> int:
 
 # --- drawing: quick spell keys -----------------------------------------------------------
 
-const QUICK_KEYS_SHOWN: Array[StringName] = [&"q", &"e", &"z", &"x", &"c"]
+const QUICK_KEYS_SHOWN: Array[StringName] = [&"q", &"e", &"z", &"x", &"c", &"m"]
 ## The strip above the quick slots that holds their key letters.
 const QUICK_LABEL_H := 8
 
@@ -1045,6 +1045,11 @@ func _quick_key_rect(i: int) -> Rect2:
 	return Rect2(Vector2(PAD + i * STEP + (4 if i >= 2 else 0), PAD + QUICK_LABEL_H), Vector2(SLOT, SLOT))
 
 
+## A quick key's label over its slot: Q, E, Z, X, C, and "Mid" for the middle mouse.
+static func quick_key_label(key: StringName) -> String:
+	return "Mid" if key == CharacterData.MIDDLE else String(key).to_upper()
+
+
 ## The quick key under the mouse in that panel (&"" if none).
 func _quick_key_at_mouse() -> StringName:
 	if not _quick.visible:
@@ -1061,13 +1066,13 @@ func _quick_key_tooltip(key: StringName) -> Array:
 	var c := world.character
 	if key in CharacterData.QUICK_KEYS and c.quick_item(key) != &"":
 		var it := ItemData.find(c.quick_item(key))
-		return [it, "\n%s: shortcut (you have %d)" % [String(key).to_upper(), c.inventory.count_of(c.quick_item(key))]]
+		return [it, "\n%s: shortcut (you have %d)" % [Player.quick_label(key), c.inventory.count_of(c.quick_item(key))]]
 	var pick := quick_key_spell(key)
 	var spell := ItemData.find(ItemData.spell_key(pick[1])) as SpellData if pick[1] != &"" else null
 	if spell == null:
-		return [null, "%s: empty (set it up in the Equipment window, P)" % String(key).to_upper()]
+		return [null, "%s: empty (set it up in the Equipment window, P)" % Player.quick_label(key)]
 	var how := "casts right away" if c.quick_casts(pick[0]) else "goes in your hand"
-	return [spell, "\n%s: %s" % [String(key).to_upper(), how]]
+	return [spell, "\n%s: %s" % [Player.quick_label(key), how]]
 
 
 func _draw_quick(g: Control) -> void:
@@ -1092,7 +1097,7 @@ func _draw_quick(g: Control) -> void:
 			if c.quick_casts(pick[0]):
 				_draw_cast_mark(g, r)
 		# The key letter above its slot, not over the icon.
-		var label := String(key).to_upper()
+		var label := quick_key_label(key)
 		var lw := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
 		g.draw_string(font, Vector2(r.position.x + (SLOT - lw) * 0.5, PAD + 6), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 7,
 			UiSkin.TEXT)

@@ -728,6 +728,13 @@ func _draw() -> void:
 		var spin := Time.get_ticks_msec() * 0.004
 		for i in 8:
 			draw_circle(mid + Vector2.from_angle(spin + i * TAU / 8.0) * r, 1.0, Color(0.85, 0.95, 1.0, 0.4 + 0.6 * k))
+	# The Command spell's target: a red reticle over it.
+	if not is_summon() and world and world.summon_target == self:
+		var at := Vector2(0, -data.size.y - 9.0)
+		var red := Color(0.95, 0.38, 0.3, 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.008))
+		draw_arc(at, 3.5, 0.0, TAU, 12, red, 1.0)
+		for d: Vector2 in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT]:
+			draw_line(at + d * 4.5, at + d * 6.5, red, 1.0)
 	# Yours: a small gold cross over it.
 	if is_summon():
 		if summon_spell.summon_marker:
@@ -750,6 +757,11 @@ func _draw() -> void:
 # --- summon behavior --------------------------------------------------------------------
 
 func _summon_target() -> Enemy:
+	# Commanded (the Command spell): that one, while it's within reach of you.
+	var told := world.commanded_target()
+	if told and absf(_wrapped_dx(told.global_position.x)) + absf(told.global_position.y - global_position.y) \
+			< SUMMON_LEASH_TILES * TILE:
+		return told
 	var best: Enemy = null
 	var best_d := summon_spell.summon_tiles * TILE
 	for n in get_tree().get_nodes_in_group(&"enemies"):

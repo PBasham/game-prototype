@@ -637,6 +637,8 @@ static func quick_label(slot: StringName) -> String:
 		return "the buff set"
 	if "_" in text:
 		return "%s %d" % [text.get_slice("_", 0).to_upper(), int(text.get_slice("_", 1)) + 1]
+	if slot == CharacterData.MIDDLE:
+		return "Middle mouse"
 	return text.to_upper()
 
 
