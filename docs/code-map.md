@@ -592,6 +592,13 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 90: biome backdrops, Dark Forest colors
+
+| Change | Where |
+| --- | --- |
+| Backdrops | `Backdrop` (`DARK_LAYERS`, `OCEAN_LAYERS`, `OCEAN_HORIZON`, `UNDERWATER_LAYERS`, `UW_DEEP`, `ocean_target`, `underwater_target`, `sea_y`, `_place_set`, `_follow`); `World._process` sets them; `ForestGenerator.sea_row` |
+| Art | `tools/make_biome_backdrops.py` (`assets/backdrop/df_*`, `ocean_far`, `uw_*`), `tools/make_dark_forest_tint.py` |
+
 ## Phase 89: caves
 
 | Change | Where |

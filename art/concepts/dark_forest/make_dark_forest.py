@@ -21,6 +21,7 @@ def save(im, path):
 
 
 BARK = [(58, 34, 52), (78, 46, 66), (96, 58, 80), (44, 26, 40)]
+# Phase 90: crowns are retinted blue-teal afterward (tools/make_dark_forest_tint.py).
 LEAF = [(18, 34, 30), (24, 46, 38), (32, 60, 48), (44, 78, 60), (12, 24, 22)]
 
 

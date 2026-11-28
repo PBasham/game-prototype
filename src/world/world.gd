@@ -402,6 +402,12 @@ func _process(delta: float) -> void:
 	if backdrop and generator:
 		var t := world_to_tile(center)
 		backdrop.dark_target = clampf(biome_amount(t, &"dark_forest") / maxf(biome_share, 0.01), 0.0, 1.0)
+		# Phase 90: the ocean's own backdrop over its water and beaches, and the
+		# underwater one when the camera is in the sea.
+		var ocean := generator.ocean_at(wrap_tile(t).x) if generator.has_method("ocean_at") else 0.0
+		backdrop.ocean_target = clampf(ocean * 1.6, 0.0, 1.0)
+		backdrop.underwater_target = backdrop.ocean_target
+		backdrop.sea_y = float(generator.sea_row() * TILE) if generator.has_method("sea_row") and generator.sea_row() >= 0 else INF
 	_heal_blocks(delta)
 	DebugOverlay.watch("chunks", "%d loaded, %d generated, %d queued" % [renderer.loaded_count(),
 		data.generated_chunk_count(), renderer.pending_count() + data.pending_generation_count()])

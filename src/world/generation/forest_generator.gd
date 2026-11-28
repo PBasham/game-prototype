@@ -629,6 +629,11 @@ func ponds() -> Array[Vector4]:
 	return _ponds.duplicate()
 
 
+## The sea's surface row (sea level), or -1 with no ocean (Phase 90: the backdrop).
+func sea_row() -> int:
+	return _sea if _ocean_c >= 0 else -1
+
+
 ## True where generated water is salt (the sea and the Deep's flooded caves), not a
 ## pond or lake.
 func salt_at(x: int, y: int) -> bool:

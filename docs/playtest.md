@@ -358,6 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 90: biome backdrops, Dark Forest colors (branch phase-90-biome-looks)**
+- [ ] Walk into the Dark Forest: its own misty backdrop of tall trees fades in (console
+      `tp dark`).
+- [ ] At the ocean: the horizon sits on the sea; dive in: under the surface you see light
+      shafts, and rocks and kelp at the bottom of the screen.
+- [ ] Dark Forest trees are blue-teal, its stone black-grey-blue.
+
 **Phase 89: caves (branch phase-89-caves)** (new world)
 - [ ] More cave entrances; tunnels go on, wind and join; small caves near the top;
       bigger caverns deeper. Tunnels are tall enough to walk through mostly.

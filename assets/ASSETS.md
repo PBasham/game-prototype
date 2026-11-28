@@ -293,6 +293,8 @@ or .ogg); the generator never overwrites without `--force`.
 | items/{icons,held}/salt_water_*.png (six bottles), clay_bucket_salt_water.png, salt.png | Placeholder salt water (the water bottles turned sea green) and Salt (a white heap) (`tools/make_salt_art.py`, Phase 81) |
 | objects/{rain_catcher,clay_rain_catcher}.png, items/{icons,held}/{rain_catcher,clay_rain_catcher}.png | Placeholder Rain Catcher (wood funnel, slime seams, clay jug) and Clay Rain Catcher (basin on a stand) (`tools/make_rain_art.py`, Phase 81). Rain is drawn in code (`Weather._draw`) |
 | terrain/{copper_ore,iron_ore}.png, items/{icons,held}/{copper_ore,iron_ore}.png | Placeholder whole-block ores: the stone picture recolored with metal glints (`tools/make_ore_art.py`, Phase 83) |
+| backdrop/{df_far,df_mid,df_near,ocean_far,uw_rays,uw_far,uw_near}.png | Placeholder biome backdrops, 1280 wide, tiling: Dark Forest (misty ridge, trees in fog, near trunks), ocean horizon, underwater (light shafts, rock spires, kelp) (`tools/make_biome_backdrops.py`, Phase 90). `dark_forest_far/near.png` are no longer used |
+| terrain/dark_forest_stone*.png, trees/darkwood_{0,1,2}.png (+ stone icons) | Retinted (Phase 90): stone black-grey-blue, crowns blue-teal (`tools/make_dark_forest_tint.py`) |
 | sounds/splash.wav | Placeholder splash for filling and pouring (`tools/make_sounds.gd`, Phase 79) |
 | sounds/bomb.wav | Placeholder explosion (`tools/make_sounds.gd`, Phase 52) |
 | items/icons/shaping_spell.png (+ scroll_, page_ icons) | 16x16 Shaping Spell: a small mallet over a slope. Placeholder (`make_item_art.gd --new-spells`, Phase 51) |

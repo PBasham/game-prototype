@@ -251,6 +251,22 @@ behind the world, each scrolling at its own speed (parallax) and repeating sidew
 It darkens as the camera goes underground. Layer speeds and heights are the `LAYERS`
 table at the top of the file. The main menu uses the same backdrop, drifting slowly.
 
+**Biome backdrops** (Phase 90): each biome has its own, faded in as the camera enters it
+(`dark_fade_speed`), the forest's hills fading out (clouds stay):
+
+- **Dark Forest** (`DARK_LAYERS`): a misty blue-grey ridge with a pine line, tall trees in
+  the fog, and huge dark near trunks with moss and a few glowing motes, over a murky
+  veil on the sky (`dark_veil`). Set from the ground's biome (`World.biome_amount`).
+- **Ocean** (`OCEAN_LAYERS`): the horizon and far islands, with the horizon row
+  (`OCEAN_HORIZON`) sitting on the sea's surface on screen. Set from `ocean_at`.
+- **Under the sea** (`UNDERWATER_LAYERS`): below the sea's surface on screen (clipped
+  there), a blue gradient (`underwater_top`, `underwater_low`), light shafts hanging from
+  the surface (fading with depth), and far rock spires and near rocks and kelp rising
+  from the bottom of the screen as you go deeper (`UW_DEEP`). Deep water is dark anyway
+  (the light map), so it shows best near the top.
+
+Placeholders from `tools/make_biome_backdrops.py` (Patrick replaces them).
+
 ## World generation
 
 See [world-generation.md](world-generation.md): every setting, how they work, recipes

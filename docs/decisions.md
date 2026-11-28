@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 90, biome backdrops, Dark Forest colors
+
+- **Patrick:** the Dark Forest and the ocean need their own backgrounds (not the forest's
+  with trees on top, or the forest through open water); Dark Forest trees bluer and its
+  stone a black, grey and blue tint; nice placeholders.
+- **Claude:** three backdrops (Dark Forest, ocean horizon, underwater) cross-fading by
+  biome, the underwater one clipped below the sea's surface on screen; Dark Forest stone
+  (and bricks, walls, icons) retinted onto a black-grey-blue ramp, darkwood crowns
+  blue-teal and trunks a little bluer (`tools/make_dark_forest_tint.py`).
+
 ## 2026-11-28: Phase 89, caves
 
 - **Patrick:** caves are rare, tight and short, and bend upward at the end; Terraria is
