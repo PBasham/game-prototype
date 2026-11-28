@@ -79,6 +79,13 @@ tunables change: Patrick tweaks things by hand from these docs.
   `Game.is_authority()` is true, through the owning system's request API.
 - Exported tunables (`@export`) for anything Patrick may want to tweak while playtesting.
 
+## Native code
+
+- The water and sand step is C++ (`native/src/`, Phase 94); built libraries live in
+  `addons/voxel_native/bin/` and are committed. After changing `native/src/`, rebuild
+  Windows debug and release (mingw) and Linux debug: commands in docs/code-map.md
+  ("Native code"). Keep `VoxelLayer`'s GDScript step working until Patrick says delete it.
+
 ## Verify before committing
 
 ```

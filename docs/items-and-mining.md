@@ -612,7 +612,7 @@ tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are
 | Material | Behavior | Notes |
 | --- | --- | --- |
 | Sand | POWDER | Falls, piles at 45 degrees, sinks through water. One Sand item a cell. |
-| Water | LIQUID | Falls, and slides sideways toward any drop within `water_spread` (32) cells, so it levels out and then settles (a level pool costs nothing). No collision. You swim in it (survival.md). Siphon Liquid carries it. |
+| Water | LIQUID | Falls, and slides sideways toward any drop within `water_spread` (32) cells, so it levels out and then settles (a level pool costs nothing). Air under water rises as a bubble (Phase 94, below). No collision. You swim in it (survival.md). Siphon Liquid carries it. |
 | Sand Bricks | STATIC | Never moves. Only explosions turn a Sand Bricks block into cells. One Sand Bricks item a cell, like sand. |
 
 - **Sand falls:** a sand block (`TileDef.voxel`) with nothing whole under it (a solid
@@ -639,6 +639,18 @@ tiles whose block is air (`VoxelLayer`, src/world/voxel_layer.gd). Materials are
   `fall_cells` 2 a step, `sand_sink_chance` 0.35, `sleep_steps` 30. Whole tiles of falling
   cells shift at once and full tiles boxed in by full tiles or rock are skipped, so a 200 block sand drop costs
   about 2 ms a step.
+- **Bubbles (Phase 94):** water with water above it and an open cell below drops as a
+  whole column (up to `bubble_reach` 64 cells, `fall_cells` a step), so the air from a
+  hole mined under water goes straight to the top: under the nearest ceiling (a
+  breathable pocket, which then spreads flat along the ceiling) or to the surface
+  (the level drops a hair). `bubble_reach` 0 brings back the old trickle.
+- **Fair turns (Phase 94):** a step goes over the active tiles bottom up; when its time
+  (`step_budget_ms` 5) runs out, the next step carries on where it stopped, so with a
+  lot of water moving the far or high water still gets its turn (no frozen water).
+- **Native (Phase 94):** the step runs in C++ (`addons/voxel_native`, about 14 times
+  faster: a 40x30 tile flood steps in about 2 ms instead of 27). Same rules as the
+  GDScript step, which stays behind `use_native` (on) until the native one is confirmed.
+  Building it: docs/code-map.md, "Native code".
 - **Look:** cells are painted into 16x16 tile pictures at the terrain's detail. Grains
   carry a patch of the sand texture (picked by their shade), bricks show the texture
   where they are, water is see-through with a lighter surface. `cell_shade` (0.84)

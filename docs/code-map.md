@@ -60,6 +60,8 @@ one new file: `godot --headless --path . --script res://tools/make_items.gd -- -
 | `art/` | Source art (Aseprite) and the Python scripts that make concept and placeholder art (`art/concepts/<topic>/`) |
 | `tools/` | Generators and the world preview |
 | `tests/unit/` | GUT tests, one file per area |
+| `native/` | C++ source of the native water and sand step (Phase 94; `godot-cpp` is a git submodule). Godot skips it (`.gdignore`) |
+| `addons/voxel_native/` | The built native step: `voxel_native.gdextension` and `bin/` (Windows .dll, Linux .so) |
 | `docs/` | These docs |
 
 ## Items
@@ -598,6 +600,33 @@ saves still load.
 | Drawing | `Hud._draw_inventory` (UiSkin panel and slots), `_draw_pouch`; `SatchelLook` removed |
 | Layout | `Hud.SIDE_W` (right column), `coin_bag_rect` (beside the trash, or after the hotbar), `_catalog_button_rect`, `trash_rect`, `_layout` (pouch under the right end); `BAG_W` removed |
 | Buttons | `Hud.INV_BUTTON_H`, `INV_BUTTON_FONT`; `UiSkin.button(..., font_size)` |
+
+## Phase 94: native water, bubbles, fair turns
+
+| Change | Where |
+| --- | --- |
+| C++ step | `native/src/voxel_step.{h,cpp}` (`VoxelStep`: `configure`, `step`, kind cache, `forget_kind`); `VoxelLayer._native`, `native_on`, `_native_step`, `_native_kind`, `forget_terrain` (also from `World.request_set_shape`) |
+| Bubbles | `VoxelLayer.bubble_reach`, `_bubble`; `VoxelStep::bubble` |
+| Fair turns | `VoxelLayer._pending`, `_pending_at`, `_pass_list`, `reset_pass`; `VoxelStep::build_pass` |
+| Switch | `VoxelLayer.use_native` (on; off runs the GDScript step, kept until Patrick confirms the native one) |
+| Tests | `tests/unit/test_native_water.gd` (both steps) |
+
+### Native code: building
+
+The .dll and .so in `addons/voxel_native/bin/` are committed, so the editor and itch
+exports just work. Rebuild only after changing `native/src/`:
+
+```
+git submodule update --init          # once: godot-cpp
+pip install scons                    # once; Windows from Linux also needs mingw-w64
+cd native
+scons platform=windows target=template_debug api_version=4.7    # editor and debug exports
+scons platform=windows target=template_release api_version=4.7  # release exports
+scons platform=linux target=template_debug api_version=4.7      # Linux (tests here)
+```
+
+(On Linux add `use_mingw=yes` to the Windows lines.) The first build of each target
+compiles godot-cpp (several minutes); after that only our files.
 
 ## Phase 93: inventory buttons
 

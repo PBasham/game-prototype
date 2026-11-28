@@ -358,6 +358,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 94: native water, bubbles, fair turns (branch phase-94-native-water)**
+- [ ] F3 / `--perf` shows "voxel step native": the C++ step is running (if it says just "voxel step", tell Claude).
+- [ ] Mine a block under water: the hole fills right away and the air pops up as one pocket under the ceiling (or the surface), no stripes trickling up.
+- [ ] Clay Bucket into a dry cave and Bombs next to water: water spreads flat, no staircase slopes.
+- [ ] Lots of water moving (several Bombs by a lake): nothing freezes mid-fill.
+- [ ] Ocean and the Deep still smooth; water saves and loads as before.
+- [ ] Compare: set VoxelLayer `use_native` off in the inspector (or tell Claude): same behavior, slower.
+
 **Phase 93: inventory buttons (branch phase-93-inventory-buttons)**
 - [ ] Craft, Equip, Spells, Catalog stack in a narrow column with small gaps; coin bag and trash under them.
 - [ ] Each button still opens its window and lights up while it's open.

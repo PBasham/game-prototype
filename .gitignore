@@ -11,3 +11,10 @@
 Thumbs.db
 *.tmp
 .vscode/
+# Phase 94: native build output (the libraries in addons/voxel_native/bin are kept)
+native/src/*.o
+native/src/*.obj
+native/src/*.os
+native/.sconsign.dblite
+addons/voxel_native/bin/*.exp
+addons/voxel_native/bin/*.lib

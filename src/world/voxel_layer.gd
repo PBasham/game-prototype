@@ -65,6 +65,13 @@ const Z := 3
 ## Time a simulation step may take (ms); what's left waits for the next step.
 @export var step_budget_ms := 5.0
 @export var imports_per_frame := 1
+## Phase 94: air under water rises as a bubble: a water column over an open cell drops as
+## a whole (up to this many cells a step), so the air ends up under the ceiling or at the
+## surface at once instead of trickling up a row at a time. 0 = off (the old trickle).
+@export var bubble_reach := 64
+## Phase 94: the step in C++ (addons/voxel_native) when it's there; off = the GDScript
+## step below (kept until the native one is confirmed).
+@export var use_native := true
 
 var world: World
 ## Index + 1 = a cell's material code.
@@ -77,6 +84,12 @@ var _palette_lum: Array[PackedFloat32Array] = []
 var _images: Array[Image] = []
 ## Tile -> steps without movement.
 var _active: Dictionary[Vector2i, int] = {}
+## Phase 94: one pass over the active tiles can span several steps when the time budget
+## runs out; the next step carries on from `_pending_at` (fair turns: no tile starves).
+var _pending: Array[Vector2i] = []
+var _pending_at := 0
+## The C++ step (VoxelStep), or null.
+var _native: RefCounted
 var _moved: Dictionary[Vector2i, bool] = {}
 var _damage: Dictionary[Vector2i, float] = {}
 var _acc := 0.0
@@ -140,6 +153,9 @@ func setup(w: World) -> void:
 	_collision.tile_set = _cell_tileset()
 	add_child(_collision)
 	world.block_changed.connect(_on_block_changed)
+	if ClassDB.class_exists(&"VoxelStep"):
+		_native = ClassDB.instantiate(&"VoxelStep")
+		_native.call("set_kind_provider", _native_kind)
 
 
 ## A material's cell code (0 = unknown).
@@ -361,6 +377,7 @@ func break_into_cells(tile: Vector2i) -> bool:
 			var px := Vector2i(t.x * TILE + lx * CELL_PX, t.y * TILE + ly * CELL_PX)
 			arr[ly * N + lx] = code | (_shade_at(code - 1, px) << 4)
 	world.data.set_shape(t.x, t.y, world.data.get_shape(t.x, t.y) & 0xF0)
+	forget_terrain(t)
 	world.request_set_block(t, WorldData.AIR, true)
 	tiles[t] = arr
 	_touched(t)
@@ -416,6 +433,7 @@ func _check_block(t: Vector2i) -> void:
 func _on_block_changed(tile: Vector2i, _old: int, _new: int) -> void:
 	var t := world.wrap_tile(tile)
 	_terrain_cache.erase(t)  # a block appeared or went mid-step
+	forget_terrain(t)
 	_wake_around(t)
 
 
@@ -620,7 +638,8 @@ func _physics_process(delta: float) -> void:
 		_acc -= 1.0
 		var t0 := Time.get_ticks_usec()
 		step()
-		PerfStats.add("voxel step (%d active)" % (_active.size() / 500 * 500), Time.get_ticks_usec() - t0)
+		PerfStats.add("voxel step%s (%d active)" % [" native" if native_on() else "", _active.size() / 500 * 500],
+			Time.get_ticks_usec() - t0)
 	if world.player:
 		var at := world.wrap_tile(world.world_to_tile(world.player.global_position))
 		_stream_left -= delta
@@ -676,15 +695,8 @@ func _step_cells(t: Vector2i, flip: bool) -> bool:
 	return moved
 
 
-## One simulation step over the active tiles, bottom up.
-func step() -> void:
-	if _active.is_empty():
-		return
-	_tick += 1
-	_moved.clear()
-	_terrain_cache.clear()
-	_changed.clear()
-	_in_step = true
+## The active tiles near the player, bottom up: one pass of the step.
+func _pass_list() -> Array[Vector2i]:
 	var list: Array[Vector2i] = _active.keys()
 	# Only near the player (Phase 85); far tiles keep their place in _active.
 	if world.player and sim_radius_tiles > 0:
@@ -693,13 +705,87 @@ func step() -> void:
 		list = list.filter(func(t: Vector2i) -> bool:
 			return absi(posmod(t.x - at.x + w / 2, w) - w / 2) <= sim_radius_tiles and absi(t.y - at.y) <= sim_radius_tiles)
 	list.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.y > b.y)
+	return list
+
+
+## True when the C++ step runs (the addon loaded and use_native is on).
+func native_on() -> bool:
+	return _native != null and use_native
+
+
+## A tile's block or shape changed: the C++ step forgets what it knew of it.
+func forget_terrain(t: Vector2i) -> void:
+	if _native:
+		_native.call("forget_kind", world.wrap_tile(t))
+
+
+## For the C++ step: a tile's terrain as 0 open, 1 solid, 2 | shape << 4, 3 platform,
+## plus 8 when it mustn't be remembered (land not generated yet).
+func _native_kind(t: Vector2i) -> int:
+	if world.data.peek_chunk(Vector2i(world.data.wrap_x(t.x) / ChunkData.SIZE, t.y / ChunkData.SIZE)) == null:
+		return 9
+	var k := _terrain_kind(t)
+	if k == 2:
+		return 2 | ((world.data.get_shape(t.x, t.y) & 7) << 4)
+	return k
+
+
+func _native_step() -> void:
+	_native.call("configure", {
+		"width_tiles": world.data.width, "height_tiles": world.data.height, "fall_cells": fall_cells,
+		"water_spread": water_spread, "sand_sink_chance": sand_sink_chance, "settle_steps": settle_steps,
+		"sleep_steps": sleep_steps, "solidify_piles": solidify_piles, "bubble_reach": bubble_reach,
+		"sim_radius_tiles": sim_radius_tiles, "step_budget_ms": step_budget_ms, "behavior": _behavior,
+	})
+	var at := Vector2i(0, -(1 << 30))
+	if world.player:
+		at = world.wrap_tile(world.world_to_tile(world.player.global_position))
+	var out: Dictionary = _native.call("step", tiles, _active, at, _tick)
+	for t: Vector2i in out["changed"]:  # woken in C++; painted and collided here
+		_dirty[_chunk_of(t)] = true
+		_col_dirty[t] = true
+		_paint[t] = true
+		_paint[Vector2i(t.x, t.y + 1)] = true
+	for t: Vector2i in out["emptied"]:
+		_check_block(t)
+	for t: Vector2i in out["settled"]:
+		_try_solidify(t)
+
+
+## Starts the step's pass over (a load, tests).
+func reset_pass() -> void:
+	_pending.clear()
+	_pending_at = 0
+	if _native:
+		_native.call("reset_pass")
+
+
+## One simulation step over the active tiles, bottom up (a pass may take several).
+func step() -> void:
+	if _active.is_empty():
+		return
+	_tick += 1
+	if native_on():
+		_native_step()
+		return
+	_moved.clear()
+	_terrain_cache.clear()
+	_changed.clear()
+	_in_step = true
+	if _pending_at >= _pending.size():
+		_pending = _pass_list()
+		_pending_at = 0
 	var flip := (_tick & 1) == 0
 	var deadline := Time.get_ticks_usec() + int(step_budget_ms * 1000.0)
 	var k := 0
-	for t in list:
+	while _pending_at < _pending.size():
 		k += 1
 		if (k & 63) == 0 and Time.get_ticks_usec() > deadline:
-			break  # the rest are still active: they go next step
+			break  # the rest of the pass goes next step
+		var t := _pending[_pending_at]
+		_pending_at += 1
+		if not _active.has(t):
+			continue
 		if not tiles.has(t):
 			_active.erase(t)
 			_check_block(t)
@@ -871,6 +957,9 @@ func _step_powder(c: Vector2i, byte: int) -> bool:
 
 
 func _step_liquid(c: Vector2i, byte: int) -> bool:
+	if bubble_reach > 0 and _liquid(c + Vector2i.UP) and _free(c + Vector2i.DOWN):
+		_bubble(c)
+		return true
 	if _fall(c, byte) != c:
 		return true
 	var d := 1 if randf() < 0.5 else -1
@@ -887,6 +976,24 @@ func _step_liquid(c: Vector2i, byte: int) -> bool:
 				_move(c, to, byte)
 				return true
 	return false
+
+
+## Under water with open cells below (Phase 94): the column of liquid above drops into
+## them as a whole (up to fall_cells), so the air goes straight to the top of the column.
+func _bubble(c: Vector2i) -> void:
+	var f := 0
+	while f < fall_cells and _free(c + Vector2i(0, f + 1)):
+		f += 1
+	var length := 1
+	while length < bubble_reach and _liquid(c + Vector2i(0, -length)):
+		length += 1
+	for i in length:  # bottom first: each cell drops f
+		var src := c + Vector2i(0, -i)
+		var dst := src + Vector2i(0, f)
+		_set_cell(dst, cell(src))
+		_moved[dst] = true
+	for i in mini(f, length):
+		_set_cell(c + Vector2i(0, -(length - 1) + i), 0)
 
 
 # --- requests ----------------------------------------------------------------------------
@@ -1399,6 +1506,7 @@ func to_dict() -> Dictionary:
 
 
 func from_dict(d: Dictionary) -> void:
+	reset_pass()
 	if d.is_empty():
 		return
 	var names: Array = d.get("materials", [])

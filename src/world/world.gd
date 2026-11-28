@@ -1341,6 +1341,8 @@ func request_set_shape(tile: Vector2i, shape: int) -> bool:
 		return false  # Abyssal Stone keeps its whole shape (no gap for the sea to leak through)
 	if not data.set_shape(tile.x, tile.y, shape):
 		return false
+	if voxels:
+		voxels.forget_terrain(tile)  # the native water step remembers shapes (Phase 94)
 	renderer.refresh_tile(tile)
 	lights.mark_dirty()
 	return true

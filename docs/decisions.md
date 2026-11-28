@@ -2,6 +2,20 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 94, native water, bubbles, fair turns
+
+- **Patrick (Phase 85 review):** mining under water leaves air trickling up in stripes;
+  water after a bomb settles in a staircase and some water stops filling. Keep air
+  pockets (breathing room), lose the trickle. Go native if it makes the voxels better;
+  keep the GDScript step until the native one is confirmed working.
+- **Claude:** the stall and the staircase were one bug: each step started over from the
+  bottom and stopped at its time budget, so upper water never got a turn. Now a pass
+  carries over between steps. Bubbles: a water column over an open cell drops as a
+  whole, so air reaches the ceiling or surface at once. Native: a GDExtension in C++
+  (C# needs NuGet, which this workspace can't reach, so it couldn't be built or tested
+  here); the .dll is committed, so nothing changes for Patrick. A 40x30 tile flood:
+  27 ms a step in GDScript, about 2 ms native.
+
 ## 2026-11-28: Phase 93, inventory buttons
 
 - **Patrick:** Catalog under Spells (maybe an icon later), less space between buttons,
