@@ -34,7 +34,7 @@ const BAD := Color(1.0, 0.35, 0.3, 0.45)
 
 ## Where a click landed.
 enum Area { NONE, INVENTORY, CRAFT_BUTTON, EQUIP_BUTTON, SPELLS_BUTTON, CATALOG_BUTTON, CHEST, CHEST_TAKE,
-	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME, TRASH, EMPOWER_NODE }
+	CHEST_DEPOSIT, RECIPE, CRAFT, CLOSE, TAB, GROUP, SEARCH, CHEST_STACK, CHEST_RENAME, TRASH, EMPOWER_NODE, UPGRADE }
 ## Equipment slots, in columns of 3: armor (head, chest, legs), accessories, magic (book,
 ## conduit).
 const EQUIP_SLOTS: Array[StringName] = CharacterData.ALL_SLOTS
@@ -1603,9 +1603,33 @@ func _upgrade_shown() -> bool:
 	return def != null and def.upgrade_to != &"" and virtual_station == null
 
 
-## List entries: the recipes, plus the upgrade (when the station has one).
+## List entries: the recipes.
 func _entry_count() -> int:
-	return recipes().size() + (1 if _upgrade_shown() else 0)
+	return recipes().size()
+
+
+## The Upgrade button in the title bar, left of "Tier N" (Phase 69).
+func _upgrade_rect() -> Rect2:
+	var def := _station_def()
+	var tier := "Tier %d" % (def.station_tier if def else 1)
+	var tw := ThemeDB.fallback_font.get_string_size(tier, HORIZONTAL_ALIGNMENT_LEFT, -1, 7).x
+	var title_end := 4.0 + CRAFT_SIZE.x - 24.0
+	return Rect2(title_end - tw - 5 - 6 - 44, 5, 44, TITLE_H - 2)
+
+
+## The Upgrade button's tooltip: what it upgrades to and what it needs.
+func upgrade_tooltip() -> String:
+	var def := _station_def()
+	var next := _upgrade_def()
+	if def == null or next == null:
+		return ""
+	var inv := craft_stock()
+	var lines := PackedStringArray()
+	for k: StringName in def.upgrade_cost:
+		var it := ItemData.find(k)
+		var need: int = def.upgrade_cost[k]
+		lines.append("%d %s (you have %d)" % [need, it.display_name if it else String(k), inv.count_of(k)])
+	return "Upgrade to %s\nNeeds: %s\nReplaces this station in place." % [next.display_name, ", ".join(lines)]
 
 
 func _list_rect() -> Rect2:
@@ -1631,9 +1655,6 @@ func _detail_rect() -> Rect2:
 func _craft_button_rects() -> Array[Rect2]:
 	var d := _detail_rect()
 	var out: Array[Rect2] = []
-	if selected_recipe >= recipes().size():
-		out.append(Rect2(d.position.x, d.end.y - 16, d.size.x, 16))  # Upgrade
-		return out
 	var y := d.end.y - 16
 	var x := d.position.x
 	out.append(Rect2(x, y, 14, 16))  # -
@@ -1646,6 +1667,8 @@ func _craft_button_rects() -> Array[Rect2]:
 func _craft_hit(local: Vector2) -> Array:
 	if _close_rect(_craft).has_point(local):
 		return [Area.CLOSE, 0]
+	if _upgrade_shown() and _upgrade_rect().has_point(local):
+		return [Area.UPGRADE, 0]
 	for i in _tabs().size():
 		if _tab_rect(i).has_point(local):
 			return [Area.TAB, i]
@@ -1682,6 +1705,10 @@ func _draw_crafting(g: Control) -> void:
 	var is_station := def != null and def.station != &""
 	UiSkin.title(g, Rect2(4, 4, g.size.x - 24, TITLE_H), def.display_name if is_station else "Crafting by hand",
 		"Tier %d" % def.station_tier if is_station else "")
+	if _upgrade_shown():
+		var ok := _can_upgrade()
+		UiSkin.button(g, _upgrade_rect(), "Upgrade", UiSkin.Btn.HOT if hover[0] == Area.UPGRADE and ok
+			else (UiSkin.Btn.NORMAL if ok else UiSkin.Btn.DISABLED))
 	_close_button(g, hover[0] == Area.CLOSE)
 	var tabs := _tabs()
 	for i in tabs.size():
@@ -1718,12 +1745,6 @@ func _draw_crafting(g: Control) -> void:
 			UiSkin.row_highlight(g, rect)
 		if i == selected_recipe:
 			g.draw_rect(Rect2(rect.position, Vector2(2, rect.size.y)), UiSkin.GOLD)
-		if i >= list.size():
-			var next := _upgrade_def()
-			_draw_icon(g, _item_icon(def.upgrade_to), rect.position + Vector2(3, 1), 1.0 if _can_upgrade() else 0.45)
-			g.draw_string(font, rect.position + Vector2(22, 12), "Upgrade to %s" % (next.display_name if next else "?"),
-				HORIZONTAL_ALIGNMENT_LEFT, LIST_W - 26, 7, UiSkin.GOLD)
-			continue
 		var r := list[i]
 		var times := _times(r)
 		var a := 1.0 if times > 0 else 0.45
@@ -1752,9 +1773,7 @@ func _draw_crafting(g: Control) -> void:
 	var d := _detail_rect()
 	if _entry_count() == 0:
 		return
-	if selected_recipe >= list.size():
-		_draw_upgrade_detail(g, font, d, def, hover)
-	elif list[selected_recipe].empower_spell != &"":
+	if list[selected_recipe].empower_spell != &"":
 		_draw_empower_detail(g, font, d, list[selected_recipe], hover)
 	else:
 		_draw_recipe_detail(g, font, d, list[selected_recipe], hover)
@@ -2008,21 +2027,6 @@ func _upgrade_def() -> ObjectDef:
 	return world.objects.def(i) as ObjectDef if i > 0 else null
 
 
-func _draw_upgrade_detail(g: Control, font: Font, d: Rect2, def: ObjectDef, hover: Array) -> void:
-	var inv := craft_stock()  # inventory + nearby chests
-	var next := _upgrade_def()
-	g.draw_string(font, d.position + Vector2(0, 10), "Upgrade to %s" % (next.display_name if next else "?"),
-		HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 8, UiSkin.TEXT)
-	g.draw_string(font, d.position + Vector2(0, 22), "Replaces this station in place.", HORIZONTAL_ALIGNMENT_LEFT, d.size.x, 6,
-		UiSkin.DIM)
-	var y := d.position.y + 30
-	for k: StringName in def.upgrade_cost:
-		y = _ingredient_row(g, font, d, y, k, "%d / %d" % [inv.count_of(k), def.upgrade_cost[k]], inv.count_of(k) >= def.upgrade_cost[k])
-	var b := _craft_button_rects()
-	var ok := _can_upgrade()
-	UiSkin.button(g, b[0], "Upgrade", UiSkin.Btn.DISABLED if not ok else (UiSkin.Btn.HOT if hover[0] == Area.CRAFT else UiSkin.Btn.NORMAL))
-
-
 # --- clicks ------------------------------------------------------------------------------
 
 func _inventory_input(pane: Pane, event: InputEvent) -> void:
@@ -2216,19 +2220,24 @@ func _crafting_input(pane: Pane, event: InputEvent) -> void:
 				var spots := _empower_layout(recipe_spell(er), _detail_rect())
 				empower_picks[er.empower_spell] = (spots.keys()[h[1]] as EmpowerNode).id
 				_recipe_key = ""
-		Area.CRAFT:
-			if selected_recipe >= recipes().size():
-				upgrade_station()
+		Area.UPGRADE:
+			var next := _upgrade_def()
+			if upgrade_station():
+				EventBus.debug_message.emit("Upgraded to %s" % next.display_name)
+				EventBus.sound_requested.emit(&"craft", Vector2.INF)
+				_recipe_key = ""
 			else:
-				match h[1]:
-					CraftBtn.MINUS, CraftBtn.PLUS:
-						var step := 10 if mb.shift_pressed else 1
-						set_craft_amount(craft_amount + (step if h[1] == CraftBtn.PLUS else -step))
-					CraftBtn.FIELD:
-						_amount_typing = true
-						_amount_fresh = true
-					_:
-						craft_selected(mb.shift_pressed, mb.ctrl_pressed or mb.meta_pressed)
+				EventBus.debug_message.emit("Not enough to upgrade: hover Upgrade to see what it needs")
+		Area.CRAFT:
+			match h[1]:
+				CraftBtn.MINUS, CraftBtn.PLUS:
+					var step := 10 if mb.shift_pressed else 1
+					set_craft_amount(craft_amount + (step if h[1] == CraftBtn.PLUS else -step))
+				CraftBtn.FIELD:
+					_amount_typing = true
+					_amount_fresh = true
+				_:
+					craft_selected(mb.shift_pressed, mb.ctrl_pressed or mb.meta_pressed)
 	_redraw()
 
 
@@ -2846,6 +2855,8 @@ func _update_tooltip(over: Control) -> void:
 					var r: RecipeData = recipes()[h[1]]
 					item = ItemData.find(r.output)
 					extra = "\nDouble click: craft 1"
+			Area.UPGRADE:
+				extra_only = upgrade_tooltip()
 	if over == null and cursor_count == 0 and not world.player.input_blocked:
 		# Hovering a chest in the world: its name.
 		var a := world.object_anchor_visual(world.world_to_tile(world.get_global_mouse_position()))

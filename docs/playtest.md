@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 69: Upgrade in the title bar (branch phase-69-station-upgrade-button)**
+- [ ] A Workbench's window: Upgrade sits in the title bar beside "Tier 1", not in the list.
+- [ ] Hover it: Darkwood Workbench, 20 Darkwood and 3 Iron Bars, with how many you have.
+- [ ] With them, click it: the window says Tier 2 and the button is gone.
+
 **Phase 68: Catalog drop chances and links (branch phase-68-catalog-drops)**
 - [ ] An enemy's page lists each drop with how many and its chance; unseen drops are
       "???" but show their chance.

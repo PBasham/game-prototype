@@ -659,3 +659,25 @@ func test_quit_game_asks_first() -> void:
 	assert_has(labels, "Cancel", "a way back")
 	assert_true(labels.has("Quit") or labels.has("Quit without saving"), "quit without saving")
 	menu.toggle()
+
+
+## Phase 69: a station's Upgrade is a button in the title bar (beside "Tier 1"), not a
+## list entry; hovering it says what it needs.
+func test_upgrade_button_in_the_title_bar() -> void:
+	var a := _floor_spot(4)
+	assert_true(w.request_place_object(a, w.objects.index_of(&"workbench")))
+	var hud := w.hud
+	hud._on_station_opened(w.wrap_tile(a))
+	assert_true(hud._upgrade_shown())
+	assert_eq(hud._entry_count(), hud.recipes().size(), "not in the recipe list")
+	var r := hud._upgrade_rect()
+	assert_lt(r.end.y, Hud.TITLE_H + 6.0, "in the title bar")
+	assert_eq(hud._craft_hit(r.get_center())[0], Hud.Area.UPGRADE)
+	var tip := hud.upgrade_tooltip()
+	assert_true(tip.contains("Darkwood Workbench") and tip.contains("20 Darkwood") and tip.contains("3 Iron Bar"), tip)
+	assert_false(hud.upgrade_station(), "not enough yet")
+	w.character.inventory.add(&"darkwood", 20)
+	w.character.inventory.add(&"iron_bar", 3)
+	assert_true(hud.upgrade_station())
+	assert_eq(hud._station_def().id, &"darkwood_workbench")
+	assert_false(hud._upgrade_shown(), "nothing past it")

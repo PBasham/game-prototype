@@ -2,6 +2,11 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 69, Upgrade in the title bar
+
+- **Patrick:** put the station's Upgrade option at the top next to "Tier 1", and hovering
+  it tells you what it requires.
+
 ## 2026-11-27: Phase 68, Catalog drop chances and links
 
 - **Patrick:** show the drop chance of an enemy's items, and make "Dropped by" link to

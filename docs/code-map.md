@@ -592,6 +592,12 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 69: Upgrade in the title bar
+
+| Change | Where |
+| --- | --- |
+| The button, its tooltip, the click | `Hud._upgrade_rect`, `upgrade_tooltip`, `Area.UPGRADE` (`_craft_hit`, `_draw_crafting`, the craft click handler, `_update_tooltip`); the old list row and `_draw_upgrade_detail` are gone |
+
 ## Phase 68: Catalog drop chances and links
 
 | Change | Where |

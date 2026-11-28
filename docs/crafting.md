@@ -363,9 +363,11 @@ can't mine the floor under furniture.
 - Console `stock <item> [count]` fills the chest you have open (testing storage).
 - Furniture is at most 8x8 tiles (`World.MAX_FURNITURE`). Furniture placed before a
   size change keeps its old filler tiles; mine it and place it again.
-- **Station tiers:** a station with `upgrade_to` shows an **Upgrade** row at the bottom
-  of its list; it costs `upgrade_cost` and replaces the station in place with the next
-  tier. Recipes with a higher `station_tier` only show at that tier. The first one:
+- **Station tiers:** a station with `upgrade_to` shows an **Upgrade** button in its
+  window's title bar, beside "Tier 1" (Phase 69: `Hud._upgrade_rect`). Hover it to see
+  what it upgrades to and what it needs (with how many you have: `upgrade_tooltip`); it's
+  greyed out until you have it all. It costs `upgrade_cost` and replaces the station in
+  place with the next tier. Recipes with a higher `station_tier` only show at that tier. The first one:
   **Workbench -> Darkwood Workbench** (tier 2) for 20 Darkwood + 3 Iron Bars. It makes
   everything a Workbench does, plus **Reinforced Wood** (4 Wood + 1 Iron Bar = 4) and
   **Reinforced Darkwood** (4 Darkwood + 1 Iron Bar = 4): sturdy building blocks (160
