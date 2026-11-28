@@ -663,6 +663,10 @@ func _give(a: PackedStringArray) -> void:
 	if item == null:
 		return
 	var count := clampi(parsed[1], 1, 99999)
+	if Coins.is_coin(item.id):
+		world.player.pick_up(item.id, count)  # coins go in the pouch
+		_print("Gave %d %s (in your coin pouch: %s)." % [count, item.display_name, Coins.text(world.character.coins)])
+		return
 	var left := world.character.inventory.add(_key(item), count)
 	if left > 0:
 		world.request_spawn_drop(_key(item), left, world.player.chest(), Vector2.ZERO, true)

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_se142"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_kfd8q"]
+[ext_resource type="Texture2D" path="res://assets/items/held/copper_coin.png" id="3_0yp1e"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/copper_coin.png" id="4_fuuih"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_6nawg"]
+
+[sub_resource type="Resource" id="Resource_e8e88"]
+script = ExtResource("2_kfd8q")
+id = &"copper_coin"
+texture = ExtResource("3_0yp1e")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_6nawg")
+icon = ExtResource("4_fuuih")
+held = SubResource("Resource_e8e88")
+impact_at = 0.2
+coin_value = 1
+id = &"copper_coin"
+display_name = "Copper Coin"
+description = "Money. 100 make 1 of the next coin up; picked up into your coin pouch."

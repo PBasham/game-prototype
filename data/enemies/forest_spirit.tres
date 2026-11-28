@@ -19,6 +19,12 @@ script = ExtResource("1_x1301")
 item = &"page_call_spirit"
 chance = 0.02
 
+[sub_resource type="Resource" id="Loot_silver_coin"]
+script = ExtResource("1_x1301")
+item = &"silver_coin"
+min_count = 1
+max_count = 1
+
 [resource]
 script = ExtResource("2_5vjx8")
 texture = ExtResource("3_bh05k")
@@ -32,7 +38,7 @@ aggro_tiles = 40.0
 aggro_tiles_vertical = 24.0
 gravity = 0.0
 glow_tiles = 8.0
-loot = Array[ExtResource("1_x1301")]([SubResource("Resource_prlqr"), SubResource("Resource_b8bsc"), SubResource("Resource_page1")])
+loot = Array[ExtResource("1_x1301")]([SubResource("Resource_prlqr"), SubResource("Resource_b8bsc"), SubResource("Resource_page1"), SubResource("Loot_silver_coin")])
 id = &"forest_spirit"
 display_name = "Forest Spirit"
 description = "A glowing wisp of the Dark Forest. Darts about, stops, charges for a second and shoots."

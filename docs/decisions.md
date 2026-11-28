@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 76, coins
+
+- **Patrick:** copper, silver, gold and platinum coins, and a little collapsible coin
+  pouch at the bottom right of the inventory. Took every default in the brief.
+- **Claude (brief):** 100 of one make 1 of the next, automatically; slimes and Forest
+  Spirits drop them; picked up straight into the pouch (no limit); take them out onto
+  the mouse (Shift: all); kept when you die; placeholder art.
+
 ## 2026-11-27: Phase 75, Floating Torch
 
 - **Patrick:** a new early spell, Floating Torch: a little torch that floats around you

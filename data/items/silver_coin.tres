@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_bd1el"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_bthn6"]
+[ext_resource type="Texture2D" path="res://assets/items/held/silver_coin.png" id="3_a78o5"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/silver_coin.png" id="4_go3xp"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_q1xcr"]
+
+[sub_resource type="Resource" id="Resource_rjm8j"]
+script = ExtResource("2_bthn6")
+id = &"silver_coin"
+texture = ExtResource("3_a78o5")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_q1xcr")
+icon = ExtResource("4_go3xp")
+held = SubResource("Resource_rjm8j")
+impact_at = 0.2
+coin_value = 100
+id = &"silver_coin"
+display_name = "Silver Coin"
+description = "Money. 100 make 1 of the next coin up; picked up into your coin pouch."

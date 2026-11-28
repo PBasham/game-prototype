@@ -98,7 +98,7 @@ func _physics_process(delta: float) -> void:
 		gap = center.distance_to(nearest)
 		to_player = body.get_center() - center
 	var magnet := player != null and _pickup_delay <= 0.0 and gap < magnet_tiles * TILE \
-		and player.character and player.character.inventory.room_for(item_id) > 0
+		and player.character and (player.character.inventory.room_for(item_id) > 0 or Coins.is_coin(item_id))
 	if magnet:
 		_magnetized = true
 		velocity = velocity.move_toward(to_player.normalized() * magnet_speed * TILE, magnet_accel * TILE * delta)

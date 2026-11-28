@@ -25,6 +25,12 @@ script = ExtResource("1_j3x2u")
 item = &"magic_essence"
 chance = 0.1
 
+[sub_resource type="Resource" id="Loot_copper_coin"]
+script = ExtResource("1_j3x2u")
+item = &"copper_coin"
+min_count = 15
+max_count = 40
+
 [resource]
 script = ExtResource("2_217tg")
 texture = ExtResource("3_be802")
@@ -39,7 +45,7 @@ hop_tiles = 7.0
 hop_wait_min = 0.6
 hop_wait_max = 1.8
 floats = true
-loot = Array[ExtResource("1_j3x2u")]([SubResource("Resource_lhn1y"), SubResource("Loot_slime_core"), SubResource("Loot_page_summon_slime"), SubResource("Loot_magic_essence")])
+loot = Array[ExtResource("1_j3x2u")]([SubResource("Resource_lhn1y"), SubResource("Loot_slime_core"), SubResource("Loot_page_summon_slime"), SubResource("Loot_magic_essence"), SubResource("Loot_copper_coin")])
 id = &"blue_slime"
 display_name = "Blue Slime"
 description = "A rarer, tougher slime. Hops higher and hits harder."

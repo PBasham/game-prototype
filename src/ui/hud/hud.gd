@@ -159,6 +159,10 @@ var _death_sub: Label
 var _wheel: Wheel
 ## The quick spell keys beside the hotbar: Q and E (their current pick), Z, X, C.
 var _quick: Pane
+## The coin pouch (Phase 76): under the inventory's bottom right, open with it.
+var _pouch: Pane
+const POUCH_HEAD := 14
+const POUCH_ICON := preload("res://assets/ui/coin_pouch.png")
 var _name_label: Label
 ## The held spell's icon, left of its name (a spell in hand).
 var _name_icon: TextureRect
@@ -216,6 +220,7 @@ func _ready() -> void:
 	_craft = _pane(_draw_crafting, _crafting_input)
 	_craft.size = CRAFT_SIZE
 	_chest = _pane(_draw_chest, _chest_input)
+	_pouch = _pane(_draw_pouch, _pouch_input)
 	_equip = EquipmentWindow.new(self)
 	_equip.close_pressed.connect(toggle_equipment)
 	add_child(_equip)
@@ -370,6 +375,8 @@ func _redraw() -> void:
 	_creative.queue_redraw()
 	_catalog.queue_redraw()
 	_bench.queue_redraw()
+	if _pouch:
+		_pouch.queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
@@ -541,7 +548,7 @@ func _process(delta: float) -> void:
 
 ## The window under the mouse, or null.
 func _over_pane() -> Control:
-	for pane: Control in [_bench, _liquid, _catalog, _creative, _spells, _equip, _craft, _chest, _inv]:
+	for pane: Control in [_bench, _liquid, _catalog, _creative, _spells, _equip, _craft, _chest, _pouch, _inv]:
 		if pane.visible and pane.get_global_rect().has_point(pane.get_global_mouse_position()):
 			return pane
 	return null
@@ -792,6 +799,10 @@ func _layout() -> void:
 	_name_icon.position = MARGIN + Vector2(2, _inv.size.y + 3)
 	_quick.size = Vector2(PAD * 2 + QUICK_KEYS_SHOWN.size() * STEP - GAP + 4, PAD * 2 + SLOT + QUICK_LABEL_H)
 	_quick.position = _inv.position + Vector2(_inv.size.x + 4, 0)
+	var folded := world.character.coins_folded if world and world.character else false
+	_pouch.size = Vector2(PAD * 2 + Coins.IDS.size() * STEP - GAP, PAD + POUCH_HEAD + (0 if folded else SLOT + PAD))
+	_pouch.position = _inv.position + Vector2(_inv.size.x - _pouch.size.x, _inv.size.y + 3)
+	_pouch.visible = open
 	var view := _view_size()
 	_status.size = STATUS_SIZE + Vector2(0, STATUS_ROW * (int(_status.get_meta(&"rows", 4)) - 4))
 	_status.position = Vector2(MARGIN.x, view.y - _status.size.y - MARGIN.y)
@@ -983,6 +994,87 @@ func hit(local: Vector2) -> Array:
 func trash_rect() -> Rect2:
 	var last := _cell(_grid_origin(), _inventory().size - 1)
 	return Rect2(Vector2(_equip_origin().x + EQUIP_W - 2 - SLOT, last.position.y), Vector2(SLOT, SLOT))
+
+
+# --- coin pouch (Phase 76) ----------------------------------------------------------------
+
+## The pouch's header (click to fold or unfold it).
+func pouch_head_rect() -> Rect2:
+	return Rect2(Vector2(0, 0), Vector2(_pouch.size.x, PAD + POUCH_HEAD - 2))
+
+
+## Coin slot `i` (Coins.IDS order: copper first).
+func pouch_slot_rect(i: int) -> Rect2:
+	return Rect2(Vector2(PAD + i * STEP, PAD + POUCH_HEAD), Vector2(SLOT, SLOT))
+
+
+func _draw_pouch(g: Control) -> void:
+	var c := world.character
+	var font := ThemeDB.fallback_font
+	UiSkin.panel(g, Rect2(Vector2.ZERO, g.size))
+	var m := g.get_local_mouse_position()
+	var hot := _over_pane() == g
+	g.draw_texture_rect(POUCH_ICON, Rect2(Vector2(PAD - 1, PAD - 2), Vector2(12, 12)), false)
+	var head := "Coins: " + Coins.text(c.coins) if c.coins_folded else "Coins"
+	g.draw_string(font, Vector2(PAD + 14, PAD + 7), head, HORIZONTAL_ALIGNMENT_LEFT, g.size.x - PAD * 2 - 22, 7,
+		UiSkin.TEXT if hot and pouch_head_rect().has_point(m) else UiSkin.GOLD)
+	# The fold arrow, right side.
+	var tip := Vector2(g.size.x - PAD - 3, PAD + 4)
+	var arrow := PackedVector2Array([tip + Vector2(-3, -2), tip + Vector2(3, -2), tip + Vector2(0, 2)]) if not c.coins_folded \
+		else PackedVector2Array([tip + Vector2(-2, -3), tip + Vector2(2, 0), tip + Vector2(-2, 3)])
+	g.draw_colored_polygon(arrow, UiSkin.GOLD)
+	if c.coins_folded:
+		_draw_cursor_stack(g)
+		return
+	var parts := Coins.split(c.coins)
+	for i in Coins.IDS.size():
+		var r := pouch_slot_rect(i)
+		UiSkin.slot(g, r, UiSkin.SlotLook.HOT if hot and r.has_point(m) else UiSkin.SlotLook.NORMAL)
+		var it := ItemData.find(Coins.IDS[i])
+		if it:
+			_draw_item(g, font, r, it, parts[i], 1.0 if parts[i] > 0 else 0.3)
+	_draw_cursor_stack(g)
+
+
+func _pouch_input(pane: Pane, event: InputEvent) -> void:
+	var mb := event as InputEventMouseButton
+	if mb == null or not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
+		return
+	pane.accept_event()
+	var c := world.character
+	if Coins.is_coin(cursor_id) and cursor_count > 0:
+		deposit_cursor_coins()
+	elif pouch_head_rect().has_point(mb.position):
+		c.coins_folded = not c.coins_folded
+		_layout()
+	else:
+		for i in Coins.IDS.size():
+			if pouch_slot_rect(i).has_point(mb.position) and not c.coins_folded:
+				take_coins(i, mb.shift_pressed)
+	_redraw()
+
+
+## Coins on the mouse go into the pouch.
+func deposit_cursor_coins() -> void:
+	world.character.coins += Coins.value_of(cursor_id) * cursor_count
+	_clear_cursor()
+	EventBus.sound_requested.emit(&"ui_click", Vector2.INF)
+
+
+## Takes coins of kind `i` out onto the mouse: one, or with `all` every one of that kind
+## (a stack at most). Only onto an empty mouse or the same coins.
+func take_coins(i: int, all: bool = false) -> int:
+	var c := world.character
+	var id := Coins.IDS[i]
+	if cursor_count > 0 and cursor_id != id:
+		return 0
+	var have := Coins.split(c.coins)[i]
+	var n := mini(have if all else 1, Inventory.max_stack(id) - (cursor_count if cursor_id == id else 0))
+	if n <= 0:
+		return 0
+	c.coins -= Coins.value_of(id) * n
+	give_cursor(id, n)
+	return n
 
 
 ## Puts the stack on the mouse in the trash (the one there before is gone for good), or

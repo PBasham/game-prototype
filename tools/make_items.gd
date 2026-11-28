@@ -510,6 +510,13 @@ func _items() -> Array[ItemData]:
 		tb.spell_power = [1.0, 1.25, 1.5][t - 1]
 		tb.held = _look(tb.id, &"spell_book", Vector2(5, 9))
 		out.append(tb)
+	# Phase 76: coins. 100 of one make 1 of the next; picked up into the coin pouch.
+	for i in Coins.IDS.size():
+		var coin := _small(Coins.IDS[i], ["Copper Coin", "Silver Coin", "Gold Coin", "Platinum Coin"][i],
+			"Money. 100 make 1 of the next coin up; picked up into your coin pouch.")
+		coin.coin_value = Coins.value_of(Coins.IDS[i])
+		coin.max_stack = 999
+		out.append(coin)
 	# Phase 67: the Alchemist's Bench. A wrong mix makes a Murky Mixture.
 	var murky := _small(&"murky_mixture", "Murky Mixture",
 		"A brew gone wrong at the Alchemist's Bench. Good for nothing but throwing away.")
@@ -1140,6 +1147,7 @@ func _enemies() -> Array[EnemyData]:
 	slime.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
 	slime.loot.append(LootDrop.make(&"magic_essence", 1, 1, 0.1))  # Phase 75
 	slime.loot.append(LootDrop.make(&"page_floating_torch", 1, 1, 0.01))
+	slime.loot.append(LootDrop.make(&"copper_coin", 5, 15))  # Phase 76
 	out.append(slime)
 	# The rare one: tougher, hits harder, hops higher, drops more slime.
 	var blue := EnemyData.new()
@@ -1163,6 +1171,7 @@ func _enemies() -> Array[EnemyData]:
 	blue.loot.append(LootDrop.make(&"slime_core", 1, 1, 0.025))
 	blue.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
 	blue.loot.append(LootDrop.make(&"magic_essence", 1, 1, 0.1))  # Phase 75
+	blue.loot.append(LootDrop.make(&"copper_coin", 15, 40))  # Phase 76
 	out.append(blue)
 	# Dark Forest: a glowing ball that darts about, stops, charges and shoots.
 	var spirit := EnemyData.new()
@@ -1186,6 +1195,7 @@ func _enemies() -> Array[EnemyData]:
 	spirit.loot.append(LootDrop.make(&"magic_essence", 1, 2))
 	spirit.loot.append(LootDrop.make(&"spirit_core", 1, 1, 0.05))
 	spirit.loot.append(LootDrop.make(&"page_call_spirit", 1, 1, 0.02))
+	spirit.loot.append(LootDrop.make(&"silver_coin", 1, 1))  # Phase 76
 	out.append(spirit)
 	return out
 

@@ -654,3 +654,23 @@ with Empower Area, its reach with Empower Reach) into the spell's reservoir
 256 (16 tiles). Right click pours it into the empty cells there. Aimed at a Liquid
 Barrel, it draws from or pours into the barrel. A message shows "Water 120 / 256" while
 you siphon. Crafting uses its water for water bottles. `ItemUser.Mode.SIPHON`.
+
+## Coins and the coin pouch (Phase 76)
+
+**Copper**, **Silver**, **Gold** and **Platinum Coins** (`data/items/*_coin.tres`,
+`ItemData.coin_value` 1, 100, 10,000, 1,000,000; `Coins` in `src/items/coins.gd`). 100 of
+one make 1 of the next. Coins you pick up go straight into the **coin pouch**
+(`CharacterData.coins`, a total in copper, saved, kept when you die), never into the
+inventory, and combine by themselves: your 100th Copper is a Silver. Drops magnet to you
+even with a full inventory.
+
+- **The pouch panel** hangs under the open inventory's bottom right (`Hud._pouch`): a
+  slot per coin with how many. Click its header (or the arrow) to fold it to one line
+  ("Coins: 3p 12g 40s 5c"; `coins_folded`, saved per character).
+- **Taking coins out:** click a coin slot to take one onto the mouse (Shift: all of that
+  coin, up to a stack of 999), then drop, throw or store them like any item. Click the
+  pouch with coins on the mouse to put them back.
+- **Where they come from:** Green Slimes 5 to 15 Copper, Blue Slimes 15 to 40, Forest
+  Spirits 1 Silver (their loot). Critters drop none. Nothing to spend them on yet.
+- Dev console: `give copper_coin 250` puts them in the pouch.
+

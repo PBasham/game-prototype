@@ -853,6 +853,9 @@ func is_using() -> bool:
 func pick_up(item_id: StringName, count: int) -> int:
 	if character == null:
 		return count
+	if Coins.is_coin(item_id):
+		character.coins += Coins.value_of(item_id) * count  # into the coin pouch
+		return 0
 	var inv := character.inventory
 	var keep := selected if selected >= 0 and selected < inv.size and inv.is_empty(selected) else -1
 	return inv.add(item_id, count, keep)

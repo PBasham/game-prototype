@@ -358,6 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 76: coins (branch phase-76-coins)**
+- [ ] Kill slimes: Copper Coins pop out and fly to you even with a full inventory. They
+      go in the coin pouch under the inventory (bottom right), not in your slots.
+- [ ] 100 Copper turn into 1 Silver by themselves (`give copper_coin 250` to check).
+- [ ] Click the pouch's header: it folds to one line ("Coins: 2s 50c"); again unfolds.
+- [ ] Click a coin: one on the mouse (Shift: all of them). Click the pouch: back in.
+
 **Phase 75: Floating Torch (branch phase-75-floating-torch)**
 - [ ] Spell Weaving Table, Learn: Floating Torch (10 Torches, 5 Paper, 2 Magic Essence).
 - [ ] Cast it at night: a little torch bobs beside your head and lights the way, 5 min.

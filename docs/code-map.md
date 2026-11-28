@@ -592,6 +592,16 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 76: coins
+
+| Change | Where |
+| --- | --- |
+| Coin values, split and text | `Coins` (`src/items/coins.gd`); `ItemData.coin_value`; `data/items/*_coin.tres` |
+| Picked up into the pouch | `Player.pick_up`, `ItemDrop` (magnets even when full); `CharacterData.coins`, `coins_folded` |
+| The pouch panel | `Hud._pouch`, `_draw_pouch`, `_pouch_input`, `take_coins`, `deposit_cursor_coins`, `pouch_slot_rect` |
+| Drops | coin loot in `data/enemies/{green_slime,blue_slime,forest_spirit}.tres` (and `tools/make_items.gd`) |
+| Art | `tools/make_coin_art.py` (`assets/items/*/..._coin.png`, `assets/ui/coin_pouch.png`) |
+
 ## Phase 75: Floating Torch
 
 | Change | Where |
