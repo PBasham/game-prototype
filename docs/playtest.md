@@ -358,6 +358,18 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 67: the Alchemist's Bench (branch phase-67-alchemists-bench)**
+- [ ] Workbench: Alchemist's Bench (16 Wood, 10 Stone, 4 Glass). Place it, right click it.
+- [ ] Is it easy to understand without reading anything? The mortar, bowl and bottle
+      stand, your ingredients on the right, the card showing what Mix makes.
+- [ ] Drag an ingredient: the pieces that take it light up. Shift drags all of it.
+      Right click an ingredient to add it; right click the table to take one back.
+- [ ] Clay Flask + 2 Red Cap: the card says Healing Potion; Mix makes it.
+- [ ] 2 whole Glowcap: Murky Mixture. Grind them first: Mana. 1 whole Glowcap: Glow.
+- [ ] 2 ground Duskcap + Clay Flask: "Unknown mix", then Poison Coating and "New recipe";
+      it's in Recipes after.
+- [ ] Close the window with things on the table: nothing is lost.
+
 **Phase 66: Water Breathing (branch phase-66-water-breathing)**
 - [ ] Under water you have 20 s of breath; the status panel grows a breath row with the
       seconds left, and it goes away once your breath is full again.

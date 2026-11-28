@@ -413,6 +413,46 @@ corner of the icon (heart: healing, star: mana, drop: coating, skull: thrown poi
 Placeholder art; the flasks are emptied, not returned. A desert biome with sand and
 glass vials is planned as its own phase.
 
+### The Alchemist's Bench (Phase 67)
+
+A second alchemy station for brewing by hand (station `alchemists_bench`, 6x4; workbench:
+16 Wood + 10 Stone + 4 Glass). The Alchemy Table stays: it's the quick list. Right click
+the bench: a tabletop window (`BenchWindow`, `src/ui/hud/bench_window.gd`) with a
+mortar, a mixing bowl and a bottle stand, and your ingredients on the right. Its rules
+are `AlchemyBench` (`src/items/alchemy_bench.gd`).
+
+- **Ingredients:** your bottles (empty or of water) and anything a mix uses, from your
+  inventory, with how many aren't on the table yet. Drag one onto the table (hold Shift:
+  all of it); the pieces that take it light up. Right click one to put it where it fits.
+  Right click something on the table to take one back, or drag it off. Nothing leaves
+  your inventory until Mix, so closing the window loses nothing.
+- **Mortar:** drop an ingredient in, press **Grind**, then drag it into the bowl. Ground
+  things show a gold speck. Adding more makes it whole again.
+- **Mixing bowl:** up to 3 ingredients (each a stack, ground or whole). The brew takes
+  the colors of what's in it.
+- **Bottle:** the stand holds the bottle. Its size picks the recipe's size, as at the
+  table.
+- **The card under the bowl** shows what Mix will make: the potion when it's a recipe you
+  know, "Unknown mix" when it isn't (it may work or go murky), or what's missing.
+- **Mix:** if the bottle and the bowl make an Alchemy Table recipe (any order), you get
+  its potion. On the bench some recipes want an ingredient ground
+  (`RecipeData.bench_ground`; the defaults are `BENCH_GROUND` in `tools/make_items.gd`):
+
+  | Recipe | Ground |
+  | --- | --- |
+  | Mana (every bottle) | Glowcap |
+  | Water Breathing (every bottle) | Kelp |
+  | Poison Coating | Duskcap |
+
+  The Glow Potion takes its Glowcap whole: that's how it differs from Mana. Anything that
+  isn't a recipe uses up the bottle and the bowl and makes a **Murky Mixture**, good for
+  nothing but throwing away.
+- **Discovering:** you know the Potions tab recipes from the start. Mixing anything else
+  that works (the Poison Coating, the Poison Flask) teaches it: "New recipe" and it's in
+  Recipes (`CharacterData.brews`, saved with the character).
+- **Recipes** (bottom right): every recipe you know, on a page over the table.
+- Dev console: `station alchemists_bench` opens it with no bench there.
+
 ## Phase 7 recipes and the bed
 
 Not playtested yet. Hand: 1 Slime + 1 Wood = 5 Torches. Workbench: Wooden Sword (10 wood),

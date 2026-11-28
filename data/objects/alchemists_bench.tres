@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ObjectDef" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/objects/alchemists_bench.png" id="1_i8d64"]
+[ext_resource type="Script" path="res://src/world/object_def.gd" id="2_kijet"]
+
+[resource]
+script = ExtResource("2_kijet")
+frames = ExtResource("1_i8d64")
+style = 2
+height_tiles = 4
+detail = 2
+width_tiles = 6
+needs_floor = true
+station = &"alchemists_bench"
+health = 1.0
+drop_item = &"alchemists_bench"
+id = &"alchemists_bench"
+display_name = "Alchemist's Bench"

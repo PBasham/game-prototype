@@ -449,7 +449,7 @@ with finer edges.
   is 80x64). The world, the hover outline and the placement ghost read it.
 - Detailed so far: Healing Potion, Mana Potion and Clay Flask (32x32, from
   `art/concepts/flasks/make_flasks.py`); the crafting stations (Workbench, Furnace,
-  Copper Anvil, Campfire, Alchemy Table, Spell Weaving Table), Table and Shelf.
+  Copper Anvil, Campfire, Alchemy Table, Alchemist's Bench (crafting.md), Spell Weaving Table), Table and Shelf.
   Station art was made by `art/concepts/stations/detail2x.py`: the old art scaled 2x
   with smoothed edges (Scale2x), 1 art pixel lit tops and shaded bottoms, wood grain
   along each board, grit on metal and stone. Not yet: the character (the paper doll

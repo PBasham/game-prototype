@@ -10,6 +10,7 @@ inputs = Dictionary[StringName, int]({
 &"kelp": 2,
 &"water_glass_bottle": 1
 })
+bench_ground = Array[StringName]([&"kelp"])
 output = &"water_breathing_glass_bottle"
 id = &"water_breathing_glass_bottle"
 display_name = "Water Breathing Glass Bottle"

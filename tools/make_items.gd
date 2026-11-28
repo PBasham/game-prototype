@@ -411,6 +411,7 @@ func _items() -> Array[ItemData]:
 			[&"darkwood_workbench", "Darkwood Workbench", "A tier 2 Workbench (upgrade one with 20 Darkwood and 3 Iron Bars): everything a Workbench makes, plus reinforced wood."],
 			[&"campfire", "Campfire", "A big warm light. Standing near it, health refills faster (Cozy). Right click to cook."],
 			[&"alchemy_table", "Alchemy Table", "A crafting station: potions, weapon coatings and thrown flasks."],
+			[&"alchemists_bench", "Alchemist's Bench", "Brew by hand: grind, mix and bottle. Wrong mixes go murky; new mixes teach you recipes."],
 			[&"table", "Table", "Put things on display on top: hold an item and right click the table top."],
 			[&"shelf", "Shelf", "Hangs on a back wall. Put things on display on it: hold an item and right click the shelf."]]:
 		var furn := _small(f[0], f[1], f[2])
@@ -509,7 +510,18 @@ func _items() -> Array[ItemData]:
 		tb.spell_power = [1.0, 1.25, 1.5][t - 1]
 		tb.held = _look(tb.id, &"spell_book", Vector2(5, 9))
 		out.append(tb)
+	# Phase 67: the Alchemist's Bench. A wrong mix makes a Murky Mixture.
+	var murky := _small(&"murky_mixture", "Murky Mixture",
+		"A brew gone wrong at the Alchemist's Bench. Good for nothing but throwing away.")
+	murky.max_stack = 30
+	murky.storage_tags.assign([&"potion"])
+	murky.bottle_shape = ItemData.BottleShape.CLAY_THIN
+	murky.bottle_contents = Color(0.36, 0.34, 0.2)
+	_detailed(murky, &"")
+	out.append(murky)
 	return out
+
+
 
 
 func _spells() -> Array[ItemData]:
@@ -920,7 +932,8 @@ func _objects() -> Array[ObjectDef]:
 			[&"hanging_net_large", "Large Hanging Net", 6, 4, &""], [&"liquid_barrel", "Liquid Barrel", 2, 3, &""],
 			[&"iron_liquid_barrel", "Iron Liquid Barrel", 2, 3, &""],
 			[&"hanging_net_long", "Long Hanging Net", 2, 5, &""],
-			[&"tall_bookshelf", "Bookshelf", 4, 6, &""]]:
+			[&"tall_bookshelf", "Bookshelf", 4, 6, &""],
+			[&"alchemists_bench", "Alchemist's Bench", 6, 4, &"alchemists_bench"]]:
 		var o := ObjectDef.new()
 		o.id = f[0]
 		o.display_name = f[1]
@@ -1266,6 +1279,7 @@ func _recipes() -> Array[RecipeData]:
 		[&"forest_spirit_pendant", &"scribing", {&"spirit_core": 1, &"magic_essence": 10, &"iron_bar": 10}, &"forest_spirit_pendant", 1, []],
 		[&"wooden_bowl", &"workbench", {&"wood": 2}, &"wooden_bowl", 2, []],
 		[&"alchemy_table", &"workbench", {&"wood": 12, &"copper_bar": 3, &"clay_flask": 2}, &"alchemy_table", 1, []],
+		[&"alchemists_bench", &"workbench", {&"wood": 16, &"stone": 10, &"glass": 4}, &"alchemists_bench", 1, []],
 		[&"table", &"workbench", {&"wood": 8}, &"table", 1, []],
 		[&"chair", &"workbench", {&"wood": 4}, &"chair", 1, []],
 		[&"roasted_berries", &"cooking", {&"berries": 3}, &"roasted_berries", 1, []],
@@ -1356,8 +1370,17 @@ func _recipes() -> Array[RecipeData]:
 		for u: StringName in UNLOCKS.get(r.id, []):
 			r.unlock_items.append(u)
 		r.tab = {&"poison_coating": "Coatings", &"poison_flask": "Flasks"}.get(r.id, "Potions" if r.station == &"alchemy" else "")
+		for g: StringName in BENCH_GROUND:
+			if r.station == &"alchemy" and r.inputs.has(g) and (String(r.id).begins_with(BENCH_GROUND[g]) or r.id == BENCH_GROUND[g]):
+				r.bench_ground.append(g)
 		out.append(r)
 	return out
+
+
+## On the Alchemist's Bench these want their ingredient ground in the mortar first:
+## ingredient -> recipes (an id or an id prefix). Mana grinds its Glowcap, the Glow Potion
+## doesn't; Water Breathing grinds its Kelp; the Poison Coating grinds its Duskcap.
+const BENCH_GROUND := {&"glowcap": "mana_", &"kelp": "water_breathing_", &"duskcap": "poison_coating"}
 
 
 ## Copper bars a spell scroll costs, by tier (1, 2, 3).

@@ -14,6 +14,9 @@ extends GameData
 @export var tab := ""
 ## Item id -> count used up.
 @export var inputs: Dictionary[StringName, int] = {}
+## On the Alchemist's Bench (Phase 67): ingredients that must be ground in the mortar
+## before they go in the bowl (the Alchemy Table ignores this).
+@export var bench_ground: Array[StringName] = []
 ## Item ids that must be somewhere in your inventory but aren't used up (the Hand
 ## Hammer for the Workbench).
 @export var requires: Array[StringName] = []

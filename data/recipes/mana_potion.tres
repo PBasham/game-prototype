@@ -10,6 +10,7 @@ inputs = Dictionary[StringName, int]({
 &"clay_flask": 1,
 &"glowcap": 2
 })
+bench_ground = Array[StringName]([&"glowcap"])
 output = &"mana_potion"
 id = &"mana_potion"
 display_name = "Mana Potion"

@@ -2,6 +2,23 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 67, the Alchemist's Bench
+
+- **Patrick:** a second version of the alchemy table, a tabletop window with a mixing bowl
+  and a vial spot, your ingredients listed on the right to drag and drop, a Mix button and
+  a distiller; Kingdom Come Deliverance alchemy, 2D and simplified. A separate station so
+  he can test it as its own system. Took every default in the brief.
+- **Claude (brief, all taken):** a new station beside the Alchemy Table; mortar (grind),
+  3-spot bowl, vial spot, any order; wrong mixes use everything up and make a Murky
+  Mixture; a distiller making Strong potions (later cut); Potions
+  tab recipes known from the start, others discovered by mixing, a recipe book; the list
+  shows only your inventory.
+- **Patrick (follow-up):** keep it intuitive and easy to use; only the mortar, the mixing
+  bowl and a slot for the bottle, and a nicer looking window. The distiller and the
+  Strong potions are gone; the window was redrawn (plank tabletop, a glazed bowl whose
+  brew takes the ingredients' colors, a bottle stand), pieces light up while dragging,
+  and a card shows what Mix will make (known recipes only, "Unknown mix" otherwise).
+
 ## 2026-11-27: Phase 66, Water Breathing
 
 - **Patrick:** an air bubble meter when you're underwater; Water Breathing potions.

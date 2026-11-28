@@ -131,6 +131,7 @@ var _equip: EquipmentWindow
 var _spells: SpellWindow
 var _creative: CreativeWindow
 var _liquid: LiquidWindow
+var _bench: BenchWindow
 var _catalog: CatalogWindow
 var catalog_open := false
 var _status: Pane
@@ -221,6 +222,9 @@ func _ready() -> void:
 	_liquid = LiquidWindow.new(self)
 	_liquid.close_pressed.connect(close_window)
 	add_child(_liquid)
+	_bench = BenchWindow.new(self)
+	_bench.close_pressed.connect(close_window)
+	add_child(_bench)
 	_creative = CreativeWindow.new(self)
 	_creative.close_pressed.connect(toggle_creative)
 	add_child(_creative)
@@ -358,6 +362,7 @@ func _redraw() -> void:
 	_spells.queue_redraw()
 	_creative.queue_redraw()
 	_catalog.queue_redraw()
+	_bench.queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
@@ -492,6 +497,8 @@ func _process(delta: float) -> void:
 		close_window()  # walked away from the station or chest
 	if _liquid.anchor != World.NO_TILE and (not _in_reach_of(_liquid.anchor) or world.object_at(_liquid.anchor) == null):
 		close_window()
+	if _bench.anchor != World.NO_TILE and not _bench.virtual and (not _in_reach_of(_bench.anchor) or world.object_at(_bench.anchor) == null):
+		close_window()
 	if bag != null and (not is_instance_valid(bag) or bag.is_queued_for_deletion()
 			or bag.global_position.distance_to(p.chest()) > (world.interact_tiles + 4.0) * World.TILE):
 		close_window()  # emptied (it vanished) or walked away
@@ -527,7 +534,7 @@ func _process(delta: float) -> void:
 
 ## The window under the mouse, or null.
 func _over_pane() -> Control:
-	for pane: Control in [_liquid, _catalog, _creative, _spells, _equip, _craft, _chest, _inv]:
+	for pane: Control in [_bench, _liquid, _catalog, _creative, _spells, _equip, _craft, _chest, _inv]:
 		if pane.visible and pane.get_global_rect().has_point(pane.get_global_mouse_position()):
 			return pane
 	return null
@@ -649,6 +656,7 @@ func close_window() -> void:
 	chest = World.NO_TILE
 	bag = null
 	_liquid.anchor = World.NO_TILE
+	_bench.anchor = World.NO_TILE
 	_layout()
 
 
@@ -661,6 +669,12 @@ func _on_liquid_opened(anchor: Vector2i) -> void:
 
 ## Opens a station's crafting window with no station there (dev console `station`).
 func open_virtual_station(def: ObjectDef) -> void:
+	if def.station == &"alchemists_bench":
+		close_window()
+		open = true
+		_bench.open_on(BenchWindow.VIRTUAL)
+		_layout()
+		return
 	chest = World.NO_TILE
 	bag = null
 	station = World.NO_TILE
@@ -670,6 +684,13 @@ func open_virtual_station(def: ObjectDef) -> void:
 
 
 func _on_station_opened(anchor: Vector2i) -> void:
+	var def := world.object_at(anchor)
+	if def and def.station == &"alchemists_bench":
+		close_window()
+		open = true
+		_bench.open_on(anchor)
+		_layout()
+		return
 	chest = World.NO_TILE
 	bag = null
 	station = anchor
@@ -796,6 +817,11 @@ func _layout() -> void:
 		_creative.visible = false
 		if _creative.searching:
 			_creative.set_searching(false)
+	if open and _bench.anchor != World.NO_TILE:
+		_bench.show_at(Vector2(view.x - _bench.size.x - window_right, window_top))
+		_bench.queue_redraw()
+	else:
+		_bench.visible = false
 	if open and _liquid.anchor != World.NO_TILE:
 		_liquid.show_at(Vector2(view.x - _liquid.size.x - window_right, window_top))
 		_liquid.queue_redraw()

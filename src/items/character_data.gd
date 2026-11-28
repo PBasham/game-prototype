@@ -188,6 +188,9 @@ var empower: Dictionary[StringName, Dictionary] = {}
 ## (`RecipeData.unlock_items`, `SpellData.learn_unlock_items`) show up once one of their
 ## key items is in here.
 var seen_items: Dictionary[StringName, bool] = {}
+## Alchemist's Bench recipes found by experimenting (recipe id -> true). The Potions tab
+## recipes are known from the start (AlchemyBench.knows).
+var brews: Dictionary[StringName, bool] = {}
 ## The Catalog: enemies this character has slain (id -> how many), and what each has
 ## been seen to drop (id -> {item id: true}). Saved.
 var slain: Dictionary[StringName, int] = {}
@@ -670,6 +673,8 @@ static func load_file(path: String) -> CharacterData:
 		c.empower[StringName(sid)] = ranks
 	for id: String in d.get("seen_items", []):
 		c.seen_items[StringName(id)] = true
+	for id: String in d.get("brews", []):
+		c.brews[StringName(id)] = true
 	for id: String in d.get("slain", {}):
 		c.slain[StringName(id)] = int(d["slain"][id])
 	for id: String in d.get("seen_drops", {}):
@@ -784,6 +789,7 @@ func to_dict() -> Dictionary:
 		"movement_spell": String(movement_spell), "ghost": ghost, "trash": trash.to_dict(),
 		"empower": _empower_dict(),
 		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k)),
+		"brews": brews.keys().map(func(k: StringName) -> String: return String(k)),
 		"slain": _slain_dict(), "seen_drops": _drops_dict()}
 
 

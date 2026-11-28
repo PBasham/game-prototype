@@ -592,6 +592,17 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 67: the Alchemist's Bench
+
+| Change | Where |
+| --- | --- |
+| The bench's rules (table, Mix, preview, Murky, discovering) | `AlchemyBench` (`src/items/alchemy_bench.gd`) |
+| The window | `BenchWindow` (`src/ui/hud/bench_window.gd`); `Hud._bench`, opened in `_on_station_opened` (station `alchemists_bench`) and `open_virtual_station` |
+| Ground ingredients | `RecipeData.bench_ground`; `BENCH_GROUND` in `tools/make_items.gd` |
+| Discovered recipes | `CharacterData.brews` (saved) |
+| Murky Mixture, the bench | `tools/make_items.gd`; `data/items/murky_mixture.tres`, `data/objects/alchemists_bench.tres` |
+| Art | `tools/make_bench_art.py` (object, icons, the window's `assets/ui/bench_{table,mortar,bowl,stand}.png`) |
+
 ## Phase 66: Water Breathing
 
 | Change | Where |
