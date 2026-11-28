@@ -358,6 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 86: salt water fixes, creatures in water (branch phase-86-water-creatures)**
+- [ ] Crabs on the beach and fish in the sea spawn again. No slimes appear under water.
+- [ ] Siphon Liquid draws salt water from the sea ("Salt water 40 / 256") and pours it
+      out; with salt water in it, it won't take fresh water and won't pour into a barrel.
+- [ ] A slime in a pond sits at the surface with a soft bob and little hops, no jitter.
+- [ ] Fish swim mid-water, not along the bottom, and turn off walls smoothly.
+
 **Phase 85: ocean lag (branch phase-85-ocean-lag)**
 - [ ] Swim across the ocean and down into the Deep (console `tp ocean`, `tp deep`):
       no stutter. F3 shows frame times.

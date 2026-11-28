@@ -1705,8 +1705,8 @@ func water_for_crafting(point: Vector2) -> int:
 	var n := voxels.liquid_in(_water_box_near(point))
 	for a in barrels_near(point, craft_chest_tiles):
 		n += liquids.get(a, 0)
-	if character:
-		n += character.water
+	if character and character.water_kind == &"water":
+		n += character.water  # fresh water only (Phase 86)
 	return n
 
 
@@ -1718,7 +1718,7 @@ func take_water_for_crafting(point: Vector2, count: int) -> int:
 		if taken >= count:
 			break
 		taken -= request_barrel_water(a, -(count - taken))
-	if taken < count and character:
+	if taken < count and character and character.water_kind == &"water":
 		var k := mini(character.water, count - taken)
 		character.water -= k
 		taken += k
@@ -2221,6 +2221,10 @@ func drop_count() -> int:
 ## The biome at a tile: counted from the blocks and walls around it (biome_box), so it
 ## follows the ground you see, dug or built. &"forest" when nothing else wins.
 func biome_at(tile: Vector2i) -> StringName:
+	# The ocean (its beaches and water) by column, from the generator (Phase 86: it was
+	# never returned, so crabs and fish never spawned).
+	if generator and generator.has_method("ocean_at") and generator.ocean_at(wrap_tile(tile).x) > 0.0:
+		return &"ocean"
 	return &"dark_forest" if biome_amount(tile, &"dark_forest") >= biome_share else &"forest"
 
 

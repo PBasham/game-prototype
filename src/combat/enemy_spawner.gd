@@ -157,6 +157,9 @@ func find_spot(data: EnemyData) -> Vector2:
 				if world.is_solid(above) or world.is_indoors(above):
 					room = false
 					break
+			# Land creatures don't start out under water (Phase 86).
+			if room and world.voxels and world.voxels.liquid_at(world.tile_to_world(Vector2i(x, y - 1)) + Vector2(4.0, 4.0)):
+				room = false
 			if room and not world.near_spawn_safe(t) and not _in_view(world.tile_to_world(t) + Vector2(4.0, 0.0), data):
 				var at := world.tile_to_world(world.wrap_tile(t)) + Vector2(4.0, 0.0)
 				if data.flies:
@@ -178,7 +181,7 @@ func _water_spot(x: int, around_y: int, data: EnemyData) -> Vector2:
 	var found: Array[Vector2i] = []
 	for y in range(around_y - 40, around_y + 40):
 		var t := world.wrap_tile(Vector2i(x, y))
-		if world.voxels.count_in(t, &"water") == VoxelLayer.CELLS:
+		if world.voxels.count_in(t, &"water") + world.voxels.count_in(t, &"salt_water") == VoxelLayer.CELLS:
 			found.append(t)
 	if found.is_empty():
 		return Vector2.INF

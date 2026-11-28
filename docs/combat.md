@@ -138,7 +138,10 @@ them).
   tiles/s toward a new heading every `turn_seconds_min`/`max` (1 to 3.5 s), turns back at
   the water's edge and surface, and darts away at `flee_speed` 11 when you come within
   `flee_tiles` 5. Out of water it flops about. Drops a Raw Fish. Spawns only in tiles
-  full of water (`EnemySpawner._water_spot`).
+  full of water, fresh or salt (`EnemySpawner._water_spot`). Phase 86: it keeps between
+  `depth_min_tiles` (1.5) and `depth_max_tiles` (8) under the surface and steers up off
+  the bottom (`Enemy._fish_depth`); bumping a block turns it away once (then 0.5 s
+  before it reacts again), so it doesn't twitch against walls.
 
 ### Firefly (the Dark Forest, Phase 62)
 
@@ -200,8 +203,16 @@ The **Ocean** table (`data/spawns/ocean.tres`, biome `ocean`): Crab 40, Fish 60,
 every 2 s, at most 14. The forest table has Fish too (critters every 2 s, at most 6):
 they only find room in ponds (`EnemySpawner._water_spot`).
 
-**Slimes float** (`EnemyData.floats`, `float_rise` 7): in water they're pushed up while
-more than a third under, splash down hard, bob at the surface and hop off it.
+**Slimes float** (`EnemyData.floats`, `float_rise` 7). Phase 86: deep under, they're
+pushed up; at the surface a spring holds them `float_sink` (0.35) of their height in
+the water with a gentle `float_bob_px` (1) bob, no jitter (`Enemy._water_surface_y`).
+They hop across the water in little hops, `water_hop_tiles` (1.2) high every
+`water_hop_wait_min`/`max` (0.45 to 0.9 s).
+
+**Where things spawn** (Phase 86): the ocean's columns (its beaches and water,
+`ocean_at`) are the "ocean" biome (`World.biome_at`), so its table (crabs, fish) applies
+there; before this it never did. Land creatures never spawn with water over their spot
+(`EnemySpawner.find_spot`).
 
 ### Despawning
 

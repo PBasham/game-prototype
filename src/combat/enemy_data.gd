@@ -60,6 +60,13 @@ enum AI { SLIME, SPIRIT, CRAB, FISH, FIREFLY }
 @export var floats := false
 ## How fast a floating slime rises when pushed under (tiles per second).
 @export var float_rise := 7.0
+## Afloat (Phase 86): how far it sits in the water (share of its height), how much it
+## bobs (px), and its hops off the water (tiles high, seconds between).
+@export_range(0.0, 1.0) var float_sink := 0.35
+@export var float_bob_px := 1.0
+@export var water_hop_tiles := 1.2
+@export var water_hop_wait_min := 0.45
+@export var water_hop_wait_max := 0.9
 ## Critters (crabs, fish): no touch damage until you hit it (a crab then pinches back).
 @export var harmless_until_hit := false
 
@@ -108,6 +115,10 @@ func group() -> CatalogGroup:
 ## Seconds between new headings (random).
 @export var turn_seconds_min := 1.0
 @export var turn_seconds_max := 3.5
+## Phase 86: keeps between these depths (tiles under the surface) when the water's deep
+## enough, and steers off the bottom.
+@export var depth_min_tiles := 1.5
+@export var depth_max_tiles := 8.0
 
 @export_group("Spirit (floats and shoots)")
 ## SPIRIT: darts to a spot near you (dart_speed tiles/s, for dart_seconds), stops,

@@ -623,21 +623,39 @@ func _siphon(delta: float, pour: bool) -> void:
 	var barrel := obj != null and obj.liquid_capacity > 0
 	var box := Rect2i(rect.position, rect.size)
 	var moved := 0
+	var note := ""
+	if c.water <= 0:
+		c.water = 0
+		# Empty: it takes whichever water is there (Phase 86: salt water too).
+		if not barrel and world.voxels.liquid_in(box, &"water") <= 0 and world.voxels.liquid_in(box, &"salt_water") > 0:
+			c.water_kind = &"salt_water"
+		elif not pour:
+			c.water_kind = &"water"
+	var kind := c.water_kind
 	if not pour:
 		n = mini(n, sp.liquid_capacity - c.water)
 		if n > 0:
-			moved = -world.request_barrel_water(at, -n) if barrel else world.voxels.take_liquid(box, n)
+			if barrel:
+				moved = -world.request_barrel_water(at, -n) if kind == &"water" else 0
+			else:
+				moved = world.voxels.take_liquid(box, n, kind)
+				if moved == 0 and world.voxels.liquid_in(box, &"salt_water" if kind == &"water" else &"water") > 0:
+					note = "Can't mix fresh and salt water. "
 			c.water += moved
 	else:
 		n = mini(n, c.water)
 		if n > 0:
-			moved = world.request_barrel_water(at, n) if barrel else world.voxels.pour_liquid(box, n)
+			if barrel and kind != &"water":
+				note = "Only fresh water goes in the %s. " % obj.display_name
+			else:
+				moved = world.request_barrel_water(at, n) if barrel else world.voxels.pour_liquid(box, n, kind)
 			c.water -= moved
 	if _siphon_note <= 0.0:
 		_siphon_note = 0.4
 		var where := (" (%s: %d / %d)" % [obj.display_name, world.barrel_water(at), obj.liquid_capacity]) if barrel else ""
 		var full := not pour and c.water >= sp.liquid_capacity
-		EventBus.debug_message.emit("%sWater %d / %d%s" % ["Full: " if full else "", c.water, sp.liquid_capacity, where])
+		var label := "Salt water" if kind == &"salt_water" and c.water > 0 else "Water"
+		EventBus.debug_message.emit("%s%s%s %d / %d%s" % [note, "Full: " if full else "", label, c.water, sp.liquid_capacity, where])
 
 
 ## An empty bottle back after drinking from it (to the inventory, or dropped).

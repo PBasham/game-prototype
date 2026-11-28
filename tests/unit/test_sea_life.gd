@@ -236,3 +236,64 @@ func test_summons_skip_critters_and_dive_after_enemies() -> void:
 			dived = true
 			break
 	assert_true(dived, "it swims down after it")
+
+
+## Phase 86: a floating slime holds steady at the surface (no jitter) between hops.
+func test_slimes_bob_steadily() -> void:
+	_tank(6)
+	var slime := w.request_spawn_enemy(_enemy(&"green_slime"), w.tile_to_world(floor_tile + Vector2i(8, -1)) + Vector2(4, 0))
+	slime.data = slime.data.duplicate()
+	slime.data.water_hop_wait_min = 100.0  # no hops while we watch
+	slime.data.water_hop_wait_max = 100.0
+	slime.data.hop_wait_min = 100.0
+	slime.data.hop_wait_max = 100.0
+	slime.data.aggro_tiles = 0.0
+	await wait_seconds(3.0)
+	var ys: Array[float] = []
+	for i in 40:
+		await wait_physics_frames(2)
+		ys.append(slime.global_position.y)
+	var lo: float = ys.min()
+	var hi: float = ys.max()
+	assert_lt(hi - lo, 4.0, "bobs gently, not jittering (%.1f px)" % (hi - lo))
+	var surface_y := float((floor_tile.y - 6) * World.TILE)
+	assert_almost_eq(lo, surface_y + slime.data.size.y * slime.data.float_sink, 4.0, "sits in the surface")
+
+
+## Phase 86: fish keep off the bottom of deep water.
+func test_fish_keep_off_the_bottom() -> void:
+	_tank(9)
+	var fish := w.request_spawn_enemy(_enemy(&"fish"), w.tile_to_world(floor_tile + Vector2i(8, -2)) + Vector2(4, 4))
+	w.teleport_player(w.tile_to_world(floor_tile + Vector2i(-30, -12)))
+	var near_bottom := 0
+	var samples := 0
+	for i in 60:
+		await wait_physics_frames(6)
+		samples += 1
+		if fish.global_position.y > (floor_tile.y - 1) * World.TILE:
+			near_bottom += 1
+	assert_lt(near_bottom, samples / 3, "mostly off the bottom (%d of %d near it)" % [near_bottom, samples])
+
+
+## Phase 86: the ocean is a biome again (crabs and fish spawn there); salt water counts
+## as water for fish; land creatures don't spawn under water.
+func test_ocean_biome_and_salt_water_spots() -> void:
+	var g := ForestGenerator.new(TileTypes.new(&"tiles"), TileTypes.new(&"walls"), 2048, 1024, 42,
+		ForestGenerator.default_settings())
+	assert_eq(g.biome_at(roundi(g.ocean().x)), &"ocean")
+	_tank(6)
+	for y in range(1, 7):
+		for x in 16:
+			w.voxels.take_liquid(Rect2i(floor_tile + Vector2i(x, -y), Vector2i.ONE), 16)
+			w.voxels.request_fill(floor_tile + Vector2i(x, -y), &"salt_water")
+	var found := false
+	w.teleport_player(w.tile_to_world(floor_tile + Vector2i(-200, 0)))  # so the spot is off screen
+	await wait_physics_frames(2)
+	for k in 10:
+		if w.spawner._water_spot(floor_tile.x + 8, floor_tile.y - 3, _enemy(&"fish")) != Vector2.INF:
+			found = true
+	assert_true(found, "fish find salt water")
+	var c := w.character
+	c.water = 50
+	c.water_kind = &"salt_water"
+	assert_eq(w.water_for_crafting(w.tile_to_world(floor_tile + Vector2i(100, -40))), 0, "a reservoir of salt water doesn't count for crafting")

@@ -262,15 +262,20 @@ func _physics_process(delta: float) -> void:
 		_update_look()
 		queue_redraw()
 		return
-	_floating = data.floats and world.voxels != null \
-		and world.voxels.liquid_at(global_position + Vector2(0.0, -data.size.y * 0.35))
-	if _floating and velocity.y > -data.float_rise * TILE * 1.5:
-		# Afloat: pushed up while more than a third under, bobbing at the surface.
-		var deep := world.voxels.liquid_at(global_position + Vector2(0.0, -data.size.y * 0.75))
-		var bob := sin(Time.get_ticks_msec() * 0.004 + get_instance_id()) * 1.2 * TILE
-		var target := -data.float_rise * TILE if deep else -data.float_rise * 0.3 * TILE + bob
-		# Splashing down is stopped hard by the water; rising back up is gentler.
-		velocity.y = move_toward(velocity.y, target, (450.0 if velocity.y > target else 40.0) * TILE * delta)
+	# Afloat (Phase 86): held at the surface by a spring, a gentle bob, no jitter. Feet
+	# in water and not on the way up from a hop.
+	_floating = data.floats and world.voxels != null and world.voxels.liquid_at(global_position + Vector2(0.0, -1.0))
+	var surface := _water_surface_y() if _floating else INF
+	if _floating and surface == INF:
+		_floating = false  # deep under: it rises (below)
+	if data.floats and world.voxels != null and not _floating \
+			and world.voxels.liquid_at(global_position + Vector2(0.0, -data.size.y * 0.6)):
+		velocity.y = move_toward(velocity.y, -data.float_rise * TILE, 60.0 * TILE * delta)  # pushed up
+	elif _floating and velocity.y > -data.float_rise * TILE * 0.5:
+		var bob := sin(Time.get_ticks_msec() * 0.003 + get_instance_id()) * data.float_bob_px
+		var target_y := surface + data.size.y * data.float_sink + bob
+		var want := clampf((target_y - global_position.y) * 10.0, -data.float_rise * TILE, 20.0 * TILE)
+		velocity.y = move_toward(velocity.y, want, 400.0 * TILE * delta)
 		velocity.x = move_toward(velocity.x, 0.0, 8.0 * TILE * delta) if _hop_vx == 0.0 else velocity.x
 	elif not wet and not data.flies:
 		velocity.y = minf(velocity.y + data.gravity * TILE * delta, 90.0 * TILE)
@@ -321,7 +326,8 @@ func _slime(delta: float) -> void:
 		_squash = 0.18  # gathering itself before the hop
 	if _wait > 0.0:
 		return
-	_wait = randf_range(data.hop_wait_min, data.hop_wait_max)
+	_wait = randf_range(data.water_hop_wait_min, data.water_hop_wait_max) if _floating \
+		else randf_range(data.hop_wait_min, data.hop_wait_max)
 	_move_from = global_position.x
 	var target := _target_dir()
 	if target != 0.0:
@@ -334,6 +340,8 @@ func _slime(delta: float) -> void:
 		return
 	# A big hop when the last moves got nowhere (a wall in the way), else random.
 	var height := data.hop_tiles if _stuck > 0 else randf_range(data.hop_tiles_min, data.hop_tiles)
+	if _floating and _stuck == 0:
+		height = data.water_hop_tiles * randf_range(0.8, 1.2)  # little hops across the water
 	var launch := sqrt(2.0 * data.gravity * TILE * height * TILE)
 	velocity = Vector2(_dir * data.hop_speed * TILE, -launch)
 	_hop_vx = velocity.x
@@ -416,6 +424,19 @@ var _heading := Vector2.RIGHT
 var _turn_left := 0.0
 
 
+## The top of the water over this column (px), looking up from the feet at most twice
+## its height; INF when it's deeper than that.
+func _water_surface_y() -> float:
+	var x := global_position.x
+	var y := global_position.y - 1.0
+	var limit := global_position.y - data.size.y * 2.0
+	while y > limit:
+		if not world.voxels.liquid_at(Vector2(x, y)):
+			return floorf(y / VoxelLayer.CELL_PX + 1.0) * VoxelLayer.CELL_PX
+		y -= VoxelLayer.CELL_PX
+	return INF
+
+
 func _in_water() -> bool:
 	return world.voxels != null and world.voxels.liquid_at(global_position + Vector2(0.0, -data.size.y * 0.5))
 
@@ -446,19 +467,54 @@ func _fish(delta: float, wet: bool) -> void:
 		_turn_left = 0.6
 	elif _turn_left <= 0.0:
 		_turn_left = randf_range(data.turn_seconds_min, data.turn_seconds_max)
-		_heading = Vector2(signf(randf() - 0.5), randf_range(-0.35, 0.35)).normalized()
+		# Phase 86: drift up or down to stay within its depth band (not on the bottom).
+		var depth := _fish_depth()
+		var dy := randf_range(-0.3, 0.3)
+		if depth.x < data.depth_min_tiles:
+			dy = randf_range(0.15, 0.35)
+		elif depth.x > data.depth_max_tiles or depth.y < 2.0:
+			dy = randf_range(-0.4, -0.2)
+		_heading = Vector2(signf(randf() - 0.5), dy).normalized()
 	# Stay in the water: turn back before leaving it (sideways, or out the top).
 	var ahead := global_position + Vector2(_heading.x * (data.size.x * 0.5 + 3.0), -data.size.y * 0.5 + _heading.y * 4.0)
-	if not world.voxels.liquid_at(ahead):
+	if not world.voxels.liquid_at(ahead) and _bump_wait <= 0.0:
 		if not world.voxels.liquid_at(ahead + Vector2(0.0, 4.0)):
 			_heading.x = -_heading.x
 		_heading.y = absf(_heading.y) * 0.5  # back down from the surface
 		_turn_left = minf(_turn_left, 0.8)
-	velocity = velocity.lerp(_heading * speed * TILE, clampf(delta * 4.0, 0.0, 1.0))
-	if get_slide_collision_count() > 0:
-		_heading.x = -_heading.x
+		_bump_wait = 0.35
+	velocity = velocity.lerp(_heading * speed * TILE, clampf(delta * 3.0, 0.0, 1.0))
+	_bump_wait = maxf(_bump_wait - delta, 0.0)
+	# Bumping a block: turn away from it once, not every frame (Phase 86: no twitching).
+	if get_slide_collision_count() > 0 and _bump_wait <= 0.0:
+		var n := get_slide_collision(0).get_normal()
+		if absf(n.x) > 0.5:
+			_heading.x = signf(n.x) * maxf(absf(_heading.x), 0.5)  # away from the wall
+		if n.y < -0.5:
+			_heading.y = -absf(_heading.y) - 0.25  # up off the bottom
+		elif n.y > 0.5:
+			_heading.y = absf(_heading.y) + 0.25  # down from a ceiling
+		_heading = _heading.normalized()
+		_bump_wait = 0.5
+		_turn_left = maxf(_turn_left, 0.6)
 	if absf(velocity.x) > 1.0:
 		_dir = signf(velocity.x)
+
+
+var _bump_wait := 0.0
+
+
+## (tiles under the water's surface, tiles of water below) for a fish, looking 12 up
+## and 6 down.
+func _fish_depth() -> Vector2:
+	var up := 0.0
+	var probe := global_position + Vector2(0.0, -data.size.y * 0.5)
+	while up < 12.0 and world.voxels.liquid_at(probe - Vector2(0.0, (up + 0.5) * TILE)):
+		up += 0.5
+	var down := 0.0
+	while down < 6.0 and world.voxels.liquid_at(probe + Vector2(0.0, (down + 0.5) * TILE)):
+		down += 0.5
+	return Vector2(up, down)
 
 
 # --- Firefly ---------------------------------------------------------------------

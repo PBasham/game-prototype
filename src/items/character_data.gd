@@ -226,6 +226,8 @@ var hunger := -1.0
 var thirst := -1.0
 ## Water in the Siphon Liquid spell's reservoir, in voxel cells.
 var water := 0
+## What the reservoir holds (Phase 86): &"water" (fresh) or &"salt_water", one at a time.
+var water_kind: StringName = &"water"
 ## Equipment slot -> item id (empty = nothing).
 ## Died in a permadeath world: a ghost, kept but no longer playable.
 var ghost := false
@@ -758,6 +760,7 @@ static func load_file(path: String) -> CharacterData:
 	c.hunger = float(d.get("hunger", -1.0))
 	c.thirst = float(d.get("thirst", -1.0))
 	c.water = int(d.get("water", 0))
+	c.water_kind = StringName(d.get("water_kind", "water"))
 	c.movement_spell = StringName(d.get("movement_spell", ""))
 	return c
 
@@ -821,7 +824,7 @@ func to_dict() -> Dictionary:
 		cols[String(group)] = colors[group].to_html(false)
 	return {"name": name, "inventory": inventory.to_dict(), "equipment": eq,
 		"known_spells": known, "quick": q, "quick_modes": modes, "wheel_last": last,
-		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger, "thirst": thirst, "water": water,
+		"look": {"colors": cols, "hair": String(hairstyle)}, "health": health, "hunger": hunger, "thirst": thirst, "water": water, "water_kind": String(water_kind),
 		"movement_spell": String(movement_spell), "ghost": ghost, "trash": trash.to_dict(),
 		"empower": _empower_dict(),
 		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k)),

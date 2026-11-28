@@ -2,6 +2,16 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 86, salt water fixes, creatures in water
+
+- **Patrick:** Siphon can't take salt water; slimes jitter on water (should hop and bob);
+  slimes spawn underwater; crabs and fish don't spawn in the ocean; fish sink to the
+  bottom and freak out at blocks.
+- **Claude:** the ocean was never returned as a biome (so its table never applied) and
+  fish only looked for fresh water: both fixed; land creatures skip spots under water;
+  Siphon holds one liquid at a time; floating is a spring to the surface with a small bob
+  and little water hops; fish keep a depth band and turn off blocks once.
+
 ## 2026-11-28: Phase 85, ocean lag
 
 - **Patrick:** the ocean is insanely laggy, like it loads every frame.

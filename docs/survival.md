@@ -118,7 +118,8 @@ right-click it with empty hands and you get "Too salty to drink". Bottles and th
 Bucket fill with it like fresh water (`ItemData.fills_salt_into`), into a "Clay Jug of
 Salt Water" and so on (full bottles only, no sips) or a "Clay Bucket of Salt Water". A
 part-drunk bottle of fresh water won't take salt water (no mixing), and Liquid Barrels and
-Rain Catchers take fresh water only. Siphon Liquid and crafting water only use fresh water.
+Rain Catchers take fresh water only. Crafting water only uses fresh water; Siphon Liquid
+carries either, one at a time (Phase 86).
 
 **Boiling:** at the Campfire or the Furnace (Bottles tab), a bottle of Salt Water boils into
 the same bottle of Water plus Salt, a Salt a sip (Clay Jug 4). Salt has no use yet.

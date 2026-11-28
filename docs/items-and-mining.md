@@ -654,6 +654,10 @@ with Empower Area, its reach with Empower Reach) into the spell's reservoir
 256 (16 tiles). Right click pours it into the empty cells there. Aimed at a Liquid
 Barrel, it draws from or pours into the barrel. A message shows "Water 120 / 256" while
 you siphon. Crafting uses its water for water bottles. `ItemUser.Mode.SIPHON`.
+Phase 86: it carries salt water too, one kind at a time (`CharacterData.water_kind`,
+saved): empty, it takes whichever is there; holding one kind it won't take the other
+("Can't mix fresh and salt water"). Salt water doesn't go into barrels and doesn't count
+for crafting.
 
 ## Coins and the coin pouch (Phase 76)
 

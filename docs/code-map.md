@@ -592,6 +592,16 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 86: salt water fixes, creatures in water
+
+| Change | Where |
+| --- | --- |
+| Ocean biome | `World.biome_at` |
+| Spawn spots | `EnemySpawner._water_spot` (salt too), `find_spot` (no land spawns under water) |
+| Siphon salt water | `CharacterData.water_kind`; `ItemUser._siphon`; `World.water_for_crafting`, `take_water_for_crafting` |
+| Floating slimes | `EnemyData.float_sink`, `float_bob_px`, `water_hop_tiles`, `water_hop_wait_min`/`max`; `Enemy._physics_process`, `_water_surface_y`, `_slime` |
+| Fish | `EnemyData.depth_min_tiles`, `depth_max_tiles`; `Enemy._fish`, `_fish_depth`, `_bump_wait` |
+
 ## Phase 85: ocean lag
 
 | Change | Where |
