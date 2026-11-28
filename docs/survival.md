@@ -127,14 +127,19 @@ the same bottle of Water plus Salt, a Salt a sip (Clay Jug 4). Salt has no use y
 **Fresh water:** ponds, lakes (world-generation.md) and rain.
 
 **Rain** (`Weather`, src/world/weather.gd, the World's `Weather` node): a shower can start
-any in-game hour (`rain_chance_per_hour` 0.07, about one or two a day) and lasts
-`rain_minutes_min` to `rain_minutes_max` (1 to 3) real minutes, fading in and out over
+any in-game hour (`rain_chance_per_hour` 0.07, about one or two a day). Phase 87: it
+lasts in-game hours (a real minute each at the default 24-minute day): mostly a short
+shower, `rain_hours_min` to `rain_hours_max` (0.5 to 1.5 hours), and with
+`long_rain_chance` (0.25) a long rain, `long_rain_hours_min` to `long_rain_hours_max` (3
+to 8 hours). It fades in and out over
 `fade_seconds` (5). Rain greys the sky, hides the sun and dims the light
 (`overcast` 0.3, through `WorldClock.overcast`), and falls as streaks (`drops` 500,
-`drop_speed`, `drop_length`, `drop_slant`, `drop_color`) that stop on the first block
+`drop_speed`, `drop_length`, `drop_slant`, `drop_color`; Phase 87: the drops are in
+the world, so you move through them instead of them sliding along with you,
+`Weather._move_drops`) that stop on the first block
 below the top of the screen, so a roof keeps it off and none falls underground. It adds no
 water to the world; it fills Rain Catchers (crafting.md). Saved in world meta "weather".
-Dev console: `rain on [minutes]`, `rain off`, `rain`.
+Dev console: `rain on [hours]`, `rain off`, `rain`.
 
 ## Swimming and breath (Phase 54)
 

@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 87, rain
+
+- **Patrick:** rain from short to in-game hours; drops move along with the player.
+- **Claude:** timing in in-game hours: mostly 0.5 to 1.5 hours, a quarter of the time 3 to
+  8 hours (all tunable); drops are world positions that wrap around the screen.
+
 ## 2026-11-28: Phase 86, salt water fixes, creatures in water
 
 - **Patrick:** Siphon can't take salt water; slimes jitter on water (should hop and bob);

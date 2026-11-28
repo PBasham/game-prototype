@@ -358,6 +358,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 87: rain (branch phase-87-rain)**
+- [ ] `rain on`: walk or fly sideways, you move through the rain (it doesn't slide
+      with you).
+- [ ] `rain` shows in-game hours left; showers are mostly short, sometimes hours long
+      (`rain on 6` for a long one).
+
 **Phase 86: salt water fixes, creatures in water (branch phase-86-water-creatures)**
 - [ ] Crabs on the beach and fish in the sea spawn again. No slimes appear under water.
 - [ ] Siphon Liquid draws salt water from the sea ("Salt water 40 / 256") and pours it

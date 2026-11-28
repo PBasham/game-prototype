@@ -235,13 +235,13 @@ func _register() -> void:
 				return
 		_print("Needs 3 tiles of open grass under the cursor, away from other bushes."))
 	_add("time", "time [hour | day | night | dusk | dawn | speed <x>]", "Show or set the time of day (24 minute days).", _time)
-	_add("rain", "rain [on [minutes] | off]", "Start or stop a shower (or show the weather).", func(a: PackedStringArray) -> void:
+	_add("rain", "rain [on [hours] | off]", "Start or stop a shower (or show the weather).", func(a: PackedStringArray) -> void:
 		var wx := world.weather
 		if a.size() >= 1 and a[0] == "on":
 			wx.start_rain(float(a[1]) if a.size() >= 2 and a[1].is_valid_float() else -1.0)
 		elif a.size() >= 1 and a[0] == "off":
 			wx.stop_rain()
-		_print("Raining, %d s left." % int(wx.rain_left) if wx.raining else "Dry."))
+		_print("Raining, %.1f in-game hours left." % (wx.rain_left / maxf(world.clock.days(1.0 / 24.0), 0.001)) if wx.raining else "Dry."))
 	_add("summon", "summon <enemy> [count]", "Spawn enemies at the cursor (green_slime).", func(a: PackedStringArray) -> void:
 		if a.is_empty() or not Registry.has_def(&"enemies", StringName(a[0])):
 			_print("Enemies: %s" % ", ".join(_enemy_ids()))

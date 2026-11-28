@@ -8,9 +8,14 @@ extends Node2D
 
 ## Chance a shower starts in any in-game hour without one.
 @export_range(0.0, 1.0) var rain_chance_per_hour := 0.07
-## How long a shower lasts, in real minutes, picked between these.
-@export var rain_minutes_min := 1.0
-@export var rain_minutes_max := 3.0
+## How long it rains, in in-game hours (Phase 87; a day is 24 of them, a real minute
+## each by default): most showers are short, now and then (long_rain_chance) it rains
+## for hours.
+@export var rain_hours_min := 0.5
+@export var rain_hours_max := 1.5
+@export_range(0.0, 1.0) var long_rain_chance := 0.25
+@export var long_rain_hours_min := 3.0
+@export var long_rain_hours_max := 8.0
 ## Seconds rain takes to fade in or out.
 @export var fade_seconds := 5.0
 ## How much darker the sky light gets in full rain (0 = none, 1 = black).
@@ -25,11 +30,12 @@ extends Node2D
 @export var catch_interval := 1.0
 
 var raining := false
-var rain_left := 0.0  ## seconds of this shower left
+var rain_left := 0.0  ## seconds of this shower left (real seconds at clock speed 1)
 var intensity := 0.0  ## 0 dry, 1 full rain (fades)
 
 var world: World
-var _drops: PackedVector2Array = PackedVector2Array()
+var _drops: PackedVector2Array = PackedVector2Array()  ## world positions (Phase 87)
+var _drops_view := Rect2()  ## the area they were spread over
 var _catch_t := 0.0
 var _catch_carry: Dictionary[Vector2i, float] = {}  ## fractions of a cell per catcher
 var _column_floor: Dictionary[int, float] = {}  ## rain's bottom per tile column (px), refreshed
@@ -38,8 +44,6 @@ var _floor_t := 0.0
 
 func _ready() -> void:
 	z_index = 50
-	for i in drops:
-		_drops.append(Vector2(randf(), randf()))
 
 
 func _process(delta: float) -> void:
@@ -47,7 +51,7 @@ func _process(delta: float) -> void:
 		return
 	var game_delta := delta * world.clock.speed
 	if raining:
-		rain_left -= delta
+		rain_left -= game_delta
 		if rain_left <= 0.0:
 			raining = false
 	elif randf() < rain_chance_per_hour * game_delta / _seconds_per_hour():
@@ -64,10 +68,7 @@ func _process(delta: float) -> void:
 		if _floor_t <= 0.0:
 			_floor_t = 0.25
 			_refresh_floors()
-		for i in _drops.size():
-			_drops[i].y += delta * drop_speed / 600.0
-			if _drops[i].y > 1.0:
-				_drops[i] = Vector2(randf(), _drops[i].y - 1.0)
+		_move_drops(delta)
 		queue_redraw()
 
 
@@ -75,12 +76,14 @@ func _seconds_per_hour() -> float:
 	return maxf(world.clock.days(1.0 / 24.0), 0.001)
 
 
-## Starts a shower now (the dev console's `rain on` too).
-func start_rain(minutes: float = -1.0) -> void:
+## Starts rain now for `hours` in-game hours (the dev console's `rain on` too); without
+## hours, a short shower or now and then a long rain.
+func start_rain(hours: float = -1.0) -> void:
 	raining = true
-	if minutes <= 0.0:
-		minutes = randf_range(rain_minutes_min, rain_minutes_max)
-	rain_left = minutes * 60.0
+	if hours <= 0.0:
+		hours = randf_range(long_rain_hours_min, long_rain_hours_max) if randf() < long_rain_chance \
+			else randf_range(rain_hours_min, rain_hours_max)
+	rain_left = hours * _seconds_per_hour()
 
 
 func stop_rain() -> void:
@@ -143,6 +146,31 @@ func _refresh_floors() -> void:
 		_column_floor[x] = stop
 
 
+## Drops live in the world: they fall (slanting) and you move through them. One that
+## leaves the area around the screen comes back in on the far side, so the rain stays as
+## thick wherever you go.
+func _move_drops(delta: float) -> void:
+	var view := _view_rect().grow(24.0)
+	if _drops.size() != drops or not _drops_view.grow(view.size.x).intersects(view):
+		_drops.clear()
+		for i in drops:
+			_drops.append(view.position + Vector2(randf() * view.size.x, randf() * view.size.y))
+	_drops_view = view
+	var fall := Vector2(drop_slant, 1.0) * drop_speed * delta
+	for i in _drops.size():
+		var d := _drops[i] + fall
+		if d.y > view.end.y:
+			d.y -= view.size.y
+			d.x = view.position.x + randf() * view.size.x
+		elif d.y < view.position.y:
+			d.y += view.size.y
+		if d.x > view.end.x:
+			d.x -= view.size.x
+		elif d.x < view.position.x:
+			d.x += view.size.x
+		_drops[i] = d
+
+
 func _view_rect() -> Rect2:
 	var vp := get_viewport()
 	var cam := vp.get_camera_2d()
@@ -161,8 +189,7 @@ func _draw() -> void:
 	var col := drop_color
 	var step := Vector2(drop_slant, 1.0).normalized() * drop_length
 	for i in count:
-		var d := _drops[i]
-		var p := view.position + Vector2(d.x * (view.size.x + 40.0) - 20.0, d.y * view.size.y)
+		var p := _drops[i]
 		var floor_y: float = _column_floor.get(floori(p.x / World.TILE), view.end.y + 8.0)
 		if p.y + step.y > floor_y:
 			continue

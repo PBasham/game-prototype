@@ -592,6 +592,13 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 87: rain
+
+| Change | Where |
+| --- | --- |
+| Duration | `Weather.rain_hours_min`/`max`, `long_rain_chance`, `long_rain_hours_min`/`max`, `start_rain` (hours), `rain_left` counts game time |
+| Drops in the world | `Weather._drops`, `_move_drops`, `_draw` |
+
 ## Phase 86: salt water fixes, creatures in water
 
 | Change | Where |

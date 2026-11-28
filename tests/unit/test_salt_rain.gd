@@ -142,3 +142,34 @@ func test_rain_dims_the_sky() -> void:
 	w.clock.overcast = 0.3
 	assert_lt(w.clock.sun_light().get_luminance(), light.get_luminance())
 	w.clock.overcast = 0.0
+
+
+## Phase 87: rain lasts in-game hours, short showers or now and then hours of it.
+func test_rain_lasts_in_game_hours() -> void:
+	var wx := w.weather
+	var hour := w.clock.days(1.0 / 24.0)
+	wx.long_rain_chance = 1.0
+	wx.start_rain()
+	assert_between(wx.rain_left, wx.long_rain_hours_min * hour, wx.long_rain_hours_max * hour)
+	wx.long_rain_chance = 0.0
+	wx.start_rain()
+	assert_between(wx.rain_left, wx.rain_hours_min * hour, wx.rain_hours_max * hour)
+	wx.start_rain(2.0)
+	assert_almost_eq(wx.rain_left, 2.0 * hour, 0.01)
+	wx.stop_rain()
+
+
+## Phase 87: drops stay put in the world (they don't slide along with you).
+func test_rain_drops_are_in_the_world() -> void:
+	var wx := w.weather
+	wx.start_rain(1.0)
+	wx.intensity = 1.0
+	wx._move_drops(0.0)
+	var before := wx._drops.duplicate()
+	wx._move_drops(0.0)
+	assert_eq(wx._drops, before, "no time passed: nothing moved")
+	wx._move_drops(0.1)
+	var d := wx._drops[0] - before[0]
+	if d.y > 0.0:  # (not wrapped back to the top)
+		assert_almost_eq(d.x, wx.drop_slant * wx.drop_speed * 0.1, 0.5, "only the fall and slant move it")
+	wx.stop_rain()
