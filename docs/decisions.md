@@ -2,6 +2,15 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 91, nicer UI
+
+- **Patrick:** option (b), dark arcane, more detailed: the UI looked like an old retro
+  game; make it sexy (he replaces the art later).
+- **Claude:** new nine-slice art at 3 art pixels per UI pixel (crisp, more detail): navy
+  gradient panels with a beveled gold frame, blue inner glow and gem corners; recessed
+  slots with blue, gold or violet glows; glassy navy buttons with gold trim; light text.
+  The inventory's blue satchel stays. The old 1x art is behind `--old`.
+
 ## 2026-11-28: Phase 90, biome backdrops, Dark Forest colors
 
 - **Patrick:** the Dark Forest and the ocean need their own backgrounds (not the forest's

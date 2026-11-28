@@ -1,6 +1,6 @@
 extends SceneTree
-## Writes the placeholder UI art (Scholar theme: leather, wood, brass and parchment) to
-## assets/ui/. UiSkin (src/ui/ui_skin.gd) draws every panel, slot and button from these
+## Writes the status icons to assets/ui/ (and, with --old, the old 1x Scholar-theme
+## panels and buttons: Phase 91 replaced them with tools/make_ui_art_hd.py). UiSkin (src/ui/ui_skin.gd) draws every panel, slot and button from these
 ## as nine-slice images, so real art can replace them file by file (keep the sizes, or
 ## change the margins in UiSkin).
 ##
@@ -21,18 +21,22 @@ const PARCHMENT_DARK := Color("b49a6a")
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
-	_save(_panel(), "panel")
-	_save(_title(), "title")
-	_save(_slot(LEATHER.darkened(0.3), false), "slot")
-	_save(_slot(LEATHER_LIGHT.darkened(0.05), false), "slot_hot")
-	_save(_slot(LEATHER.darkened(0.3), true), "slot_selected")
-	_save(_slot(Color("1a1a2a"), false), "slot_magic")
-	_save(_button(WOOD, WOOD_LIGHT, WOOD_DARK), "button")
-	_save(_button(WOOD_LIGHT, WOOD_LIGHT.lightened(0.2), WOOD), "button_hot")
-	_save(_button(WOOD_DARK, WOOD, WOOD_DARK.darkened(0.3)), "button_pressed")
-	_save(_button(Color("4a3e34"), Color("5a4e44"), Color("3a3028")), "button_disabled")
-	_save(_row(LEATHER_LIGHT), "row_hot")
-	_save(_field(), "field")
+	# Phase 91: the panels, slots, buttons, field and row art come from
+	# tools/make_ui_art_hd.py now (3x, dark arcane); --old writes these 1x ones again
+	# (then set UiSkin.DETAIL to 1 and its MARGINS back).
+	if "--old" in OS.get_cmdline_user_args():
+		_save(_panel(), "panel")
+		_save(_title(), "title")
+		_save(_slot(LEATHER.darkened(0.3), false), "slot")
+		_save(_slot(LEATHER_LIGHT.darkened(0.05), false), "slot_hot")
+		_save(_slot(LEATHER.darkened(0.3), true), "slot_selected")
+		_save(_slot(Color("1a1a2a"), false), "slot_magic")
+		_save(_button(WOOD, WOOD_LIGHT, WOOD_DARK), "button")
+		_save(_button(WOOD_LIGHT, WOOD_LIGHT.lightened(0.2), WOOD), "button_hot")
+		_save(_button(WOOD_DARK, WOOD, WOOD_DARK.darkened(0.3)), "button_pressed")
+		_save(_button(Color("4a3e34"), Color("5a4e44"), Color("3a3028")), "button_disabled")
+		_save(_row(LEATHER_LIGHT), "row_hot")
+		_save(_field(), "field")
 	_save(_icon(HEART, {"r": Color("d83a3a"), "l": Color("ff8a7a"), "d": Color("8a1a1a")}), "icon_health")
 	_save(_icon(DROP, {"r": Color("3a7ae0"), "l": Color("9ac8ff"), "d": Color("1a3a8a")}), "icon_mana")
 	_save(_icon(FOOD, {"r": Color("c8803a"), "l": Color("f0b070"), "d": Color("7a4a1a"), "b": Color("e8e0d0")}), "icon_hunger")

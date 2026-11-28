@@ -1,45 +1,49 @@
 class_name UiSkin
 extends RefCounted
-## The look of every window, slot and button (Scholar theme: leather, wood, brass and
-## parchment). Placeholder art from tools/make_ui_art.gd in assets/ui/; replace any file
-## with real art of the same size (or change its margins below).
+## The look of every window, slot and button. Phase 91: "dark arcane", deep navy panels
+## with gold trim, blue glows and gem corners, at DETAIL art pixels per UI pixel
+## (placeholder art from tools/make_ui_art_hd.py in assets/ui/; the old 1x art was
+## tools/make_ui_art.gd). Replace any file with real art of the same size (or change its
+## margins below, in art pixels).
 ##
 ## Two ways to use it: the HUD draws with panel() / slot() / button() / title() on a
 ## CanvasItem; menus built from Controls use theme().
 
 const DIR := "res://assets/ui/"
-const TEXT := Color("f2ead8")
-const DIM := Color("b0a48c")
-## Text on parchment (titles).
-const INK := Color("3a2618")
-const GOLD := Color("e8c86a")
+const TEXT := Color("eef2fa")
+const DIM := Color("93a0bd")
+## Text on title strips.
+const INK := Color("f2dc9a")
+## Dark text on parchment (the Alchemist's Bench recipe book).
+const PARCHMENT_INK := Color("3a2618")
+const GOLD := Color("f0cf6c")
 const BAD := Color("ff8a7a")
 const GOOD := Color("9ad48a")
+## Art pixels per UI pixel (the art is drawn at this scale for detail).
+const DETAIL := 3
 
-## file -> nine-slice margin (px from each edge).
+## file -> nine-slice margin (art px from each edge).
 const MARGINS := {
-	"panel": 8, "title": 6, "slot": 4, "slot_hot": 4, "slot_selected": 4, "slot_magic": 4,
-	"button": 5, "button_hot": 5, "button_pressed": 5, "button_disabled": 5,
-	"row_hot": 3, "field": 4,
+	"panel": 24, "title": 18, "slot": 12, "slot_hot": 12, "slot_selected": 12, "slot_magic": 12,
+	"button": 15, "button_hot": 15, "button_pressed": 15, "button_disabled": 15,
+	"row_hot": 9, "field": 12,
 }
 
-static var _boxes: Dictionary[String, StyleBoxTexture] = {}
+static var _boxes: Dictionary[String, StyleBox] = {}
 static var _theme: Theme
 
 
 ## A nine-slice style box for an assets/ui file ("panel", "slot", ...).
-static func box(file_name: String, content_margin: float = -1.0) -> StyleBoxTexture:
+static func box(file_name: String, content_margin: float = -1.0) -> StyleBox:
 	var key := "%s:%s" % [file_name, content_margin]
 	if _boxes.has(key):
 		return _boxes[key]
-	var sb := StyleBoxTexture.new()
+	var sb := UiNineSlice.new()
 	sb.texture = load(DIR + file_name + ".png") as Texture2D
-	var m: int = MARGINS.get(file_name, 4)
-	sb.texture_margin_left = m
-	sb.texture_margin_top = m
-	sb.texture_margin_right = m
-	sb.texture_margin_bottom = m
-	var cm := float(m) if content_margin < 0.0 else content_margin
+	var m: int = MARGINS.get(file_name, 12)
+	sb.margin = m
+	sb.detail = DETAIL
+	var cm := float(m) / DETAIL if content_margin < 0.0 else content_margin
 	sb.content_margin_left = cm
 	sb.content_margin_top = cm
 	sb.content_margin_right = cm

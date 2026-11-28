@@ -307,13 +307,13 @@ func _draw_book(font: Font) -> void:
 	var page := TABLE.grow(-6)
 	draw_rect(page, Color("eadfbf"))
 	draw_rect(page.grow(-2), Color("8a5c34"), false, 1.0)
-	draw_string(font, page.position + Vector2(8, 13), "Recipes you know", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, UiSkin.INK)
+	draw_string(font, page.position + Vector2(8, 13), "Recipes you know", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, UiSkin.PARCHMENT_INK)
 	var lines := book_lines()
 	var per := int((page.size.y - 24) / 10.0)
 	_book_scroll = clampi(_book_scroll, 0, maxi(lines.size() - per, 0))
 	for i in range(_book_scroll, mini(lines.size(), _book_scroll + per)):
 		draw_string(font, page.position + Vector2(8, 25 + (i - _book_scroll) * 10), lines[i], HORIZONTAL_ALIGNMENT_LEFT,
-			page.size.x - 16, 6, UiSkin.INK)
+			page.size.x - 16, 6, UiSkin.PARCHMENT_INK)
 
 
 ## One line per known recipe: "Mana Potion: Clay Flask + 2 ground Glowcap".

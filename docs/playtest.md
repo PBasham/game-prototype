@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 91: nicer UI (branch phase-91-ui)**
+- [ ] Windows, slots and buttons are the new navy and gold look, crisp, in game and in
+      the menus. Hover and selected slots glow.
+- [ ] The Alchemist's Bench recipe book is still readable (dark text on parchment).
+
 **Phase 90: biome backdrops, Dark Forest colors (branch phase-90-biome-looks)**
 - [ ] Walk into the Dark Forest: its own misty backdrop of tall trees fades in (console
       `tp dark`).

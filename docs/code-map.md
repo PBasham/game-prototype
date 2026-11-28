@@ -592,6 +592,13 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 91: nicer UI
+
+| Change | Where |
+| --- | --- |
+| 3x nine-slice | `UiNineSlice` (`src/ui/ui_nine_slice.gd`); `UiSkin.DETAIL`, `MARGINS`, `box`, colors |
+| Art | `tools/make_ui_art_hd.py` (`assets/ui/{panel,title,slot*,button*,field,row_hot}.png`); `tools/make_ui_art.gd` (icons; `--old`) |
+
 ## Phase 90: biome backdrops, Dark Forest colors
 
 | Change | Where |

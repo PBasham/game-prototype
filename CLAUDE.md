@@ -60,7 +60,7 @@ tunables change: Patrick tweaks things by hand from these docs.
 - Sounds: placeholders from `tools/make_sounds.gd` (`assets/sounds/<id>.wav`, kept unless
   `--force`). Play one with `EventBus.sound_requested.emit(id, position)`.
 - UI look: `UiSkin` (src/ui/ui_skin.gd) with nine-slice art in `assets/ui/` from
-  `tools/make_ui_art.gd`. Draw every new window, slot and button with it.
+  `tools/make_ui_art_hd.py` (3x detail, dark arcane; Phase 91). Draw every new window, slot and button with it.
 - Screenshots of menus: `-- --menu=characters` (or `new_character`, `worlds`, `new_world`); add
   `--overlay=off` to hide the F3 overlay.
 - Scripted runs can aim with `--aim=DX:DY` (offset from the chest) for mining shots.

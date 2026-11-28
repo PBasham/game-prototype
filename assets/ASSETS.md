@@ -295,6 +295,7 @@ or .ogg); the generator never overwrites without `--force`.
 | terrain/{copper_ore,iron_ore}.png, items/{icons,held}/{copper_ore,iron_ore}.png | Placeholder whole-block ores: the stone picture recolored with metal glints (`tools/make_ore_art.py`, Phase 83) |
 | backdrop/{df_far,df_mid,df_near,ocean_far,uw_rays,uw_far,uw_near}.png | Placeholder biome backdrops, 1280 wide, tiling: Dark Forest (misty ridge, trees in fog, near trunks), ocean horizon, underwater (light shafts, rock spires, kelp) (`tools/make_biome_backdrops.py`, Phase 90). `dark_forest_far/near.png` are no longer used |
 | terrain/dark_forest_stone*.png, trees/darkwood_{0,1,2}.png (+ stone icons) | Retinted (Phase 90): stone black-grey-blue, crowns blue-teal (`tools/make_dark_forest_tint.py`) |
+| ui/{panel,title,slot,slot_hot,slot_selected,slot_magic,button,button_hot,button_pressed,button_disabled,field,row_hot}.png | Placeholder "dark arcane" UI at 3x detail (navy, gold trim, blue glows, gem corners) (`tools/make_ui_art_hd.py`, Phase 91; replaced the 1x Scholar art) |
 | sounds/splash.wav | Placeholder splash for filling and pouring (`tools/make_sounds.gd`, Phase 79) |
 | sounds/bomb.wav | Placeholder explosion (`tools/make_sounds.gd`, Phase 52) |
 | items/icons/shaping_spell.png (+ scroll_, page_ icons) | 16x16 Shaping Spell: a small mallet over a slope. Placeholder (`make_item_art.gd --new-spells`, Phase 51) |

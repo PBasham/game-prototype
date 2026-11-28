@@ -368,14 +368,19 @@ wall for sunlight.
 ## UI look
 
 Every window, slot and button is drawn by `UiSkin` (`src/ui/ui_skin.gd`) from nine-slice
-images in `assets/ui/` (Scholar theme: leather, wood, brass, parchment). They're
-placeholders from `tools/make_ui_art.gd`; replace any file with real art of the same
-size, or change its margin in `UiSkin.MARGINS`. Text colors (`TEXT`, `DIM`, `GOLD`,
-`INK` for parchment titles) are constants there too. Menus built from Controls get the
-same look through `UiSkin.theme()`.
+images in `assets/ui/`. Phase 91: "dark arcane", deep navy panels with gold trim, blue
+glows and gem corners, drawn at `UiSkin.DETAIL` (3) art pixels per UI pixel so they're
+crisp instead of chunky (`UiNineSlice`, `src/ui/ui_nine_slice.gd`, draws the corners and
+edges at 1/3 scale). They're placeholders from `tools/make_ui_art_hd.py`; replace any
+file with real art of the same size, or change its margin (art pixels) in
+`UiSkin.MARGINS`. Text colors (`TEXT`, `DIM`, `GOLD`, `INK` for title strips,
+`PARCHMENT_INK` for the bench's parchment) are constants there too. Menus built from
+Controls get the same look through `UiSkin.theme()`. The inventory's blue satchel is
+drawn separately and stays as it was.
 
 ```
-godot --headless --path . --script res://tools/make_ui_art.gd
+python3 tools/make_ui_art_hd.py --force   # panels, slots, buttons, field, row
+godot --headless --path . --script res://tools/make_ui_art.gd   # status icons (--old: the 1x Scholar art)
 ```
 
 **Chat and emotes (Enter):** like Terraria's. Enter opens a line at the bottom left,
