@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_ld7iv")
 station = &"workbench"
+tab = "Building"
 station_tier = 2
 inputs = Dictionary[StringName, int]({
 &"darkwood": 4,

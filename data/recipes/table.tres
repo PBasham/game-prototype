@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_bwvin")
 station = &"workbench"
+tab = "Furniture"
 inputs = Dictionary[StringName, int]({
 &"wood": 8
 })

@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_fy8su")
+tab = "Building"
 inputs = Dictionary[StringName, int]({
 &"log": 1
 })

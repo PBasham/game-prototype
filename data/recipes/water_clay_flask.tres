@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_du0lf")
+tab = "Items"
 inputs = Dictionary[StringName, int]({
 &"clay_flask": 1,
 &"water": 16

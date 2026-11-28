@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_4cm8l")
 station = &"anvil"
+tab = "Weapons"
 inputs = Dictionary[StringName, int]({
 &"iron_bar": 10,
 &"wood": 2

@@ -50,8 +50,15 @@ const LIST_W := 134
 ## Stations whose window has tabs: station kind to tab names. The Spell Weaving Table:
 ## Spells (learn spells) and Scrolls (scribe spells you know). Create and Empower come
 ## with Magic progression.
+## Phase 71: the Workbench, Furnace and Anvil too (RecipeData.tab picks the tab; empty =
+## the first). The Campfire and hand crafting have too few recipes for tabs.
 const STATION_TABS := { &"alchemy": ["Potions", "Coatings", "Flasks"],
-	&"spell_weaving": ["Learn", "Empower"]}
+	&"spell_weaving": ["Learn", "Empower"],
+	&"workbench": ["Stations", "Furniture", "Storage", "Building", "Items"],
+	&"furnace": ["Smelting", "Bottles", "Bricks"],
+	&"anvil": ["Weapons", "Armor"]}
+## Stations that also make everything you can make by hand (Phase 71).
+const HAND_TOO: Array[StringName] = [&"workbench"]
 const TAB_H := 14
 const ROW_H := 18
 ## Craft buttons: how many each makes (0 = as many as you can).
@@ -1457,6 +1464,9 @@ func recipes() -> Array[RecipeData]:
 	else:
 		var base := Crafting.recipes_for(def.station, def.station_tier) if def and def.station != &"" \
 			else Crafting.recipes_for(&"")
+		if def and def.station in HAND_TOO:
+			base.append_array(Crafting.recipes_for(&""))
+			base.sort_custom(func(a: RecipeData, b: RecipeData) -> bool: return a.display_name < b.display_name)
 		var tabs: Array = STATION_TABS.get(def.station, []) if def else []
 		for r in base:
 			if c and not c.unlocked(r.unlock_items):
@@ -1480,7 +1490,9 @@ func _tabs() -> Array:
 
 
 func _tab_rect(i: int) -> Rect2:
-	return Rect2(PAD + i * 58, 22, 56, TAB_H)
+	var n := maxi(_tabs().size(), 1)
+	var w := minf(56.0, (CRAFT_SIZE.x - PAD * 2 + 2.0) / n - 2.0)
+	return Rect2(PAD + i * (w + 2.0), 22, w, TAB_H)
 
 
 ## Below the tabs (and the spell filters), when there are any.

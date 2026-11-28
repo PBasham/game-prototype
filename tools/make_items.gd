@@ -1369,7 +1369,7 @@ func _recipes() -> Array[RecipeData]:
 			r.station_tier = 2  # the Darkwood Workbench
 		for u: StringName in UNLOCKS.get(r.id, key_items(r.inputs)):
 			r.unlock_items.append(u)
-		r.tab = {&"poison_coating": "Coatings", &"poison_flask": "Flasks"}.get(r.id, "Potions" if r.station == &"alchemy" else "")
+		r.tab = {&"poison_coating": "Coatings", &"poison_flask": "Flasks"}.get(r.id, "Potions" if r.station == &"alchemy" else RECIPE_TABS.get(r.id, ""))
 		for g: StringName in BENCH_GROUND:
 			if r.station == &"alchemy" and r.inputs.has(g) and (String(r.id).begins_with(BENCH_GROUND[g]) or r.id == BENCH_GROUND[g]):
 				r.bench_ground.append(g)
@@ -1447,6 +1447,78 @@ const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20},
 ## Hidden recipes: shown once you've had one of these items (RecipeData.unlock_items).
 const UNLOCKS := {&"scroll_call_spirit": [&"spirit_core"], &"forest_spirit_pendant": [&"spirit_core"],
 	&"scroll_summon_slime": [&"slime_core"]}
+## Phase 71: which tab of its station's window a recipe is under (Hud.STATION_TABS).
+## Hand recipes have one too: they also show at the Workbench.
+const RECIPE_TABS := {
+	&"alchemists_bench": "Stations",
+	&"alchemy_table": "Stations",
+	&"barrel": "Storage",
+	&"bed": "Furniture",
+	&"blank_scroll": "Items",
+	&"bookshelf": "Furniture",
+	&"bug_net": "Items",
+	&"campfire": "Stations",
+	&"chair": "Furniture",
+	&"chest": "Storage",
+	&"clay_bottle": "Bottles",
+	&"clay_flask": "Bottles",
+	&"clay_jug": "Bottles",
+	&"copper_anvil": "Stations",
+	&"copper_bar": "Smelting",
+	&"copper_chestplate": "Armor",
+	&"copper_dagger": "Weapons",
+	&"copper_greaves": "Armor",
+	&"copper_helmet": "Armor",
+	&"copper_sword": "Weapons",
+	&"crate": "Storage",
+	&"dark_forest_stone_bricks": "Bricks",
+	&"darkwood": "Building",
+	&"door": "Furniture",
+	&"dual_storm_axes": "Weapons",
+	&"firefly_lamp": "Furniture",
+	&"food_pantry": "Storage",
+	&"furnace": "Stations",
+	&"glass": "Smelting",
+	&"glass_bottle": "Bottles",
+	&"glass_flask": "Bottles",
+	&"glass_vial": "Bottles",
+	&"hanging_net_large": "Storage",
+	&"hanging_net_long": "Storage",
+	&"hanging_net_medium": "Storage",
+	&"hanging_net_small": "Storage",
+	&"iron_bar": "Smelting",
+	&"iron_chestplate": "Armor",
+	&"iron_greaves": "Armor",
+	&"iron_helmet": "Armor",
+	&"iron_liquid_barrel": "Storage",
+	&"iron_sword": "Weapons",
+	&"liquid_barrel": "Storage",
+	&"lumber_rack": "Storage",
+	&"pantry_rack": "Storage",
+	&"paper": "Items",
+	&"potion_bookcase": "Storage",
+	&"potion_cabinet": "Storage",
+	&"potion_shelf": "Storage",
+	&"reinforced_darkwood": "Building",
+	&"reinforced_wood": "Building",
+	&"sand_bricks": "Building",
+	&"scribes_desk": "Stations",
+	&"spell_weaving_table": "Stations",
+	&"stone_bricks": "Bricks",
+	&"table": "Furniture",
+	&"tall_bookshelf": "Furniture",
+	&"torch_from_slime": "Furniture",
+	&"water_clay_bottle": "Items",
+	&"water_clay_flask": "Items",
+	&"water_clay_jug": "Items",
+	&"water_glass_bottle": "Items",
+	&"water_glass_flask": "Items",
+	&"water_glass_vial": "Items",
+	&"wood": "Building",
+	&"wood_platform": "Building",
+	&"wooden_bowl": "Items",
+	&"wooden_sword": "Items",
+	&"workbench": "Stations"}
 ## Phase 70: every other recipe is hidden until you've had one of its key items: its
 ## inputs minus these basics (a recipe of only basics is always shown).
 const COMMON_INPUTS: Array[StringName] = [&"wood", &"log", &"stone", &"dirt", &"sand"]

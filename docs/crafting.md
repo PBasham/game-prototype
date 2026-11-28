@@ -111,6 +111,22 @@ left). **K** (or the **Craft (K)** button in the inventory) opens **hand craftin
 right click (or E) a station to open that station's list instead. The window closes
 with its **x**, K, Esc, closing the inventory, or walking out of reach.
 
+**Tabs** (Phase 71; `Hud.STATION_TABS`, each recipe's `RecipeData.tab`, empty = the first
+tab; defaults in `RECIPE_TABS`, `tools/make_items.gd`):
+
+| Station | Tabs |
+| --- | --- |
+| Workbench (and Darkwood) | Stations, Furniture, Storage, Building, Items |
+| Furnace | Smelting, Bottles, Bricks |
+| Copper Anvil | Weapons, Armor |
+| Alchemy Table | Potions, Coatings, Flasks |
+| Spell Weaving Table | Learn, Empower |
+
+The Campfire and hand crafting have no tabs. **The Workbench also makes everything you
+can make by hand** (`Hud.HAND_TOO`), each under its tab (the Campfire and Workbench
+under Stations, Torches under Furniture, Wood and Platforms under Building, bottles of
+water under Items).
+
 **Materials from chests:** crafting (and station upgrades and learning spells) also uses
 what's in chests within `World.craft_chest_tiles` (12) of you. Your inventory is used
 first, then the closest chest, then the next. The "have / need" counts include them.

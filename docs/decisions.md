@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 71, station tabs
+
+- **Patrick:** tabs for the crafting stations too, logical ones; recipes crafted by hand
+  should be craftable at the Workbench.
+- **Claude:** Workbench (Stations, Furniture, Storage, Building, Items), Furnace
+  (Smelting, Bottles, Bricks), Anvil (Weapons, Armor); the Campfire is small enough
+  without.
+
 ## 2026-11-27: Phase 70, recipes behind their key items
 
 - **Patrick:** recipes should be held behind some of their key items.

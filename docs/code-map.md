@@ -592,6 +592,12 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 71: station tabs
+
+| Change | Where |
+| --- | --- |
+| Tabs per station, hand recipes at the Workbench | `Hud.STATION_TABS`, `HAND_TOO`, `recipes()`, `_tab_rect` (fits any count); `tab` in `data/recipes/*.tres`; `RECIPE_TABS` in `tools/make_items.gd` |
+
 ## Phase 70: recipes behind their key items
 
 | Change | Where |

@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1_ntyqt")
+tab = "Furniture"
 inputs = Dictionary[StringName, int]({
 &"slime": 1,
 &"wood": 1

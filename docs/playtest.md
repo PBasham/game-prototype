@@ -358,6 +358,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 71: station tabs (branch phase-71-crafting-tabs)**
+- [ ] Workbench: Stations, Furniture, Storage, Building, Items. Each makes sense?
+- [ ] Hand recipes (Campfire, Torch, Wood, Platforms, bottles of water) are at the
+      Workbench too.
+- [ ] Furnace: Smelting, Bottles, Bricks. Copper Anvil: Weapons, Armor.
+
 **Phase 70: recipes behind their key items (branch phase-70-recipe-unlocks)**
 - [ ] A new character: the Workbench lists only recipes made of basics (Wood, Stone...).
 - [ ] Get Glass: "New recipe: Alchemist's Bench" (and the Glass bottles at the furnace).

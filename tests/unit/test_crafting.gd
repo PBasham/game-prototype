@@ -109,7 +109,8 @@ func test_stations_open_their_recipes() -> void:
 	var names: Array[StringName] = []
 	for r in w.hud.recipes():
 		names.append(r.id)
-	assert_eq(names, [&"clay_bottle", &"clay_flask", &"clay_jug", &"copper_bar", &"dark_forest_stone_bricks", &"glass", &"glass_bottle", &"glass_flask", &"glass_vial", &"iron_bar", &"stone_bricks"] as Array[StringName], "the furnace's list")
+	assert_eq(w.hud._tabs(), ["Smelting", "Bottles", "Bricks"])
+	assert_eq(names, [&"copper_bar", &"glass", &"iron_bar"] as Array[StringName], "the furnace's Smelting tab")
 	w.character.inventory.add(&"copper_ore", 7)
 	var before := w.character.inventory.count_of(&"copper_bar")
 	assert_eq(w.hud.craft(w.hud.recipes()[names.find(&"copper_bar")], 10), 2, "7 ore makes 2 bars")
@@ -707,3 +708,32 @@ func test_recipes_hide_behind_their_key_items() -> void:
 	assert_false(c.unlocked(potion.unlock_items))
 	c.inventory.add(&"red_cap", 1)
 	assert_true(c.unlocked(potion.unlock_items), "one key item is enough")
+
+
+## Phase 71: the Workbench, Furnace and Anvil have tabs, and the Workbench also makes
+## everything you can make by hand.
+func test_station_tabs_and_hand_recipes_at_the_workbench() -> void:
+	_seen_everything()
+	var a := _floor_spot(4)
+	assert_true(w.request_place_object(a, w.objects.index_of(&"workbench")))
+	var hud := w.hud
+	hud._on_station_opened(w.wrap_tile(a))
+	assert_eq(hud._tabs(), ["Stations", "Furniture", "Storage", "Building", "Items"])
+	var seen := {}
+	for i in hud._tabs().size():
+		hud.craft_tab = i
+		assert_gt(hud.recipes().size(), 0, "%s has recipes" % hud._tabs()[i])
+		for r in hud.recipes():
+			assert_false(seen.has(r.id), "%s is in one tab only" % r.id)
+			seen[r.id] = true
+		assert_lt(hud._tab_rect(i).end.x, Hud.CRAFT_SIZE.x - Hud.PAD + 1.0, "fits")
+	for r in Crafting.recipes_for(&""):
+		assert_true(seen.has(r.id), "%s (by hand) is at the Workbench too" % r.id)
+	assert_true(seen.has(&"chest"))
+	hud.craft_tab = 0
+	assert_has(hud.recipes().map(func(r: RecipeData) -> StringName: return r.id), &"furnace")
+	for d in Registry.get_all(&"recipes"):
+		var r := d as RecipeData
+		var tabs: Array = Hud.STATION_TABS.get(r.station, [])
+		if not tabs.is_empty() and r.tab != "":
+			assert_has(tabs, r.tab, "%s's tab is one of its station's" % r.id)
