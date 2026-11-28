@@ -99,7 +99,7 @@ func test_stew_well_fed() -> void:
 	_hold(&"mushroom_stew", 1)
 	p.hunger = 10.0
 	assert_true(w.item_user.eat_held())
-	assert_almost_eq(p.hunger, 50.0, 0.01)
+	assert_almost_eq(p.hunger, 65.0, 0.01)
 	assert_true(p.has_buff(&"item_mushroom_stew"))
 	assert_almost_eq(p.stat(&"move_speed"), speed + 0.1, 0.001)
 	assert_almost_eq(p._food_regen(), 0.5, 0.001)

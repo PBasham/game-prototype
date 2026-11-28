@@ -195,8 +195,8 @@ func _items() -> Array[ItemData]:
 	out.append(_small(&"raw_crab", "Raw Crab", "From a beach crab. Cook it at a campfire into Crab Legs."))
 	out.append(_small(&"raw_fish", "Raw Fish", "From a fish. Cook it at a campfire."))
 	for row: Array in [
-			[&"crab_legs", "Crab Legs", "Cracked and cooked. +22 hunger, +6 health.", 22.0, 6.0],
-			[&"cooked_fish", "Cooked Fish", "Grilled on the campfire. +18 hunger, +5 health.", 18.0, 5.0]]:
+			[&"crab_legs", "Crab Legs", "Cracked and cooked. +30 hunger, +6 health.", 30.0, 6.0],
+			[&"cooked_fish", "Cooked Fish", "Grilled on the campfire. +28 hunger, +5 health.", 28.0, 5.0]]:
 		var sea := _small(row[0], row[1], row[2])
 		sea.kind = ItemData.Kind.FOOD
 		sea.food_value = row[3]
@@ -239,23 +239,24 @@ func _items() -> Array[ItemData]:
 		bottle.fills_salt_into = StringName("salt_water_" + String(row[0]))
 		_detailed(bottle, &"")
 		out.append(bottle)
-	# Phase 79: the Clay Bucket carries a tile of water (16 cells) and pours it back out.
-	var bucket := _small(&"clay_bucket", "Clay Bucket", "Right-click water to scoop up a tile of it (or take it from a Liquid Barrel).")
+	# Phase 79: the Clay Bucket carries water and pours it back out; Phase 82: 4 tiles
+	# of it (BUCKET_CELLS).
+	var bucket := _small(&"clay_bucket", "Clay Bucket", "Right-click water to scoop up 4 tiles of it (or take it from a Liquid Barrel).")
 	bucket.fills_into = &"clay_bucket_water"
 	bucket.fills_salt_into = &"clay_bucket_salt_water"
-	bucket.fill_takes = 16
+	bucket.fill_takes = BUCKET_CELLS
 	bucket.max_stack = 10
 	_detailed(bucket, &"")
 	out.append(bucket)
-	var bucket_water := _small(&"clay_bucket_water", "Clay Bucket of Water", "A tile of water. Left-click to pour it out (or into a Liquid Barrel).")
-	bucket_water.pours_water = 16
+	var bucket_water := _small(&"clay_bucket_water", "Clay Bucket of Water", "4 tiles of water. Left-click to pour it out (or into a Liquid Barrel).")
+	bucket_water.pours_water = BUCKET_CELLS
 	bucket_water.leaves_item = &"clay_bucket"
 	bucket_water.liquid = &"water"
 	bucket_water.max_stack = 1
 	_detailed(bucket_water, &"")
 	out.append(bucket_water)
-	var bucket_salt := _small(&"clay_bucket_salt_water", "Clay Bucket of Salt Water", "A tile of sea water. Left-click to pour it out.")
-	bucket_salt.pours_water = 16
+	var bucket_salt := _small(&"clay_bucket_salt_water", "Clay Bucket of Salt Water", "4 tiles of sea water. Left-click to pour it out.")
+	bucket_salt.pours_water = BUCKET_CELLS
 	bucket_salt.leaves_item = &"clay_bucket"
 	bucket_salt.liquid = &"salt_water"
 	bucket_salt.max_stack = 1
@@ -272,9 +273,9 @@ func _items() -> Array[ItemData]:
 	out.append(_block(&"glass", "Glass", "Clear glass, melted from sand. A see-through block and back wall, and the stuff of glass bottles and cabinets.", &"glass_wall"))
 	out.append(_small(&"wooden_bowl", "Wooden Bowl", "For stew."))
 	for row: Array in [
-			[&"roasted_berries", "Roasted Berries", "Warm and sweet. +25 hunger, +5 health.", 25.0, 5.0],
-			[&"cooked_mushroom", "Cooked Mushroom", "Seared on the campfire. +16 hunger, +4 health.", 16.0, 4.0],
-			[&"mushroom_stew", "Mushroom Stew", "A hearty bowl. +40 hunger, +8 health, and Well Fed for 5 minutes.", 40.0, 8.0]]:
+			[&"roasted_berries", "Roasted Berries", "Warm and sweet. +40 hunger, +5 health.", 40.0, 5.0],
+			[&"cooked_mushroom", "Cooked Mushroom", "Seared on the campfire. +20 hunger, +4 health.", 20.0, 4.0],
+			[&"mushroom_stew", "Mushroom Stew", "A hearty bowl. +55 hunger, +8 health, and Well Fed for 5 minutes.", 55.0, 8.0]]:
 		var food := _small(row[0], row[1], row[2])
 		food.kind = ItemData.Kind.FOOD
 		food.food_value = row[3]
@@ -285,18 +286,18 @@ func _items() -> Array[ItemData]:
 	out[out.size() - 1].buff_seconds = 300.0
 	out[out.size() - 1].buff_health_regen = 0.5
 	out[out.size() - 1].buff_move_speed = 0.1
-	var compote := _small(&"raspberry_compote", "Raspberry Compote", "Stewed raspberries. +35 hunger, +6 health, and Mending for 4 minutes.")
+	var compote := _small(&"raspberry_compote", "Raspberry Compote", "Stewed raspberries. +70 hunger, +6 health, and Mending for 4 minutes.")
 	compote.kind = ItemData.Kind.FOOD
-	compote.food_value = 35.0
+	compote.food_value = 70.0
 	compote.heal_value = 6.0
 	compote.buff_name = "Mending"
 	compote.buff_description = "Health refills 1 a second faster."
 	compote.buff_seconds = 240.0
 	compote.buff_health_regen = 1.0
 	out.append(compote)
-	var mash := _small(&"blueberry_mash", "Blueberry Mash", "Mashed blueberries. +20 hunger, +10 health, and Light Step for 4 minutes.")
+	var mash := _small(&"blueberry_mash", "Blueberry Mash", "Mashed blueberries. +35 hunger, +10 health, and Light Step for 4 minutes.")
 	mash.kind = ItemData.Kind.FOOD
-	mash.food_value = 20.0
+	mash.food_value = 35.0
 	mash.heal_value = 10.0
 	mash.buff_name = "Light Step"
 	mash.buff_description = "You move 15% faster."
@@ -1042,6 +1043,7 @@ func _objects() -> Array[ObjectDef]:
 	out[12].container_slots = 10
 	out[12].container_accepts = &"lumber"
 	out[12].fill_look = ObjectDef.FillLook.PILE  # each log and board end in its own color
+	out[12].split_slots = 5  # boards left, logs right (Phase 82)
 	out[12].pile_area = Rect2i(6, 7, 68, 51)
 	out[12].pile_boards = 0.4  # boards lie flat on the left, log ends on the right
 	out[12].front_frame = 1  # the front posts over the logs
@@ -1193,7 +1195,7 @@ func _enemies() -> Array[EnemyData]:
 	slime.knockback = 10.0
 	slime.loot.append(LootDrop.make(&"slime", 1, 2))
 	slime.loot.append(LootDrop.make(&"slime_core", 1, 1, 0.025))
-	slime.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
+	slime.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.004))
 	slime.loot.append(LootDrop.make(&"magic_essence", 1, 1, 0.1))  # Phase 75
 	slime.loot.append(LootDrop.make(&"page_floating_torch", 1, 1, 0.01))
 	slime.loot.append(LootDrop.make(&"copper_coin", 1, 3))  # Phase 76 (78: fewer)
@@ -1218,7 +1220,7 @@ func _enemies() -> Array[EnemyData]:
 	blue.hop_wait_max = 1.8
 	blue.loot.append(LootDrop.make(&"slime", 2, 4))
 	blue.loot.append(LootDrop.make(&"slime_core", 1, 1, 0.025))
-	blue.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
+	blue.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.004))
 	blue.loot.append(LootDrop.make(&"magic_essence", 1, 1, 0.1))  # Phase 75
 	blue.loot.append(LootDrop.make(&"copper_coin", 2, 5))  # Phase 76 (78: fewer)
 	out.append(blue)
@@ -1692,6 +1694,8 @@ const BREATHING_BOTTLES := [[&"clay_flask", "Clay Flask", 2], [&"glass_vial", "G
 const WATER_BOTTLES := [[&"clay_flask", "Clay Flask", 1], [&"clay_bottle", "Clay Bottle", 2],
 	[&"clay_jug", "Clay Jug", 4], [&"glass_vial", "Glass Vial", 1], [&"glass_bottle", "Glass Bottle", 2],
 	[&"glass_flask", "Glass Flask", 3]]
+## Water a Clay Bucket holds, in voxel cells (16 a tile; Phase 82).
+const BUCKET_CELLS := 64
 ## Thirst a sip of water gives (Phase 80).
 const SIP_THIRST := 20.0
 

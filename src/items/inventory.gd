@@ -25,6 +25,9 @@ var stack_cap := 0
 ## Special storage: holds this many times an item's own stack per slot (Potion
 ## Cabinets: 4 x 30 potions), when stack_cap is 0.
 var stack_mult := 1
+## Two sides (ObjectDef.split_slots): slots below this take boards, the rest logs.
+## 0 = no split.
+var split_at := 0
 
 
 func _init(slots: int = DEFAULT_SIZE) -> void:
@@ -81,6 +84,13 @@ static func max_stack(item_id: StringName) -> int:
 ## Returns how many didn't fit.
 ## `keep_empty`: an empty slot to fill only if nothing else has room (the slot in your
 ## hand, so picking things up doesn't fill your empty hand).
+## Split storage: whether a slot is on the side for this item (logs right, boards left).
+func fits_slot(slot: int, item_id: StringName) -> bool:
+	if split_at <= 0:
+		return true
+	return (slot >= split_at) == String(item_id).ends_with("log")
+
+
 func add(item_id: StringName, count: int, keep_empty: int = -1) -> int:
 	if count <= 0 or item_id == &"":
 		return 0
@@ -103,7 +113,7 @@ func add(item_id: StringName, count: int, keep_empty: int = -1) -> int:
 	for i in order:
 		if count == 0:
 			break
-		if is_empty(i):
+		if is_empty(i) and fits_slot(i, item_id):
 			var n := mini(count, cap)
 			ids[i] = item_id
 			counts[i] = n
@@ -119,7 +129,7 @@ func room_for(item_id: StringName) -> int:
 	var cap := cap_for(item_id)
 	var room := 0
 	for i in size:
-		if is_empty(i):
+		if is_empty(i) and fits_slot(i, item_id):
 			room += cap
 		elif ids[i] == item_id:
 			room += cap - counts[i]

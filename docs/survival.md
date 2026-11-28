@@ -104,9 +104,10 @@ water in reach: +20 thirst a sip (`ItemUser.sip_thirst`), one sip every 0.6 s
 (`sip_cooldown`), no water taken.
 
 **Clay Bucket (Phase 79, Furnace, Bottles tab, 5 Clay):** right-click water to scoop up
-a tile of it (16 cells, `ItemData.fill_takes`) from around the cursor, or from a Liquid
-Barrel; it needs a full tile there. Left-click with the Clay Bucket of Water to pour the
-tile back out around the cursor, or into a Liquid Barrel with room
+4 tiles of it (64 cells, `ItemData.fill_takes`; `BUCKET_CELLS` in make_items, Phase 82)
+from the 5x5 tiles around the cursor, or from a Liquid Barrel; it needs that much there.
+Left-click with the Clay Bucket of Water to pour it back out around the cursor (5x5), or
+into a Liquid Barrel with room
 (`ItemData.pours_water`); if it doesn't fit, nothing pours. Empty buckets stack to 10,
 full ones don't stack.
 
@@ -221,17 +222,18 @@ nothing ("You're full", "No need right now") or while its sickness is on.
 | `buff_water_breathing` | Your breath never runs out under water while the buff is on |
 | `buff_poison_hits` | A weapon coating: the next this many melee hits poison (see combat.md) |
 
-**Cooking** happens at the **Campfire** (right click it: station `cooking`):
+**Cooking** happens at the **Campfire** (right click it: station `cooking`). Phase 82:
+cooked food is always worth more than the raw food that went in:
 
 | Recipe | Makes | Effect |
 | --- | --- | --- |
-| 3 Berries | Roasted Berries | +25 hunger, +5 health |
-| 1 Field Mushroom | Cooked Mushroom | +16 hunger, +4 health |
-| 1 Raw Crab (from crabs) | Crab Legs | +22 hunger, +6 health |
-| 1 Raw Fish (from fish) | Cooked Fish | +18 hunger, +5 health |
-| 4 Raspberries + 1 Wooden Bowl | Raspberry Compote | +35 hunger, +6 health, Mending 4 min (+1 health/s) |
-| 4 Blueberries + 1 Wooden Bowl | Blueberry Mash | +20 hunger, +10 health, Light Step 4 min (+15% speed) |
-| 2 Field Mushroom + 1 Red Cap + 1 Wooden Bowl | Mushroom Stew | +40 hunger, +8 health, Well Fed 5 min (+0.5 health/s, +10% speed) |
+| 3 Berries | Roasted Berries | +40 hunger, +5 health |
+| 1 Field Mushroom | Cooked Mushroom | +20 hunger, +4 health |
+| 1 Raw Crab (from crabs) | Crab Legs | +30 hunger, +6 health |
+| 1 Raw Fish (from fish) | Cooked Fish | +28 hunger, +5 health |
+| 4 Raspberries + 1 Wooden Bowl | Raspberry Compote | +70 hunger, +6 health, Mending 4 min (+1 health/s) |
+| 4 Blueberries + 1 Wooden Bowl | Blueberry Mash | +35 hunger, +10 health, Light Step 4 min (+15% speed) |
+| 2 Field Mushroom + 1 Red Cap + 1 Wooden Bowl | Mushroom Stew | +55 hunger, +8 health, Well Fed 5 min (+0.5 health/s, +10% speed) |
 
 Wooden Bowls: 2 Wood makes 2 at the workbench. Raw berries and mushrooms still work,
 cooked food is just much better.

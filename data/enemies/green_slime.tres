@@ -17,7 +17,7 @@ chance = 0.025
 [sub_resource type="Resource" id="Loot_page_summon_slime"]
 script = ExtResource("1_roai4")
 item = &"page_summon_slime"
-chance = 0.01
+chance = 0.004
 
 [sub_resource type="Resource" id="Loot_magic_essence"]
 script = ExtResource("1_roai4")

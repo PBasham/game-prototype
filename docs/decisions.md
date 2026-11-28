@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 82, tweaks
+
+- **Patrick:** a bit more reach (a block or two); craft from storage further away; the
+  Lumber Rack's window split like the potion cabinets (boards left, logs right); the Clay
+  Bucket holds much more and should look like clay; Summon Slime page 1/250; drop chances
+  as "1/250 | 0.40%"; cooked food worth more than raw (blueberries 6, mash 20 was wrong).
+- **Claude:** +2 tiles reach on everything; crafting range 12 to 24 tiles; the bucket
+  holds 4 tiles (scoops and pours over 5x5); cooked foods: Roasted Berries 40, Cooked
+  Mushroom 20, Crab Legs 30, Cooked Fish 28, Compote 70, Mash 35, Stew 55; split slots
+  enforce their side (a message if you try the wrong one).
+
 ## 2026-11-28: Phase 81, salt water, rain, catchers, lakes
 
 - **Patrick:** the sea is salt water; boiling leaves water and salt; glass can boil too;

@@ -10,7 +10,8 @@ from PIL import Image, ImageDraw
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets")
 FORCE = "--force" in sys.argv
-CLAY = [(110, 58, 38, 255), (164, 92, 60, 255), (204, 128, 88, 255)]
+CLAY = [(128, 66, 44, 255), (176, 98, 66, 255), (200, 124, 88, 255)]  # matte terracotta
+ROPE = [(120, 96, 60, 255), (170, 140, 92, 255)]
 WATER = [(46, 96, 168, 255), (92, 158, 230, 255), (190, 225, 255, 255)]
 
 
@@ -24,29 +25,32 @@ def save(img, rel):
 
 
 def bucket(full):
+    """A thick, rounded fired-clay pot with a rope handle: no metal bands or shine."""
     im = Image.new("RGBA", (32, 32))
     d = ImageDraw.Draw(im)
     dark, mid, light = CLAY
-    # Handle: a thin arc over the top.
-    d.arc([7, 2, 24, 20], 200, 340, fill=dark, width=2)
-    # Body: a tapered pot, wider at the top.
-    d.polygon([(6, 11), (25, 11), (22, 28), (9, 28)], fill=mid)
-    d.line([(9, 28), (22, 28)], fill=dark, width=1)
-    d.line([(6, 11), (9, 28)], fill=dark)
-    d.line([(25, 11), (22, 28)], fill=dark)
-    d.line([(10, 14), (11, 25)], fill=light)
-    # Bands.
-    d.line([(7, 17), (24, 17)], fill=dark)
-    d.line([(8, 23), (23, 23)], fill=dark)
-    # Rim and mouth.
-    d.ellipse([5, 8, 26, 14], fill=dark)
+    # Rope handle: a loop over the top, tied through two lugs.
+    d.arc([6, 1, 25, 22], 195, 345, fill=ROPE[0], width=2)
+    d.arc([7, 2, 24, 21], 200, 340, fill=ROPE[1], width=1)
+    # Body: a squat rounded pot, wider in the belly.
+    d.ellipse([4, 9, 27, 30], fill=mid)
+    d.rectangle([7, 9, 24, 14], fill=mid)
+    d.arc([4, 9, 27, 30], 20, 160, fill=dark, width=2)  # shade along the bottom
+    # Rough clay texture: a few darker and lighter flecks, a soft (not shiny) side light.
+    for p in [(9, 18), (14, 22), (20, 19), (23, 24), (11, 26), (17, 27), (21, 14)]:
+        d.point(p, fill=dark)
+    for p in [(8, 15), (8, 20), (9, 23), (10, 17)]:
+        d.point(p, fill=light)
+    # Lugs where the rope ties on.
+    d.rectangle([4, 11, 6, 13], fill=dark)
+    d.rectangle([25, 11, 27, 13], fill=dark)
+    # A thick rim and the mouth.
+    d.ellipse([6, 7, 25, 13], fill=dark)
     if full:
-        d.ellipse([7, 9, 24, 13], fill=WATER[1])
-        d.line([(10, 10), (14, 10)], fill=WATER[2])
-        d.point((19, 12), fill=WATER[0])
+        d.ellipse([8, 8, 23, 12], fill=WATER[1])
+        d.line([(11, 9), (15, 9)], fill=WATER[2])
     else:
-        d.ellipse([7, 9, 24, 13], fill=(70, 36, 24, 255))
-    d.arc([5, 8, 26, 14], 160, 380, fill=light)
+        d.ellipse([8, 8, 23, 12], fill=(76, 38, 26, 255))
     return im
 
 

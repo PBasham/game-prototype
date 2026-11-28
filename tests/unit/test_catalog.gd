@@ -93,11 +93,11 @@ func test_enemy_kills_fill_the_catalog_and_j_opens_it() -> void:
 ## enemy's page (and back from its drops).
 func test_drop_chances_and_links() -> void:
 	assert_eq(Catalog.chance_text(1.0), "100%")
-	assert_eq(Catalog.chance_text(0.025), "2.5%")
-	assert_eq(Catalog.chance_text(0.01), "1%")
-	assert_eq(Catalog.chance_text(0.0025), "0.25%")
+	assert_eq(Catalog.chance_text(0.025), "1/40 | 2.50%")
+	assert_eq(Catalog.chance_text(0.004), "1/250 | 0.40%")
+	assert_eq(Catalog.chance_text(0.5), "1/2 | 50.00%")
 	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
-	assert_eq(Catalog.loot_text(Catalog.loot_line(slime, &"page_summon_slime")), "1%")
+	assert_eq(Catalog.loot_text(Catalog.loot_line(slime, &"page_summon_slime")), "1/250 | 0.40%")
 	assert_eq(Catalog.loot_text(Catalog.loot_line(slime, &"slime")), "1-2, 100%")
 	Game.world_info = WorldInfo.test_course()
 	Game.character = null

@@ -93,7 +93,7 @@ func test_placing_reach_follows_the_mining_spell() -> void:
 	w.player.select_slot(3)
 	w.item_user.update_target(w.player.chest())
 	var mining := ItemData.find(ItemData.spell_key(&"mining_spell")) as SpellData
-	assert_almost_eq(w.item_user.reach(), (mining.reach_tiles + w.character.spell_reach_bonus()) * World.TILE, 0.01)
+	assert_almost_eq(w.item_user.reach(), (mining.reach_tiles + w.character.spell_reach_bonus() + w.item_user.reach_bonus_tiles) * World.TILE, 0.01)
 
 
 func test_clicking_with_the_spell_shapes_the_block() -> void:

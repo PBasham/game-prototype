@@ -117,6 +117,10 @@ enum FillLook { NONE, FRAMES, BOTTLES, PILE, BOOKS, NET }
 ## PILE: the share of pile_area's width (from the left) where boards lie flat; logs take
 ## the rest. 0 = everything as ends.
 @export_range(0.0, 0.9) var pile_boards := 0.0
+## Storage split in two sides (Phase 82, the Lumber Rack): the first this many slots take
+## boards (wood, darkwood, reinforced), the rest logs; the window shows them side by side.
+## 0 = one side.
+@export var split_slots := 0
 ## NET: the bag's inside, in art px of its picture (items heap up from its bottom).
 @export var net_bag := Rect2i(4, 8, 40, 20)
 ## Liquid storage (Liquid Barrels): how much water it holds, in voxel cells (16 a tile).

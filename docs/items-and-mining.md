@@ -153,7 +153,7 @@ Each item is an `ItemData` (`src/items/item_data.gd`). Open one in the Inspector
 | `beam` | Mines continuously while held (the mining spell) |
 | `mining_area` | Area in tiles (2 = 2x2) a swing starts at. Ctrl + wheel can always go down to 1x1. |
 | `mining_area_max` | Biggest area for the Ctrl + wheel toggle (0 = no bigger than `mining_area`) |
-| `reach_tiles` | How far it reaches, measured from the chest |
+| `reach_tiles` | How far it reaches, measured from the chest, plus `ItemUser.reach_bonus_tiles` (2, Phase 82) for everything |
 | `impact_at` | When in the swing the hit lands (0 to 1 through the animation) |
 | **Placing** | |
 | `places_block` | Block placed with left click |

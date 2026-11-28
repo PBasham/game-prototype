@@ -843,9 +843,14 @@ func _layout() -> void:
 		var n := store.size if store else 40
 		var cols := _shelf_cols()
 		var grid_h := _rows(n) * STEP - GAP
+		var extra_w := 0
 		if cols > 0:
 			grid_h = ceili(n / float(cols)) * (STEP + PLANK_H) - GAP
-		_chest.size = Vector2(PAD * 2 + 10 * STEP - GAP, 22 + grid_h + 6 + 16 + PAD)
+		if _split_at() > 0:
+			var sides := maxi(_split_at(), n - _split_at())
+			grid_h = SPLIT_LABEL_H + ceili(sides / 5.0) * STEP - GAP
+			extra_w = SPLIT_GAP
+		_chest.size = Vector2(PAD * 2 + 10 * STEP - GAP + extra_w, 22 + grid_h + 6 + 16 + PAD)
 		_chest.position = Vector2(view.x - _chest.size.x - window_right, window_top)
 	if open and equipping:
 		_equip.show_at(_equip_spot())
@@ -984,7 +989,24 @@ const PLANK_H := 4
 
 ## A slot in the open chest window: 10 to a row, or laid out like the storage's shelves
 ## (top shelf first), with a plank under each row.
+## Split storage (the Lumber Rack): slots before this on the left, the rest on the right.
+func _split_at() -> int:
+	var store := _store()
+	return store.split_at if store and bag == null else 0
+
+
+## The gap between a split storage's two sides, and the label row above them.
+const SPLIT_GAP := 12
+const SPLIT_LABEL_H := 10
+
+
 func _store_cell(i: int) -> Rect2:
+	var split := _split_at()
+	if split > 0:
+		var right := i >= split
+		var k := i - split if right else i
+		var x := PAD + (k % 5) * STEP + (5 * STEP - GAP + SPLIT_GAP if right else 0)
+		return Rect2(Vector2(x, 22 + SPLIT_LABEL_H + (k / 5) * STEP), Vector2(SLOT, SLOT))
 	var cols := _shelf_cols()
 	if cols <= 0:
 		return _cell(Vector2(PAD, 22), i)
@@ -1606,6 +1628,17 @@ func _draw_chest(g: Control) -> void:
 		var bar := Rect2(PAD, 18.5, g.size.x - PAD * 2, 2.5)
 		g.draw_rect(bar, Color(0.1, 0.07, 0.05))
 		g.draw_rect(Rect2(bar.position, Vector2(bar.size.x * store.fill(), bar.size.y)), Color("b8823e"))
+	if store and _split_at() > 0:
+		# Two sides: boards left, logs right, a post between them.
+		var split := _split_at()
+		var left := _store_cell(0)
+		var logs_at := _store_cell(split)
+		g.draw_string(font, Vector2(left.position.x, left.position.y - 3), "Boards", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
+		g.draw_string(font, Vector2(logs_at.position.x, logs_at.position.y - 3), "Logs", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.DIM)
+		var post_x := logs_at.position.x - SPLIT_GAP * 0.5 - GAP * 0.5 - 1.5
+		var bottom := _store_cell(store.size - 1).end.y
+		g.draw_rect(Rect2(post_x, left.position.y - 2, 3, bottom - left.position.y + 4), Color("a0703f"))
+		g.draw_rect(Rect2(post_x + 3, left.position.y - 2, 1, bottom - left.position.y + 4), Color("5a3a20"))
 	if store:
 		var cols := _shelf_cols()
 		if cols > 0:
@@ -2640,6 +2673,9 @@ func click_slot(slot: int, inv: Inventory = null) -> void:
 	if not _cursor_is_spell() and not inv.accepts(cursor_id):
 		EventBus.debug_message.emit("That doesn't go in here")
 		return
+	if not inv.fits_slot(slot, cursor_id):
+		EventBus.debug_message.emit("Logs go on the right, boards on the left")
+		return
 	if inv.is_empty(slot) and cursor_count > inv.cap_for(cursor_id):
 		# More than a slot holds here: fill it, keep the rest on the mouse.
 		inv.set_slot(slot, cursor_id, inv.cap_for(cursor_id), cursor_meta)
@@ -2739,7 +2775,7 @@ func right_click_slot(slot: int, inv: Inventory = null, half := false) -> void:
 		cursor_id = inv.ids[slot]
 		cursor_count += inv.take(slot, 1)
 		return
-	if cursor_count == 0 or not inv.accepts(cursor_id):
+	if cursor_count == 0 or not inv.accepts(cursor_id) or not inv.fits_slot(slot, cursor_id):
 		return
 	if inv.is_empty(slot):
 		inv.set_slot(slot, cursor_id, (0 if inv.is_empty(slot) else inv.counts[slot]) + 1)

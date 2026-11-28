@@ -63,7 +63,7 @@ var _biome_cache: Dictionary = {}
 ## E interacts with things this close (tiles).
 @export var interact_tiles := 6.0
 ## Crafting also uses what's in chests this close to you (tiles), after your inventory.
-@export var craft_chest_tiles := 12.0
+@export var craft_chest_tiles := 24.0
 ## Dev console `freecraft`: crafting needs no materials (and nothing is used up).
 var free_crafting := false
 ## Dev console `instant_placement`: holding the button places every frame, no wait.
@@ -1755,6 +1755,7 @@ func _new_container(def: ObjectDef) -> Inventory:
 	inv.accepts_tag = def.container_accepts
 	inv.stack_cap = def.container_stack_cap
 	inv.stack_mult = def.container_stack_mult
+	inv.split_at = def.split_slots
 	if def.fill_look != ObjectDef.FillLook.NONE:
 		inv.changed.connect(func() -> void:
 			if object_layer:

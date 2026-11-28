@@ -128,7 +128,7 @@ under Stations, Torches under Furniture, Wood and Platforms under Building, bott
 water under Items).
 
 **Materials from chests:** crafting (and station upgrades and learning spells) also uses
-what's in chests within `World.craft_chest_tiles` (12) of you. Your inventory is used
+what's in chests within `World.craft_chest_tiles` (24, Phase 82) of you. Your inventory is used
 first, then the closest chest, then the next. The "have / need" counts include them.
 Crafted items go to your inventory (`CraftStock`, src/items/craft_stock.gd).
 Dev console **`freecraft`** toggles free crafting: no materials or max mana needed and
@@ -218,7 +218,7 @@ src/items/catalog.gd). Three tabs:
 - **Items:** every item but spells. Ones you've never had show as black silhouettes;
   the title shows "found / total". Click a found item for its page: description, where
   it's made, how many recipes use it, a **Recipes** button, and **Dropped by**: each
-  enemy you've had it from, with how many and the chance ("Green Slime (1%)"), as a link
+  enemy you've had it from, with how many and the chance ("Green Slime (1/250 | 0.40%)": one in how many and the percent, Phase 82), as a link
   (blue) to that enemy's page.
 - **Entities** (was Enemies, then Creatures): sub tabs **Enemies**, **Bosses**, **NPCs**
   and **Peaceful** (Phase 77). `EnemyData.catalog_group` puts each one under its sub tab;
@@ -294,7 +294,7 @@ can't mine the floor under furniture.
 
 | Object | Size | Holds | Capacity | Recipe (workbench) |
 | --- | --- | --- | --- | --- |
-| Lumber Rack | 5x4 | Any logs and wood (Log, Darkwood Log, Wood, Darkwood, both Reinforced) | 10 full stacks (9,999 each) | 25 Wood + 4 Logs |
+| Lumber Rack | 5x4 | Any logs and wood (Log, Darkwood Log, Wood, Darkwood, both Reinforced); two sides (Phase 82, `ObjectDef.split_slots` 5, `Inventory.split_at`/`fits_slot`): boards in the left 5 slots, logs in the right 5 | 10 full stacks (9,999 each) | 25 Wood + 4 Logs |
 | Potion Cabinet | 3x5, glass doors, 4 shelves of 3 spots | Potions, coatings, bottles | 12 slots of 6 stacks (180 potions a slot) | 20 Wood + 2 Copper Bars + 4 Glass |
 | Large Potion Cabinet (id `potion_bookcase`) | 4x6, 5 shelves of 4 spots | Potions, coatings, bottles | 20 slots of 6 stacks | 30 Wood + 4 Copper Bars + 6 Glass |
 | Shelf (id `potion_shelf`) | 3x2, on a back wall, 4 spots | Anything | 4 slots of 2 stacks | 6 Wood |

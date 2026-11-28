@@ -188,11 +188,19 @@ func grab_point() -> Vector2:
 	return from + (at - from).limit_length(reach())
 
 
+## Added to every item's and spell's reach, building too (Phase 82: a bit more range).
+@export var reach_bonus_tiles := 2.0
+
+
 func reach() -> float:
 	if _item == null:
 		return 0.0
 	if infinite_reach:
 		return 100000.0
+	return _base_reach() + reach_bonus_tiles * TILE
+
+
+func _base_reach() -> float:
 	var c := world.player.character
 	if _places(_item):
 		# Building reaches as far as your Mining Spell digs (its Empower Reach too).
@@ -652,7 +660,7 @@ func fill_held(tile: Vector2i, all := false) -> int:
 	if item == null or (item.fills_into == &"" and item.fills_salt_into == &""):
 		return 0
 	var barrel := world.barrel_water(tile)
-	var near := Rect2i(tile - Vector2i.ONE, Vector2i(3, 3))
+	var near := _water_box(tile, item.fill_takes)
 	# Fresh water (a barrel's, ponds, lakes, rain) or the sea's salt water (Phase 81).
 	var liquid := &"water"
 	if barrel <= 0 and world.voxels.count_in(tile, &"water") <= 0:
@@ -695,6 +703,13 @@ func fill_held(tile: Vector2i, all := false) -> int:
 		p.refresh_held()
 		EventBus.sound_requested.emit(&"splash", world.tile_to_world(tile))
 	return filled
+
+
+## The tiles a bucket scoops from or pours into around a tile: 3x3, or 5x5 for more than
+## a tile of water.
+func _water_box(tile: Vector2i, cells: int) -> Rect2i:
+	var r := 1 if cells <= VoxelLayer.CELLS else 2
+	return Rect2i(tile - Vector2i(r, r), Vector2i(r * 2 + 1, r * 2 + 1))
 
 
 ## Drinking straight from water: thirst a sip, at most one sip per `sip_cooldown`.
@@ -754,7 +769,7 @@ func pour_held(tile: Vector2i) -> bool:
 	else:
 		if world.is_solid(tile):
 			return false
-		var box := Rect2i(tile - Vector2i.ONE, Vector2i(3, 3))
+		var box := _water_box(tile, n)
 		var poured := world.voxels.pour_liquid(box, n, liquid)
 		if poured < n:
 			world.voxels.take_liquid(box, poured, liquid)  # take it back

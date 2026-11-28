@@ -120,10 +120,11 @@ static func loot_line(e: EnemyData, id: StringName) -> LootDrop:
 ## A drop chance as text: "100%", "2.5%", "1%", "0.25%".
 static func chance_text(chance: float) -> String:
 	var pct := chance * 100.0
-	if is_equal_approx(pct, roundf(pct)):
-		return "%d%%" % roundi(pct)
-	var s := ("%.1f" if pct >= 1.0 else "%.2f") % pct
-	return s.rstrip("0").rstrip(".") + "%"
+	if is_equal_approx(pct, 100.0):
+		return "100%"
+	# "1/250 | 0.40%": one in how many, and the percent to two places (Phase 82).
+	var one_in := roundi(1.0 / maxf(chance, 0.000001))
+	return "1/%d | %.2f%%" % [one_in, pct]
 
 
 ## A loot line as text: "1-2, 100%" ("2.5%" alone for a single item).

@@ -293,7 +293,7 @@ func test_building_uses_the_mining_reach_and_shared_area() -> void:
 	w.player.select_slot(3)  # planks
 	u.update_target(w.player.chest())
 	var mining := ItemData.find(ItemData.spell_key(&"mining_spell")) as SpellData
-	assert_almost_eq(u.reach(), (mining.reach_tiles + w.character.spell_reach_bonus()) * World.TILE, 0.01,
+	assert_almost_eq(u.reach(), (mining.reach_tiles + w.character.spell_reach_bonus() + w.item_user.reach_bonus_tiles) * World.TILE, 0.01,
 			"placing reaches as far as the Mining Spell")
 	var planks := w.player.held_item
 	w.player.area_scrolled.emit(1)

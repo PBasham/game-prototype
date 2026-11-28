@@ -65,7 +65,7 @@ into item drops.
 ### Green Slime
 
 20 health, 6 contact damage, hops about 5 tiles. Drops 1 to 2 **Slime**, rarely a
-**Slime Core** (1 in 40) or **Spell Page: Summon Slime** (1 in 100); 1 in 10 a **Magic
+**Slime Core** (1 in 40) or **Spell Page: Summon Slime** (1 in 250, Phase 82); 1 in 10 a **Magic
 Essence**, and 1 in 100 a **Spell Page: Floating Torch** (Phase 75). The common one.
 
 ### Blue Slime

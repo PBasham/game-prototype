@@ -592,6 +592,17 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 82: tweaks
+
+| Change | Where |
+| --- | --- |
+| Reach | `ItemUser.reach_bonus_tiles`, `reach`, `_base_reach` |
+| Crafting range | `World.craft_chest_tiles` |
+| Lumber Rack sides | `ObjectDef.split_slots`; `Inventory.split_at`, `fits_slot`; `Hud._split_at`, `_store_cell`, `_draw_chest`, `click_slot` |
+| Bucket size and art | `BUCKET_CELLS` in `tools/make_items.gd`; `ItemUser._water_box`; `tools/make_bucket_art.py` |
+| Drop chance text | `Catalog.chance_text` |
+| Food, page chance | `data/items/*.tres`, `data/enemies/*_slime.tres`, `tools/make_items.gd` |
+
 ## Phase 81: salt water, rain, catchers, lakes
 
 | Change | Where |

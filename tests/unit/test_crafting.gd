@@ -533,12 +533,15 @@ func test_special_storage_takes_only_its_kind_and_fills_up() -> void:
 	# Any logs and wood, in full stacks.
 	var full := Inventory.max_stack(&"wood")
 	assert_eq(full, 9999)
-	assert_eq(rack.add(&"wood", full * 5), 0, "full stacks")
+	# Boards on the left five, logs on the right five (Phase 82).
+	assert_eq(rack.add(&"wood", full * 3), 0, "full stacks")
 	assert_eq(rack.add(&"dark_log", full * 3), 0)
 	assert_eq(rack.add(&"reinforced_darkwood", full * 2), 0)
+	assert_eq(rack.add(&"log", full * 2), 0)
 	assert_eq(rack.add(&"log", 10), 10, "10 stacks in all")
 	assert_almost_eq(rack.fill(), 1.0, 0.001)
-	rack.remove(&"wood", full * 5)
+	rack.remove(&"wood", full * 3)
+	rack.remove(&"reinforced_darkwood", full * 2)
 	assert_almost_eq(rack.fill(), 0.5, 0.001, "half full by stacks")
 	assert_eq((w.objects.def(rack_id) as ObjectDef).fill_look, ObjectDef.FillLook.PILE, "drawn as a heap, each end its own color")
 	# Darkwood logs build blocks like logs do.

@@ -179,7 +179,7 @@ guesses; the docs listed say where each tunable lives.
 - [ ] Dev Focus tooltip: just the changes, "Focus" on the right.
 - [ ] Spell in hand: icon and name under the hotbar.
 - [ ] Cave edges in shadow: no checkerboard blocks.
-- [ ] Crafting with materials in a nearby chest (within 12 tiles): inventory used first.
+- [ ] Crafting with materials in a nearby chest (within 24 tiles): inventory used first.
 - [ ] Console `freecraft`: craft anything with no materials; again turns it off.
 - [ ] Flying or jumping over a slime: a sword can't hit it far below you.
 - [ ] Healing Circle: casting again moves it (no stacking).
@@ -357,6 +357,14 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       into them up close) and hits them, stays
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
+
+**Phase 82: tweaks (branch phase-82-tweaks)**
+- [ ] Mining, building and filling reach 2 tiles further.
+- [ ] Crafting uses wood in a Lumber Rack up to 24 tiles away.
+- [ ] Open a Lumber Rack: Boards on the left, Logs on the right; a log won't go on the left.
+- [ ] The Clay Bucket looks like fired clay and moves 4 tiles of water at a time.
+- [ ] Catalog drop chances read "1/250 | 0.40%"; the Summon Slime page is that rare.
+- [ ] Cooked food: Blueberry Mash +35, Roasted Berries +40, Compote +70, Stew +55.
 
 **Phase 81: salt water, rain, catchers, lakes (branch phase-81-salt-rain-lakes)**
 (Make a new world: lakes, ponds and salt water only come with newly generated land.)
