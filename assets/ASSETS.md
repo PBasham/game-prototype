@@ -54,7 +54,7 @@ Drawn by `src/world/terrain.gdshader`, which blends them per pixel across tiles.
 | dirt.png | dirt, grass (grass is drawn on top by the shader) |
 | stone.png | stone, copper ore |
 | planks.png | wood planks |
-| ore_copper.png | transparent overlay of copper nuggets on stone |
+| ore_copper.png | transparent overlay of copper nuggets on stone (unused since Phase 83: copper_ore.png is a whole ore block) |
 | dirt_wall.png, stone_wall.png, planks_wall.png | background walls |
 | noise.png | edge and blend noise (RGBA channels), not art |
 
@@ -292,6 +292,7 @@ or .ogg); the generator never overwrites without `--force`.
 | sounds/sip.wav | Placeholder sip (`tools/make_sounds.gd`, Phase 80) |
 | items/{icons,held}/salt_water_*.png (six bottles), clay_bucket_salt_water.png, salt.png | Placeholder salt water (the water bottles turned sea green) and Salt (a white heap) (`tools/make_salt_art.py`, Phase 81) |
 | objects/{rain_catcher,clay_rain_catcher}.png, items/{icons,held}/{rain_catcher,clay_rain_catcher}.png | Placeholder Rain Catcher (wood funnel, slime seams, clay jug) and Clay Rain Catcher (basin on a stand) (`tools/make_rain_art.py`, Phase 81). Rain is drawn in code (`Weather._draw`) |
+| terrain/{copper_ore,iron_ore}.png, items/{icons,held}/{copper_ore,iron_ore}.png | Placeholder whole-block ores: the stone picture recolored with metal glints (`tools/make_ore_art.py`, Phase 83) |
 | sounds/splash.wav | Placeholder splash for filling and pouring (`tools/make_sounds.gd`, Phase 79) |
 | sounds/bomb.wav | Placeholder explosion (`tools/make_sounds.gd`, Phase 52) |
 | items/icons/shaping_spell.png (+ scroll_, page_ icons) | 16x16 Shaping Spell: a small mallet over a slope. Placeholder (`make_item_art.gd --new-spells`, Phase 51) |

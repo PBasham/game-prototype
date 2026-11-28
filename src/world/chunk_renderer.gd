@@ -59,12 +59,12 @@ class ChunkView:
 ## Every back wall is drawn as bright as this share of its block (measured from the
 ## two pictures as drawn, so dirt, logs, bricks and glass all read the same step
 ## darker than the block in front: Patrick, Phase 42). 0 = off (each wall as its art).
-@export_range(0.0, 1.0) var wall_block_ratio := 0.6
+@export_range(0.0, 1.0) var wall_block_ratio := 0.4
 ## Back walls darken toward a block right above or beside them (a soft shadow):
 ## this much at the block's edge, fading over block_shadow_px world px.
-@export_range(0.0, 1.0) var block_shadow := 0.72
-@export_range(0.0, 8.0) var block_shadow_px := 2.0
-@export_range(0.0, 1.0) var wall_desat := 0.2
+@export_range(0.0, 1.0) var block_shadow := 0.45
+@export_range(0.0, 8.0) var block_shadow_px := 4.0
+@export_range(0.0, 1.0) var wall_desat := 0.35
 ## Chunks loaded around the camera, in each direction.
 var load_radius := Vector2i(2, 2)
 ## Max finished chunks turned into nodes per frame (spreads the main-thread cost).

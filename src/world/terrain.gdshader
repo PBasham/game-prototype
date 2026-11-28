@@ -42,7 +42,7 @@ uniform float clear_walls[32];
 uniform float wall_shade = 1.0;
 uniform float built_wall_shade = 1.35;
 // Built blocks (bricks, planks) drawn this much brighter, so they stand out from a back
-// wall of the same stuff; and a soft shadow on walls next to and under built blocks.
+// wall of the same stuff; and a soft shadow on walls next to and under any block.
 uniform float built_block_shade = 1.12;
 uniform float block_shadow = 0.72;
 uniform float block_shadow_px = 2.0;
@@ -428,12 +428,13 @@ void fragment() {
 		}
 	}
 	if (!drew && here == 0 && col.a > 0.0) {
-		// A back wall: shaded where a block stands right above or to either side.
+		// A back wall: shaded where a block (built or natural, Phase 83) stands right
+		// above or to either side, so blocks stand off the wall behind them.
 		vec2 lp = p - floor(p / T) * T;
 		float near = 99.0;
-		if (is_built(blk(here_t + ivec2(0, -1)))) near = min(near, lp.y);
-		if (is_built(blk(here_t + ivec2(-1, 0)))) near = min(near, lp.x);
-		if (is_built(blk(here_t + ivec2(1, 0)))) near = min(near, 7.999 - lp.x);
+		if (blk(here_t + ivec2(0, -1)) > 0) near = min(near, lp.y);
+		if (blk(here_t + ivec2(-1, 0)) > 0) near = min(near, lp.x);
+		if (blk(here_t + ivec2(1, 0)) > 0) near = min(near, 7.999 - lp.x);
 		if (near < block_shadow_px) {
 			col.rgb *= mix(block_shadow, 1.0, near / block_shadow_px);
 		}

@@ -318,16 +318,22 @@ every asset, its size and layout.
   `tools/make_item_art.gd`. Replace the PNGs with yours (same names).
 
 **Background walls** are drawn a little greyer than blocks so the front layer stands
-out: `wall_shade` (1.0, the wall art is already darker) and `wall_desat` (0.2) on the
+out: `wall_shade` (1.0, the wall art is already darker) and `wall_desat` (0.35, Phase 83) on the
 `Chunks` node (ChunkRenderer). Built walls (planks, bricks, glass: room walls) are
 brightened again by `built_wall_shade` (1.35). Built blocks are drawn
-`built_block_shade` (1.12) brighter, and back walls get a soft shadow where a built block
-stands right above or beside them (`block_shadow` 0.72 at the edge, fading over
-`block_shadow_px` 2), so a brick wall and its back wall read apart. Every back wall is
-then evened out to `wall_block_ratio` (0.6) as bright as its block (measured from the two
+`built_block_shade` (1.12) brighter, and back walls get a soft shadow where any block
+(built or natural, Phase 83) stands right above or beside them (`block_shadow` 0.45 at
+the edge, fading over `block_shadow_px` 4), so a dirt block on a dirt wall reads apart.
+Every back wall is then evened out to `wall_block_ratio` (0.4, Phase 83) as bright as its
+block (measured from the two
 pictures as drawn, `ChunkRenderer._wall_mults`), so dirt, stone, logs, bricks and sand
 all sit the same step behind their blocks. Before this, walls ranged from 0.38 (dirt,
 stone) to 0.86 (clay) of their block.
+
+**Ore blocks** (Phase 83) are whole blocks of ore, like Terraria's: their own terrain
+pictures `assets/terrain/copper_ore.png` and `iron_ore.png` (the stone pattern in the
+ore's colors, with metal glints; `tools/make_ore_art.py`) instead of stone with an
+`ore_overlay` (still supported for a tile that wants it).
 
 **Break dust:** a block or wall that breaks puffs a little cloud of dust in its colors
 (`BreakDust`, src/world/break_dust.gd; the color is the terrain picture's average,

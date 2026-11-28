@@ -358,6 +358,12 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 83: blocks vs walls, whole-block ores (branch phase-83-walls-ores)**
+- [ ] Underground, a dirt block in front of a dirt wall stands out: walls are darker and
+      greyer, with a soft shadow under and beside blocks. No outlines.
+- [ ] Copper Ore is a whole copper-colored block with glints; Iron Ore a rusty one.
+      Their icons match.
+
 **Phase 82: tweaks (branch phase-82-tweaks)**
 - [ ] Mining, building and filling reach 2 tiles further.
 - [ ] Crafting uses wood in a Lumber Rack up to 24 tiles away.

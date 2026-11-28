@@ -592,6 +592,13 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 83: blocks vs walls, whole-block ores
+
+| Change | Where |
+| --- | --- |
+| Walls darker, shadow from any block | `ChunkRenderer.wall_block_ratio`, `wall_desat`, `block_shadow`, `block_shadow_px`; terrain.gdshader (the back wall shadow) |
+| Ore blocks | `data/tiles/copper_ore.tres`, `iron_ore.tres` (`terrain`); `assets/terrain/*_ore.png`, icons; `tools/make_ore_art.py` |
+
 ## Phase 82: tweaks
 
 | Change | Where |

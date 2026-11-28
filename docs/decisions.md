@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 83, blocks vs walls, whole-block ores
+
+- **Patrick:** a dirt block on a dirt wall is hard to see; ores should be whole blocks
+  of ore, like Terraria, not a piece of ore in stone.
+- **Claude:** walls darker and greyer (`wall_block_ratio` 0.6 to 0.4, `wall_desat` 0.2 to
+  0.35) and the soft wall shadow now comes from natural blocks too (0.45 over 4 px, was
+  built only, 0.72 over 2), no outlines; copper and iron ore get their own terrain.
+
 ## 2026-11-28: Phase 82, tweaks
 
 - **Patrick:** a bit more reach (a block or two); craft from storage further away; the
