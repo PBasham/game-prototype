@@ -27,7 +27,7 @@ const BUSH_GROWN := 1
 @export var tree_health := 100.0
 ## A fallen tree drops one Log per this many tiles of its height, rounded (small pines
 ## about 14 tiles: 2, medium about 19: 3, large about 23: 4). 1 Log crafts into 4 Wood.
-@export var tiles_per_log := 6.0
+@export var tiles_per_log := 4.5
 ## Seeds dropped: always 1, plus this chance of a second.
 @export_range(0.0, 1.0) var extra_seed_chance := 0.5
 ## Seconds a tree takes to fall over.

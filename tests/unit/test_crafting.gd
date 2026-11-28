@@ -204,9 +204,9 @@ func test_logs_make_wood_and_build_log_cabins() -> void:
 	assert_eq(w.blocks.def(w.blocks.index_of(&"log")).drop_item, &"", "a log block gives the log back")
 	assert_eq((w.walls.def(w.walls.index_of(&"log_wall")) as TileDef).drop_item, &"log")
 	# Bigger trees, more logs.
-	assert_eq(w.plants.logs_for(13.8), 2)
-	assert_eq(w.plants.logs_for(18.1), 3)
-	assert_eq(w.plants.logs_for(24.4), 4)
+	assert_eq(w.plants.logs_for(13.8), 3)
+	assert_eq(w.plants.logs_for(18.1), 4)
+	assert_eq(w.plants.logs_for(24.4), 5)
 	# Torches need slime.
 	for t in Crafting.recipes_for(&""):
 		if t.output == &"torch":

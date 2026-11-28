@@ -90,6 +90,8 @@ func nearest_enemy() -> Enemy:
 	var best: Enemy = null
 	var best_d := spell.summon_tiles * World.TILE
 	for e in world.enemies():
+		if not e.summon_should_attack():
+			continue  # critters (unless they've turned on you), other summons
 		var d := e.hit_rect().get_center().distance_to(global_position)
 		if d < best_d:
 			best_d = d

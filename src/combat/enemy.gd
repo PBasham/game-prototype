@@ -256,6 +256,12 @@ func _physics_process(delta: float) -> void:
 	_since_hit += delta
 	_squash = maxf(_squash - delta, 0.0)
 	var wet := data.swims and _in_water()
+	if is_summon() and _summon_dive(delta):
+		move_and_slide()
+		_summon_tick(delta)
+		_update_look()
+		queue_redraw()
+		return
 	_floating = data.floats and world.voxels != null \
 		and world.voxels.liquid_at(global_position + Vector2(0.0, -data.size.y * 0.35))
 	if _floating and velocity.y > -data.float_rise * TILE * 1.5:
@@ -748,13 +754,41 @@ func _summon_target() -> Enemy:
 	var best_d := summon_spell.summon_tiles * TILE
 	for n in get_tree().get_nodes_in_group(&"enemies"):
 		var e := n as Enemy
-		if e == null or e.is_queued_for_deletion() or e.health <= 0.0:
+		if e == null or e.is_queued_for_deletion() or e.health <= 0.0 or not e.summon_should_attack():
 			continue
 		var d := absf(_wrapped_dx(e.global_position.x)) + absf(e.global_position.y - global_position.y) * 0.5
 		if d < best_d:
 			best_d = d
 			best = e
 	return best
+
+
+## True when your summons go for this enemy: not other summons, and not critters (fish,
+## crabs, fireflies) unless they've turned on you.
+func summon_should_attack() -> bool:
+	return not is_summon() and not (data.is_critter() and not _angry)
+
+
+## Under water after an enemy: swims straight at it (no floating, no gravity). False
+## when there's nothing in the water to go after (then it floats and hops as usual).
+func _summon_dive(delta: float) -> bool:
+	var target := _summon_target()
+	if target == null or world.voxels == null:
+		return false
+	var mid := global_position + Vector2(0.0, -data.size.y * 0.5)
+	var their := target.global_position + Vector2(0.0, -target.data.size.y * 0.5)
+	var me_wet := world.voxels.liquid_at(mid)
+	var them_wet := world.voxels.liquid_at(their)
+	if not them_wet or not (me_wet or their.y > mid.y + TILE):
+		return false
+	if not me_wet and not _floating:
+		return false  # on dry land: hop over to the water first
+	var to := Vector2(_wrapped_dx(their.x), their.y - mid.y)
+	var want := to.normalized() * summon_spell.summon_swim_speed * TILE
+	velocity = velocity.move_toward(want, 40.0 * TILE * delta)
+	_hop_vx = 0.0
+	_dir = signf(to.x) if to.x != 0.0 else _dir
+	return true
 
 
 func _summon_dir() -> float:

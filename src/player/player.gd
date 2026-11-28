@@ -1700,8 +1700,8 @@ func _update_use(delta: float) -> void:
 		toggle_movement_spell()
 	if character and not input_blocked:
 		if _just("spellbook"):
-			if Input.is_key_pressed(KEY_ALT):
-				toggle_tool_spell(&"shaping_spell")
+			if Input.is_key_pressed(KEY_CTRL) and Input.is_key_pressed(KEY_SHIFT):
+				toggle_tool_spell(&"shaping_spell")  # Ctrl + Shift + R (Phase 72; was Alt + R)
 			else:
 				toggle_tool_spell(&"chopping_spell" if Input.is_key_pressed(KEY_CTRL) else &"mining_spell")
 		for k: StringName in CharacterData.QUICK_KEYS:

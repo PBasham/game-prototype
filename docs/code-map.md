@@ -592,6 +592,14 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 72: tweaks
+
+| Change | Where |
+| --- | --- |
+| Shaping Spell key | `Player._update_use` (Ctrl + Shift + R), `Hud.dedicated_key` |
+| More logs | `PlantLayer.tiles_per_log` 4.5 |
+| Summons skip critters, the slime dives | `Enemy.summon_should_attack`, `_summon_dive`, `SpellData.summon_swim_speed`; `Familiar.nearest_enemy` |
+
 ## Phase 71: station tabs
 
 | Change | Where |
@@ -747,7 +755,7 @@ saves still load.
 | Shapes drawn | `terrain.gdshader` `shape_of`, `in_shape` (B channel of the tile texture); `ChunkBuildJob.shape`; `ChunkRenderer._tile_color` |
 | Shaped collision | `ChunkRenderer.SHAPE_POLYGONS`, `_shape_alt` (TileSet alternatives 1 to 6 on SOLID rows) |
 | Saving | `WorldSave.META_SHAPES`; `World._shapes_to_dict`, load in `World` after `load_chunks` |
-| Shaping Spell | `SpellData.shapes_blocks`; `ItemUser.Mode.SHAPE`, `shape_cycle`, `shape_step`; `World.request_set_shape`; Alt + R in `Player`; `Hud.dedicated_key`; `data/empower/gather_reach.tres` |
+| Shaping Spell | `SpellData.shapes_blocks`; `ItemUser.Mode.SHAPE`, `shape_cycle`, `shape_step`; `World.request_set_shape`; Ctrl + Shift + R in `Player`; `Hud.dedicated_key`; `data/empower/gather_reach.tres` |
 | Placing reach | `ItemUser.reach` (the Mining Spell's reach) |
 | `shapes` console command | `DevConsole._shapes` |
 

@@ -208,3 +208,31 @@ func test_torches_hang_on_tree_trunks() -> void:
 		if w.plants.plant_at(g) == null:
 			break
 	assert_eq(w.data.get_object(spot.x, spot.y), 0, "the torch came off with the tree")
+
+
+## Phase 72: your summoned slime leaves critters alone, but dives after an enemy in water.
+func test_summons_skip_critters_and_dive_after_enemies() -> void:
+	_tank(9)
+	# You stand on a ledge beside the tank (summons stay within reach of you).
+	for x in range(17, 24):
+		w.request_set_block(floor_tile + Vector2i(x, 0), w.blocks.index_of(&"stone"))
+	w.teleport_player(w.tile_to_world(floor_tile + Vector2i(20, -1)) + Vector2(4, 0))
+	var spell := ItemData.find(ItemData.spell_key(&"summon_slime")) as SpellData
+	var fish := w.request_spawn_enemy(_enemy(&"fish"), w.tile_to_world(floor_tile + Vector2i(8, -2)) + Vector2(4, 0))
+	assert_false(fish.summon_should_attack(), "a fish minding its own business")
+	var mine := w.request_spell_effect(spell, w.tile_to_world(floor_tile + Vector2i(8, -9)), 1.0) as Enemy
+	mine.global_position = w.tile_to_world(floor_tile + Vector2i(8, -9))
+	assert_false(mine.summon_should_attack(), "not your own summons either")
+	await wait_seconds(1.0)
+	assert_eq(fish.health, fish.data.max_health, "it left the fish alone")
+	var top := mine.global_position.y
+	assert_lt(top, w.tile_to_world(floor_tile + Vector2i(0, -6)).y, "floating near the top")
+	fish.take_damage(0.01, w.player)  # now it's angry: fair game
+	assert_true(fish.summon_should_attack())
+	var dived := false
+	for i in 240:
+		await wait_physics_frames(1)
+		if not is_instance_valid(fish) or fish.health < fish.data.max_health - 0.01 or mine.global_position.y > top + 3.0 * World.TILE:
+			dived = true
+			break
+	assert_true(dived, "it swims down after it")

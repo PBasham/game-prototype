@@ -29,7 +29,7 @@ func test_everyone_starts_with_it_on_alt_r() -> void:
 	assert_true(w.character.knows(&"shaping_spell"))
 	var spell := ItemData.find(ItemData.spell_key(&"shaping_spell")) as SpellData
 	assert_true(spell.shapes_blocks)
-	assert_eq(Hud.dedicated_key(spell), "Alt + R")
+	assert_eq(Hud.dedicated_key(spell), "Ctrl + Shift + R")
 	w.player.toggle_tool_spell(&"shaping_spell")
 	assert_eq(w.player.use_item().id, spell.id)
 

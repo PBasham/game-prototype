@@ -24,7 +24,7 @@ Inspector. Permanent changes go in the `.tres` or the script's `@export` default
 | **B** | The buff set: casts every spell in it at once |
 | **R** | Mining Spell in hand (again: put it away, back to your hotbar slot) |
 | **Ctrl + R** | Chopping Spell in hand (same) |
-| **Alt + R** | Shaping Spell in hand (same) |
+| **Ctrl + Shift + R** | Shaping Spell in hand (same) |
 | **F** | Movement spell on or off. Levitate: up raises you to its hover height, down lowers you, and you stay at the height you leave it (the one in the Equipment window's Movement slot; empty = Fly, else Levitate) |
 | **Caps Lock** | Walk / run toggle |
 | **Ctrl + mouse wheel** | Change the area: one setting shared by spells and building (blocks, walls, grass seeds), up to the spellbook's `build_area_max` (3x3). Pickaxes keep their own fixed area. Wheel up = bigger. |
@@ -357,7 +357,7 @@ A character is saved separately from worlds: `user://characters/<name>.gpchar` (
 look, inventory, equipment, spells). You pick or make one on the main menu's character
 page (see [guide.md](guide.md#starting-the-game-menu-worlds-saves)); any character can
 play any world. A new character starts with the **Mining Spell**, **Chopping Spell** and **Shaping Spell**
-(tools are spells: R, Ctrl + R and Alt + R take them in hand) and a **Copper Dagger**, nothing
+(tools are spells: R, Ctrl + R and Ctrl + Shift + R take them in hand) and a **Copper Dagger**, nothing
 else (`CharacterData.STARTING_SPELLS`, `STARTING_ITEMS`). Characters from before Phase
 24 learn both spells when loaded; their old pickaxes and axes are gone.
 
@@ -545,7 +545,7 @@ Sticks and rocks lying around are the `Forage` node (crafting.md).
   chunk loads. After that they're the world's: chopped trees stay chopped.
 - **Trees:** `tree_health` (100). Each axe hit rocks the tree (`wiggle_degrees`); at 0
   it falls away from you over `fall_time` and breaks into Logs along its trunk (one per
-  `tiles_per_log`, 6, tiles of height: 2 to 4) and 1 seed (`extra_seed_chance` of a second). Removing the grass under a tree breaks
+  `tiles_per_log`, 4.5, tiles of height: 3 to 5) and 1 seed (`extra_seed_chance` of a second). Removing the grass under a tree breaks
   it on the spot.
 - **Darkwood trees** (the Dark Forest, tree variants after the 12 pines) drop **Darkwood
   Logs** (`dark_log`) instead, more of them (they're 22 to 35 tiles tall). They build

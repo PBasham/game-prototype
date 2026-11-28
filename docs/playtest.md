@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 72: tweaks (branch phase-72-tweaks)**
+- [ ] Ctrl + Shift + R takes the Shaping Spell (Alt + R no longer does).
+- [ ] Trees drop a few more Logs (3 to 5).
+- [ ] Your slime ignores fish and crabs. Hit a fish: the slime dives after it.
+
 **Phase 71: station tabs (branch phase-71-crafting-tabs)**
 - [ ] Workbench: Stations, Furniture, Storage, Building, Items. Each makes sense?
 - [ ] Hand recipes (Campfire, Torch, Wood, Platforms, bottles of water) are at the

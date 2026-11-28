@@ -198,6 +198,9 @@ enum BookPose { HAND, FLOAT, HIP }
 ## close (tiles) it gets before it slides straight into the enemy instead of hopping.
 @export var summon_hop_wait := 0.35
 @export var summon_ram_tiles := 2.5
+## Phase 72: how fast a summoned slime swims (tiles a second) when it dives after an
+## enemy under water (it floats otherwise).
+@export var summon_swim_speed := 9.0
 ## Melee summon: sideways speed of an aimed hop is capped at the slime's hop speed
 ## times this, so it can land on enemies a bit further off.
 @export var summon_hop_reach := 1.6

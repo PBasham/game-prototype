@@ -91,6 +91,12 @@ More forms as more slimes are added (add them to `summon_enemy_ranks`, raise the
 node's `max_rank`). It shares the summon limit with the Forest Spirit (one, two with
 the Pendant).
 
+Phase 72: no summon (slime or familiar) goes after **critters** (fish, crabs, fireflies)
+unless they've turned on you (`Enemy.summon_should_attack`). In water the slime floats
+as usual, but with an enemy in the water it **dives**: it swims straight at it at
+`summon_swim_speed` (9 tiles a second, on the spell) with no gravity
+(`Enemy._summon_dive`), then floats back up when there's nothing left to chase.
+
 ### Forest Spirit (Dark Forest)
 
 `ai` SPIRIT: a glowing blue ball that floats (no gravity), never more than

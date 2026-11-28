@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 72, tweaks
+
+- **Patrick:** Shaping Spell on Ctrl + Shift + R; trees drop a little more logs; Summon
+  Slime goes into water after underwater enemies, but doesn't target passive animals.
+- **Claude:** `tiles_per_log` 6 to 4.5 (3 to 5 Logs); familiars skip critters too, and a
+  critter you've hit (angry) is fair game.
+
 ## 2026-11-27: Phase 71, station tabs
 
 - **Patrick:** tabs for the crafting stations too, logical ones; recipes crafted by hand
