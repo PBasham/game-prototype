@@ -213,7 +213,7 @@ Defaults are written by `tools/make_items.gd` (items, spells, objects and recipe
 
 The **Catalog** is a panel, not an item: **J**, or the **Catalog** button in the
 inventory (next to the trash), opens it next to the inventory (`CatalogWindow`, src/ui/hud/catalog_window.gd; data in `Catalog`,
-src/items/catalog.gd). Three tabs:
+src/items/catalog.gd). Four tabs:
 
 - **Items:** every item but spells. Ones you've never had show as black silhouettes;
   the title shows "found / total". Click a found item for its page: description, where
@@ -233,7 +233,13 @@ src/items/catalog.gd). Three tabs:
   list what makes it and what it goes into. Recipes you haven't unlocked show as "???"
   with their station; known ones show the ingredients. Click a known row to jump to that
   item's recipes.
-- **Search** (Items and Enemies): the box at the top right narrows the list to names
+- **Log** (Phase 84): your unlocks as they happened, newest first, each with the in-game
+  day and time: "New recipe: Glass Bottle", "Can learn: Floating Torch", "Learned:
+  Floating Torch". The last `CharacterData.LOG_MAX` (200) are kept in
+  `CharacterData.messages` and saved with the character. `Hud.log_message` stamps a line
+  (`WorldClock.label`); `show_new_recipe` and `CharacterData.spell_learned` add them.
+  The search box filters it too.
+- **Search** (Items, Entities and Log): the box at the top right narrows the list to names
   containing what you type. Only found things match, so it doesn't give away what's
   still hidden. Enter or Esc stops typing.
 

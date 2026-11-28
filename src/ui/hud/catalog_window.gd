@@ -16,7 +16,10 @@ const TAB_H := 12
 const DETAIL_W := 132
 const ROW_H := 20
 const RECIPE_ROWS := 8
-const TABS: Array[String] = ["Items", "Entities", "Recipes"]
+const TABS: Array[String] = ["Items", "Entities", "Recipes", "Log"]
+## The Log tab (Phase 84): one line a message, newest first.
+const LOG_ROW_H := 11
+const LOG_STAMP_W := 62
 ## The Entities tab's sub tabs (Phase 77), in EnemyData.CatalogGroup order (after AUTO).
 const SUB_TABS: Array[String] = ["Enemies", "Bosses", "NPCs", "Peaceful"]
 const SUB_H := 12
@@ -60,6 +63,8 @@ func title_right() -> String:
 		1:
 			var p := Catalog.enemy_progress(c)
 			return "%d / %d found" % [p.x, p.y]
+		3:
+			return "%d message%s" % [c.messages.size() if c else 0, "" if c and c.messages.size() == 1 else "s"]
 	return ""
 
 
@@ -72,7 +77,7 @@ func _top() -> float:
 
 
 func tab_rect(i: int) -> Rect2:
-	return Rect2(PAD + i * 52, BODY_TOP, 50, TAB_H)
+	return Rect2(PAD + i * 46, BODY_TOP, 44, TAB_H)
 
 
 func cell(i: int) -> Rect2:
@@ -121,7 +126,28 @@ func _list_size() -> int:
 			return _items().size()
 		1:
 			return _enemies().size()
+		3:
+			return _log().size()
 	return _recipes().size()
+
+
+## The Log tab's lines, newest first, narrowed by the search.
+func _log() -> Array[Dictionary]:
+	var c := _char()
+	var out: Array[Dictionary] = []
+	if c == null:
+		return out
+	var q := search.strip_edges().to_lower()
+	for i in range(c.messages.size() - 1, -1, -1):
+		var m := c.messages[i]
+		if q == "" or q in String(m["text"]).to_lower():
+			out.append(m)
+	return out
+
+
+## Log lines that fit.
+func _log_rows() -> int:
+	return int((size.y - _top() - PAD) / LOG_ROW_H)
 
 
 ## The Items tab's list, narrowed by the search.
@@ -194,6 +220,8 @@ func hit(local: Vector2) -> Array:
 		for i in SUB_TABS.size():
 			if sub_tab_rect(i).has_point(local):
 				return [Part.SUB_TAB, i]
+	if tab == 3:
+		return [Part.NONE, -1]
 	if tab != 2:
 		for i in _links.size():
 			if (_links[i][0] as Rect2).has_point(local):
@@ -239,6 +267,27 @@ func draw_body(font: Font) -> void:
 			_draw_enemies(font, h, hot_link)
 		2:
 			_draw_recipes(font, h)
+		3:
+			_draw_log(font)
+
+
+func _draw_log(font: Font) -> void:
+	var list := _log()
+	if list.is_empty():
+		_text(font, Vector2(PAD, _top() + 10), "Nothing yet. New recipes and spells you learn are listed here." if search == "" else "No messages match.", size.x - PAD * 2, UiSkin.DIM)
+		return
+	var shown := _log_rows()
+	for i in range(scroll, mini(list.size(), scroll + shown)):
+		var y := _top() + (i - scroll) * LOG_ROW_H
+		if (i - scroll) % 2 == 1:
+			draw_rect(Rect2(PAD - 2, y, size.x - PAD * 2 + 4, LOG_ROW_H), Color(1, 1, 1, 0.04))
+		draw_string(font, Vector2(PAD, y + 8), String(list[i]["t"]), HORIZONTAL_ALIGNMENT_LEFT, LOG_STAMP_W, 6, UiSkin.DIM)
+		draw_string(font, Vector2(PAD + LOG_STAMP_W, y + 8), String(list[i]["text"]), HORIZONTAL_ALIGNMENT_LEFT,
+			size.x - PAD * 2 - LOG_STAMP_W, 7, UiSkin.TEXT)
+	if scroll > 0:
+		draw_string(font, Vector2(size.x - PAD - 6, _top() - 1), "^", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
+	if scroll + shown < list.size():
+		draw_string(font, Vector2(size.x - PAD - 6, size.y - 2), "v", HORIZONTAL_ALIGNMENT_LEFT, -1, 7, UiSkin.GOLD)
 
 
 func _draw_items(font: Font, h: Array, hot_link: Variant) -> void:
@@ -457,8 +506,8 @@ func _scroll_marks(font: Font, total: int, cols: int, rows_shown: int) -> void:
 
 func body_click(mb: InputEventMouseButton) -> void:
 	if mb.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
-		var cols := 1 if tab == 2 else COLS
-		var shown := RECIPE_ROWS if tab == 2 else _rows()
+		var cols := 1 if tab in [2, 3] else COLS
+		var shown := RECIPE_ROWS if tab == 2 else (_log_rows() if tab == 3 else _rows())
 		var rows := ceili(_list_size() / float(cols))
 		scroll = clampi(scroll + (1 if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1), 0, maxi(0, rows - shown))
 		return

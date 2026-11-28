@@ -592,6 +592,14 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 84: message log
+
+| Change | Where |
+| --- | --- |
+| The log | `CharacterData.messages`, `LOG_MAX`, `log_message`, `spell_learned`, `message_logged`; saved as "messages" |
+| Adding lines | `Hud.log_message`, `show_new_recipe`; the `spell_learned` hookup in `Hud` setup |
+| Log tab | `CatalogWindow.TABS`, `_log`, `_log_rows`, `_draw_log`, `LOG_ROW_H`, `LOG_STAMP_W` |
+
 ## Phase 83: blocks vs walls, whole-block ores
 
 | Change | Where |

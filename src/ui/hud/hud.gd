@@ -365,6 +365,9 @@ func _ready() -> void:
 	EventBus.player_died.connect(_on_player_died)
 	world.character.inventory.changed.connect(_redraw)
 	world.character.magic_changed.connect(_layout)
+	world.character.spell_learned.connect(func(id: StringName) -> void:
+		var sp := ItemData.find(ItemData.spell_key(id))
+		log_message("Learned: %s" % (sp.display_name if sp else String(id))))
 	world.character.recipe_discovered.connect(func(what: String) -> void:
 		show_new_recipe(what)
 		EventBus.sound_requested.emit(&"learn_spell", world.player.chest())
@@ -1066,7 +1069,18 @@ func show_banner(text: String) -> void:
 
 ## "New recipe: X". More found within a moment join the same banner: "New recipes: A, B
 ## and 3 more".
+## Adds a line to the character's message log (the Catalog's Log tab), stamped with the
+## in-game day and time.
+func log_message(text: String) -> void:
+	if world and world.character:
+		world.character.log_message(text, world.clock.label() if world.clock else "")
+
+
 func show_new_recipe(what: String) -> void:
+	if what.begins_with("Learn: "):
+		log_message("Can learn: %s" % what.trim_prefix("Learn: "))
+	else:
+		log_message("New recipe: %s" % what)
 	var fresh := _banner.visible and not _banner_recipes.is_empty() and _banner_left > banner_seconds + banner_fade - 0.5
 	if not fresh:
 		_banner_recipes.clear()

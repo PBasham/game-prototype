@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 84, message log
+
+- **Patrick:** a place to see past messages in full, "mostly unlocks".
+- **Claude:** a fourth Catalog tab, Log: new recipes (also "Can learn" spell recipes) and
+  spells learned, newest first, with the in-game day and time, searchable; the last 200
+  saved with the character. Pickups are left out.
+
 ## 2026-11-28: Phase 83, blocks vs walls, whole-block ores
 
 - **Patrick:** a dirt block on a dirt wall is hard to see; ores should be whole blocks

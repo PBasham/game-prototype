@@ -19,6 +19,10 @@ signal equipment_changed
 ## A hidden recipe (or a spell to learn) showed up because you got one of its key
 ## items for the first time.
 signal recipe_discovered(display_name: String)
+## A spell joined known_spells (learn_spell).
+signal spell_learned(spell_id: StringName)
+## A line was added to the message log (the Catalog's Log tab).
+signal message_logged
 
 const DEFAULT_NAME := "default"
 ## Used when the book slot is empty (data/items).
@@ -193,6 +197,11 @@ var seen_items: Dictionary[StringName, bool] = {}
 ## Alchemist's Bench recipes found by experimenting (recipe id -> true). The Potions tab
 ## recipes are known from the start (AlchemyBench.knows).
 var brews: Dictionary[StringName, bool] = {}
+## The message log (Phase 84): unlocks as they happened, oldest first, each
+## {"t": "Day 3, 14:20", "text": "New recipe: Glass Bottle"}. The last LOG_MAX are kept
+## and saved.
+var messages: Array[Dictionary] = []
+const LOG_MAX := 200
 ## The coin pouch (Phase 76): every coin you have, as a copper total (Coins.split shows it
 ## by coin). Coins you pick up go here, not into the inventory. Kept when you die.
 var coins := 0
@@ -507,6 +516,15 @@ func learn_spell(spell_id: StringName) -> void:
 	if not knows(spell_id):
 		known_spells.append(spell_id)
 		magic_changed.emit()
+		spell_learned.emit(spell_id)
+
+
+## Adds a line to the message log, stamped with the in-game day and time.
+func log_message(text: String, stamp: String) -> void:
+	messages.append({"t": stamp, "text": text})
+	if messages.size() > LOG_MAX:
+		messages = messages.slice(messages.size() - LOG_MAX)
+	message_logged.emit()
 
 
 ## The highest spell tier the equipped book can hold.
@@ -687,6 +705,9 @@ static func load_file(path: String) -> CharacterData:
 		c.seen_items[StringName(id)] = true
 	for id: String in d.get("brews", []):
 		c.brews[StringName(id)] = true
+	for m: Variant in d.get("messages", []):
+		if m is Array and (m as Array).size() >= 2:
+			c.messages.append({"t": String(m[0]), "text": String(m[1])})
 	c.coins = int(d.get("coins", 0))
 	for id: String in d.get("slain", {}):
 		c.slain[StringName(id)] = int(d["slain"][id])
@@ -805,6 +826,7 @@ func to_dict() -> Dictionary:
 		"empower": _empower_dict(),
 		"seen_items": seen_items.keys().map(func(k: StringName) -> String: return String(k)),
 		"brews": brews.keys().map(func(k: StringName) -> String: return String(k)),
+		"messages": messages.map(func(m: Dictionary) -> Array: return [m["t"], m["text"]]),
 		"command_slot": true,
 		"coins": coins,
 		"slain": _slain_dict(), "seen_drops": _drops_dict()}

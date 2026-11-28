@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 84: message log (branch phase-84-message-log)**
+- [ ] Catalog (J) has a fourth tab, Log. Unlock a recipe (pick up Clay, Sand...): it's
+      listed at the top with the day and time. Learn a spell: "Learned: ...".
+- [ ] The search box filters the log. Quit and come back: the log is still there.
+
 **Phase 83: blocks vs walls, whole-block ores (branch phase-83-walls-ores)**
 - [ ] Underground, a dirt block in front of a dirt wall stands out: walls are darker and
       greyer, with a soft shadow under and beside blocks. No outlines.
