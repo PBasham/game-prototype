@@ -185,6 +185,16 @@ enum BottleShape { NONE, CLAY_THIN, CLAY_REGULAR, CLAY_LARGE, GLASS_THIN, GLASS_
 ## Water cells filling it takes away (16 = a tile): 1 for bottles, 16 for the Clay
 ## Bucket. 0 = none.
 @export var fill_takes := 0
+## Empty bottles: how many sips (charges) a full one holds (Phase 80).
+@export var holds_charges := 0
+## Bottles of a liquid: sips left in this one, the liquid, and the empty bottle it's in.
+## A part-drunk bottle is its own item ("Clay Jug of Water (2/4)", `<liquid>_<bottle>_<n>`)
+## so it stacks with its own kind; drinking leaves the next one down (`leaves_item`).
+@export var charges := 0
+@export var liquid: StringName = &""
+@export var container: StringName = &""
+## Set on the part-drunk ones: the full bottle they're a stage of (kept out of the Catalog).
+@export var charge_of: StringName = &""
 ## Left-click to pour out this many water cells (a full Clay Bucket); it becomes
 ## `leaves_item`.
 @export var pours_water := 0

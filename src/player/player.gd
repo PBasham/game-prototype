@@ -1751,6 +1751,10 @@ func _update_use(delta: float) -> void:
 			# Anything outlined under the cursor (furniture, a stick or rock, a ripe bush)
 			# wins over the back layer, so you pick it up instead of mining the wall.
 			var outlined: bool = world != null and world.hover_outline != null and world.hover_outline.hovered() != null
+			# Empty hands: a sip of the water under the cursor.
+			if (held_item == null or stowed) and world and world.item_user \
+					and world.item_user.sip_at(world.world_to_tile(aim_point())):
+				return
 			# An empty bottle or bucket fills from water (or a Liquid Barrel) first.
 			if held_item != null and not stowed and held_item.fills_into != &"" and world and world.item_user \
 					and world.item_user.fill_held(world.world_to_tile(aim_point()), Input.is_key_pressed(KEY_SHIFT)) > 0:

@@ -56,7 +56,7 @@ func test_every_empty_bottle_fills_into_its_water() -> void:
 	for b in BOTTLES:
 		var item := ItemData.find(b)
 		assert_eq(item.fills_into, StringName("water_" + String(b)), String(b))
-		assert_eq(item.fill_takes, 1, "a bottle takes one cell")
+		assert_eq(item.fill_takes, item.holds_charges, "a cell a sip")
 		assert_not_null(ItemData.find(item.fills_into))
 	var iu := w.item_user
 	assert_eq(iu._mode_for(ItemData.find(&"glass_vial"), true), ItemUser.Mode.FILL)
@@ -84,10 +84,10 @@ func test_shift_fills_as_far_as_the_water_goes() -> void:
 	var spot := floor_tile + Vector2i(4, -1)
 	v.request_fill(spot, &"water")
 	v.take_liquid(Rect2i(spot, Vector2i.ONE), 13)
-	_hold(&"clay_jug", 10)
-	assert_eq(w.item_user.fill_held(spot, true), 3, "three cells, three jugs")
-	assert_eq(w.character.inventory.count_of(&"clay_jug"), 7)
-	assert_eq(_tank_water(), 0)
+	_hold(&"clay_bottle", 10)
+	assert_eq(w.item_user.fill_held(spot, true), 1, "three cells: one bottle of two sips")
+	assert_eq(w.character.inventory.count_of(&"clay_bottle"), 9)
+	assert_eq(_tank_water(), 1)
 
 
 func test_no_water_no_fill() -> void:
@@ -141,13 +141,13 @@ func test_barrels_fill_bottles_and_buckets() -> void:
 	w.request_barrel_water(spot, 20)
 	_hold(&"clay_jug", 1)
 	assert_eq(w.item_user.fill_held(spot), 1)
-	assert_eq(w.barrel_water(spot), 19, "a bottle takes one cell")
+	assert_eq(w.barrel_water(spot), 16, "a jug takes four cells")
 	_hold(&"clay_bucket", 1)
 	assert_eq(w.item_user.fill_held(spot), 1)
-	assert_eq(w.barrel_water(spot), 3)
+	assert_eq(w.barrel_water(spot), 0)
 	_hold(&"clay_bucket_water", 1)
 	assert_true(w.item_user.pour_held(spot))
-	assert_eq(w.barrel_water(spot), 19, "poured back in")
+	assert_eq(w.barrel_water(spot), 16, "poured back in")
 
 
 func test_bucket_recipe() -> void:
@@ -156,3 +156,75 @@ func test_bucket_recipe() -> void:
 	assert_eq(r.station, &"furnace")
 	assert_eq(r.tab, "Bottles")
 	assert_eq(r.inputs, {&"clay": 5} as Dictionary[StringName, int])
+
+
+## Phase 80: sips.
+func test_bottles_hold_sips() -> void:
+	var sizes := {&"clay_flask": 1, &"glass_vial": 1, &"clay_bottle": 2, &"glass_bottle": 2,
+		&"glass_flask": 3, &"clay_jug": 4}
+	for b: StringName in sizes:
+		var n: int = sizes[b]
+		assert_eq(ItemData.find(b).holds_charges, n, String(b))
+		var full := ItemData.find(StringName("water_" + String(b)))
+		assert_eq(full.charges, n)
+		assert_eq(full.thirst_value, 20.0)
+		assert_eq(full.container, b)
+		var id := full.id
+		for left in range(n, 0, -1):
+			var it := ItemData.find(id)
+			assert_not_null(it, "%s %d" % [b, left])
+			assert_eq(it.charges, left)
+			id = it.leaves_item
+		assert_eq(id, b, "the last sip leaves the empty bottle")
+	assert_false(Catalog.all_items().has(ItemData.find(&"water_clay_jug_2")), "part-drunk ones stay out of the Catalog")
+
+
+func test_drinking_keeps_the_rest_in_hand() -> void:
+	_hold(&"water_clay_jug", 1)
+	w.player.thirst = 0.0
+	assert_true(w.item_user.eat_held())
+	assert_almost_eq(w.player.thirst, 20.0, 0.01)
+	assert_eq(w.character.inventory.ids[0], &"water_clay_jug_3", "the jug, a sip down, still held")
+	w.item_user.eat_held()
+	w.item_user.eat_held()
+	w.item_user.eat_held()
+	assert_eq(w.character.inventory.ids[0], &"clay_jug")
+
+
+func test_topping_up_takes_whats_missing() -> void:
+	await _tank(2)
+	_hold(&"water_clay_jug_1", 1)
+	var before := _tank_water()
+	assert_eq(w.item_user.fill_held(floor_tile + Vector2i(4, -1)), 1)
+	assert_eq(_tank_water(), before - 3)
+	assert_eq(w.character.inventory.count_of(&"water_clay_jug"), 1)
+
+
+func test_pouring_one_bottle_into_another() -> void:
+	var r := Bottles.pour(ItemData.find(&"water_glass_vial"), ItemData.find(&"water_clay_jug_2"))
+	assert_eq(r, [&"glass_vial", &"water_clay_jug_3"] as Array[StringName])
+	r = Bottles.pour(ItemData.find(&"water_clay_jug"), ItemData.find(&"glass_bottle"))
+	assert_eq(r, [&"water_clay_jug_2", &"water_glass_bottle"] as Array[StringName])
+	assert_true(Bottles.pour(ItemData.find(&"water_glass_vial"), ItemData.find(&"water_glass_vial")).is_empty(), "full")
+	# In the inventory: right-click a vial on the mouse onto the jug.
+	var inv := w.character.inventory
+	inv.set_slot(3, &"water_clay_jug_2", 1)
+	w.hud.cursor_id = &"water_glass_vial"
+	w.hud.cursor_count = 1
+	w.hud.right_click_slot(3, inv)
+	assert_eq(inv.ids[3], &"water_clay_jug_3")
+	assert_eq(w.hud.cursor_id, &"glass_vial", "the empty vial on the mouse")
+
+
+func test_sipping_from_water() -> void:
+	await _tank(2)
+	w.character.inventory.set_slot(0, &"", 0)
+	w.player.select_slot(0)
+	w.player.thirst = 10.0
+	var before := _tank_water()
+	assert_true(w.item_user.sip_at(floor_tile + Vector2i(4, -1)))
+	assert_almost_eq(w.player.thirst, 30.0, 0.01)
+	assert_eq(_tank_water(), before, "sipping takes no water")
+	w.item_user.sip_at(floor_tile + Vector2i(4, -1))
+	assert_almost_eq(w.player.thirst, 30.0, 0.01, "a short wait between sips")
+	assert_false(w.item_user.sip_at(floor_tile + Vector2i(4, -12)), "no water there")

@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 80, water sips
+
+- **Patrick:** bottles hold charges by size, +20 thirst a charge; part-drunk ones keep
+  their state so they stack; click one on another to pour a charge across; recipes need
+  full bottles; filling tops up; hand recipes updated; drink straight from water for 20
+  with a sip sound.
+- **Claude:** 1 / 2 / 3 / 4 sips (the Clay Jug stays the biggest at 4); a cell of water a
+  sip; each stage is its own item (`water_<bottle>_<n>`) chained by `leaves_item`;
+  pouring is right click with the bottle on the mouse onto a single bottle; sips 0.6 s
+  apart; placeholder art for part-drunk bottles is the full picture.
+
 ## 2026-11-27: Phase 79, filling bottles and the Clay Bucket
 
 - **Patrick:** right-click water with an empty clay or glass bottle to fill it; filling

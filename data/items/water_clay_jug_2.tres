@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_ou237"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_322ge"]
+[ext_resource type="Texture2D" path="res://assets/items/held/water_clay_jug_2.png" id="3_v8m62"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/water_clay_jug_2.png" id="4_qncah"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_1ycqn"]
+
+[sub_resource type="Resource" id="Resource_hyjd2"]
+script = ExtResource("2_322ge")
+id = &"water_clay_jug_2"
+texture = ExtResource("3_v8m62")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("5_1ycqn")
+kind = 11
+icon = ExtResource("4_qncah")
+max_stack = 30
+held = SubResource("Resource_hyjd2")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 3
+bottle_contents = Color(0.36, 0.62, 0.9, 1)
+thirst_value = 20.0
+leaves_item = &"water_clay_jug_1"
+fills_into = &"water_clay_jug"
+fill_takes = 2
+charges = 2
+liquid = &"water"
+container = &"clay_jug"
+charge_of = &"water_clay_jug"
+id = &"water_clay_jug_2"
+display_name = "Clay Jug of Water (2/4)"
+description = "Drink: +20 thirst a sip, 2 sips left. Right-click water to top it up."

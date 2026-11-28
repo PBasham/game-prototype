@@ -2710,6 +2710,9 @@ func right_click_slot(slot: int, inv: Inventory = null, half := false) -> void:
 			EventBus.debug_message.emit("%s coated: next %d hits poison" % [there.display_name, on_mouse.buff_poison_hits])
 			EventBus.sound_requested.emit(&"craft", Vector2.INF)
 		return
+	# A bottle on the mouse onto another one bottle: pour sips into it (Phase 80).
+	if on_mouse and there and on_mouse.charges > 0 and inv.counts[slot] == 1 and pour_bottle(slot, inv):
+		return
 	if cursor_count == 0 and not inv.is_empty(slot) and (half or inv.counts[slot] == 1):
 		if not half:
 			click_slot(slot, inv)  # the last one, with its coating or charges
@@ -2730,6 +2733,27 @@ func right_click_slot(slot: int, inv: Inventory = null, half := false) -> void:
 		cursor_count -= 1
 		if cursor_count <= 0:
 			_clear_cursor()
+
+
+## Pours sips from one bottle on the mouse into the single bottle in a slot (empty, or
+## the same liquid with room). What's left of the poured bottle stays on the mouse (or,
+## with more on the mouse, goes to the inventory). Returns true if it poured.
+func pour_bottle(slot: int, inv: Inventory) -> bool:
+	var r := Bottles.pour(ItemData.find(cursor_id), inv.item(slot))
+	if r.is_empty():
+		return false
+	inv.set_slot(slot, r[1], 1)
+	cursor_count -= 1
+	if cursor_count <= 0:
+		cursor_id = r[0]
+		cursor_count = 1
+		cursor_meta = {}
+	else:
+		var left := world.character.inventory.add(r[0], 1)
+		if left > 0:
+			world.request_spawn_drop(r[0], left, world.player.chest(), Vector2.ZERO)
+	EventBus.sound_requested.emit(&"splash", Vector2.INF)
+	return true
 
 
 ## Book or conduit slot: put the item on the mouse there (if it fits), taking out what

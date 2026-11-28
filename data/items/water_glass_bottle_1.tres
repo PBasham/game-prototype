@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_fhfhq"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_uoh27"]
+[ext_resource type="Texture2D" path="res://assets/items/held/water_glass_bottle_1.png" id="3_kh0th"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/water_glass_bottle_1.png" id="4_1pqhs"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_wq3ve"]
+
+[sub_resource type="Resource" id="Resource_06qu7"]
+script = ExtResource("2_uoh27")
+id = &"water_glass_bottle_1"
+texture = ExtResource("3_kh0th")
+type = &"block"
+grip = Vector2(12, 22)
+detail = 2
+
+[resource]
+script = ExtResource("5_wq3ve")
+kind = 11
+icon = ExtResource("4_1pqhs")
+max_stack = 30
+held = SubResource("Resource_06qu7")
+drop_size = 16
+impact_at = 0.2
+storage_tags = Array[StringName]([&"potion"])
+bottle_shape = 5
+bottle_contents = Color(0.36, 0.62, 0.9, 1)
+thirst_value = 20.0
+leaves_item = &"glass_bottle"
+fills_into = &"water_glass_bottle"
+fill_takes = 1
+charges = 1
+liquid = &"water"
+container = &"glass_bottle"
+charge_of = &"water_glass_bottle"
+id = &"water_glass_bottle_1"
+display_name = "Glass Bottle of Water (1/2)"
+description = "Drink: +20 thirst a sip, 1 sip left. Right-click water to top it up."

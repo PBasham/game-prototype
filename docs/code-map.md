@@ -592,6 +592,16 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 80: water sips
+
+| Change | Where |
+| --- | --- |
+| Sips | `ItemData.holds_charges`, `charges`, `liquid`, `container`, `charge_of`; `tools/make_items.gd` `_water_bottles`, `SIP_THIRST`; `data/items/water_*_<n>.tres` |
+| Pouring | `Bottles` (`src/items/bottles.gd`: `id_for`, `capacity`, `pour`); `Hud.pour_bottle` from `right_click_slot` |
+| Drinking stays in hand | `ItemUser.eat_from` puts `leaves_item` back in the same slot |
+| Sipping from water | `ItemUser.sip_at`, `sip_thirst`, `sip_cooldown`; `Player` right click with empty hands |
+| Catalog skips stages | `Catalog.all_items` |
+
 ## Phase 79: filling bottles, Clay Bucket
 
 | Change | Where |

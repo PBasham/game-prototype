@@ -7,7 +7,7 @@ script = ExtResource("1_t8lak")
 tab = "Items"
 inputs = Dictionary[StringName, int]({
 &"glass_flask": 1,
-&"water": 48
+&"water": 3
 })
 unlock_items = Array[StringName]([&"glass_flask", &"water"])
 output = &"water_glass_flask"

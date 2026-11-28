@@ -69,25 +69,39 @@ A fourth bar under hunger (`Player`, "Thirst" exports):
 
 Sleeping uses thirst like hunger. With the world's Thirst option off, the bar stays full.
 
-**Water bottles:** any empty bottle plus water, crafted by hand (no station). The water
-comes from around you (`World.water_for_crafting`): water you stand in or next to
-(within `World.craft_water_tiles` 2), Liquid Barrels within the crafting reach, and your
-Siphon Liquid's reservoir, used in that order. Drinking gives the empty bottle back
-(`leaves_item`); `thirst_value` is 15 a tile of water:
+**Water bottles (Phase 80: sips):** a bottle of water holds sips (`ItemData.charges`);
+each sip is +20 thirst (`SIP_THIRST` in `tools/make_items.gd`, the items' `thirst_value`).
+Drinking one sip leaves the bottle a sip down, still in your hand (`leaves_item` points to
+the next stage, "Clay Jug of Water (3/4)", id `water_clay_jug_3`), and the last sip
+leaves the empty bottle. Part-drunk bottles stack with their own kind and stay out of the
+Catalog (`ItemData.charge_of`). Recipes that use a bottle of water (Water Breathing) need
+a full one.
 
-| Bottle | Water (cells) | Thirst |
+| Bottle | Sips (`holds_charges`) | Water to fill (cells) |
 | --- | --- | --- |
-| Clay Flask, Glass Vial | 16 | +15 |
-| Clay Bottle, Glass Bottle | 32 | +30 |
-| Glass Flask | 48 | +45 |
-| Clay Jug | 64 | +60 |
+| Clay Flask, Glass Vial | 1 | 1 |
+| Clay Bottle, Glass Bottle | 2 | 2 |
+| Glass Flask | 3 | 3 |
+| Clay Jug | 4 | 4 |
 
-**Filling bottles (Phase 79):** with an empty bottle in hand, right-click water within
-reach (or a Liquid Barrel with water in it) to fill one; Shift + right-click fills the
-whole stack, as far as the water goes. Each bottle takes just 1 cell of water, whatever
-its size (`ItemData.fill_takes`), so a tile fills 16. The full bottles go to your inventory,
-the rest drop at your feet. With no water under the cursor, right click does its usual
-thing (open a chest, and so on). `ItemData.fills_into` names the full item.
+**Filling:** with an empty or part-drunk bottle in hand, right-click water within reach (or
+a Liquid Barrel with water in it) to fill one; Shift + right-click fills the whole stack,
+as far as the water goes. Each takes a cell of water a sip it's missing
+(`ItemData.fill_takes`), so a tile of water is 16 sips. The full bottles go to your
+inventory, the rest drop at your feet. With no water under the cursor, right click does
+its usual thing (open a chest, and so on). `ItemData.fills_into` names the full item.
+Crafting a bottle of water by hand (no station) costs the same: the bottle plus a cell a
+sip, from water around you (`World.water_for_crafting`: water you stand in or next to,
+within `World.craft_water_tiles` 2, Liquid Barrels within the crafting reach, then your
+Siphon Liquid's reservoir).
+
+**Pouring between bottles:** with a bottle of water on the mouse (inventory open),
+right-click another single bottle (empty, or water with room) to pour sips into it
+(`Bottles.pour`, `Hud.pour_bottle`). What's left stays on the mouse.
+
+**Drinking straight from water:** with empty hands (or your item put away), right-click
+water in reach: +20 thirst a sip (`ItemUser.sip_thirst`), one sip every 0.6 s
+(`sip_cooldown`), no water taken.
 
 **Clay Bucket (Phase 79, Furnace, Bottles tab, 5 Clay):** right-click water to scoop up
 a tile of it (16 cells, `ItemData.fill_takes`) from around the cursor, or from a Liquid
@@ -95,8 +109,6 @@ Barrel; it needs a full tile there. Left-click with the Clay Bucket of Water to 
 tile back out around the cursor, or into a Liquid Barrel with room
 (`ItemData.pours_water`); if it doesn't fit, nothing pours. Empty buckets stack to 10,
 full ones don't stack.
-
-You can't drink water straight from a pond yet.
 
 ## Swimming and breath (Phase 54)
 

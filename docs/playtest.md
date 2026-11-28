@@ -358,6 +358,16 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 80: water sips (branch phase-80-water-charges)**
+- [ ] A Clay Jug of Water: drink it, +20 thirst, and you still hold "Clay Jug of Water
+      (3/4)". Four sips, then the empty jug.
+- [ ] Right-click water with the 3/4 jug: back to full. Empty bottles fill as before.
+- [ ] Open the inventory, pick up a Glass Vial of Water, right-click a part-drunk jug: one
+      sip moves over, the empty vial stays on the mouse.
+- [ ] Put your item away (or select an empty slot), right-click water: a sip sound, +20
+      thirst.
+- [ ] Part-drunk bottles aren't in the Catalog; Water Breathing still needs a full bottle.
+
 **Phase 79: filling bottles, Clay Bucket (branch phase-79-fill-bottles)**
 - [ ] Hold empty Glass Vials, right-click a pond: one Glass Vial of Water, and the pond
       loses one cell (barely visible). Shift + right-click: the whole stack.

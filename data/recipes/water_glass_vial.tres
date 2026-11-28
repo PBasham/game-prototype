@@ -7,7 +7,7 @@ script = ExtResource("1_vcd3y")
 tab = "Items"
 inputs = Dictionary[StringName, int]({
 &"glass_vial": 1,
-&"water": 16
+&"water": 1
 })
 unlock_items = Array[StringName]([&"glass_vial", &"water"])
 output = &"water_glass_vial"

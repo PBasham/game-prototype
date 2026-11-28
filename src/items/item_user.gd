@@ -689,6 +689,32 @@ func fill_held(tile: Vector2i, all := false) -> int:
 	return filled
 
 
+## Drinking straight from water: thirst a sip, at most one sip per `sip_cooldown`.
+@export var sip_thirst := 20.0
+@export var sip_cooldown := 0.6
+var _sip_ms := -100000
+
+
+## Empty hands, right click: a sip of the water at a tile (fresh water only; none taken).
+## Returns false with no water there (quietly) or when you can't drink now.
+func sip_at(tile: Vector2i) -> bool:
+	if world.voxels.count_in(tile, &"water") <= 0:
+		return false
+	if not _in_reach(tile):
+		EventBus.debug_message.emit("Too far away")
+		return false
+	var p := world.player
+	if p.thirst >= p.max_thirst:
+		EventBus.debug_message.emit("You're not thirsty")
+		return true
+	if Time.get_ticks_msec() - _sip_ms < int(sip_cooldown * 1000.0):
+		return true
+	_sip_ms = Time.get_ticks_msec()
+	p.thirst = minf(p.thirst + sip_thirst, p.max_thirst)
+	EventBus.sound_requested.emit(&"sip", world.tile_to_world(tile))
+	return true
+
+
 ## Pours the held full bucket out at a tile: into a Liquid Barrel there (if it has
 ## room) or into the empty space around the tile. Nothing happens if the water
 ## doesn't fit. Returns true if it poured.
@@ -761,9 +787,12 @@ func eat_from(slot: int) -> bool:
 	var inv := p.character.inventory
 	if not world.infinite_items and inv.take(slot, 1) <= 0:
 		return false
-	p.refresh_held()
 	p.consume(item)
-	_give_back(item)
+	if inv.is_empty(slot) and item.leaves_item != &"" and not world.infinite_items:
+		inv.set_slot(slot, item.leaves_item, 1)  # the bottle (or the rest of it) stays in hand
+	else:
+		_give_back(item)
+	p.refresh_held()
 	var drink := item.thirst_value > 0.0 or item.mana_value > 0.0 or item.sickness != &"" or item.food_value <= 0.0
 	EventBus.debug_message.emit("%s %s" % ["Drank" if drink else "Ate", item.display_name])
 	EventBus.sound_requested.emit(&"eat", world.player.chest())

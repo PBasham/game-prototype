@@ -218,7 +218,8 @@ func _items() -> Array[ItemData]:
 	out.append(_block(&"clay", "Clay", "Found in patches in the dirt. Fire it in a Furnace into flasks, bottles and jugs.", &"clay_wall"))
 	var flask_empty := _small(&"clay_flask", "Clay Flask", "An empty flask of fired clay. Potions, coatings and thrown flasks start with one. Right-click water to fill it.")
 	flask_empty.fills_into = &"water_clay_flask"
-	flask_empty.fill_takes = 1  # a sip of the pond (Phase 79)
+	flask_empty.fill_takes = 1  # a cell of water a sip (Phase 80)
+	flask_empty.holds_charges = 1
 	_detailed(flask_empty, &"")
 	out.append(flask_empty)
 	# Phase 35: more bottles (clay and glass, three sizes each), Sand and Glass.
@@ -230,7 +231,10 @@ func _items() -> Array[ItemData]:
 			[&"glass_flask", "Glass Flask", "A big round glass flask."]]:
 		var bottle := _small(row[0], row[1], row[2] + " Right-click water to fill it.")
 		bottle.fills_into = StringName("water_" + String(row[0]))
-		bottle.fill_takes = 1
+		for wb: Array in WATER_BOTTLES:
+			if wb[0] == row[0]:
+				bottle.fill_takes = wb[2]
+				bottle.holds_charges = wb[2]
 		_detailed(bottle, &"")
 		out.append(bottle)
 	# Phase 79: the Clay Bucket carries a tile of water (16 cells) and pours it back out.
@@ -337,19 +341,10 @@ func _items() -> Array[ItemData]:
 	out.append(glow)
 	# Water (Phase 54): any empty bottle + water (from the water around you, a Liquid
 	# Barrel nearby or your Siphon Liquid) at no station. Bigger holds more and quenches more.
+	# Phase 80: each holds sips (charges), WATER_BOTTLES' third column; each sip is
+	# SIP_THIRST. A part-drunk one is its own item, `water_<bottle>_<n>`.
 	for b: Array in WATER_BOTTLES:
-		var tiles: int = b[2]
-		var wat := _small(StringName("water_" + String(b[0])), "%s of Water" % b[1],
-			"Drink: +%d thirst. Gives the %s back." % [15 * tiles, String(b[1]).to_lower()])
-		wat.kind = ItemData.Kind.FOOD
-		wat.thirst_value = 15.0 * tiles
-		wat.leaves_item = b[0]
-		wat.max_stack = 30
-		wat.storage_tags.assign([&"potion"])
-		wat.bottle_shape = BOTTLES[StringName(b[0])]
-		wat.bottle_contents = Color(0.36, 0.62, 0.9)
-		_detailed(wat, &"")
-		out.append(wat)
+		out.append_array(_water_bottles(b))
 	# Water Breathing (Phase 66): a bottle of water + 2 Kelp at the Alchemy Table. Breath
 	# never runs out while it lasts; a bigger bottle lasts longer.
 	for b: Array in BREATHING_BOTTLES:
@@ -1310,7 +1305,7 @@ func _recipes() -> Array[RecipeData]:
 		var wb := StringName("water_breathing_" + String(b[0]))
 		table.append([wb, &"alchemy", {StringName("water_" + String(b[0])): 1, &"kelp": 2}, wb, 1, []])
 	for b: Array in WATER_BOTTLES:
-		table.append([StringName("water_" + String(b[0])), &"", {StringName(b[0]): 1, &"water": 16 * int(b[2])}, StringName("water_" + String(b[0])), 1, []])
+		table.append([StringName("water_" + String(b[0])), &"", {StringName(b[0]): 1, &"water": int(b[2])}, StringName("water_" + String(b[0])), 1, []])
 	table.append_array([
 		# By hand.
 		[&"wood", &"", {&"log": 1}, &"wood", 4, []],
@@ -1641,6 +1636,42 @@ const BREATHING_BOTTLES := [[&"clay_flask", "Clay Flask", 2], [&"glass_vial", "G
 const WATER_BOTTLES := [[&"clay_flask", "Clay Flask", 1], [&"clay_bottle", "Clay Bottle", 2],
 	[&"clay_jug", "Clay Jug", 4], [&"glass_vial", "Glass Vial", 1], [&"glass_bottle", "Glass Bottle", 2],
 	[&"glass_flask", "Glass Flask", 3]]
+## Thirst a sip of water gives (Phase 80).
+const SIP_THIRST := 20.0
+
+
+## A bottle of water, full and part drunk: [full, (max-1)/max, ..., 1/max].
+func _water_bottles(b: Array) -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	var bottle := StringName(b[0])
+	var full := StringName("water_" + String(b[0]))
+	var most: int = b[2]
+	for n in range(most, 0, -1):
+		var id := full if n == most else StringName("%s_%d" % [full, n])
+		var label := "%s of Water" % b[1] if n == most else "%s of Water (%d/%d)" % [b[1], n, most]
+		var sips := "%d sips" % n if n > 1 else "1 sip"
+		var text := "%s of water, +%d thirst each." % [sips.capitalize(), int(SIP_THIRST)] if n == most \
+			else "Drink: +%d thirst a sip, %s left. Right-click water to top it up." % [int(SIP_THIRST), sips]
+		var wat := _small(id, label, text)
+		wat.kind = ItemData.Kind.FOOD
+		wat.thirst_value = SIP_THIRST
+		wat.charges = n
+		wat.liquid = &"water"
+		wat.container = bottle
+		wat.leaves_item = bottle if n == 1 else StringName("%s_%d" % [full, n - 1])
+		if n < most:
+			wat.charge_of = full
+			wat.fills_into = full
+			wat.fill_takes = most - n
+		wat.max_stack = 30
+		wat.storage_tags.assign([&"potion"])
+		wat.bottle_shape = BOTTLES[bottle]
+		wat.bottle_contents = Color(0.36, 0.62, 0.9)
+		_detailed(wat, &"")
+		out.append(wat)
+	return out
+
+
 ## Red Caps or Glowcaps per filled bottle (the same for clay and glass).
 const FILLED_HERBS := {&"clay_bottle": 3, &"clay_jug": 4, &"glass_vial": 2, &"glass_bottle": 3, &"glass_flask": 4}
 

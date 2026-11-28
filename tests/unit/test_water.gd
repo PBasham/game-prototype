@@ -95,7 +95,7 @@ func test_thirst_drains_and_parched_hurts() -> void:
 
 func test_drinking_water_quenches_and_gives_the_bottle_back() -> void:
 	var item := ItemData.find(&"water_glass_vial")
-	assert_eq(item.thirst_value, 15.0)
+	assert_eq(item.thirst_value, 20.0)
 	assert_eq(item.leaves_item, &"glass_vial")
 	var p := w.player
 	var inv := w.character.inventory
@@ -103,7 +103,7 @@ func test_drinking_water_quenches_and_gives_the_bottle_back() -> void:
 	inv.add(&"water_glass_vial", 1)
 	var vials := inv.count_of(&"glass_vial")
 	assert_true(w.item_user.eat_from(_slot_of(inv, &"water_glass_vial")))
-	assert_eq(p.thirst, 65.0)
+	assert_eq(p.thirst, 70.0)
 	assert_eq(inv.count_of(&"glass_vial"), vials + 1, "the empty vial back")
 	assert_eq(p.cant_consume(item), "", "still thirsty")
 	p.thirst = p.max_thirst
@@ -163,7 +163,7 @@ func test_crafting_water_from_around_you() -> void:
 	await _into_tank()
 	w.character.water = 0
 	var r := Registry.get_def(&"recipes", &"water_glass_vial") as RecipeData
-	assert_eq(r.inputs[&"water"], 16)
+	assert_eq(r.inputs[&"water"], 1, "a cell a sip")
 	var inv := w.character.inventory
 	inv.add(&"glass_vial", 3)
 	var stock := CraftStock.new([inv])
@@ -172,7 +172,7 @@ func test_crafting_water_from_around_you() -> void:
 	assert_gt(Crafting.times_craftable(stock, r), 0, "standing in water")
 	var before := v.liquid_in(Rect2i(floor_tile + Vector2i(0, -2), Vector2i(10, 2)))
 	assert_eq(Crafting.craft(stock, r, 1)[0], 1)
-	assert_eq(v.liquid_in(Rect2i(floor_tile + Vector2i(0, -2), Vector2i(10, 2))), before - 16)
+	assert_eq(v.liquid_in(Rect2i(floor_tile + Vector2i(0, -2), Vector2i(10, 2))), before - 1)
 	assert_eq(inv.count_of(&"water_glass_vial"), 1)
 	# Out of the water: only the reservoir counts.
 	w.teleport_player(w.tile_to_world(floor_tile + Vector2i(5, -25)))
@@ -180,7 +180,7 @@ func test_crafting_water_from_around_you() -> void:
 	w.character.water = 20
 	assert_eq(w.water_for_crafting(w.player.chest()), 20)
 	assert_eq(Crafting.craft(stock, r, 1)[0], 1)
-	assert_eq(w.character.water, 4, "used the Siphon's water")
+	assert_eq(w.character.water, 19, "used the Siphon's water")
 
 
 func test_water_shows_on_the_map() -> void:
