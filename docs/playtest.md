@@ -358,9 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 93: inventory buttons (branch phase-93-inventory-buttons)**
+- [ ] Craft, Equip, Spells, Catalog stack in a narrow column with small gaps; coin bag and trash under them.
+- [ ] Each button still opens its window and lights up while it's open.
+
 **Phase 92: inventory in the new UI style (branch phase-92-inventory-ui)**
 - [ ] Hotbar and open inventory: navy panel with the gold frame, every cell a slot; the selected one glows gold, hover blue.
-- [ ] Coin bag is a slot between Catalog and the trash (right of the hotbar when closed); click opens the pouch, one slot per coin, under the inventory's right end (bag turns gold); click again closes.
+- [ ] Coin bag is a slot left of the trash (right of the hotbar when closed); click opens the pouch, one slot per coin, under the inventory's right end (bag turns gold); click again closes.
 - [ ] Craft, Equip, Spells and Catalog buttons are smaller with smaller text; still easy to read and click.
 - [ ] Trash (bottom right) shows the new bin; throwing something in shows the item instead.
 - [ ] Craft, Equip, Spells, Catalog buttons light up while their window is open.

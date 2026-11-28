@@ -405,9 +405,9 @@ tinted a little by the wall behind it). Bare bones for now: no trees, chests or 
 
 The inventory (Phase 92) is a UiSkin panel: each cell is a skin slot (gold glow on the
 selected one, blue on hover), hotbar numbers in the corner, a faint gold rule under the
-hotbar row when open. The right column has the Craft, Equip and Spells buttons
-(`Hud.INV_BUTTON_H` 13 tall, `INV_BUTTON_FONT` 6), then Catalog, the coin bag and the
-trash. The coin bag is a slot (gold while the pouch is open; right of the hotbar when
+hotbar row when open. The right column (`Hud.SIDE_W`, 46 wide) stacks Craft, Equip,
+Spells and Catalog (`INV_BUTTON_H` 13 tall, `INV_BUTTON_GAP` 2 apart, `INV_BUTTON_FONT`
+6), with the coin bag and the trash side by side under them. The coin bag is a slot (gold while the pouch is open; right of the hotbar when
 the inventory is closed) and the pouch, one slot per coin, opens under the inventory's
 right end. The trash has a bin in it until something's thrown away. Their icons are `assets/ui/coin_pouch.png` and `trash_bin.png` (42x42,
 drawn at 14 UI px), placeholders from `tools/make_inventory_art_hd.py`.

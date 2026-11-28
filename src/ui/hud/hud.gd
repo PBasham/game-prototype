@@ -44,11 +44,12 @@ const EQUIP_NAMES: Array[String] = ["Head armor", "Chest armor", "Leg armor", "A
 	"Accessory", "Spellbook (empty: the Basic Spellbook)", "Conduit"]
 ## Width of the button column right of the inventory grid.
 const EQUIP_W := 3 * STEP - GAP
-## The open inventory's right column (Phase 92): the buttons, and Catalog, coin bag and
-## trash on the bottom row.
-const SIDE_W := EQUIP_W + STEP
-## Inventory buttons (Phase 92): height and text size.
+## The open inventory's right column (Phase 93): Craft, Equip, Spells and Catalog
+## stacked, the coin bag and trash on the bottom row.
+const SIDE_W := 2 * STEP - GAP + 4
+## Inventory buttons (Phase 92): height, gap between them and text size.
 const INV_BUTTON_H := 13
+const INV_BUTTON_GAP := 2
 const INV_BUTTON_FONT := 6
 
 ## Crafting window: size, list width, row height.
@@ -823,7 +824,7 @@ func _inventory() -> Inventory:
 
 func _layout() -> void:
 	if open:
-		var bottom := maxf(_rows(_inventory().size) * STEP - GAP, 3 * 20.0 - 4.0) + PAD * 2
+		var bottom := maxf(_rows(_inventory().size) * STEP - GAP, 4 * (INV_BUTTON_H + INV_BUTTON_GAP) + SLOT) + PAD * 2
 		_inv.size = Vector2(_equip_origin().x + SIDE_W + PAD, bottom)
 	else:
 		_inv.size = Vector2(PAD * 2 + 11 * STEP - GAP, PAD * 2 + SLOT)  # the bag after slot 0
@@ -952,27 +953,29 @@ func _rows(n: int) -> int:
 
 
 func _equip_origin() -> Vector2:
-	return _grid_origin() + Vector2(10 * STEP + 6, 0)
+	return _grid_origin() + Vector2(10 * STEP + 4, 0)
 
 
 func _craft_button_rect() -> Rect2:
-	return Rect2(_equip_origin() + Vector2(0, 3), Vector2(SIDE_W - 2, INV_BUTTON_H))
+	return _side_button_rect(0)
 
 
 func _equip_button_rect() -> Rect2:
-	return Rect2(_equip_origin() + Vector2(0, 23), Vector2(SIDE_W - 2, INV_BUTTON_H))
+	return _side_button_rect(1)
 
 
 func _spells_button_rect() -> Rect2:
-	return Rect2(_equip_origin() + Vector2(0, 43), Vector2(SIDE_W - 2, INV_BUTTON_H))
+	return _side_button_rect(2)
 
 
-## The Catalog (J) button: last row, left of the coin bag and trash.
+## The Catalog (J) button: under Spells.
 func _catalog_button_rect() -> Rect2:
-	var t := trash_rect()
-	var x := _equip_origin().x
-	var bag_x := t.position.x - STEP
-	return Rect2(Vector2(x, t.position.y + (SLOT - INV_BUTTON_H) * 0.5), Vector2(bag_x - x - GAP, INV_BUTTON_H))
+	return _side_button_rect(3)
+
+
+## The k-th button down the inventory's right column.
+func _side_button_rect(k: int) -> Rect2:
+	return Rect2(_equip_origin() + Vector2(0, k * (INV_BUTTON_H + INV_BUTTON_GAP)), Vector2(SIDE_W, INV_BUTTON_H))
 
 
 
@@ -1058,7 +1061,8 @@ func hit(local: Vector2) -> Array:
 ## The trash slot: bottom right of the open inventory, level with the last row.
 func trash_rect() -> Rect2:
 	var last := _cell(_grid_origin(), _inventory().size - 1)
-	return Rect2(Vector2(_equip_origin().x + SIDE_W - 2 - SLOT, last.position.y), Vector2(SLOT, SLOT))
+	var y := maxf(last.position.y, _equip_origin().y + 4 * (INV_BUTTON_H + INV_BUTTON_GAP))
+	return Rect2(Vector2(_equip_origin().x + SIDE_W - SLOT, y), Vector2(SLOT, SLOT))
 
 
 # --- banner (Phase 78) ---------------------------------------------------------------------

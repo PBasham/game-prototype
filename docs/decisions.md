@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 93, inventory buttons
+
+- **Patrick:** Catalog under Spells (maybe an icon later), less space between buttons,
+  much narrower buttons.
+- **Claude:** the four buttons stack in a 46 wide column, 2 apart; the coin bag and trash
+  sit side by side under them.
+
 ## 2026-11-28: Phase 92, inventory in the new UI style
 
 - **Patrick:** the inventory should match the Phase 91 look too, buttons and coin bag

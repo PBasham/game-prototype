@@ -50,10 +50,10 @@ func test_picked_up_coins_go_in_the_pouch_and_combine() -> void:
 	hud.deposit_cursor_coins()
 	assert_eq(c.coins, 100)
 	assert_eq(hud.cursor_count, 0)
-	# Phase 78: the coin bag opens and closes it (Phase 92: between Catalog and the trash).
+	# Phase 78: the coin bag opens and closes it (Phase 93: under the buttons, left of the trash).
 	assert_false(hud._pouch.visible, "closed until you click the bag")
 	var bag := hud.coin_bag_rect()
-	assert_gt(bag.position.x, hud._catalog_button_rect().end.x, "right of Catalog")
+	assert_gt(bag.position.y, hud._catalog_button_rect().end.y, "under Catalog")
 	assert_lt(bag.end.x, hud.trash_rect().position.x + 0.5, "left of the trash")
 	assert_eq(hud.hit(bag.get_center())[0], Hud.Area.COIN_BAG)
 	hud.click_coin_bag()

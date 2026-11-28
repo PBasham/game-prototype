@@ -669,7 +669,7 @@ inventory, and combine by themselves: your 100th Copper is a Silver. Drops magne
 even with a full inventory.
 
 - **The coin bag** (Phase 78; moved in Phase 92): a slot right of the hotbar, or
-  between Catalog and the trash when the inventory is open (`Hud.coin_bag_rect`). Hover
+  left of the trash, under the buttons, when the inventory is open (`Hud.coin_bag_rect`). Hover
   it for your total ("Coins: 3p 12g 40s 5c"); click it to open the **pouch panel**
   under the inventory's right end (it opens the inventory too, from the hotbar), again
   (or the pouch's x) to close it. The panel has a slot per coin with how many (`Hud._pouch`).

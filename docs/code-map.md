@@ -598,6 +598,12 @@ saves still load.
 | Drawing | `Hud._draw_inventory` (UiSkin panel and slots), `_draw_pouch`; `SatchelLook` removed |
 | Layout | `Hud.SIDE_W` (right column), `coin_bag_rect` (beside the trash, or after the hotbar), `_catalog_button_rect`, `trash_rect`, `_layout` (pouch under the right end); `BAG_W` removed |
 | Buttons | `Hud.INV_BUTTON_H`, `INV_BUTTON_FONT`; `UiSkin.button(..., font_size)` |
+
+## Phase 93: inventory buttons
+
+| Change | Where |
+| --- | --- |
+| Stacked, narrow buttons | `Hud.SIDE_W`, `INV_BUTTON_GAP`, `_side_button_rect(k)` (Craft 0, Equip 1, Spells 2, Catalog 3); `trash_rect` under them; min inventory height in `_layout` |
 | Art | `tools/make_inventory_art_hd.py` (`assets/ui/coin_pouch.png`, `trash_bin.png`); `Hud.POUCH_ICON`, `TRASH_ICON` |
 
 ## Phase 91: nicer UI
