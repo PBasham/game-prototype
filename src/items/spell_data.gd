@@ -252,6 +252,11 @@ enum BookPose { HAND, FLOAT, HIP }
 ## Light Orb and Wisp: light radius (tiles) and color. `duration`: seconds a light or a
 ## BUFF lasts.
 @export var light_radius := 36.0
+## Phase 75: drawn as a little floating torch (Floating Torch) instead of an orb.
+@export var light_torch := false
+## Phase 75: 1 = it never runs out (Floating Torch's last Kindled rank). An int so an
+## Empower node can set it.
+@export var light_endless := 0
 @export var light_color := Color(1.0, 0.92, 0.75)
 @export var duration := 180.0
 ## Wisp: hold the button to steer the light with the cursor, let go to leave it there

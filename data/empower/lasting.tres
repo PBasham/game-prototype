@@ -16,6 +16,7 @@ scales = Dictionary[StringName, float]({
 &"duration": 0.2
 })
 casts = Array[int]([5, 6, 10])
+not_spells = Array[StringName]([&"floating_torch"])
 order = 4
 id = &"lasting"
 display_name = "Lasting"

@@ -707,8 +707,8 @@ func summon_light_orb(spell: SpellData) -> LightOrb:
 		if spell.light_placed:
 			if o.placed and o.spell_id == spell.id:
 				same.append(o)
-		elif not o.placed:
-			o.queue_free()
+		elif not o.placed and o.spell_id == spell.id:
+			o.queue_free()  # recast: the new one replaces it (a Light Orb and a Floating Torch can both be out)
 	while spell.light_placed and same.size() >= maxi(spell.light_max, 1):
 		same.pop_front().queue_free()
 	var orb := LightOrb.new()

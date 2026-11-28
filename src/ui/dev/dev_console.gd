@@ -185,7 +185,7 @@ func _register() -> void:
 				if not world.item_user.cast(spell):
 					return
 		_print("Cast %s." % spell.display_name))
-	_add("quick", "quick <slot> <spell> [cast|ready]", "Put a known spell in a quick slot: q1..q8, e1..e8, z, x, c, buff1..buff6 (learns it if needed); cast or ready sets whether the key casts right away. \"quick <slot> none\" empties it.", func(a: PackedStringArray) -> void:
+	_add("quick", "quick <slot> <spell> [cast|ready]", "Put a known spell in a quick slot: q1..q8, e1..e8, z, x, c, m (middle mouse), buff1..buff6 (learns it if needed); cast or ready sets whether the key casts right away. \"quick <slot> none\" empties it.", func(a: PackedStringArray) -> void:
 		var mode := ""
 		if a.size() > 2 and a[a.size() - 1] in ["cast", "ready"]:
 			mode = a[a.size() - 1]
@@ -195,7 +195,7 @@ func _register() -> void:
 			return
 		var slot := _quick_slot(a[0])
 		if slot == &"":
-			_print("Slots: q1..q8, e1..e8, z, x, c, buff1..buff6.")
+			_print("Slots: q1..q8, e1..e8, z, x, c, m (middle mouse), buff1..buff6.")
 			return
 		var c := world.character
 		if a[1] == "none":

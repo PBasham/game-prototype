@@ -592,6 +592,15 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 75: Floating Torch
+
+| Change | Where |
+| --- | --- |
+| The spell | `data/spells/floating_torch.tres` (`SpellData.light_torch`, `light_endless`); `LightOrb.torch`, `_draw_torch`; `World.summon_light_orb` (replaces only the same spell's light) |
+| Its Empower nodes | `data/empower/torch_brighter.tres`, `torch_kindled.tres`; `EmpowerNode.at_max`, `not_spells` (Lasting skips it) |
+| Drops | Magic Essence and the page in `data/enemies/green_slime.tres`, `blue_slime.tres` (and `tools/make_items.gd`) |
+| Art | `tools/make_floating_torch_art.py` (spell icon, `assets/ui/empower/torch_*.png`) |
+
 ## Phase 74: Catalog creatures
 
 | Change | Where |

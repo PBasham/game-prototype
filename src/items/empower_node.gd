@@ -24,8 +24,14 @@ enum Stat { MANA_COST, EVOLVE, FIELDS }
 @export var adds: Dictionary[StringName, float] = {}
 ## FIELDS: SpellData numbers scaled per rank (`{&"damage": 0.1}` = 10% more per rank).
 @export var scales: Dictionary[StringName, float] = {}
+## FIELDS, Phase 75: SpellData numbers set once the node is at max_rank (Kindled's last
+## rank: `{&"light_endless": 1.0}`, the Floating Torch never runs out).
+@export var at_max: Dictionary[StringName, float] = {}
 ## Spells it's offered for by id (empty = by `groups`).
 @export var spells: Array[StringName] = []
+## Spells it's never offered for, even when `casts` / `groups` fit (the Floating Torch has
+## its own Kindled instead of the shared Lasting).
+@export var not_spells: Array[StringName] = []
 ## Spell casts it's offered for (empty = any), e.g. Potency for projectiles and chains.
 @export var casts: Array[SpellData.Cast] = []
 ## Spell groups it's offered for (empty = every spell that uses mana).
@@ -49,6 +55,8 @@ func fits(spell: SpellData) -> bool:
 		return false
 	if stat == Stat.EVOLVE:
 		return spell.summon_enemy_ranks.size() > 1
+	if not_spells.has(spell.id):
+		return false
 	if not spells.is_empty():
 		return spells.has(spell.id)
 	if not casts.is_empty() and not casts.has(spell.cast):
@@ -77,6 +85,9 @@ func apply(spell: SpellData, rank: int) -> void:
 		_set_num(spell, f, float(spell.get(f)) + adds[f] * rank)
 	for f in scales:
 		_set_num(spell, f, float(spell.get(f)) * (1.0 + scales[f] * rank))
+	if rank >= max_rank:
+		for f in at_max:
+			_set_num(spell, f, at_max[f])
 
 
 static func _set_num(spell: SpellData, field: StringName, value: float) -> void:
@@ -89,7 +100,7 @@ static func _set_num(spell: SpellData, field: StringName, value: float) -> void:
 func validate() -> PackedStringArray:
 	var problems := super()
 	var probe := SpellData.new()
-	for f in adds.keys() + scales.keys():
+	for f in adds.keys() + scales.keys() + at_max.keys():
 		if not typeof(probe.get(f)) in [TYPE_INT, TYPE_FLOAT]:
 			problems.append("%s: %s isn't a SpellData number" % [id, f])
 	return problems

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="SpellData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/items/icons/floating_torch.png" id="1_x1pbv"]
+[ext_resource type="Script" path="res://src/items/spell_data.gd" id="2_mcyo5"]
+
+[resource]
+script = ExtResource("2_mcyo5")
+cast = 5
+group = 4
+cooldown = 1.0
+projectile_color = Color(1, 0.7, 0.35, 1)
+light_radius = 26.0
+light_torch = true
+light_color = Color(1, 0.82, 0.55, 1)
+duration = 300.0
+mana_cost = 8.0
+learn_cost = Dictionary[StringName, int]({
+&"magic_essence": 2,
+&"paper": 5,
+&"torch": 10
+})
+kind = 4
+icon = ExtResource("1_x1pbv")
+max_stack = 1
+impact_at = 0.3
+id = &"floating_torch"
+display_name = "Floating Torch"
+description = "A little torch floats beside you and follows you around, lighting the way for 5 minutes. Cast again to refresh it."

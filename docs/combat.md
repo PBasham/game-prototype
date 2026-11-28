@@ -65,14 +65,15 @@ into item drops.
 ### Green Slime
 
 20 health, 6 contact damage, hops about 5 tiles. Drops 1 to 2 **Slime**, rarely a
-**Slime Core** (1 in 40) or **Spell Page: Summon Slime** (1 in 100). The common one.
+**Slime Core** (1 in 40) or **Spell Page: Summon Slime** (1 in 100); 1 in 10 a **Magic
+Essence**, and 1 in 100 a **Spell Page: Floating Torch** (Phase 75). The common one.
 
 ### Blue Slime
 
 The rare one (about 1 in 9 forest spawns), and only after a Green Slime has been slain
 in this world. 35 health, 1 defense, 9 contact damage,
 hops about 7 tiles and more often (waits 0.6 to 1.8 s). Drops 2 to 4 **Slime**, and the
-same rare core and page as the Green Slime. Same sheet as the Green Slime, tinted blue.
+same rare core and Summon Slime page as the Green Slime, and 1 in 10 a Magic Essence. Same sheet as the Green Slime, tinted blue.
 
 ### Your slime (Summon Slime)
 

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://src/player/doll/item_motion.gd" id="1_xuuqf"]
+[ext_resource type="Script" path="res://src/player/doll/held_item_look.gd" id="2_t4xdy"]
+[ext_resource type="Texture2D" path="res://assets/items/held/scroll_floating_torch.png" id="3_tn7h8"]
+[ext_resource type="Texture2D" path="res://assets/items/icons/scroll_floating_torch.png" id="4_yfd4j"]
+[ext_resource type="Script" path="res://src/items/item_data.gd" id="5_gbs8c"]
+
+[sub_resource type="Resource" id="Resource_48bvf"]
+script = ExtResource("2_t4xdy")
+id = &"scroll_floating_torch"
+texture = ExtResource("3_tn7h8")
+type = &"block"
+grip = Vector2(4, 6)
+
+[resource]
+script = ExtResource("5_gbs8c")
+kind = 14
+icon = ExtResource("4_yfd4j")
+max_stack = 20
+held = SubResource("Resource_48bvf")
+impact_at = 0.2
+teaches_spell = &"floating_torch"
+id = &"scroll_floating_torch"
+display_name = "Scroll: Floating Torch"
+description = "One use. Left click: cast Floating Torch once for free, at base power."

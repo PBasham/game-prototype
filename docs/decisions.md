@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 75, Floating Torch
+
+- **Patrick:** a new early spell, Floating Torch: a little torch that floats around you
+  and follows you, giving light; ranks for more light, and another for duration whose
+  last rank is expensive and lasts forever. Cost maybe 10 torches, paper and Magic
+  Essence; most enemies dropping Magic Essence, not guaranteed. Took the brief's
+  defaults.
+- **Claude:** light 26 (a torch is 32), 5 min, 8 mana; Brighter +5 x3; Kindled +50% x2,
+  then endless; learn 10 Torches, 5 Paper, 2 Magic Essence; slimes drop Magic Essence
+  1 in 10. The brief had Forest Spirits at 25%, but they already always drop 1 to 2,
+  so they stay as they are.
+
 ## 2026-11-27: Phase 74, Catalog creatures
 
 - **Patrick:** fish aren't enemies in the Catalog (they're passive).

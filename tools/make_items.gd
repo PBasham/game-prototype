@@ -670,6 +670,20 @@ func _spells() -> Array[ItemData]:
 	orb.impact_at = 0.3
 	out.append(orb)
 
+	# Floating Torch (Phase 75): an early, dimmer Light Orb drawn as a torch. Empower:
+	# Brighter (light), Kindled (time; the last rank never runs out).
+	var ftorch := _spell(&"floating_torch", "Floating Torch", "A little torch floats beside you and follows you around, lighting the way for 5 minutes. Cast again to refresh it.")
+	ftorch.cast = SpellData.Cast.LIGHT
+	ftorch.light_torch = true
+	ftorch.light_radius = 26.0
+	ftorch.light_color = Color(1.0, 0.82, 0.55)
+	ftorch.duration = 300.0
+	ftorch.mana_cost = 8.0
+	ftorch.cooldown = 1.0
+	ftorch.impact_at = 0.3
+	ftorch.projectile_color = Color(1.0, 0.7, 0.35)
+	out.append(ftorch)
+
 	var wisp := _spell(&"wisp", "Wisp", "Hold to steer a wisp of light with the cursor; let go to leave it there. Up to 3 at once, 5 minutes each.")
 	wisp.cast = SpellData.Cast.LIGHT
 	wisp.light_placed = true
@@ -903,6 +917,7 @@ func _spells() -> Array[ItemData]:
 		&"mend": SpellData.Group.DEFENSE,
 		&"healing_circle": SpellData.Group.DEFENSE,
 		&"light_orb": SpellData.Group.LIGHT,
+		&"floating_torch": SpellData.Group.LIGHT,
 		&"wisp": SpellData.Group.LIGHT}
 	for sp in out:
 		(sp as SpellData).group = groups.get(sp.id, SpellData.Group.ATTACK)
@@ -1123,6 +1138,8 @@ func _enemies() -> Array[EnemyData]:
 	slime.loot.append(LootDrop.make(&"slime", 1, 2))
 	slime.loot.append(LootDrop.make(&"slime_core", 1, 1, 0.025))
 	slime.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
+	slime.loot.append(LootDrop.make(&"magic_essence", 1, 1, 0.1))  # Phase 75
+	slime.loot.append(LootDrop.make(&"page_floating_torch", 1, 1, 0.01))
 	out.append(slime)
 	# The rare one: tougher, hits harder, hops higher, drops more slime.
 	var blue := EnemyData.new()
@@ -1145,6 +1162,7 @@ func _enemies() -> Array[EnemyData]:
 	blue.loot.append(LootDrop.make(&"slime", 2, 4))
 	blue.loot.append(LootDrop.make(&"slime_core", 1, 1, 0.025))
 	blue.loot.append(LootDrop.make(&"page_summon_slime", 1, 1, 0.01))
+	blue.loot.append(LootDrop.make(&"magic_essence", 1, 1, 0.1))  # Phase 75
 	out.append(blue)
 	# Dark Forest: a glowing ball that darts about, stops, charges and shoots.
 	var spirit := EnemyData.new()
@@ -1448,10 +1466,12 @@ const BOOK_POSES := {
 const PHANTOM_TINTS: Array[Color] = [Color(0.7, 0.9, 1.0), Color(1.0, 0.68, 0.42), Color(0.82, 0.86, 0.95)]
 
 const LEARN_COSTS := {&"gel_cushion": {&"slime": 20},
+	&"floating_torch": {&"torch": 10, &"paper": 5, &"magic_essence": 2},
 	&"call_spirit": {&"spirit_core": 1, &"magic_essence": 5},
 	&"summon_slime": {&"slime_core": 1, &"slime": 20, &"magic_essence": 5}}
 ## Scrolls that cost something else instead.
 const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20},
+	&"floating_torch": {&"blank_scroll": 1, &"torch": 3},
 	&"call_spirit": {&"blank_scroll": 1, &"magic_essence": 3, &"spirit_core": 1},
 	&"summon_slime": {&"blank_scroll": 1, &"magic_essence": 3, &"slime_core": 1}}
 ## Hidden recipes: shown once you've had one of these items (RecipeData.unlock_items).

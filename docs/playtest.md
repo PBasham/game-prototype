@@ -358,6 +358,15 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 75: Floating Torch (branch phase-75-floating-torch)**
+- [ ] Spell Weaving Table, Learn: Floating Torch (10 Torches, 5 Paper, 2 Magic Essence).
+- [ ] Cast it at night: a little torch bobs beside your head and lights the way, 5 min.
+      A Light Orb can be out at the same time.
+- [ ] Empower: Brighter (3 ranks) and Kindled (2 ranks for 7.5 and 10 min; the
+      expensive 3rd: it never goes out).
+- [ ] Slimes drop Magic Essence now and then (1 in 10); Green Slimes rarely drop the
+      Floating Torch's page.
+
 **Phase 74: Catalog creatures (branch phase-74-catalog-creatures)**
 - [ ] The Catalog's second tab is Creatures: enemies first, then fish, crabs, fireflies.
       Each page says Hostile or Passive.
