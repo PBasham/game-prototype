@@ -94,6 +94,7 @@ func test_pristine_water_is_not_saved_and_streams() -> void:
 	w.voxels.stream_water(t + Vector2i(w.data.width / 2, 0))
 	assert_eq(w.voxels.count_in(t, &"salt_water"), 0, "dropped")
 	w.voxels.stream_water(t)
+	w.voxels.flush_imports()  # streamed chunks queue (Phase 85)
 	assert_eq(w.voxels.count_in(t, &"salt_water"), 16, "back from the generator")
 	# Touched water is saved and stays.
 	w.voxels.take_liquid(Rect2i(t, Vector2i.ONE), 4, &"salt_water")

@@ -592,6 +592,18 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 85: ocean lag
+
+| Change | Where |
+| --- | --- |
+| Budgeted painting | `VoxelLayer._paint_bulk`, `bulk_paint_ms`, `_flush_paint`, `_paint_one`, `_paint_rock`, `_view_tiles` |
+| Queued imports | `VoxelLayer._queue_generated`, `_import_some`, `_import_one`, `flush_imports`, `imports_per_frame` |
+| No main-thread generation from drawing | `WorldData.peek_block`; `VoxelLayer._terrain_kind`, `_fringe_rects` |
+| Refill only real sea | `VoxelLayer.refill_sea` |
+| Simulation radius and budget | `VoxelLayer.sim_radius_tiles`, `step_budget_ms`, `step` |
+| Culled drawing | `VoxelLayer._draw` |
+| Dev | `tp ocean`, `tp deep`; PerfStats "voxel ..." keys |
+
 ## Phase 84: message log
 
 | Change | Where |

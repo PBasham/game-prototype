@@ -55,6 +55,16 @@ const Z := 3
 ## water_load_tiles. It isn't saved either: the generator makes it again.
 @export var water_unload_tiles := 192
 @export var water_load_tiles := 144
+## Phase 85: streamed and loaded water is painted a little each frame (this many
+## milliseconds), nearest the player first, and chunks of it are added this many a frame,
+## so swimming through the sea doesn't hitch.
+@export var bulk_paint_ms := 2.5
+## Moving water and sand farther than this from the player waits (stays as it is until
+## you come back), like Noita: only the area around you runs.
+@export var sim_radius_tiles := 96
+## Time a simulation step may take (ms); what's left waits for the next step.
+@export var step_budget_ms := 5.0
+@export var imports_per_frame := 1
 
 var world: World
 ## Index + 1 = a cell's material code.
@@ -87,6 +97,10 @@ var _in_step := false
 ## resolution (2 pixels a world pixel, like the terrain textures).
 const REGION := 16
 var _paint: Dictionary[Vector2i, bool] = {}
+## Tiles from imported or loaded water, painted on a time budget (bulk_paint_ms).
+var _paint_bulk: Dictionary[Vector2i, bool] = {}
+## Chunks of generated water waiting to be added (imports_per_frame a frame).
+var _import_queue: Array[ChunkData] = []
 var _regions: Dictionary[Vector2i, Array] = {}  # region -> [Image, ImageTexture]
 var _width_cells := 0
 ## Chunks whose generated water is already in `tiles` (saved, so it isn't added twice).
@@ -205,8 +219,11 @@ func _terrain_blocks(c: Vector2i) -> bool:
 	return false
 
 
-## 0 open, 1 full solid, 2 shaped solid, 3 platform.
+## 0 open, 1 full solid, 2 shaped solid, 3 platform. Land not generated yet counts as
+## solid (water doesn't flow into it, and painting never makes the main thread generate).
 func _terrain_kind(t: Vector2i) -> int:
+	if t.y >= 0 and t.y < world.data.height and world.data.peek_chunk(Vector2i(world.data.wrap_x(t.x) / ChunkData.SIZE, t.y / ChunkData.SIZE)) == null:
+		return 1
 	var b := world.data.get_block(t.x, t.y)
 	if b == WorldData.OUT_OF_BOUNDS:
 		return 1
@@ -426,9 +443,58 @@ func import_generated() -> void:
 		return
 	world.data.fresh_water = []
 	for chunk in fresh:
-		if not _imported.has(chunk.coord):
-			_unloaded.erase(chunk.coord)
-			_import_chunk(chunk)
+		_import_one(chunk)
+
+
+## Queues newly generated water for _import_some (the game's per-frame path).
+func _queue_generated() -> void:
+	var fresh := world.data.fresh_water
+	if fresh.is_empty():
+		return
+	world.data.fresh_water = []
+	_import_queue.append_array(fresh)
+
+
+## Adds queued chunks of generated water: any on or next to the screen now, the rest a
+## few a frame.
+func _import_some() -> void:
+	if _import_queue.is_empty():
+		return
+	var view := _view_tiles().grow(ChunkData.SIZE)
+	var later: Array[ChunkData] = []
+	for chunk in _import_queue:
+		var o := chunk.coord * ChunkData.SIZE
+		var near := view.size.x == 0 or view.intersects(Rect2i(
+			Vector2i(posmod(o.x - view.position.x, world.data.width) + view.position.x, o.y), Vector2i(ChunkData.SIZE, ChunkData.SIZE)))
+		if near:
+			_import_one(chunk)
+		else:
+			later.append(chunk)
+	_import_queue = later
+	var n := 0
+	while not _import_queue.is_empty() and n < imports_per_frame:
+		_import_one(_import_queue.pop_front())
+		n += 1
+
+
+## Adds every queued chunk of water now (tests, loading).
+func flush_imports() -> void:
+	_queue_generated()
+	for chunk in _import_queue:
+		_import_one(chunk)
+	_import_queue.clear()
+	for t: Vector2i in _paint_bulk:
+		_paint[t] = true
+	_paint_bulk.clear()
+
+
+func _import_one(chunk: ChunkData) -> void:
+	if _imported.has(chunk.coord):
+		return
+	var t := Time.get_ticks_usec()
+	_unloaded.erase(chunk.coord)
+	_import_chunk(chunk)
+	PerfStats.add("voxel import", Time.get_ticks_usec() - t)
 
 
 func _import_chunk(chunk: ChunkData) -> void:
@@ -439,6 +505,11 @@ func _import_chunk(chunk: ChunkData) -> void:
 	_imported[chunk.coord] = true
 	var ox := chunk.coord.x * ChunkData.SIZE
 	var oy := chunk.coord.y * ChunkData.SIZE
+	# A chunk arriving on screen (a teleport, the first frames) is painted at once.
+	var view := _view_tiles()
+	var seen := view.size.x > 0 and view.grow(ChunkData.SIZE).has_point(
+		Vector2i(posmod(ox - view.position.x, world.data.width) + view.position.x, oy))
+	var queue := _paint if seen else _paint_bulk
 	for i in ChunkData.AREA:
 		if chunk.water[i] == 0:
 			continue
@@ -453,7 +524,7 @@ func _import_chunk(chunk: ChunkData) -> void:
 		for k in CELLS:
 			arr[k] = code | ((randi() % 16) << 4)
 		tiles[t] = arr
-		_paint[t] = true
+		queue[t] = true
 
 
 static func _chunk_of(t: Vector2i) -> Vector2i:
@@ -483,7 +554,7 @@ func stream_water(center: Vector2i) -> void:
 			_unloaded.erase(c)
 			var chunk := world.data.peek_chunk(c)
 			if chunk:
-				_import_chunk(chunk)
+				_import_queue.append(chunk)
 	for c: Vector2i in _imported.keys():
 		if far.call(c, water_unload_tiles) and is_pristine(c):
 			_drop_chunk(c)
@@ -499,6 +570,7 @@ func _drop_chunk(c: Vector2i) -> void:
 			tiles.erase(t)
 			_active.erase(t)
 			_paint.erase(t)
+			_paint_bulk.erase(t)
 			if _col_x.has(t):
 				_col_dirty[t] = true
 	var per := ChunkData.SIZE / REGION
@@ -517,8 +589,12 @@ func refill_sea(center: Vector2i, budget: int) -> int:
 			break
 		var t := Vector2i(world.data.wrap_x(center.x + randi_range(-refill_radius, refill_radius)),
 				center.y + randi_range(-refill_radius, refill_radius))
-		if t.y < 0 or t.y >= world.data.height - 1 or not gen.sea_at(t.x, t.y):
+		# Only where the generator put sea water (Phase 85): dry caverns in the Deep
+		# aren't flooded a few tiles at a time forever.
+		if t.y < 0 or t.y >= world.data.height - 1 or not gen.sea_at(t.x, t.y) or not gen.water_at(t.x, t.y):
 			continue
+		if not _imported.has(_chunk_of(t)):
+			continue  # its water hasn't been added yet (it's queued): it isn't missing
 		if world.data.get_block(t.x, t.y) != air or count_in(t, &"salt_water") == CELLS:
 			continue
 		var wet := count_in(t, &"salt_water") > 0
@@ -535,37 +611,48 @@ func refill_sea(center: Vector2i, budget: int) -> int:
 func _physics_process(delta: float) -> void:
 	if world == null:
 		return
-	import_generated()
+	_queue_generated()
+	_import_some()
 	if not Game.is_authority():
 		return
 	_acc = minf(_acc + delta * ticks_per_second, 3.0)
 	while _acc >= 1.0:
 		_acc -= 1.0
+		var t0 := Time.get_ticks_usec()
 		step()
+		PerfStats.add("voxel step (%d active)" % (_active.size() / 500 * 500), Time.get_ticks_usec() - t0)
 	if world.player:
 		var at := world.wrap_tile(world.world_to_tile(world.player.global_position))
 		_stream_left -= delta
 		if _stream_left <= 0.0:
 			_stream_left = 2.0
+			var t1 := Time.get_ticks_usec()
 			stream_water(at)
+			PerfStats.add("voxel stream", Time.get_ticks_usec() - t1)
 		if ocean_refill:
 			_refill_budget = minf(_refill_budget + delta * refill_tiles_per_second, refill_tiles_per_second)
 			_refill_left -= delta
 			if _refill_left <= 0.0:
 				_refill_left = 0.25
+				var t2 := Time.get_ticks_usec()
 				_refill_budget -= refill_sea(at, floori(_refill_budget))
+				PerfStats.add("voxel refill", Time.get_ticks_usec() - t2)
 	_col_check_left -= delta
 	if _col_check_left <= 0.0:
 		_col_check_left = 1.0
 		_check_collision_copies()
+	var t3 := Time.get_ticks_usec()
 	_flush_collision()
+	PerfStats.add("voxel collision", Time.get_ticks_usec() - t3)
 
 
 func _process(_delta: float) -> void:
 	if world == null:
 		return
-	if not _paint.is_empty():
+	if not _paint.is_empty() or not _paint_bulk.is_empty():
+		var t := Time.get_ticks_usec()
 		_flush_paint()
+		PerfStats.add("voxel paint", Time.get_ticks_usec() - t)
 	queue_redraw()
 
 
@@ -599,9 +686,20 @@ func step() -> void:
 	_changed.clear()
 	_in_step = true
 	var list: Array[Vector2i] = _active.keys()
+	# Only near the player (Phase 85); far tiles keep their place in _active.
+	if world.player and sim_radius_tiles > 0:
+		var at := world.wrap_tile(world.world_to_tile(world.player.global_position))
+		var w := world.data.width
+		list = list.filter(func(t: Vector2i) -> bool:
+			return absi(posmod(t.x - at.x + w / 2, w) - w / 2) <= sim_radius_tiles and absi(t.y - at.y) <= sim_radius_tiles)
 	list.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.y > b.y)
 	var flip := (_tick & 1) == 0
+	var deadline := Time.get_ticks_usec() + int(step_budget_ms * 1000.0)
+	var k := 0
 	for t in list:
+		k += 1
+		if (k & 63) == 0 and Time.get_ticks_usec() > deadline:
+			break  # the rest are still active: they go next step
 		if not tiles.has(t):
 			_active.erase(t)
 			_check_block(t)
@@ -995,43 +1093,84 @@ func _shade_at(index: int, px: Vector2i) -> int:
 	return best
 
 
-## Repaints the changed tiles into their regions' pictures.
+## Repaints the changed tiles into their regions' pictures: every tile changed by the
+## simulation or an edit, then streamed and loaded water (`_paint_bulk`) for up to
+## bulk_paint_ms (chunks that arrive in view are painted at once, see _import_chunk).
 func _flush_paint() -> void:
 	var touched: Dictionary[Vector2i, bool] = {}
-	# Rock beside water gets a fringe of water painted over its edge: repaint those too.
-	var beside: Array[Vector2i] = []
 	for t: Vector2i in _paint:
-		if tiles.has(t):
-			for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-				var n := Vector2i(world.data.wrap_x(t.x + d.x), t.y + d.y)
-				if not tiles.has(n) and not _paint.has(n):
-					beside.append(n)
-	for n in beside:
-		_paint[n] = true
-	for t: Vector2i in _paint:
-		if t.y < 0 or t.y >= world.data.height:
-			continue
-		var r := Vector2i(t.x / REGION, t.y / REGION)
-		var entry: Array = _regions.get(r, [])
-		if entry.is_empty():
-			if not tiles.has(t) and not _has_fringe(t):
-				continue
-			var img := Image.create_empty(REGION * TILE * 2, REGION * TILE * 2, false, Image.FORMAT_RGBA8)
-			entry = [img, null]
-			_regions[r] = entry
-		_paint_tile(entry[0] as Image, t, Vector2i((t.x - r.x * REGION) * TILE * 2, (t.y - r.y * REGION) * TILE * 2))
-		touched[r] = true
+		_paint_one(t, touched, true)
 	_paint.clear()
+	if not _paint_bulk.is_empty():
+		var deadline := Time.get_ticks_usec() + int(bulk_paint_ms * 1000.0)
+		var done: Array[Vector2i] = []
+		for t: Vector2i in _paint_bulk:
+			if Time.get_ticks_usec() > deadline:
+				break
+			_paint_one(t, touched, false)
+			done.append(t)
+		for t in done:
+			_paint_bulk.erase(t)
 	for r: Vector2i in touched:
 		var entry: Array = _regions[r]
 		var img := entry[0] as Image
-		if img.is_invisible():
-			_regions.erase(r)
-			continue
 		if entry[1] == null:
 			entry[1] = ImageTexture.create_from_image(img)
 		else:
 			(entry[1] as ImageTexture).update(img)
+
+
+## Paints one tile into its region (making the region's picture when needed), and its
+## rock neighbors' water fringe. `urgent` neighbors are painted now, bulk ones queued.
+func _paint_one(t: Vector2i, touched: Dictionary[Vector2i, bool], urgent: bool) -> void:
+	if t.y < 0 or t.y >= world.data.height:
+		return
+	var has := tiles.has(t)
+	if has and water_fringe > 0:
+		# Rock beside water gets a fringe of water painted over its edge.
+		for d: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var n := Vector2i(world.data.wrap_x(t.x + d.x), t.y + d.y)
+			if not tiles.has(n) and world.data.peek_block(n.x, n.y) > 0:
+				if urgent:
+					if not _paint.has(n):
+						_paint_rock(n, touched)
+				else:
+					_paint_bulk[n] = true
+	var r := Vector2i(t.x / REGION, t.y / REGION)
+	var entry: Array = _regions.get(r, [])
+	if entry.is_empty():
+		if not has and not _has_fringe(t):
+			return
+		var img := Image.create_empty(REGION * TILE * 2, REGION * TILE * 2, false, Image.FORMAT_RGBA8)
+		entry = [img, null]
+		_regions[r] = entry
+	_paint_tile(entry[0] as Image, t, Vector2i((t.x - r.x * REGION) * TILE * 2, (t.y - r.y * REGION) * TILE * 2))
+	touched[r] = true
+
+
+## A rock tile's fringe, painted now (an urgent neighbor).
+func _paint_rock(t: Vector2i, touched: Dictionary[Vector2i, bool]) -> void:
+	var r := Vector2i(t.x / REGION, t.y / REGION)
+	var entry: Array = _regions.get(r, [])
+	if entry.is_empty():
+		if not _has_fringe(t):
+			return
+		entry = [Image.create_empty(REGION * TILE * 2, REGION * TILE * 2, false, Image.FORMAT_RGBA8), null]
+		_regions[r] = entry
+	_paint_tile(entry[0] as Image, t, Vector2i((t.x - r.x * REGION) * TILE * 2, (t.y - r.y * REGION) * TILE * 2))
+	touched[r] = true
+
+
+## The tiles on screen (a little margin), or an empty rect without a camera.
+func _view_tiles() -> Rect2i:
+	var vp := get_viewport()
+	var cam := vp.get_camera_2d() if vp else null
+	if cam == null:
+		return Rect2i()
+	var size := vp.get_visible_rect().size / cam.zoom
+	var tl := cam.get_screen_center_position() - size * 0.5
+	return Rect2i(Vector2i(floori(tl.x / TILE) - 2, floori(tl.y / TILE) - 2),
+		Vector2i(ceili(size.x / TILE) + 4, ceili(size.y / TILE) + 4))
 
 
 ## True when a tile without cells is rock with water beside it (a fringe to paint).
@@ -1043,7 +1182,7 @@ func _has_fringe(t: Vector2i) -> bool:
 ## pixels, color] for each edge cell of a water neighbor that touches its rock.
 func _fringe_rects(t: Vector2i) -> Array:
 	var out: Array = []
-	if water_fringe <= 0 or world.data.get_block(t.x, t.y) <= 0:
+	if water_fringe <= 0 or world.data.peek_block(t.x, t.y) <= 0:
 		return out
 	var cp := CELL_PX * 2
 	var size := TILE * 2
@@ -1151,12 +1290,21 @@ func _paint_tile(img: Image, t: Vector2i, at: Vector2i) -> void:
 func _draw() -> void:
 	if world == null:
 		return
+	# Only the regions on screen (Phase 85: the sea keeps hundreds loaded).
+	var view := _view_tiles()
+	var cull := view.size.x > 0
+	var vr := Rect2(view.position * TILE, view.size * TILE).grow(REGION * TILE)
+	var t0 := Time.get_ticks_usec()
 	for r: Vector2i in _regions:
 		var entry: Array = _regions[r]
 		if entry[1] == null:
 			continue
 		var x := world.near_player_x(r.x * REGION * TILE)
-		draw_texture_rect(entry[1] as Texture2D, Rect2(x, r.y * REGION * TILE, REGION * TILE, REGION * TILE), false)
+		var rect := Rect2(x, r.y * REGION * TILE, REGION * TILE, REGION * TILE)
+		if cull and not vr.intersects(rect):
+			continue
+		draw_texture_rect(entry[1] as Texture2D, rect, false)
+	PerfStats.add("voxel draw", Time.get_ticks_usec() - t0)
 
 
 # --- collision ---------------------------------------------------------------------------
@@ -1281,7 +1429,7 @@ func from_dict(d: Dictionary) -> void:
 			tiles[t] = arr
 			# Quiet: it was at rest when saved (what was still moving starts again
 			# when anything near it changes).
-			_paint[t] = true
+			_paint_bulk[t] = true
 			_col_dirty[t] = true
 	for key: String in d.get("imported", []):
 		var parts := key.split(",")

@@ -2,6 +2,17 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-28: Phase 85, ocean lag
+
+- **Patrick:** the ocean is insanely laggy, like it loads every frame.
+- **Claude:** measured first: painting streamed-in sea water took 270 to 800 ms in one
+  frame, drawing shorelines made the main thread generate land, and the sea refill
+  poured water into dry Deep caverns and not-yet-loaded chunks, keeping 1,000+ tiles
+  of water moving (20 to 170 ms steps). Fixed all three (budgeted painting and imports,
+  no generating while drawing, refill only where the generator put water), plus
+  on-screen-only drawing and a Noita-style simulation radius and step budget. Moving
+  the cell simulation to native code (C# or GDExtension) stays an option for later.
+
 ## 2026-11-28: Phase 84, message log
 
 - **Patrick:** a place to see past messages in full, "mostly unlocks".

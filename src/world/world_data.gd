@@ -187,6 +187,16 @@ func generated_chunk_count() -> int:
 	return _chunks.size()
 
 
+## The block if its chunk is already generated, else AIR. Never generates (for drawing
+## code that mustn't stall the main thread).
+func peek_block(x: int, y: int) -> int:
+	if y < 0 or y >= height:
+		return AIR
+	var wx := wrap_x(x)
+	var chunk := peek_chunk(Vector2i(wx / CHUNK, y / CHUNK))
+	return chunk.blocks[ChunkData.local_index(wx % CHUNK, y % CHUNK)] if chunk else AIR
+
+
 func get_block(x: int, y: int) -> int:
 	if y < 0:
 		return AIR

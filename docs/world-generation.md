@@ -480,7 +480,23 @@ water blue and sand tan.
   fills back up, `refill_tiles_per_second` (8) tiles a second within `refill_radius` (48)
   of you (`ocean_refill`, `refill_samples` 48 tries a pass, 4 passes a second;
   `VoxelLayer.refill_sea`). A sealed dry room under the sea stays dry (only tiles touching
-  water refill).
+  water refill). Phase 85: only tiles the generator filled (`water_at`) in chunks whose
+  water is already in (`_imported`) refill, so dry caverns in the Deep don't slowly flood
+  and queued chunks don't get water poured into them early.
+- **Keeping the sea smooth** (Phase 85, the ocean lag): the cost was drawing, not the
+  water. Now:
+  - Streamed and loaded water is queued: chunks on or next to the screen go in at once,
+    the rest `imports_per_frame` (1) a frame (`_queue_generated`, `_import_some`;
+    `flush_imports` adds everything now). Their tiles are painted on a budget of
+    `bulk_paint_ms` (2.5 ms) a frame (`_paint_bulk`), while edits and moving water paint
+    at once (`_paint`).
+  - Drawing water never makes the main thread generate land
+    (`WorldData.peek_block`; land not generated yet counts as solid to the water).
+  - Only water regions on screen are drawn.
+  - Like Noita, only water within `sim_radius_tiles` (96) of you moves; the rest waits
+    where it is. A step stops after `step_budget_ms` (5 ms) and carries on next step.
+  - `--perf` prints the voxel timings ("voxel step", "voxel paint", "voxel import",
+    "voxel draw"...). Dev console `tp ocean` and `tp deep` jump there.
 
 ## Code tour
 

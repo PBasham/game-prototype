@@ -358,6 +358,13 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 85: ocean lag (branch phase-85-ocean-lag)**
+- [ ] Swim across the ocean and down into the Deep (console `tp ocean`, `tp deep`):
+      no stutter. F3 shows frame times.
+- [ ] Water still looks right everywhere (far shores may fill in a moment after they
+      come on screen).
+- [ ] Pour a Clay Bucket into a dry cave: the water flows as before.
+
 **Phase 84: message log (branch phase-84-message-log)**
 - [ ] Catalog (J) has a fourth tab, Log. Unlock a recipe (pick up Clay, Sand...): it's
       listed at the top with the day and time. Learn a spell: "Learned: ...".

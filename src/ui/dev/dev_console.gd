@@ -365,7 +365,7 @@ func _register() -> void:
 	_add("fullbright", "fullbright", "Toggle the lighting off (everything fully lit) and back on, to look around dark places.", func(_a: PackedStringArray) -> void:
 		world.lights.visible = not world.lights.visible
 		_print("Full bright %s." % ("off" if world.lights.visible else "on")))
-	_add("tp", "tp <x> <y> | tp spawn | tp dark", "Teleport to a tile (feet), the world's spawn, or the middle of the Dark Forest.", _tp)
+	_add("tp", "tp <x> <y> | tp spawn | tp dark | tp ocean | tp deep", "Teleport to a tile (feet), the world's spawn, the middle of the Dark Forest, or the ocean (its surface, or near its floor).", _tp)
 	_add("pos", "pos", "Your tile position.", func(_a: PackedStringArray) -> void:
 		var t := world.wrap_tile(world.world_to_tile(world.player.global_position))
 		_print("tile %d, %d" % [t.x, t.y]))
@@ -902,10 +902,17 @@ func _tp(a: PackedStringArray) -> void:
 			return
 		var x := roundi(forest.dark_forests()[0].x)
 		tile = Vector2i(x, forest.surface_at(x) - 1)
+	elif a.size() == 1 and a[0] in ["ocean", "deep"]:
+		var forest := world.generator as ForestGenerator
+		if forest == null or forest.ocean().x < 0:
+			_print("This world has no ocean.")
+			return
+		var x := roundi(forest.ocean().x)
+		tile = Vector2i(x, forest._sea - 2) if a[0] == "ocean" else Vector2i(x, forest.surface_at(x) - 6)
 	elif a.size() == 2 and a[0].is_valid_int() and a[1].is_valid_int():
 		tile = Vector2i(int(a[0]), int(a[1]))
 	else:
-		_print("Usage: tp <x> <y> | tp spawn | tp dark")
+		_print("Usage: tp <x> <y> | tp spawn | tp dark | tp ocean | tp deep")
 		return
 	var pos := world.tile_to_world(tile) + Vector2(World.TILE * 0.5, 0)
 	world.renderer.load_all_now(pos)
