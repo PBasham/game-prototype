@@ -4,12 +4,13 @@
 
 [resource]
 script = ExtResource("1_ld7iv")
-station_tier = 2
 station = &"workbench"
+station_tier = 2
 inputs = Dictionary[StringName, int]({
 &"darkwood": 4,
 &"iron_bar": 1
 })
+unlock_items = Array[StringName]([&"darkwood", &"iron_bar"])
 output = &"reinforced_darkwood"
 output_count = 4
 id = &"reinforced_darkwood"

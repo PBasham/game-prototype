@@ -10,6 +10,7 @@ inputs = Dictionary[StringName, int]({
 &"red_cap": 1,
 &"wooden_bowl": 1
 })
+unlock_items = Array[StringName]([&"field_mushroom", &"red_cap", &"wooden_bowl"])
 output = &"mushroom_stew"
 id = &"mushroom_stew"
 display_name = "Mushroom Stew"

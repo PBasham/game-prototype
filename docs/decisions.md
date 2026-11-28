@@ -2,6 +2,12 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 70, recipes behind their key items
+
+- **Patrick:** recipes should be held behind some of their key items.
+- **Claude:** every recipe's key items are its inputs except Wood, Log, Stone, Dirt and
+  Sand; it shows once you've had any one of them (the existing `unlock_items`).
+
 ## 2026-11-27: Phase 69, Upgrade in the title bar
 
 - **Patrick:** put the station's Upgrade option at the top next to "Tier 1", and hovering

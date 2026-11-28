@@ -8,6 +8,7 @@ station = &"cooking"
 inputs = Dictionary[StringName, int]({
 &"field_mushroom": 1
 })
+unlock_items = Array[StringName]([&"field_mushroom"])
 output = &"cooked_mushroom"
 id = &"cooked_mushroom"
 display_name = "Cooked Mushroom"

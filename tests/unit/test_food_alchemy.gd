@@ -36,6 +36,7 @@ func _hold(id: StringName, count: int) -> void:
 
 
 func _open_station(id: StringName) -> void:
+	_seen_everything()
 	var a := _floor_spot(3)
 	assert_true(w.request_place_object(a, w.objects.index_of(id)))
 	assert_true(w.try_interact_at(w.tile_to_world(a + Vector2i(1, -1)) + Vector2(4, 4), w.player))
@@ -162,3 +163,9 @@ func test_poison_flask_cloud() -> void:
 	w.item_user.cursor_override = p.chest() + Vector2(40 * p.facing, 0)
 	assert_true(w.item_user.throw_held())
 	assert_eq(w.character.inventory.counts[0], 1)
+
+
+## Recipes hide behind their key items (Phase 70): a character who's had everything sees them all.
+func _seen_everything() -> void:
+	for d in Registry.get_all(&"items"):
+		w.character.seen_items[d.id] = true

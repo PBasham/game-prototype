@@ -7,6 +7,7 @@ script = ExtResource("1_s8dv3")
 inputs = Dictionary[StringName, int]({
 &"dark_log": 1
 })
+unlock_items = Array[StringName]([&"dark_log"])
 output = &"darkwood"
 output_count = 4
 id = &"darkwood"

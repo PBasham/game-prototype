@@ -8,6 +8,7 @@ station = &"cooking"
 inputs = Dictionary[StringName, int]({
 &"raw_crab": 1
 })
+unlock_items = Array[StringName]([&"raw_crab"])
 output = &"crab_legs"
 id = &"crab_legs"
 display_name = "Crab Legs"

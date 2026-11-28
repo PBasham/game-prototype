@@ -11,6 +11,7 @@ inputs = Dictionary[StringName, int]({
 &"duskcap": 1,
 &"slime": 1
 })
+unlock_items = Array[StringName]([&"clay_flask", &"duskcap", &"slime"])
 output = &"poison_flask"
 output_count = 2
 id = &"poison_flask"

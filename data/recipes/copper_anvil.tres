@@ -8,6 +8,7 @@ station = &"workbench"
 inputs = Dictionary[StringName, int]({
 &"copper_bar": 6
 })
+unlock_items = Array[StringName]([&"copper_bar"])
 output = &"copper_anvil"
 id = &"copper_anvil"
 display_name = "Copper Anvil"

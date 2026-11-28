@@ -149,7 +149,7 @@ name (`World.chest_names`, saved). A torch on a wall comes down with a right cli
 | `inputs` | Item id to count, used up |
 | `requires` | Item ids that must be in the inventory but aren't used up (no recipe uses it now) |
 | `output`, `output_count` | What you get |
-| `unlock_items` | **Discovered recipe:** hidden until the character has had one of these items in the inventory (empty = always known). The moment one turns up: "New recipe: ..." and a chime. Remembered per character (`CharacterData.seen_items`, saved), so using the item up doesn't hide it again. Spells to learn at the table do the same with `SpellData.learn_unlock_items`. |
+| `unlock_items` | **Discovered recipe:** hidden until the character has had one of these items in the inventory (empty = always known). The moment one turns up: "New recipe: ..." and a chime. Remembered per character (`CharacterData.seen_items`, saved), so using the item up doesn't hide it again. Spells to learn at the table do the same with `SpellData.learn_unlock_items`. Phase 70: almost every recipe has them: its **key items**, its inputs minus the basics (`COMMON_INPUTS` in `tools/make_items.gd`: Wood, Log, Stone, Dirt, Sand), so a recipe shows once you've had any one of them (a Healing Potion once you've had a Clay Flask or a Red Cap; the Alchemist's Bench once you've had Glass). Recipes of only basics (the Workbench) always show. `tools/set_recipe_unlocks.gd` fills them in for recipes that have none (it leaves set ones alone). |
 
 **Summons (Phase 22):** each summonable enemy drops a rare core that shows its summon's
 recipes and goes into them; its Spell Page is a rarer drop that teaches the spell

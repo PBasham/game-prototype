@@ -99,6 +99,7 @@ func test_furniture_footprint_floor_and_removal() -> void:
 
 
 func test_stations_open_their_recipes() -> void:
+	_seen_everything()
 	var a := _floor_spot(3)
 	assert_true(w.request_place_object(a, w.objects.index_of(&"furnace")))
 	var point := w.tile_to_world(a + Vector2i(1, -1)) + Vector2(4, 4)
@@ -681,3 +682,28 @@ func test_upgrade_button_in_the_title_bar() -> void:
 	assert_true(hud.upgrade_station())
 	assert_eq(hud._station_def().id, &"darkwood_workbench")
 	assert_false(hud._upgrade_shown(), "nothing past it")
+
+
+## Recipes hide behind their key items (Phase 70): a character who's had everything sees them all.
+func _seen_everything() -> void:
+	for d in Registry.get_all(&"items"):
+		w.character.seen_items[d.id] = true
+
+
+## Phase 70: a recipe shows once you've had one of its key items (its inputs but the
+## basics: Wood, Logs, Stone, Dirt, Sand).
+func test_recipes_hide_behind_their_key_items() -> void:
+	var bench := Registry.get_def(&"recipes", &"alchemists_bench") as RecipeData
+	assert_eq(bench.unlock_items, [&"glass"] as Array[StringName])
+	var potion := Registry.get_def(&"recipes", &"healing_potion") as RecipeData
+	assert_eq(potion.unlock_items, [&"clay_flask", &"red_cap"] as Array[StringName])
+	var table := Registry.get_def(&"recipes", &"workbench") as RecipeData
+	assert_true(table.unlock_items.is_empty(), "only basics: always shown")
+	for d in Registry.get_all(&"recipes"):
+		var r := d as RecipeData
+		for id in r.unlock_items:
+			assert_not_null(ItemData.find(id), "%s's key item %s exists" % [r.id, id])
+	var c := CharacterData.new()
+	assert_false(c.unlocked(potion.unlock_items))
+	c.inventory.add(&"red_cap", 1)
+	assert_true(c.unlocked(potion.unlock_items), "one key item is enough")

@@ -592,6 +592,12 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 70: recipes behind their key items
+
+| Change | Where |
+| --- | --- |
+| Key items per recipe | `unlock_items` in every `data/recipes/*.tres`; the rule is `key_items` / `COMMON_INPUTS` in `tools/make_items.gd`; `tools/set_recipe_unlocks.gd` applies it |
+
 ## Phase 69: Upgrade in the title bar
 
 | Change | Where |

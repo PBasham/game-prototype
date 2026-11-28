@@ -9,6 +9,7 @@ inputs = Dictionary[StringName, int]({
 &"rope": 6,
 &"wood": 4
 })
+unlock_items = Array[StringName]([&"rope"])
 output = &"bug_net"
 id = &"bug_net"
 display_name = "Bug Net"

@@ -10,6 +10,7 @@ inputs = Dictionary[StringName, int]({
 &"glass_vial": 1,
 &"red_cap": 2
 })
+unlock_items = Array[StringName]([&"glass_vial", &"red_cap"])
 output = &"healing_glass_vial"
 id = &"healing_glass_vial"
 display_name = "Healing Glass Vial"

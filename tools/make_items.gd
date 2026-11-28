@@ -1367,7 +1367,7 @@ func _recipes() -> Array[RecipeData]:
 		r.display_name = String(e[3]).capitalize()
 		if r.id in [&"reinforced_wood", &"reinforced_darkwood"]:
 			r.station_tier = 2  # the Darkwood Workbench
-		for u: StringName in UNLOCKS.get(r.id, []):
+		for u: StringName in UNLOCKS.get(r.id, key_items(r.inputs)):
 			r.unlock_items.append(u)
 		r.tab = {&"poison_coating": "Coatings", &"poison_flask": "Flasks"}.get(r.id, "Potions" if r.station == &"alchemy" else "")
 		for g: StringName in BENCH_GROUND:
@@ -1447,6 +1447,18 @@ const SCROLL_COSTS := {&"gel_cushion": {&"blank_scroll": 1, &"slime": 20},
 ## Hidden recipes: shown once you've had one of these items (RecipeData.unlock_items).
 const UNLOCKS := {&"scroll_call_spirit": [&"spirit_core"], &"forest_spirit_pendant": [&"spirit_core"],
 	&"scroll_summon_slime": [&"slime_core"]}
+## Phase 70: every other recipe is hidden until you've had one of its key items: its
+## inputs minus these basics (a recipe of only basics is always shown).
+const COMMON_INPUTS: Array[StringName] = [&"wood", &"log", &"stone", &"dirt", &"sand"]
+
+
+## A recipe's key items: its inputs that aren't COMMON_INPUTS.
+static func key_items(inputs: Dictionary) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for id: StringName in inputs:
+		if not id in COMMON_INPUTS:
+			out.append(id)
+	return out
 
 
 ## Paper, the Blank Scroll, a scroll for every spell (left click casts it once) and a

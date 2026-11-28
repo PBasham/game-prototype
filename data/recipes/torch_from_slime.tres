@@ -8,6 +8,7 @@ inputs = Dictionary[StringName, int]({
 &"slime": 1,
 &"wood": 1
 })
+unlock_items = Array[StringName]([&"slime"])
 output = &"torch"
 output_count = 5
 id = &"torch_from_slime"

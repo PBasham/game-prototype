@@ -8,6 +8,7 @@ station = &"furnace"
 inputs = Dictionary[StringName, int]({
 &"dark_forest_stone": 2
 })
+unlock_items = Array[StringName]([&"dark_forest_stone"])
 output = &"dark_forest_stone_bricks"
 id = &"dark_forest_stone_bricks"
 display_name = "Dark Forest Stone Bricks"

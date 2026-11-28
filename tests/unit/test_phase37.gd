@@ -196,6 +196,7 @@ func test_wall_brightness_follows_its_block() -> void:
 
 
 func test_station_command_opens_a_station_without_one() -> void:
+	_seen_everything()
 	w.console.run("station furnace")
 	assert_true(w.hud.crafting)
 	assert_eq(w.hud._station_def().station, &"furnace")
@@ -319,3 +320,9 @@ func test_glow_potion_lights_you() -> void:
 	assert_gt(float(w.player.buff_light()[0]), 0.0)
 	w.item_user._update_held_light()
 	assert_true(w.item_user._held_light.is_in_group(&"light_sources"), "a light around you")
+
+
+## Recipes hide behind their key items (Phase 70): a character who's had everything sees them all.
+func _seen_everything() -> void:
+	for d in Registry.get_all(&"items"):
+		w.character.seen_items[d.id] = true

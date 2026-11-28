@@ -8,6 +8,7 @@ inputs = Dictionary[StringName, int]({
 &"clay_jug": 1,
 &"water": 64
 })
+unlock_items = Array[StringName]([&"clay_jug", &"water"])
 output = &"water_clay_jug"
 id = &"water_clay_jug"
 display_name = "Water Clay Jug"

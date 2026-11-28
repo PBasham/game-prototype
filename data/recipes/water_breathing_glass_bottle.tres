@@ -11,6 +11,7 @@ inputs = Dictionary[StringName, int]({
 &"water_glass_bottle": 1
 })
 bench_ground = Array[StringName]([&"kelp"])
+unlock_items = Array[StringName]([&"kelp", &"water_glass_bottle"])
 output = &"water_breathing_glass_bottle"
 id = &"water_breathing_glass_bottle"
 display_name = "Water Breathing Glass Bottle"

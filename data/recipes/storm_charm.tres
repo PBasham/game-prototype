@@ -9,6 +9,7 @@ inputs = Dictionary[StringName, int]({
 &"copper_bar": 6,
 &"magic_essence": 6
 })
+unlock_items = Array[StringName]([&"copper_bar", &"magic_essence"])
 output = &"storm_charm"
 id = &"storm_charm"
 display_name = "Storm Charm"

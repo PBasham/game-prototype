@@ -9,6 +9,7 @@ inputs = Dictionary[StringName, int]({
 &"blank_scroll": 1,
 &"slime": 20
 })
+unlock_items = Array[StringName]([&"blank_scroll", &"slime"])
 output = &"scroll_gel_cushion"
 id = &"scroll_gel_cushion"
 display_name = "Scroll Gel Cushion"
