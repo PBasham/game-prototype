@@ -220,9 +220,11 @@ src/items/catalog.gd). Three tabs:
   it's made, how many recipes use it, a **Recipes** button, and **Dropped by**: each
   enemy you've had it from, with how many and the chance ("Green Slime (1%)"), as a link
   (blue) to that enemy's page.
-- **Creatures** (was Enemies; Phase 74): hostile enemies first, then the passive
-  creatures (critters: fish, crabs, fireflies), and each page says **Hostile** or
-  **Passive**. A creature counts as found once you've killed one. Its page shows health,
+- **Entities** (was Enemies, then Creatures): sub tabs **Enemies**, **Bosses**, **NPCs**
+  and **Peaceful** (Phase 77). `EnemyData.catalog_group` puts each one under its sub tab;
+  Auto (the default) means Peaceful for critters (fish, crabs, fireflies) and Enemies
+  for the rest. No bosses or NPCs yet: those sub tabs say "None yet". Each page says
+  Hostile, Boss, NPC or Peaceful. An entity counts as found once you've killed one. Its page shows health,
   damage, defense, how many you've slain, and its drops, one row each with how many and
   the chance ("1-2, 100%", from its `LootDrop`s). Drops you've never had from it stay
   silhouettes named "???" (their chance still shows); seen ones link to their item page
@@ -239,7 +241,7 @@ src/items/catalog.gd). Three tabs:
 kills and drops are `slain` and `seen_drops` (`CharacterData.note_kill`, called from
 `Enemy._die`). A recipe is known when you've had one of its `unlock_items`, the same
 rule as the crafting window. Station names come from the lowest tier object with that
-`station`. Dev console: `catalog [items|enemies|recipes] [name]`.
+`station`. Dev console: `catalog [items|entities|recipes] [name]`.
 
 ## Furniture and stations: `data/objects/<id>.tres` (`ObjectDef`)
 

@@ -592,6 +592,12 @@ saves still load.
 | Boards flat on the left | `ObjectDef.pile_boards`; `ObjectLayer._draw_pile` |
 | Tele Grab lifts forage | `ForageLayer.request_lift_near`; `World.tele_grab` |
 
+## Phase 77: Catalog Entities
+
+| Change | Where |
+| --- | --- |
+| Sub tabs | `CatalogWindow.SUB_TABS`, `sub_tab`, `sub_tab_rect`, `_grid_top`, `_rows`, `_enemies`; `EnemyData.catalog_group`, `group()` |
+
 ## Phase 76: coins
 
 | Change | Where |

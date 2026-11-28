@@ -485,18 +485,20 @@ func _register() -> void:
 				b.style = String(looks["style"])
 			msg += ", style %s, detail %dx, bands %d, trim %.2f, turn %d, colors %s" % [b.style, b.detail, b.bands, b.trim, int(b.turn_idle), b.color_mode()]
 		_print(msg))
-	_add("catalog", "catalog [items|enemies|recipes] [item]", "Open the Catalog on a tab (recipes <item>: that item's recipes).", func(a: PackedStringArray) -> void:
+	_add("catalog", "catalog [items|entities|recipes] [item or entity]", "Open the Catalog on a tab (recipes <item>: that item's recipes).", func(a: PackedStringArray) -> void:
 		var hud := world.hud
 		if not hud.catalog_open:
 			hud.toggle_catalog()
 		var w := hud._catalog
 		if a.size() >= 1:
-			w.tab = maxi(["items", "enemies", "recipes"].find(a[0]), 0)
+			w.tab = maxi(["items", "entities", "recipes"].find(a[0]), 0)
+			if a[0] in ["enemies", "creatures"]:
+				w.tab = 1
 			w.scroll = 0
 		if a.size() >= 2 and w.tab == 1:
 			var en := Registry.get_def(&"enemies", StringName("_".join(a.slice(1)))) as EnemyData
 			if en:
-				w.picked_enemy = en
+				w.follow(en)
 		elif a.size() >= 2:
 			var it := find_item(" ".join(a.slice(1)))
 			if it:

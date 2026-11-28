@@ -137,4 +137,35 @@ func test_creatures_tab_lists_passive_ones_last() -> void:
 	for id: StringName in [&"fish", &"crab", &"firefly"]:
 		assert_has(ids, id)
 		assert_true((Registry.get_def(&"enemies", id) as EnemyData).is_critter(), "%s is passive" % id)
-	assert_eq(CatalogWindow.TABS[1], "Creatures")
+	assert_eq(CatalogWindow.TABS[1], "Entities")
+
+
+## Phase 77: the Entities tab's sub tabs: Enemies, Bosses, NPCs, Peaceful.
+func test_entities_sub_tabs() -> void:
+	assert_eq(CatalogWindow.SUB_TABS, ["Enemies", "Bosses", "NPCs", "Peaceful"] as Array[String])
+	var fish := Registry.get_def(&"enemies", &"fish") as EnemyData
+	var slime := Registry.get_def(&"enemies", &"green_slime") as EnemyData
+	assert_eq(fish.group(), EnemyData.CatalogGroup.PEACEFUL)
+	assert_eq(slime.group(), EnemyData.CatalogGroup.ENEMY)
+	Game.world_info = WorldInfo.test_course()
+	Game.character = null
+	w = WORLD_SCENE.instantiate() as World
+	add_child(w)
+	await wait_physics_frames(3)
+	w.hud.toggle_catalog()
+	var cat := w.hud._catalog
+	cat.tab = 1
+	cat.sub_tab = 0
+	var ids := cat._enemies().map(func(e: EnemyData) -> StringName: return e.id)
+	assert_has(ids, &"green_slime")
+	assert_does_not_have(ids, &"fish")
+	cat.sub_tab = 3
+	ids = cat._enemies().map(func(e: EnemyData) -> StringName: return e.id)
+	assert_eq(ids.size(), 3, "fish, crabs, fireflies")
+	assert_has(ids, &"fish")
+	cat.sub_tab = 1
+	assert_eq(cat._enemies().size(), 0, "no bosses yet")
+	assert_gt(cat.cell(0).position.y, cat.sub_tab_rect(0).end.y, "the grid sits under the sub tabs")
+	cat.follow(fish)
+	assert_eq(cat.sub_tab, 3, "a link to a fish opens Peaceful")
+

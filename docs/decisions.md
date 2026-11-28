@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was decided, why, and what it affects.
 
+## 2026-11-27: Phase 77, Catalog Entities
+
+- **Patrick:** rename the Catalog's Creatures tab to Entities, with sub tabs Enemies,
+  Bosses, NPCs and Peaceful.
+- **Claude:** `EnemyData.catalog_group` (Auto: critters are Peaceful, the rest Enemies)
+  ready for bosses and NPCs.
+
 ## 2026-11-27: Phase 76, coins
 
 - **Patrick:** copper, silver, gold and platinum coins, and a little collapsible coin

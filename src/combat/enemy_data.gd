@@ -68,6 +68,18 @@ enum AI { SLIME, SPIRIT, CRAB, FISH, FIREFLY }
 ## (SpawnTable max_critters), apart from the enemies.
 func is_critter() -> bool:
 	return harmless_until_hit
+
+
+## Which of the Catalog's Entities sub tabs it's under (Phase 77). Auto: Peaceful for
+## critters, else Enemies.
+enum CatalogGroup { AUTO, ENEMY, BOSS, NPC, PEACEFUL }
+@export var catalog_group := CatalogGroup.AUTO
+
+
+func group() -> CatalogGroup:
+	if catalog_group != CatalogGroup.AUTO:
+		return catalog_group
+	return CatalogGroup.PEACEFUL if is_critter() else CatalogGroup.ENEMY
 @export_group("Crab (scuttles on the ground)")
 ## Tiles per second sideways, and how long it scuttles or stops (seconds, random).
 @export var scuttle_speed := 4.0

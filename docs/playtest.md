@@ -358,6 +358,11 @@ New worlds only for the ground (old chunks keep their blocks). `tp dark` gets yo
       near you otherwise. Evolve at the Empower tab: it's a Blue Slime next cast.
 - [ ] With the Pendant: a slime and a spirit together.
 
+**Phase 77: Catalog Entities (branch phase-77-catalog-entities)**
+- [ ] The Catalog's second tab is Entities, with Enemies, Bosses, NPCs and Peaceful.
+      Slimes and the Forest Spirit under Enemies; fish, crabs and fireflies under
+      Peaceful; Bosses and NPCs say "None yet".
+
 **Phase 76: coins (branch phase-76-coins)**
 - [ ] Kill slimes: Copper Coins pop out and fly to you even with a full inventory. They
       go in the coin pouch under the inventory (bottom right), not in your slots.

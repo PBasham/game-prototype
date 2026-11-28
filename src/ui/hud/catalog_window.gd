@@ -16,15 +16,20 @@ const TAB_H := 12
 const DETAIL_W := 132
 const ROW_H := 20
 const RECIPE_ROWS := 8
-const TABS: Array[String] = ["Items", "Creatures", "Recipes"]
+const TABS: Array[String] = ["Items", "Entities", "Recipes"]
+## The Entities tab's sub tabs (Phase 77), in EnemyData.CatalogGroup order (after AUTO).
+const SUB_TABS: Array[String] = ["Enemies", "Bosses", "NPCs", "Peaceful"]
+const SUB_H := 12
 const SILHOUETTE := Color(0.0, 0.0, 0.0, 0.85)
 
-enum Part { NONE, TAB, CELL, SLOT_PICK, RECIPES_BUTTON, RECIPE, SEARCH, LINK }
+enum Part { NONE, TAB, CELL, SLOT_PICK, RECIPES_BUTTON, RECIPE, SEARCH, LINK, SUB_TAB }
 ## A link's color (an enemy on an item's page, a drop on an enemy's page).
 const LINK := Color("9fd4ff")
 const DROP_ROW := 18
 
 var tab := 0
+## The Entities tab's sub tab (SUB_TABS index).
+var sub_tab := 0
 var scroll := 0
 ## The item or enemy whose page is open (Items / Enemies), and the Recipes tab's item.
 var picked_item: ItemData
@@ -72,7 +77,22 @@ func tab_rect(i: int) -> Rect2:
 
 func cell(i: int) -> Rect2:
 	var k := i - scroll * COLS
-	return Rect2(PAD + (k % COLS) * STEP, _top() + (k / COLS) * STEP, SLOT, SLOT)
+	return Rect2(PAD + (k % COLS) * STEP, _grid_top() + (k / COLS) * STEP, SLOT, SLOT)
+
+
+## The grid's top: under the sub tabs on the Entities tab.
+func _grid_top() -> float:
+	return _top() + (SUB_H + 4.0 if tab == 1 else 0.0)
+
+
+## Grid rows shown (one fewer under the Entities tab's sub tabs).
+func _rows() -> int:
+	return ROWS - 1 if tab == 1 else ROWS
+
+
+func sub_tab_rect(i: int) -> Rect2:
+	var w := (COLS * STEP - Hud.GAP + 2.0) / SUB_TABS.size() - 2.0
+	return Rect2(PAD + i * (w + 2.0), _top(), w, SUB_H)
 
 
 func detail_rect() -> Rect2:
@@ -114,14 +134,13 @@ func _items() -> Array[ItemData]:
 		return Catalog.item_found(c, it.id) and q in it.display_name.to_lower())
 
 
-## The Enemies tab's list, narrowed by the search.
+## The Entities tab's list: its sub tab's entities, narrowed by the search.
 func _enemies() -> Array[EnemyData]:
 	var q := search.strip_edges().to_lower()
-	if q == "":
-		return Catalog.all_enemies()
 	var c := _char()
+	var want := sub_tab + 1  # EnemyData.CatalogGroup (after AUTO)
 	return Catalog.all_enemies().filter(func(e: EnemyData) -> bool:
-		return Catalog.enemy_found(c, e.id) and q in e.display_name.to_lower())
+		return int(e.group()) == want and (q == "" or (Catalog.enemy_found(c, e.id) and q in e.display_name.to_lower())))
 
 
 func search_rect() -> Rect2:
@@ -171,6 +190,10 @@ func hit(local: Vector2) -> Array:
 			return [Part.TAB, i]
 	if tab != 2 and search_rect().has_point(local):
 		return [Part.SEARCH, 0]
+	if tab == 1:
+		for i in SUB_TABS.size():
+			if sub_tab_rect(i).has_point(local):
+				return [Part.SUB_TAB, i]
 	if tab != 2:
 		for i in _links.size():
 			if (_links[i][0] as Rect2).has_point(local):
@@ -185,7 +208,7 @@ func hit(local: Vector2) -> Array:
 		return [Part.NONE, -1]
 	if recipes_button_rect().has_point(local) and tab == 0 and picked_item and Catalog.item_found(_char(), picked_item.id):
 		return [Part.RECIPES_BUTTON, 0]
-	for i in range(scroll * COLS, mini(_list_size(), (scroll + ROWS) * COLS)):
+	for i in range(scroll * COLS, mini(_list_size(), (scroll + _rows()) * COLS)):
 		if cell(i).has_point(local):
 			return [Part.CELL, i]
 	return [Part.NONE, -1]
@@ -273,12 +296,18 @@ func _draw_items(font: Font, h: Array, hot_link: Variant) -> void:
 func _draw_enemies(font: Font, h: Array, hot_link: Variant) -> void:
 	var c := _char()
 	var list := _enemies()
-	for i in range(scroll * COLS, mini(list.size(), (scroll + ROWS) * COLS)):
+	for i in SUB_TABS.size():
+		var st := UiSkin.Btn.PRESSED if sub_tab == i else (UiSkin.Btn.HOT if h[0] == Part.SUB_TAB and h[1] == i else UiSkin.Btn.NORMAL)
+		UiSkin.button(self, sub_tab_rect(i), SUB_TABS[i], st)
+	if list.is_empty():
+		_text(font, Vector2(PAD + 2, _grid_top() + 10), "None yet." if search == "" else "Nothing found by that name.",
+			COLS * STEP, UiSkin.DIM)
+	for i in range(scroll * COLS, mini(list.size(), (scroll + _rows()) * COLS)):
 		var r := cell(i)
 		var e := list[i]
 		UiSkin.slot(self, r, UiSkin.SlotLook.SELECTED if picked_enemy == e else (UiSkin.SlotLook.HOT if h[0] == Part.CELL and h[1] == i else UiSkin.SlotLook.NORMAL))
 		_enemy_icon(r.grow(-1), e, Catalog.enemy_found(c, e.id))
-	_scroll_marks(font, list.size(), COLS, ROWS)
+	_scroll_marks(font, list.size(), COLS, _rows())
 	var d := detail_rect()
 	UiSkin.slot(self, d, UiSkin.SlotLook.NORMAL)
 	if picked_enemy == null:
@@ -292,9 +321,10 @@ func _draw_enemies(font: Font, h: Array, hot_link: Variant) -> void:
 		_text(font, d.position + Vector2(5, 34), "Not slain yet.", d.size.x - 10, UiSkin.DIM)
 		return
 	_text(font, d.position + Vector2(36, 15), e.display_name, d.size.x - 40, UiSkin.GOLD)
-	# Hostile or passive (critters only fight back once you've hit them).
-	var kind := "Passive" if e.is_critter() else "Hostile"
-	_text(font, d.position + Vector2(36, 24), kind, d.size.x - 40, UiSkin.GOOD if e.is_critter() else UiSkin.BAD)
+	# Its kind (critters only fight back once you've hit them).
+	var kind := ["Hostile", "Hostile", "Boss", "NPC", "Peaceful"][int(e.group())] as String
+	_text(font, d.position + Vector2(36, 24), kind, d.size.x - 40,
+		UiSkin.GOOD if e.group() in [EnemyData.CatalogGroup.PEACEFUL, EnemyData.CatalogGroup.NPC] else UiSkin.BAD)
 	var y := _text(font, d.position + Vector2(5, 34), e.description, d.size.x - 10, UiSkin.TEXT, 4)
 	var stats := "Health %d   Damage %d" % [roundi(e.max_health), roundi(e.contact_damage)]
 	if e.defense > 0:
@@ -428,7 +458,7 @@ func _scroll_marks(font: Font, total: int, cols: int, rows_shown: int) -> void:
 func body_click(mb: InputEventMouseButton) -> void:
 	if mb.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
 		var cols := 1 if tab == 2 else COLS
-		var shown := RECIPE_ROWS if tab == 2 else ROWS
+		var shown := RECIPE_ROWS if tab == 2 else _rows()
 		var rows := ceili(_list_size() / float(cols))
 		scroll = clampi(scroll + (1 if mb.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1), 0, maxi(0, rows - shown))
 		return
@@ -440,6 +470,9 @@ func body_click(mb: InputEventMouseButton) -> void:
 	match h[0]:
 		Part.TAB:
 			tab = h[1]
+			scroll = 0
+		Part.SUB_TAB:
+			sub_tab = h[1]
 			scroll = 0
 		Part.SEARCH:
 			set_searching(not searching)
@@ -473,6 +506,7 @@ func follow(target: Variant) -> void:
 	if target is EnemyData:
 		picked_enemy = target
 		tab = 1
+		sub_tab = maxi(int((target as EnemyData).group()) - 1, 0)
 	elif target is ItemData:
 		picked_item = target
 		tab = 0
